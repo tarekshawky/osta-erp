@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
+import { parseWorkbookRows, type ImportResult } from "@/lib/excel";
+import { EXPENSE_CATEGORIES, EXPENSE_PAYMENT_METHODS } from "@/lib/expenseData";
 
 export type ExpenseFormInput = {
   category: string;
@@ -90,4 +92,68 @@ export async function refundExpense(
 
   revalidatePath("/admin/expenses");
   return { ok: true };
+}
+
+export async function importExpensesFromExcel(formData: FormData): Promise<ImportResult> {
+  const admin = await requireEmployee("ADMIN");
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) {
+    return { ok: false, created: 0, errors: [{ row: 0, message: "No file uploaded." }] };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const rows = await parseWorkbookRows(buffer);
+
+  if (rows.length === 0) {
+    return { ok: false, created: 0, errors: [{ row: 0, message: "The file has no data rows." }] };
+  }
+
+  let created = 0;
+  const errors: { row: number; message: string }[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNum = i + 2;
+
+    const description = row["Description"]?.trim();
+    const amount = Number(row["Amount"]);
+
+    if (!description) {
+      errors.push({ row: rowNum, message: "Missing Description." });
+      continue;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      errors.push({ row: rowNum, message: "Missing or invalid Amount." });
+      continue;
+    }
+
+    const category = EXPENSE_CATEGORIES.includes(row["Category"] as (typeof EXPENSE_CATEGORIES)[number])
+      ? row["Category"]
+      : "Other";
+    const payment = EXPENSE_PAYMENT_METHODS.includes(row["Payment"] as (typeof EXPENSE_PAYMENT_METHODS)[number])
+      ? row["Payment"]
+      : "Cash";
+    const date = row["Date"] && !Number.isNaN(Date.parse(row["Date"])) ? new Date(row["Date"]) : new Date();
+
+    try {
+      await prisma.expense.create({
+        data: {
+          date,
+          description,
+          category,
+          payment,
+          amount,
+          teamId: admin.teamId,
+          createdById: admin.id,
+        },
+      });
+      created++;
+    } catch {
+      errors.push({ row: rowNum, message: "Could not create this expense." });
+    }
+  }
+
+  revalidatePath("/admin/expenses");
+  return { ok: true, created, errors };
 }

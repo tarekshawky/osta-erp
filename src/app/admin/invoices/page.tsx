@@ -6,7 +6,9 @@ import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Pagination } from "@/components/admin/Pagination";
+import { ImportModal } from "@/components/admin/ImportModal";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
+import { importInvoicesFromExcel } from "./import/actions";
 import type { Prisma } from "@/generated/prisma";
 
 export default async function AdminInvoicesPage({
@@ -64,17 +66,46 @@ export default async function AdminInvoicesPage({
       />
 
       <div className="px-6 py-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Invoices</h2>
             <p className="text-sm text-slate-500 mt-0.5">{allInvoices._count} records</p>
           </div>
-          <Link
-            href="/admin/invoices/new"
-            className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2"
-          >
-            + New Invoice
-          </Link>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/admin/invoices/export?${new URLSearchParams({
+                ...(q ? { q } : {}),
+                ...(team !== "all" ? { team } : {}),
+                ...(status !== "all" ? { status } : {}),
+                ...(year ? { year: String(year) } : {}),
+              }).toString()}`}
+              className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2 flex items-center gap-1.5"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Export
+            </a>
+            <ImportModal
+              title="Import Invoices"
+              templateHref="/admin/invoices/import/template"
+              onImport={importInvoicesFromExcel}
+              trigger={
+                <span className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2 flex items-center gap-1.5">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 21V9m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Import
+                </span>
+              }
+            />
+            <Link
+              href="/admin/invoices/new"
+              className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2"
+            >
+              + New Invoice
+            </Link>
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 lg:grid-cols-5 gap-3">

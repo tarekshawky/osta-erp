@@ -10,7 +10,8 @@ import { ExpenseRefundModal } from "./ExpenseRefundModal";
 import { DeleteExpenseButton } from "./DeleteExpenseButton";
 import { ExpensePdfButton } from "./ExpensePdfButton";
 import { Pagination } from "@/components/admin/Pagination";
-import { createExpense, updateExpense } from "@/app/admin/expenses/actions";
+import { ImportModal } from "@/components/admin/ImportModal";
+import { createExpense, updateExpense, importExpensesFromExcel } from "@/app/admin/expenses/actions";
 
 export type ExpenseRow = {
   id: string;
@@ -78,21 +79,45 @@ export function ExpensesManager({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Expenses</h2>
           <p className="text-sm text-slate-500 mt-0.5">{totalCount} records</p>
         </div>
-        <button
-          type="button"
-          onClick={openAdd}
-          className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 flex items-center gap-1"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-          </svg>
-          Add Expense
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href={`/admin/expenses/export${year ? `?year=${year}` : ""}`}
+            className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2 flex items-center gap-1.5"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Export
+          </a>
+          <ImportModal
+            title="Import Expenses"
+            templateHref="/admin/expenses/import/template"
+            onImport={importExpensesFromExcel}
+            trigger={
+              <span className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2 flex items-center gap-1.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 21V9m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Import
+              </span>
+            }
+          />
+          <button
+            type="button"
+            onClick={openAdd}
+            className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 flex items-center gap-1"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            </svg>
+            Add Expense
+          </button>
+        </div>
       </div>
 
       {mode === "add" && (
