@@ -12,15 +12,19 @@ import type { Prisma } from "@/generated/prisma";
 export default async function AdminInvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; team?: string; status?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; team?: string; status?: string; page?: string; year?: string }>;
 }) {
-  const { q = "", team = "all", status = "all", page: pageParam } = await searchParams;
+  const { q = "", team = "all", status = "all", page: pageParam, year: yearParam } = await searchParams;
   const page = parsePage(pageParam);
+  const year = yearParam ? Number(yearParam) : null;
 
-  const [teams, allInvoices] = await Promise.all([
+  const [teams, allInvoices, invoiceDates] = await Promise.all([
     prisma.team.findMany({ orderBy: { name: "asc" } }),
     prisma.invoice.aggregate({ _sum: { amount: true }, _count: true }),
+    prisma.invoice.findMany({ select: { date: true } }),
   ]);
+
+  const years = Array.from(new Set(invoiceDates.map((i) => i.date.getFullYear()))).sort((a, b) => b - a);
 
   const [paidCount, partiallyRefundedCount, refundedCount] = await Promise.all([
     prisma.invoice.count({ where: { status: "Paid" } }),
@@ -38,6 +42,7 @@ export default async function AdminInvoicesPage({
   }
   if (team !== "all") where.team = { name: team };
   if (status !== "all") where.status = status;
+  if (year) where.date = { gte: new Date(Date.UTC(year, 0, 1)), lt: new Date(Date.UTC(year + 1, 0, 1)) };
 
   const filteredCount = await prisma.invoice.count({ where });
   const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
@@ -53,7 +58,10 @@ export default async function AdminInvoicesPage({
 
   return (
     <div className="pb-10">
-      <AdminTopBar title="Invoices" />
+      <AdminTopBar
+        title="Invoices"
+        yearFilter={{ years, selected: year ?? "all", basePath: "/admin/invoices" }}
+      />
 
       <div className="px-6 py-6">
         <div className="flex items-center justify-between">
@@ -78,6 +86,7 @@ export default async function AdminInvoicesPage({
         </div>
 
         <form className="mt-5 flex flex-col sm:flex-row gap-3">
+          {year && <input type="hidden" name="year" value={year} />}
           <input
             type="text"
             name="q"
@@ -166,7 +175,12 @@ export default async function AdminInvoicesPage({
               )}
             </tbody>
           </table>
-          <Pagination page={safePage} totalPages={totalPages} basePath="/admin/invoices" searchParams={{ q, team, status }} />
+          <Pagination
+            page={safePage}
+            totalPages={totalPages}
+            basePath="/admin/invoices"
+            searchParams={{ q, team, status, year: year ? String(year) : undefined }}
+          />
         </div>
       </div>
     </div>

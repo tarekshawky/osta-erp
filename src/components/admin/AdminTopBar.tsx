@@ -1,13 +1,25 @@
+import { YearFilter } from "./YearFilter";
+
 function currentMonthLabel() {
   return new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(new Date());
 }
 
-export function AdminTopBar({ title }: { title: string }) {
+export function AdminTopBar({
+  title,
+  yearFilter,
+}: {
+  title: string;
+  yearFilter?: { years: number[]; selected: number | "all"; basePath: string };
+}) {
   return (
     <header className="bg-gradient-to-r from-blue-950 to-blue-800 text-white px-6 py-4 flex items-center justify-between">
       <h1 className="font-semibold">{title}</h1>
       <div className="flex items-center gap-3">
-        <span className="px-3 py-1.5 rounded-full bg-white/10 text-sm">{currentMonthLabel()}</span>
+        {yearFilter ? (
+          <YearFilter years={yearFilter.years} selected={yearFilter.selected} basePath={yearFilter.basePath} />
+        ) : (
+          <span className="px-3 py-1.5 rounded-full bg-white/10 text-sm">{currentMonthLabel()}</span>
+        )}
         <span className="relative">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M6 8a6 6 0 0112 0c0 4 1.5 5.5 1.5 5.5H4.5S6 12 6 8z" strokeLinejoin="round" />

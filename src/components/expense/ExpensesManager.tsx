@@ -47,11 +47,13 @@ export function ExpensesManager({
   totalCount,
   page,
   totalPages,
+  year,
 }: {
   expenses: ExpenseRow[];
   totalCount: number;
   page: number;
   totalPages: number;
+  year?: string;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<"closed" | "add" | "edit">("closed");
@@ -199,7 +201,7 @@ export function ExpensesManager({
             )}
           </tbody>
         </table>
-        <Pagination page={page} totalPages={totalPages} basePath="/admin/expenses" />
+        <Pagination page={page} totalPages={totalPages} basePath="/admin/expenses" searchParams={{ year }} />
       </div>
     </div>
   );
