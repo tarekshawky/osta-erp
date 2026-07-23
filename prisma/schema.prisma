@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  EMPLOYEE
+  ADMIN
+}
+
+enum CustomerType {
+  INDIVIDUAL
+  COMPANY
+}
+
+model Team {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  employees Employee[]
+  invoices  Invoice[]
+  expenses  Expense[]
+}
+
+model Employee {
+  id        String     @id @default(cuid())
+  code      String     @unique
+  name      String
+  jobTitle  String
+  role      Role       @default(EMPLOYEE)
+  pinHash   String
+  status    String     @default("active")
+  phone     String?
+  custody   Float      @default(0)
+  teamId    String?
+  team      Team?      @relation(fields: [teamId], references: [id])
+  invoices  Invoice[]
+  expenses  Expense[]
+  createdAt DateTime   @default(now())
+}
+
+model Customer {
+  id           String       @id @default(cuid())
+  type         CustomerType @default(INDIVIDUAL)
+  name         String
+  companyName  String?
+  trn          String?
+  phone        String       @unique
+  emirate      String
+  buildingName String?
+  flatNo       String?
+  invoices     Invoice[]
+  createdAt    DateTime     @default(now())
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  number        String        @unique
+  date          DateTime
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  serviceType   String        @default("Repair")
+  category      String        @default("AC")
+  payment       String
+  amount        Float
+  status        String        @default("Paid")
+  refundedAmount Float        @default(0)
+  warrantyUntil DateTime?
+  teamId        String?
+  team          Team?         @relation(fields: [teamId], references: [id])
+  createdById   String
+  createdBy     Employee      @relation(fields: [createdById], references: [id])
+  items         InvoiceItem[]
+  createdAt     DateTime      @default(now())
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  serviceName String
+  description String?
+  qty         Int     @default(1)
+  unitPrice   Float
+}
+
+model Expense {
+  id             String   @id @default(cuid())
+  date           DateTime
+  description    String
+  category       String?
+  payment        String   @default("Cash")
+  amount         Float
+  status         String   @default("Recorded")
+  refundedAmount Float    @default(0)
+  teamId         String?
+  team           Team?    @relation(fields: [teamId], references: [id])
+  createdById    String
+  createdBy      Employee @relation(fields: [createdById], references: [id])
+  createdAt      DateTime @default(now())
+}

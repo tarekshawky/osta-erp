@@ -1,0 +1,101 @@
+"use client";
+
+import { formatAed } from "@/lib/format";
+import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
+import type { PaymentFormData, ServiceFormData } from "./types";
+
+const METHODS = [
+  {
+    id: "Cash" as const,
+    label: "Cash",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="2" y="6" width="20" height="12" rx="2" />
+        <circle cx="12" cy="12" r="2.5" />
+      </svg>
+    ),
+  },
+  {
+    id: "Bank Transfer" as const,
+    label: "Bank Transfer",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M3 10l9-6 9 6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 10v9M10 10v9M14 10v9M19 10v9M3 21h18" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    id: "Ziina" as const,
+    label: "Ziina",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="6" y="2" width="12" height="20" rx="2" />
+        <path d="M10 18h4" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+];
+
+export function PaymentStep({
+  value,
+  service,
+  onChange,
+  onNext,
+}: {
+  value: PaymentFormData;
+  service: ServiceFormData;
+  onChange: (value: PaymentFormData) => void;
+  onNext: () => void;
+}) {
+  const total = service.items.reduce((sum, item) => {
+    const hasService = item.service === CUSTOM_SERVICE_VALUE ? item.customName.trim().length > 0 : item.service.length > 0;
+    if (!hasService) return sum;
+    return sum + (Number(item.qty) || 0) * (Number(item.unitPrice) || 0);
+  }, 0);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Select Payment Method</label>
+        <div className="grid grid-cols-3 gap-3">
+          {METHODS.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => onChange({ method: m.id })}
+              className={`flex flex-col items-center gap-1 rounded-xl border py-4 text-xs font-medium ${
+                value.method === m.id ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"
+              }`}
+            >
+              {m.icon}
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-slate-50 p-4 text-sm">
+        <div className="flex justify-between text-slate-500">
+          <span>Subtotal</span>
+          <span>{formatAed(total)}</span>
+        </div>
+        <div className="flex justify-between font-bold text-slate-900 mt-1">
+          <span>Total</span>
+          <span className="text-blue-700">{formatAed(total)}</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={onNext}
+        className="mt-2 w-full rounded-xl bg-blue-700 text-white font-medium text-sm py-3.5 flex items-center justify-center gap-2"
+      >
+        Next
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+    </div>
+  );
+}

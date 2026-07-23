@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OSTA ERP
 
-## Getting Started
+A Next.js 16 ERP app for OSTA Services — role-based login (Employee / Admin), invoices with a 4-step creation wizard and PDF export, expenses, employee management, and wallets/custody tracking.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Next.js 16 (App Router, Turbopack)
+- Prisma + PostgreSQL (Neon)
+- Tailwind CSS v4
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Getting started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Install dependencies:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   npm install
+   ```
 
-## Learn More
+2. Set up your `.env`:
 
-To learn more about Next.js, take a look at the following resources:
+   ```
+   DATABASE_URL="postgresql://..."
+   AUTH_SECRET="a-long-random-string"
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Push the schema and seed demo data:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npx prisma db push
+   npx tsx prisma/seed.ts
+   ```
 
-## Deploy on Vercel
+4. Run the dev server:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Demo logins
+
+- Employee PIN: `1991` (Mostafa Yasser Ahmed Ali, Team Leader)
+- Admin PIN: `1000` (Amr Abdelhamid, CEO & Co-Founder)
