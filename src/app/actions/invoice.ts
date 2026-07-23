@@ -50,7 +50,8 @@ export async function createInvoiceFromWizard(
   const session = await getSession();
   if (!session) return { ok: false, error: "Not signed in." };
 
-  const employee = await prisma.employee.findUniqueOrThrow({ where: { id: session.employeeId } });
+  const employee = await prisma.employee.findUnique({ where: { id: session.employeeId } });
+  if (!employee) return { ok: false, error: "Your session has expired. Please log in again." };
 
   const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
   if (!billName || !customer.phone.trim()) {

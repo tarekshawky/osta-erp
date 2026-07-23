@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
 import { SERVICE_CATALOG, CUSTOM_SERVICE_VALUE, type Category } from "@/lib/invoiceData";
@@ -12,10 +12,9 @@ export default async function AdminInvoiceEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await getSession();
-  const [invoice, admin] = await Promise.all([
+  const [admin, invoice] = await Promise.all([
+    requireEmployee("ADMIN"),
     prisma.invoice.findUnique({ where: { id }, include: { customer: true, items: true } }),
-    prisma.employee.findUniqueOrThrow({ where: { id: session!.employeeId } }),
   ]);
   if (!invoice) notFound();
 

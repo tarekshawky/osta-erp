@@ -1,13 +1,13 @@
-import { getSession } from "@/lib/session";
+import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { initials } from "@/lib/format";
 import { logout } from "@/app/actions/logout";
 import { TopBar } from "@/components/TopBar";
 
 export default async function EmployeeProfilePage() {
-  const session = await getSession();
+  const session = await requireEmployee("EMPLOYEE");
   const employee = await prisma.employee.findUniqueOrThrow({
-    where: { id: session!.employeeId },
+    where: { id: session.id },
     include: { team: true },
   });
 

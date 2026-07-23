@@ -2,13 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { requireEmployee } from "@/lib/auth";
 
 export async function createExpense(formData: FormData) {
-  const session = await getSession();
-  if (!session) redirect("/");
-
-  const employee = await prisma.employee.findUniqueOrThrow({ where: { id: session.employeeId } });
+  const employee = await requireEmployee("EMPLOYEE");
 
   const description = String(formData.get("description") ?? "").trim();
   const category = String(formData.get("category") ?? "").trim();

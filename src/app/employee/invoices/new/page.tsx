@@ -1,11 +1,9 @@
-import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { requireEmployee } from "@/lib/auth";
 import { TopBar } from "@/components/TopBar";
 import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
 
 export default async function NewInvoicePage() {
-  const session = await getSession();
-  const employee = await prisma.employee.findUniqueOrThrow({ where: { id: session!.employeeId } });
+  const employee = await requireEmployee("EMPLOYEE");
 
   return (
     <div className="pb-8">

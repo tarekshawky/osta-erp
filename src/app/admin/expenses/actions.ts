@@ -1,15 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
-
-async function requireAdmin() {
-  const session = await getSession();
-  if (!session || session.role !== "ADMIN") redirect("/");
-  return session;
-}
+import { requireEmployee } from "@/lib/auth";
 
 export type ExpenseFormInput = {
   category: string;
@@ -20,13 +13,11 @@ export type ExpenseFormInput = {
 };
 
 export async function createExpense(input: ExpenseFormInput): Promise<{ ok: boolean; error?: string }> {
-  const session = await requireAdmin();
+  const employee = await requireEmployee("ADMIN");
 
   if (!input.description.trim() || !Number.isFinite(input.amount) || input.amount <= 0) {
     return { ok: false, error: "Please fill in a description and a valid amount." };
   }
-
-  const employee = await prisma.employee.findUniqueOrThrow({ where: { id: session.employeeId } });
 
   await prisma.expense.create({
     data: {
@@ -48,7 +39,7 @@ export async function updateExpense(
   id: string,
   input: ExpenseFormInput
 ): Promise<{ ok: boolean; error?: string }> {
-  await requireAdmin();
+  await requireEmployee("ADMIN");
 
   if (!input.description.trim() || !Number.isFinite(input.amount) || input.amount <= 0) {
     return { ok: false, error: "Please fill in a description and a valid amount." };
@@ -70,7 +61,7 @@ export async function updateExpense(
 }
 
 export async function deleteExpense(id: string) {
-  await requireAdmin();
+  await requireEmployee("ADMIN");
   await prisma.expense.delete({ where: { id } });
   revalidatePath("/admin/expenses");
 }
@@ -79,7 +70,7 @@ export async function refundExpense(
   id: string,
   amount: number
 ): Promise<{ ok: boolean; error?: string }> {
-  await requireAdmin();
+  await requireEmployee("ADMIN");
 
   const expense = await prisma.expense.findUnique({ where: { id } });
   if (!expense) return { ok: false, error: "Expense not found." };

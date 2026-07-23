@@ -1,10 +1,8 @@
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
+import { requireEmployee } from "@/lib/auth";
 import { EmployeeBottomNav } from "@/components/EmployeeBottomNav";
 
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
-  if (!session || session.role !== "EMPLOYEE") redirect("/");
+  await requireEmployee("EMPLOYEE");
 
   return (
     <div className="min-h-dvh bg-slate-100 flex justify-center">
