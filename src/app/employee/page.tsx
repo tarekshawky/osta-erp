@@ -26,7 +26,7 @@ export default async function EmployeeHomePage() {
 
   const revenue = revenueAgg._sum.amount ?? 0;
   const expenses = expenseAgg._sum.amount ?? 0;
-  const currentCash = employee.custody + revenue - expenses;
+  const currentCash = employee.custody + revenue - expenses - employee.revenueWithdrawn;
   const number = (n: number) => new Intl.NumberFormat("en-US", { minimumFractionDigits: n % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 }).format(n);
 
   return (

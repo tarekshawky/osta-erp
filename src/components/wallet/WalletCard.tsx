@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatAed, initials } from "@/lib/format";
 import { CustodyModal } from "./CustodyModal";
+import { WithdrawRevenueModal } from "./WithdrawRevenueModal";
 
 export function WalletCard({
   role,
@@ -10,6 +11,7 @@ export function WalletCard({
   custody,
   revenue,
   expenses,
+  revenueWithdrawn,
 }: {
   role: "Admin" | "Employee";
   code: string;
@@ -18,8 +20,10 @@ export function WalletCard({
   custody: number;
   revenue: number;
   expenses: number;
+  revenueWithdrawn: number;
 }) {
-  const balance = custody + revenue - expenses;
+  const balance = custody + revenue - expenses - revenueWithdrawn;
+  const availableRevenue = revenue - expenses - revenueWithdrawn;
 
   return (
     <div className="rounded-xl border border-slate-200 overflow-hidden">
@@ -52,7 +56,7 @@ export function WalletCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 bg-white text-xs">
+      <div className={`grid bg-white text-xs ${role === "Employee" ? "grid-cols-5" : "grid-cols-4"}`}>
         <CustodyModal
           employeeId={employeeId}
           employeeName={name}
@@ -75,10 +79,26 @@ export function WalletCard({
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 19L19 5M12 5h7v7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Withdraw
+              Withdraw Custody
             </div>
           }
         />
+        {role === "Employee" && (
+          <WithdrawRevenueModal
+            employeeId={employeeId}
+            employeeName={name}
+            available={availableRevenue}
+            trigger={
+              <div className="flex flex-col items-center gap-1 py-3 text-purple-600 hover:bg-slate-50 w-full">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 3v14M6 11l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4 21h16" strokeLinecap="round" />
+                </svg>
+                Withdraw Revenue
+              </div>
+            }
+          />
+        )}
         <Link
           href="/admin/expenses"
           className="flex flex-col items-center gap-1 py-3 text-red-500 hover:bg-slate-50"

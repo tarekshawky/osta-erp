@@ -12,6 +12,7 @@ export type WalletRow = {
   custody: number;
   revenue: number;
   expenses: number;
+  revenueWithdrawn: number;
 };
 
 export function WalletsManager({ wallets }: { wallets: WalletRow[] }) {
@@ -20,8 +21,8 @@ export function WalletsManager({ wallets }: { wallets: WalletRow[] }) {
   const admins = wallets.filter((w) => w.role === "ADMIN");
   const employees = wallets.filter((w) => w.role === "EMPLOYEE");
 
-  const adminTotal = admins.reduce((sum, w) => sum + w.custody + w.revenue - w.expenses, 0);
-  const employeeTotal = employees.reduce((sum, w) => sum + w.custody + w.revenue - w.expenses, 0);
+  const adminTotal = admins.reduce((sum, w) => sum + w.custody + w.revenue - w.expenses - w.revenueWithdrawn, 0);
+  const employeeTotal = employees.reduce((sum, w) => sum + w.custody + w.revenue - w.expenses - w.revenueWithdrawn, 0);
 
   const shown = tab === "admin" ? admins : employees;
 
@@ -75,6 +76,7 @@ export function WalletsManager({ wallets }: { wallets: WalletRow[] }) {
             custody={w.custody}
             revenue={w.revenue}
             expenses={w.expenses}
+            revenueWithdrawn={w.revenueWithdrawn}
           />
         ))}
         {shown.length === 0 && <p className="text-sm text-slate-400 py-10 text-center col-span-2">No wallets found.</p>}

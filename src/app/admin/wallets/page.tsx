@@ -20,6 +20,7 @@ export default async function AdminWalletsPage() {
     custody: emp.custody,
     revenue: revenueMap.get(emp.id) ?? 0,
     expenses: expenseMap.get(emp.id) ?? 0,
+    revenueWithdrawn: emp.revenueWithdrawn,
   }));
 
   return (
