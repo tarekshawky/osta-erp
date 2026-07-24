@@ -51,6 +51,16 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/payroll",
+    label: "Payroll",
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v10M9.5 9.5c0-1.4 1.1-2.5 2.5-2.5s2.5.9 2.5 2c0 1.4-1.1 2-2.5 2.5-1.4.5-2.5 1.1-2.5 2.5s1.1 2 2.5 2 2.5-1.1 2.5-2.5" strokeLinecap="round" strokeLinejoin="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/reports",
     label: "Reports",
     icon: (

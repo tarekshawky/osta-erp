@@ -42,6 +42,8 @@ model Employee {
   team      Team?      @relation(fields: [teamId], references: [id])
   invoices  Invoice[]
   expenses  Expense[]
+  payrollEntries        PayrollEntry[] @relation("PayrollFor")
+  payrollEntriesCreated PayrollEntry[] @relation("PayrollCreatedBy")
   createdAt DateTime   @default(now())
 }
 
@@ -106,4 +108,17 @@ model Expense {
   createdById    String
   createdBy      Employee @relation(fields: [createdById], references: [id])
   createdAt      DateTime @default(now())
+}
+
+model PayrollEntry {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation("PayrollFor", fields: [employeeId], references: [id])
+  type        String
+  amount      Float
+  date        DateTime
+  note        String?
+  createdById String
+  createdBy   Employee @relation("PayrollCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
 }
