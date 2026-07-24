@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { formatAed, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/StatusBadge";
+import { TeamBadge } from "@/components/admin/TeamBadge";
 import { CategoryBadge } from "./CategoryBadge";
 import { ExpenseForm, type ExpenseFormValue } from "./ExpenseForm";
 import { ExpenseRefundModal } from "./ExpenseRefundModal";
@@ -23,6 +24,7 @@ export type ExpenseRow = {
   status: string;
   refundedAmount: number;
   createdByName: string;
+  teamName: string | null;
 };
 
 function toFormValue(expense: ExpenseRow): ExpenseFormValue {
@@ -49,16 +51,35 @@ export function ExpensesManager({
   page,
   totalPages,
   year,
+  month,
+  teams,
+  selectedTeam,
 }: {
   expenses: ExpenseRow[];
   totalCount: number;
   page: number;
   totalPages: number;
   year?: string;
+  month?: string;
+  teams: string[];
+  selectedTeam: string;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<"closed" | "add" | "edit">("closed");
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  function updateTeam(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "all") {
+      params.delete("team");
+    } else {
+      params.set("team", value);
+    }
+    params.delete("page");
+    const qs = params.toString();
+    router.push(qs ? `/admin/expenses?${qs}` : "/admin/expenses");
+  }
 
   function openAdd() {
     setEditingId(null);
@@ -85,8 +106,24 @@ export function ExpensesManager({
           <p className="text-sm text-slate-500 mt-0.5">{totalCount} records</p>
         </div>
         <div className="flex items-center gap-2">
+          <select
+            value={selectedTeam}
+            onChange={(e) => updateTeam(e.target.value)}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"
+          >
+            <option value="all">All Teams</option>
+            {teams.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
           <a
-            href={`/admin/expenses/export${year ? `?year=${year}` : ""}`}
+            href={`/admin/expenses/export?${new URLSearchParams({
+              ...(year ? { year } : {}),
+              ...(month ? { month } : {}),
+              ...(selectedTeam !== "all" ? { team: selectedTeam } : {}),
+            }).toString()}`}
             className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2 flex items-center gap-1.5"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -156,6 +193,7 @@ export function ExpensesManager({
               <th className="px-4 py-3 font-medium">Date</th>
               <th className="px-4 py-3 font-medium">Type</th>
               <th className="px-4 py-3 font-medium">Description</th>
+              <th className="px-4 py-3 font-medium">Team</th>
               <th className="px-4 py-3 font-medium">Employee</th>
               <th className="px-4 py-3 font-medium">Payment</th>
               <th className="px-4 py-3 font-medium text-right">Amount</th>
@@ -171,6 +209,9 @@ export function ExpensesManager({
                   <CategoryBadge category={exp.category} />
                 </td>
                 <td className="px-4 py-3 text-slate-900">{exp.description}</td>
+                <td className="px-4 py-3">
+                  <TeamBadge name={exp.teamName} />
+                </td>
                 <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{exp.createdByName}</td>
                 <td className="px-4 py-3 text-slate-600">{exp.payment}</td>
                 <td className="px-4 py-3 text-right font-semibold text-red-500 whitespace-nowrap">
@@ -219,14 +260,19 @@ export function ExpensesManager({
             ))}
             {expenses.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
                   No expenses recorded.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-        <Pagination page={page} totalPages={totalPages} basePath="/admin/expenses" searchParams={{ year }} />
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          basePath="/admin/expenses"
+          searchParams={{ year, month, team: selectedTeam !== "all" ? selectedTeam : undefined }}
+        />
       </div>
     </div>
   );

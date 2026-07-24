@@ -1,4 +1,4 @@
-import { YearFilter } from "./YearFilter";
+import { DateFilter } from "./DateFilter";
 
 function currentMonthLabel() {
   return new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(new Date());
@@ -6,17 +6,22 @@ function currentMonthLabel() {
 
 export function AdminTopBar({
   title,
-  yearFilter,
+  dateFilter,
 }: {
   title: string;
-  yearFilter?: { years: number[]; selected: number | "all"; basePath: string };
+  dateFilter?: { years: number[]; selectedYear: number | "all"; selectedMonth: number | "all"; basePath: string };
 }) {
   return (
     <header className="bg-gradient-to-r from-blue-950 to-blue-800 text-white px-6 py-4 flex items-center justify-between">
       <h1 className="font-semibold">{title}</h1>
       <div className="flex items-center gap-3">
-        {yearFilter ? (
-          <YearFilter years={yearFilter.years} selected={yearFilter.selected} basePath={yearFilter.basePath} />
+        {dateFilter ? (
+          <DateFilter
+            years={dateFilter.years}
+            selectedYear={dateFilter.selectedYear}
+            selectedMonth={dateFilter.selectedMonth}
+            basePath={dateFilter.basePath}
+          />
         ) : (
           <span className="px-3 py-1.5 rounded-full bg-white/10 text-sm">{currentMonthLabel()}</span>
         )}

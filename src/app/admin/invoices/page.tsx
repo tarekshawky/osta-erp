@@ -8,17 +8,19 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Pagination } from "@/components/admin/Pagination";
 import { ImportModal } from "@/components/admin/ImportModal";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
+import { buildDateRange } from "@/lib/dateRangeFilter";
 import { importInvoicesFromExcel } from "./import/actions";
 import type { Prisma } from "@/generated/prisma";
 
 export default async function AdminInvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; team?: string; status?: string; page?: string; year?: string }>;
+  searchParams: Promise<{ q?: string; team?: string; status?: string; page?: string; year?: string; month?: string }>;
 }) {
-  const { q = "", team = "all", status = "all", page: pageParam, year: yearParam } = await searchParams;
+  const { q = "", team = "all", status = "all", page: pageParam, year: yearParam, month: monthParam } = await searchParams;
   const page = parsePage(pageParam);
   const year = yearParam ? Number(yearParam) : null;
+  const month = monthParam ? Number(monthParam) : null;
 
   const [teams, allInvoices, invoiceDates] = await Promise.all([
     prisma.team.findMany({ orderBy: { name: "asc" } }),
@@ -44,7 +46,8 @@ export default async function AdminInvoicesPage({
   }
   if (team !== "all") where.team = { name: team };
   if (status !== "all") where.status = status;
-  if (year) where.date = { gte: new Date(Date.UTC(year, 0, 1)), lt: new Date(Date.UTC(year + 1, 0, 1)) };
+  const dateRange = buildDateRange(year, month);
+  if (dateRange) where.date = dateRange;
 
   const filteredCount = await prisma.invoice.count({ where });
   const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
@@ -62,7 +65,7 @@ export default async function AdminInvoicesPage({
     <div className="pb-10">
       <AdminTopBar
         title="Invoices"
-        yearFilter={{ years, selected: year ?? "all", basePath: "/admin/invoices" }}
+        dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin/invoices" }}
       />
 
       <div className="px-6 py-6">
@@ -78,6 +81,7 @@ export default async function AdminInvoicesPage({
                 ...(team !== "all" ? { team } : {}),
                 ...(status !== "all" ? { status } : {}),
                 ...(year ? { year: String(year) } : {}),
+                ...(month ? { month: String(month) } : {}),
               }).toString()}`}
               className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2 flex items-center gap-1.5"
             >
@@ -118,6 +122,7 @@ export default async function AdminInvoicesPage({
 
         <form className="mt-5 flex flex-col sm:flex-row gap-3">
           {year && <input type="hidden" name="year" value={year} />}
+          {month && <input type="hidden" name="month" value={month} />}
           <input
             type="text"
             name="q"
@@ -210,7 +215,7 @@ export default async function AdminInvoicesPage({
             page={safePage}
             totalPages={totalPages}
             basePath="/admin/invoices"
-            searchParams={{ q, team, status, year: year ? String(year) : undefined }}
+            searchParams={{ q, team, status, year: year ? String(year) : undefined, month: month ? String(month) : undefined }}
           />
         </div>
       </div>

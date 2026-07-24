@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { buildWorkbookBuffer } from "@/lib/excel";
+import { buildDateRange } from "@/lib/dateRangeFilter";
 import { formatDate } from "@/lib/format";
 import type { Prisma } from "@/generated/prisma";
 
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
   const team = searchParams.get("team") ?? "all";
   const status = searchParams.get("status") ?? "all";
   const year = searchParams.get("year") ? Number(searchParams.get("year")) : null;
+  const month = searchParams.get("month") ? Number(searchParams.get("month")) : null;
 
   const where: Prisma.InvoiceWhereInput = {};
   if (q) {
@@ -24,7 +26,8 @@ export async function GET(request: NextRequest) {
   }
   if (team !== "all") where.team = { name: team };
   if (status !== "all") where.status = status;
-  if (year) where.date = { gte: new Date(Date.UTC(year, 0, 1)), lt: new Date(Date.UTC(year + 1, 0, 1)) };
+  const dateRange = buildDateRange(year, month);
+  if (dateRange) where.date = dateRange;
 
   const invoices = await prisma.invoice.findMany({
     where,
