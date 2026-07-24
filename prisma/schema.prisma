@@ -95,6 +95,8 @@ model Expense {
   date           DateTime
   description    String
   category       String?
+  vehicle        String?
+  subcategory    String?
   payment        String   @default("Cash")
   amount         Float
   status         String   @default("Recorded")

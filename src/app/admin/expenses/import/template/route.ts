@@ -5,8 +5,16 @@ import { buildWorkbookBuffer } from "@/lib/excel";
 export async function GET() {
   await requireEmployee("ADMIN");
 
-  const headers = ["Date", "Category", "Description", "Payment", "Amount"];
-  const sampleRow = [new Date().toISOString().slice(0, 10), "Fuel", "Adnoc", "Cash", 150];
+  const headers = ["Date", "Category", "Vehicle", "Subcategory", "Description", "Payment", "Amount"];
+  const sampleRow = [
+    new Date().toISOString().slice(0, 10),
+    "Vehicle",
+    "Toyota Camry",
+    "Fuel",
+    "Adnoc",
+    "Cash",
+    150,
+  ];
 
   const buffer = await buildWorkbookBuffer("Expenses Template", headers, [sampleRow]);
 

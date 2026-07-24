@@ -1,7 +1,12 @@
 import { PrismaClient } from "../src/generated/prisma";
 import { createHash } from "crypto";
 import { EMIRATES, SERVICE_CATALOG, CATEGORIES, WARRANTY_DAYS, type Category } from "../src/lib/invoiceData";
-import { EXPENSE_CATEGORIES } from "../src/lib/expenseData";
+import {
+  EXPENSE_CATEGORIES,
+  VEHICLES,
+  VEHICLE_EXPENSE_TYPES,
+  ADVERTISING_PLATFORMS,
+} from "../src/lib/expenseData";
 
 const prisma = new PrismaClient();
 
@@ -210,28 +215,37 @@ async function main() {
 
   const expenseCreators = [mostafa, tarek, mohamedElSayed, amr];
   const expensePayments = ["Cash", "Cash", "Bank", "Ziina"];
-  const expenseByCategory: Record<string, string[]> = {
-    Fuel: ["Emarat", "Adnoc", "Enoc"],
-    Parking: ["Mall Parking", "RTA Parking"],
-    Salik: ["Salik Toll"],
-    Tools: ["Tools World", "Al Futtaim Tools"],
+  const expenseDescriptions: Record<string, string[]> = {
+    Vehicle: ["Emarat", "Adnoc", "Enoc", "Salik Toll", "Al Futtaim Tools", "Union Coop Parts"],
+    Advertising: ["Meta Ads Campaign", "Google Ads Campaign", "Meta Business Verification"],
     Materials: ["Cool Sales", "Muhammad Tahir", "Gulf Materials"],
-    Office: ["Office Depot", "Stationery World"],
-    "Spare Parts": ["Union Coop Parts", "AC Spares Co"],
-    Other: ["MetaPay - Advertising", "Misc Vendor"],
+    Transportation: ["Careem Ride", "RTA Bus Pass"],
+    Meals: ["Team Lunch", "Site Visit Meal"],
+    Accommodation: ["Hotel Stay - Al Ain"],
+    Maintenance: ["Office AC Service", "Equipment Maintenance"],
+    Other: ["Office Depot", "Misc Vendor"],
   };
 
   for (let i = 0; i < 24; i++) {
     const creator = pick(expenseCreators);
     const category = pick(EXPENSE_CATEGORIES);
+    const vehicle = category === "Vehicle" ? pick(VEHICLES) : null;
+    const subcategory =
+      category === "Vehicle"
+        ? pick(VEHICLE_EXPENSE_TYPES)
+        : category === "Advertising"
+          ? pick(ADVERTISING_PLATFORMS)
+          : null;
     const amount = randomAmount(20, 1200);
     const status = i < 21 ? "Recorded" : i < 23 ? "Partially Refunded" : "Refunded";
     const refundedAmount = status === "Refunded" ? amount : status === "Partially Refunded" ? randomAmount(5, amount / 2) : 0;
     await prisma.expense.create({
       data: {
         date: daysAgo(Math.floor(Math.random() * 20)),
-        description: pick(expenseByCategory[category]),
+        description: pick(expenseDescriptions[category]),
         category,
+        vehicle,
+        subcategory,
         payment: pick(expensePayments),
         amount,
         status,

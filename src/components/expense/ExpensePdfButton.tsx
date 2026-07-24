@@ -8,6 +8,8 @@ export type ExpensePdfData = {
   id: string;
   date: Date;
   category: string | null;
+  vehicle: string | null;
+  subcategory: string | null;
   description: string;
   payment: string;
   amount: number;
@@ -65,6 +67,8 @@ export function ExpensePdfButton({ expense, className }: { expense: ExpensePdfDa
       const rows: [string, string][] = [
         ["Date", formatDate(expense.date)],
         ["Category", expense.category ?? "—"],
+        ...(expense.vehicle ? ([["Vehicle", expense.vehicle]] as [string, string][]) : []),
+        ...(expense.subcategory ? ([["Type", expense.subcategory]] as [string, string][]) : []),
         ["Description", expense.description],
         ["Payment Method", expense.payment],
         ["Recorded By", expense.createdByName],

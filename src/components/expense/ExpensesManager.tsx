@@ -19,6 +19,8 @@ export type ExpenseRow = {
   date: string;
   description: string;
   category: string | null;
+  vehicle: string | null;
+  subcategory: string | null;
   payment: string;
   amount: number;
   status: string;
@@ -29,7 +31,9 @@ export type ExpenseRow = {
 
 function toFormValue(expense: ExpenseRow): ExpenseFormValue {
   return {
-    category: expense.category ?? "Fuel",
+    category: expense.category ?? "Other",
+    vehicle: expense.vehicle ?? "",
+    subcategory: expense.subcategory ?? "",
     payment: expense.payment,
     amount: expense.amount,
     date: expense.date.slice(0, 10),
@@ -38,7 +42,9 @@ function toFormValue(expense: ExpenseRow): ExpenseFormValue {
 }
 
 const emptyFormValue: ExpenseFormValue = {
-  category: "Fuel",
+  category: "Vehicle",
+  vehicle: "",
+  subcategory: "",
   payment: "Cash",
   amount: 0,
   date: new Date().toISOString().slice(0, 10),
@@ -207,6 +213,11 @@ export function ExpensesManager({
                 <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{formatDate(new Date(exp.date))}</td>
                 <td className="px-4 py-3">
                   <CategoryBadge category={exp.category} />
+                  {(exp.vehicle || exp.subcategory) && (
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      {[exp.vehicle, exp.subcategory].filter(Boolean).join(" · ")}
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-slate-900">{exp.description}</td>
                 <td className="px-4 py-3">
@@ -237,6 +248,8 @@ export function ExpensesManager({
                         id: exp.id,
                         date: new Date(exp.date),
                         category: exp.category,
+                        vehicle: exp.vehicle,
+                        subcategory: exp.subcategory,
                         description: exp.description,
                         payment: exp.payment,
                         amount: exp.amount,

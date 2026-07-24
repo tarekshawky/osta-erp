@@ -23,11 +23,24 @@ export async function GET(request: NextRequest) {
     include: { createdBy: true, team: true },
   });
 
-  const headers = ["Date", "Category", "Description", "Payment", "Amount", "Employee", "Team", "Status"];
+  const headers = [
+    "Date",
+    "Category",
+    "Vehicle",
+    "Subcategory",
+    "Description",
+    "Payment",
+    "Amount",
+    "Employee",
+    "Team",
+    "Status",
+  ];
 
   const rows = expenses.map((exp) => [
     formatDate(exp.date),
     exp.category ?? "",
+    exp.vehicle ?? "",
+    exp.subcategory ?? "",
     exp.description,
     exp.payment,
     exp.amount,

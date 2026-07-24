@@ -4,15 +4,33 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { parseWorkbookRows, type ImportResult } from "@/lib/excel";
-import { EXPENSE_CATEGORIES, EXPENSE_PAYMENT_METHODS } from "@/lib/expenseData";
+import {
+  EXPENSE_CATEGORIES,
+  EXPENSE_PAYMENT_METHODS,
+  VEHICLES,
+  VEHICLE_EXPENSE_TYPES,
+  ADVERTISING_PLATFORMS,
+} from "@/lib/expenseData";
 
 export type ExpenseFormInput = {
   category: string;
+  vehicle: string;
+  subcategory: string;
   payment: string;
   amount: number;
   date: string;
   description: string;
 };
+
+function resolveVehicleAndSubcategory(input: Pick<ExpenseFormInput, "category" | "vehicle" | "subcategory">) {
+  if (input.category === "Vehicle") {
+    return { vehicle: input.vehicle || null, subcategory: input.subcategory || null };
+  }
+  if (input.category === "Advertising") {
+    return { vehicle: null, subcategory: input.subcategory || null };
+  }
+  return { vehicle: null, subcategory: null };
+}
 
 export async function createExpense(input: ExpenseFormInput): Promise<{ ok: boolean; error?: string }> {
   const employee = await requireEmployee("ADMIN");
@@ -26,6 +44,7 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
       date: new Date(input.date),
       description: input.description.trim(),
       category: input.category,
+      ...resolveVehicleAndSubcategory(input),
       payment: input.payment,
       amount: input.amount,
       teamId: employee.teamId,
@@ -53,6 +72,7 @@ export async function updateExpense(
       date: new Date(input.date),
       description: input.description.trim(),
       category: input.category,
+      ...resolveVehicleAndSubcategory(input),
       payment: input.payment,
       amount: input.amount,
     },
@@ -136,12 +156,29 @@ export async function importExpensesFromExcel(formData: FormData): Promise<Impor
       : "Cash";
     const date = row["Date"] && !Number.isNaN(Date.parse(row["Date"])) ? new Date(row["Date"]) : new Date();
 
+    const vehicle =
+      category === "Vehicle" && VEHICLES.includes(row["Vehicle"] as (typeof VEHICLES)[number])
+        ? row["Vehicle"]
+        : null;
+    const subcategory =
+      category === "Vehicle"
+        ? VEHICLE_EXPENSE_TYPES.includes(row["Subcategory"] as (typeof VEHICLE_EXPENSE_TYPES)[number])
+          ? row["Subcategory"]
+          : null
+        : category === "Advertising"
+          ? ADVERTISING_PLATFORMS.includes(row["Subcategory"] as (typeof ADVERTISING_PLATFORMS)[number])
+            ? row["Subcategory"]
+            : null
+          : null;
+
     try {
       await prisma.expense.create({
         data: {
           date,
           description,
           category,
+          vehicle,
+          subcategory,
           payment,
           amount,
           teamId: admin.teamId,

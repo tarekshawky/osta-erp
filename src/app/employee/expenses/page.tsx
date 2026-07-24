@@ -30,7 +30,7 @@ export default async function EmployeeExpensesPage() {
             <div>
               <div className="font-medium text-slate-900 text-sm">{exp.description}</div>
               <div className="text-xs text-slate-500 mt-0.5">
-                {formatDate(exp.date)} · {exp.category}
+                {formatDate(exp.date)} · {[exp.category, exp.vehicle, exp.subcategory].filter(Boolean).join(" · ")}
               </div>
             </div>
             <div className="font-bold text-red-500 text-sm">-{formatAed(exp.amount)}</div>

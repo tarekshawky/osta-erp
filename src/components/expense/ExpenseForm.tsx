@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { EXPENSE_CATEGORIES, EXPENSE_PAYMENT_METHODS } from "@/lib/expenseData";
+import {
+  EXPENSE_CATEGORIES,
+  EXPENSE_PAYMENT_METHODS,
+  VEHICLES,
+  VEHICLE_EXPENSE_TYPES,
+  ADVERTISING_PLATFORMS,
+} from "@/lib/expenseData";
 import type { ExpenseFormInput } from "@/app/admin/expenses/actions";
 
 export type ExpenseFormValue = ExpenseFormInput;
@@ -33,11 +39,11 @@ export function ExpenseForm({
     <div className="rounded-xl border border-slate-200 bg-white p-5 mb-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-slate-600">Expense Type</span>
+          <span className="text-xs font-medium text-slate-600">Category</span>
           <select
             className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
             value={value.category}
-            onChange={(e) => setValue({ ...value, category: e.target.value })}
+            onChange={(e) => setValue({ ...value, category: e.target.value, vehicle: "", subcategory: "" })}
           >
             {EXPENSE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -46,6 +52,57 @@ export function ExpenseForm({
             ))}
           </select>
         </label>
+        {value.category === "Vehicle" && (
+          <>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-slate-600">Vehicle</span>
+              <select
+                className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+                value={value.vehicle}
+                onChange={(e) => setValue({ ...value, vehicle: e.target.value })}
+              >
+                <option value="">Select vehicle...</option>
+                {VEHICLES.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-slate-600">Expense Type</span>
+              <select
+                className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+                value={value.subcategory}
+                onChange={(e) => setValue({ ...value, subcategory: e.target.value })}
+              >
+                <option value="">Select type...</option>
+                {VEHICLE_EXPENSE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
+        {value.category === "Advertising" && (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-slate-600">Platform</span>
+            <select
+              className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+              value={value.subcategory}
+              onChange={(e) => setValue({ ...value, subcategory: e.target.value })}
+            >
+              <option value="">Select platform...</option>
+              {ADVERTISING_PLATFORMS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Payment Method</span>
           <select
