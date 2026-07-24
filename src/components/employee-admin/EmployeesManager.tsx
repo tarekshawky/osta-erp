@@ -20,6 +20,7 @@ export type EmployeeRow = {
   status: string;
   custody: number;
   revenue: number;
+  monthlySalary: number;
 };
 
 function toFormValue(emp: EmployeeRow): EmployeeFormValue {
@@ -33,6 +34,7 @@ function toFormValue(emp: EmployeeRow): EmployeeFormValue {
     pin: "",
     status: (emp.status as EmployeeFormValue["status"]) ?? "active",
     custody: emp.custody,
+    monthlySalary: emp.monthlySalary,
   };
 }
 
@@ -46,6 +48,7 @@ const emptyFormValue: EmployeeFormValue = {
   pin: "",
   status: "active",
   custody: 0,
+  monthlySalary: 0,
 };
 
 export function EmployeesManager({
@@ -155,6 +158,7 @@ export function EmployeesManager({
               <th className="px-4 py-3 font-medium">Job Title</th>
               <th className="px-4 py-3 font-medium">Team</th>
               <th className="px-4 py-3 font-medium text-right">Custody</th>
+              <th className="px-4 py-3 font-medium text-right">Salary</th>
               <th className="px-4 py-3 font-medium text-right">Revenue</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium text-right">Actions</th>
@@ -173,6 +177,7 @@ export function EmployeesManager({
                   <TeamBadge name={emp.teamName} />
                 </td>
                 <td className="px-4 py-3 text-right text-slate-900">{formatAed(emp.custody)}</td>
+                <td className="px-4 py-3 text-right text-slate-900">{formatAed(emp.monthlySalary)}</td>
                 <td className="px-4 py-3 text-right font-medium text-green-600">{formatAed(emp.revenue)}</td>
                 <td className="px-4 py-3">
                   <span
@@ -206,7 +211,7 @@ export function EmployeesManager({
             ))}
             {employees.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
                   No employees found.
                 </td>
               </tr>

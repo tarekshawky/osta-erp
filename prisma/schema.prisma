@@ -37,6 +37,7 @@ model Employee {
   phone     String?
   custody   Float      @default(0)
   revenueWithdrawn Float @default(0)
+  monthlySalary Float  @default(0)
   teamId    String?
   team      Team?      @relation(fields: [teamId], references: [id])
   invoices  Invoice[]

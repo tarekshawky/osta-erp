@@ -137,6 +137,17 @@ export function EmployeeForm({
             onChange={(e) => setValue({ ...value, custody: Number(e.target.value) })}
           />
         </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Monthly Salary (AED)</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            value={value.monthlySalary || 0}
+            onChange={(e) => setValue({ ...value, monthlySalary: Number(e.target.value) })}
+          />
+        </label>
       </div>
 
       {error && <p className="text-sm text-red-500 mt-3">{error}</p>}

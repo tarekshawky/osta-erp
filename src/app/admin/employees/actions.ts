@@ -20,6 +20,7 @@ export type EmployeeFormInput = {
   pin: string;
   status: "active" | "inactive" | "suspended";
   custody: number;
+  monthlySalary: number;
 };
 
 function validate(input: EmployeeFormInput, isCreate: boolean) {
@@ -56,6 +57,7 @@ export async function createEmployee(input: EmployeeFormInput): Promise<{ ok: bo
       pinHash: hashPin(input.pin),
       status: input.status,
       custody: Number.isFinite(input.custody) ? input.custody : 0,
+      monthlySalary: Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0,
     },
   });
 
@@ -87,6 +89,7 @@ export async function updateEmployee(
       role: input.role === "admin" ? "ADMIN" : "EMPLOYEE",
       status: input.status,
       custody: Number.isFinite(input.custody) ? input.custody : 0,
+      monthlySalary: Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0,
       ...(input.pin ? { pinHash: hashPin(input.pin) } : {}),
     },
   });
