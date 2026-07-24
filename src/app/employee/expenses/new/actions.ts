@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { VEHICLES, VEHICLE_EXPENSE_TYPES, ADVERTISING_PLATFORMS } from "@/lib/expenseData";
@@ -45,5 +46,8 @@ export async function createExpense(formData: FormData) {
     },
   });
 
+  revalidatePath("/admin/expenses");
+  revalidatePath("/admin");
+  revalidatePath("/employee");
   redirect("/employee/expenses");
 }
