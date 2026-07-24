@@ -8,9 +8,7 @@ export default async function AdminNewInvoicePage() {
   return (
     <div className="pb-10">
       <AdminTopBar title="Invoices" />
-      <div className="max-w-lg">
-        <InvoiceWizard basePath="/admin" createdByName={employee.name} />
-      </div>
+      <InvoiceWizard basePath="/admin" createdByName={employee.name} />
     </div>
   );
 }

@@ -56,17 +56,15 @@ export default async function AdminInvoiceEditPage({
   return (
     <div className="pb-10">
       <AdminTopBar title="Invoices" />
-      <div className="max-w-lg">
-        <InvoiceWizard
-          basePath="/admin"
-          createdByName={admin.name}
-          mode="edit"
-          editInvoiceId={invoice.id}
-          initialCustomer={initialCustomer}
-          initialService={initialService}
-          initialPayment={initialPayment}
-        />
-      </div>
+      <InvoiceWizard
+        basePath="/admin"
+        createdByName={admin.name}
+        mode="edit"
+        editInvoiceId={invoice.id}
+        initialCustomer={initialCustomer}
+        initialService={initialService}
+        initialPayment={initialPayment}
+      />
     </div>
   );
 }
