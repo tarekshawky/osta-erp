@@ -27,7 +27,7 @@ export const VEHICLE_EXPENSE_TYPES = [
 
 export const ADVERTISING_PLATFORMS = ["Meta Ads", "Google Ads", "Meta Verified", "Others"] as const;
 
-export const EXPENSE_PAYMENT_METHODS = ["Cash", "Bank", "Ziina"] as const;
+export const EXPENSE_PAYMENT_METHODS = ["Cash", "Bank", "Credit"] as const;
 
 export const EXPENSE_CATEGORY_STYLES: Record<string, string> = {
   Vehicle: "bg-orange-50 text-orange-600",

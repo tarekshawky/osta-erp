@@ -214,7 +214,7 @@ async function main() {
   }
 
   const expenseCreators = [mostafa, tarek, mohamedElSayed, amr];
-  const expensePayments = ["Cash", "Cash", "Bank", "Ziina"];
+  const expensePayments = ["Cash", "Cash", "Bank", "Credit"];
   const expenseDescriptions: Record<string, string[]> = {
     Vehicle: ["Emarat", "Adnoc", "Enoc", "Salik Toll", "Al Futtaim Tools", "Union Coop Parts"],
     Advertising: ["Meta Ads Campaign", "Google Ads Campaign", "Meta Business Verification"],
