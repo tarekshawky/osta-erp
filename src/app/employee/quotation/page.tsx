@@ -8,7 +8,7 @@ export default async function QuotationPage() {
   return (
     <div className="pb-8">
       <TopBar title="Quotation" />
-      <QuotationWizard createdByName={employee.name} />
+      <QuotationWizard basePath="/employee" createdByName={employee.name} />
     </div>
   );
 }

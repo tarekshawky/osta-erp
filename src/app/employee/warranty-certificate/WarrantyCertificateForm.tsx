@@ -4,7 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Field, inputClassName } from "@/components/FormField";
 import { EMIRATES, WARRANTY_DAYS } from "@/lib/invoiceData";
-import { createWarrantyCertificate } from "./actions";
+import {
+  createWarrantyCertificate,
+  updateWarrantyCertificate,
+  type WarrantyCertificateFormInput,
+} from "@/app/actions/warranty";
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -16,17 +20,27 @@ function addDaysStr(dateStr: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-export function WarrantyCertificateForm() {
+export function WarrantyCertificateForm({
+  detailPathPrefix,
+  mode = "create",
+  certificateId,
+  initial,
+}: {
+  detailPathPrefix: string;
+  mode?: "create" | "edit";
+  certificateId?: string;
+  initial?: WarrantyCertificateFormInput;
+}) {
   const router = useRouter();
-  const [customerName, setCustomerName] = useState("");
-  const [emirate, setEmirate] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [serviceProvided, setServiceProvided] = useState("");
-  const [equipmentLocation, setEquipmentLocation] = useState("");
-  const [warrantyFrom, setWarrantyFrom] = useState(todayStr());
-  const [warrantyTo, setWarrantyTo] = useState(addDaysStr(todayStr(), WARRANTY_DAYS));
-  const [teamSupervisor, setTeamSupervisor] = useState("");
+  const [customerName, setCustomerName] = useState(initial?.customerName ?? "");
+  const [emirate, setEmirate] = useState(initial?.emirate ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? "");
+  const [address, setAddress] = useState(initial?.address ?? "");
+  const [serviceProvided, setServiceProvided] = useState(initial?.serviceProvided ?? "");
+  const [equipmentLocation, setEquipmentLocation] = useState(initial?.equipmentLocation ?? "");
+  const [warrantyFrom, setWarrantyFrom] = useState(initial?.warrantyFrom ?? todayStr());
+  const [warrantyTo, setWarrantyTo] = useState(initial?.warrantyTo ?? addDaysStr(todayStr(), WARRANTY_DAYS));
+  const [teamSupervisor, setTeamSupervisor] = useState(initial?.teamSupervisor ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -38,7 +52,7 @@ export function WarrantyCertificateForm() {
   function handleSubmit() {
     setError(null);
     startTransition(async () => {
-      const res = await createWarrantyCertificate({
+      const payload = {
         customerName,
         emirate,
         phone,
@@ -48,9 +62,14 @@ export function WarrantyCertificateForm() {
         warrantyFrom,
         warrantyTo,
         teamSupervisor,
-      });
-      if (res.ok && res.id) {
-        router.push(`/employee/warranty-certificate/${res.id}`);
+      };
+      const res =
+        mode === "edit" && certificateId
+          ? await updateWarrantyCertificate(certificateId, payload)
+          : await createWarrantyCertificate(payload);
+      if (res.ok) {
+        const id = mode === "edit" ? certificateId! : (res as { id?: string }).id!;
+        router.push(`${detailPathPrefix}/${id}`);
       } else {
         setError(res.error ?? "Something went wrong.");
       }
@@ -138,7 +157,7 @@ export function WarrantyCertificateForm() {
         onClick={handleSubmit}
         className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl py-3 font-medium text-sm"
       >
-        {isPending ? "Creating..." : "Create Certificate"}
+        {isPending ? "Saving..." : mode === "edit" ? "Save Changes" : "Create Certificate"}
       </button>
     </div>
   );

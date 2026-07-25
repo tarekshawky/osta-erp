@@ -29,6 +29,16 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/quotations",
+    label: "Quotations",
+    icon: (
+      <>
+        <path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" strokeLinejoin="round" />
+        <path d="M9 12h6M9 16h6" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/expenses",
     label: "Expenses",
     icon: (
@@ -67,6 +77,16 @@ const NAV = [
       <>
         <path d="M7 3h10a1 1 0 011 1v16l-3-2-2 2-2-2-2 2-3-2V4a1 1 0 011-1z" strokeLinejoin="round" />
         <path d="M9 8h6M9 12h6M9 16h3" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
+    href: "/admin/warranty-certificates",
+    label: "Warranty Certificates",
+    icon: (
+      <>
+        <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" strokeLinejoin="round" />
+        <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
       </>
     ),
   },

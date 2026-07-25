@@ -15,7 +15,7 @@ export default async function WarrantyCertificatePage() {
   return (
     <div className="pb-8">
       <TopBar title="Warranty Certificate" />
-      <WarrantyCertificateForm />
+      <WarrantyCertificateForm detailPathPrefix="/employee/warranty-certificate" />
       <div className="px-5 mt-2">
         <h2 className="text-sm font-semibold text-slate-700 mb-2">Your Certificates</h2>
         <div className="flex flex-col gap-3">

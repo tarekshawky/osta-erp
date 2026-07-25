@@ -6,7 +6,7 @@ import { StepHeader } from "@/components/invoice/StepHeader";
 import { CustomerStep } from "@/components/invoice/CustomerStep";
 import { ServiceStep } from "@/components/invoice/ServiceStep";
 import { QuotationPreviewCard } from "./QuotationPreviewCard";
-import { createQuotationFromWizard } from "@/app/actions/quotation";
+import { createQuotationFromWizard, updateQuotationFromWizard } from "@/app/actions/quotation";
 import { emptyCustomer, emptyService, type CustomerFormData, type ServiceFormData } from "@/components/invoice/types";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
 import { formatAed, formatUaePhone } from "@/lib/format";
@@ -14,14 +14,32 @@ import { DownloadPdfButton } from "@/components/invoice/DownloadPdfButton";
 
 const STEP_META = [{ subtitle: "Customer" }, { subtitle: "Service" }, { subtitle: "Preview" }];
 
-export function QuotationWizard({ createdByName }: { createdByName: string }) {
+export function QuotationWizard({
+  basePath,
+  createdByName,
+  mode = "create",
+  editQuotationId,
+  initialCustomer,
+  initialService,
+}: {
+  basePath: "/admin" | "/employee";
+  createdByName: string;
+  mode?: "create" | "edit";
+  editQuotationId?: string;
+  initialCustomer?: CustomerFormData;
+  initialService?: ServiceFormData;
+}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [customer, setCustomer] = useState<CustomerFormData>(emptyCustomer);
-  const [service, setService] = useState<ServiceFormData>(emptyService);
+  const [customer, setCustomer] = useState<CustomerFormData>(initialCustomer ?? emptyCustomer);
+  const [service, setService] = useState<ServiceFormData>(initialService ?? emptyService);
   const [result, setResult] = useState<{ number: string; amount: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const isEdit = mode === "edit";
+  const listHref = basePath === "/admin" ? "/admin/quotations" : "/employee";
+  const exitHref = isEdit && editQuotationId ? `${basePath}/quotations/${editQuotationId}` : listHref;
 
   function reset() {
     setCustomer(emptyCustomer);
@@ -33,7 +51,7 @@ export function QuotationWizard({ createdByName }: { createdByName: string }) {
 
   function handleBack() {
     if (step === 0) {
-      router.push("/employee");
+      router.push(exitHref);
     } else {
       setStep((s) => s - 1);
     }
@@ -42,7 +60,10 @@ export function QuotationWizard({ createdByName }: { createdByName: string }) {
   function handleSave() {
     setError(null);
     startTransition(async () => {
-      const res = await createQuotationFromWizard(customer, service);
+      const res =
+        isEdit && editQuotationId
+          ? await updateQuotationFromWizard(editQuotationId, customer, service)
+          : await createQuotationFromWizard(customer, service);
       if (res.ok && res.number) {
         setResult({ number: res.number, amount: res.amount ?? 0 });
       } else {
@@ -83,7 +104,7 @@ export function QuotationWizard({ createdByName }: { createdByName: string }) {
           </svg>
         </div>
         <div className="text-center">
-          <h2 className="text-lg font-bold text-slate-900">Quotation Created!</h2>
+          <h2 className="text-lg font-bold text-slate-900">{isEdit ? "Quotation Updated!" : "Quotation Created!"}</h2>
           <p className="text-sm text-slate-400 mt-1">{result.number}</p>
           <p className="text-2xl font-bold text-blue-700 mt-1">{formatAed(result.amount)}</p>
         </div>
@@ -105,15 +126,24 @@ export function QuotationWizard({ createdByName }: { createdByName: string }) {
             label="Download PDF"
             className="flex-1 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 text-center"
           />
-          <button
-            onClick={reset}
-            className="flex-1 rounded-xl bg-blue-700 text-white px-5 py-2.5 text-sm font-medium"
-          >
-            Create Another
-          </button>
+          {isEdit ? (
+            <button
+              onClick={() => router.push(exitHref)}
+              className="flex-1 rounded-xl bg-blue-700 text-white px-5 py-2.5 text-sm font-medium"
+            >
+              View Quotation
+            </button>
+          ) : (
+            <button
+              onClick={reset}
+              className="flex-1 rounded-xl bg-blue-700 text-white px-5 py-2.5 text-sm font-medium"
+            >
+              Create Another
+            </button>
+          )}
         </div>
-        <button onClick={() => router.push("/employee")} className="text-sm text-slate-500">
-          Back to Home
+        <button onClick={() => router.push(listHref)} className="text-sm text-slate-500">
+          {basePath === "/admin" ? "Back to Quotations" : "Back to Home"}
         </button>
       </div>
     );
@@ -122,7 +152,7 @@ export function QuotationWizard({ createdByName }: { createdByName: string }) {
   return (
     <div className="px-5 py-4 pb-10">
       <StepHeader
-        title="Create Quotation"
+        title={isEdit ? "Edit Quotation" : "Create Quotation"}
         subtitle={STEP_META[step].subtitle}
         step={step + 1}
         totalSteps={3}
@@ -147,7 +177,7 @@ export function QuotationWizard({ createdByName }: { createdByName: string }) {
             onClick={handleSave}
             className="w-full rounded-xl bg-blue-700 disabled:opacity-60 text-white font-medium text-sm py-3.5"
           >
-            {isPending ? "Saving..." : "Save Quotation"}
+            {isPending ? "Saving..." : isEdit ? "Save Changes" : "Save Quotation"}
           </button>
         </div>
       )}
