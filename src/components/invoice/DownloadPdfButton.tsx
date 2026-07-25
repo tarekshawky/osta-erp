@@ -2,9 +2,8 @@
 
 import { useRef, useState } from "react";
 
-const PX_TO_MM = 25.4 / 96;
 const CAPTURE_SCALE = 2;
-const PAGE_MARGIN_MM = 4;
+const MARGIN_MM = 8;
 
 export function DownloadPdfButton({
   targetId,
@@ -33,18 +32,46 @@ export function DownloadPdfButton({
       ]);
 
       const canvas = await html2canvas(node, { scale: CAPTURE_SCALE, backgroundColor: "#ffffff" });
-      const imgData = canvas.toDataURL("image/png");
 
-      // Size the PDF page to the content itself (plus a small margin) instead of
-      // forcing it into a fixed A4 sheet -- otherwise viewers that open at "fit
-      // width" only show the top of a mostly-blank page, which reads as "zoomed in".
-      const contentWidth = (canvas.width / CAPTURE_SCALE) * PX_TO_MM;
-      const contentHeight = (canvas.height / CAPTURE_SCALE) * PX_TO_MM;
-      const pageWidth = contentWidth + PAGE_MARGIN_MM * 2;
-      const pageHeight = contentHeight + PAGE_MARGIN_MM * 2;
+      // Always lay the content out at full A4 width -- regardless of how wide the
+      // source card happened to render on screen (a narrow phone view or a wide
+      // admin panel) -- so the exported file always looks like a real A4 sheet.
+      // If the content is taller than one page at that width, paginate across
+      // multiple A4 pages instead of shrinking everything to fit on one.
+      const pdf = new jsPDF({ unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const contentWidth = pageWidth - MARGIN_MM * 2;
+      const maxContentHeight = pageHeight - MARGIN_MM * 2;
+      const contentHeight = (canvas.height / canvas.width) * contentWidth;
 
-      const pdf = new jsPDF({ unit: "mm", format: [pageWidth, pageHeight] });
-      pdf.addImage(imgData, "PNG", PAGE_MARGIN_MM, PAGE_MARGIN_MM, contentWidth, contentHeight);
+      if (contentHeight <= maxContentHeight) {
+        const imgData = canvas.toDataURL("image/png");
+        pdf.addImage(imgData, "PNG", MARGIN_MM, MARGIN_MM, contentWidth, contentHeight);
+      } else {
+        const pageSliceHeightPx = (maxContentHeight / contentWidth) * canvas.width;
+        let renderedPx = 0;
+        let isFirstPage = true;
+
+        while (renderedPx < canvas.height) {
+          const sliceHeightPx = Math.min(pageSliceHeightPx, canvas.height - renderedPx);
+
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = sliceHeightPx;
+          const ctx = sliceCanvas.getContext("2d");
+          if (!ctx) break;
+          ctx.drawImage(canvas, 0, renderedPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+
+          if (!isFirstPage) pdf.addPage();
+          const sliceHeightMm = (sliceHeightPx / canvas.width) * contentWidth;
+          pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", MARGIN_MM, MARGIN_MM, contentWidth, sliceHeightMm);
+
+          renderedPx += sliceHeightPx;
+          isFirstPage = false;
+        }
+      }
+
       pdf.save(`${fileName}.pdf`);
       ranOnce.current = true;
     } finally {
