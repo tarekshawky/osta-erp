@@ -39,6 +39,7 @@ export default async function AdminEmployeesPage({
     custody: emp.custody,
     revenue: revenueMap.get(emp.id) ?? 0,
     monthlySalary: emp.monthlySalary,
+    hasWallet: emp.hasWallet,
   }));
 
   return (

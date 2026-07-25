@@ -21,6 +21,7 @@ export type EmployeeRow = {
   custody: number;
   revenue: number;
   monthlySalary: number;
+  hasWallet: boolean;
 };
 
 function toFormValue(emp: EmployeeRow): EmployeeFormValue {
@@ -35,6 +36,7 @@ function toFormValue(emp: EmployeeRow): EmployeeFormValue {
     status: (emp.status as EmployeeFormValue["status"]) ?? "active",
     custody: emp.custody,
     monthlySalary: emp.monthlySalary,
+    hasWallet: emp.hasWallet,
   };
 }
 
@@ -49,6 +51,7 @@ const emptyFormValue: EmployeeFormValue = {
   status: "active",
   custody: 0,
   monthlySalary: 0,
+  hasWallet: true,
 };
 
 export function EmployeesManager({

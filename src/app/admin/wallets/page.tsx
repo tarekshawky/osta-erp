@@ -4,7 +4,7 @@ import { WalletsManager } from "@/components/wallet/WalletsManager";
 
 export default async function AdminWalletsPage() {
   const [employees, revenueByEmployee, expensesByEmployee] = await Promise.all([
-    prisma.employee.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.employee.findMany({ where: { hasWallet: true }, orderBy: { createdAt: "asc" } }),
     prisma.invoice.groupBy({ by: ["createdById"], _sum: { amount: true }, where: { status: "Paid" } }),
     prisma.expense.groupBy({ by: ["createdById"], _sum: { amount: true } }),
   ]);

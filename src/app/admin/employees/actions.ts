@@ -21,6 +21,7 @@ export type EmployeeFormInput = {
   status: "active" | "inactive" | "suspended";
   custody: number;
   monthlySalary: number;
+  hasWallet: boolean;
 };
 
 function validate(input: EmployeeFormInput, isCreate: boolean) {
@@ -58,10 +59,12 @@ export async function createEmployee(input: EmployeeFormInput): Promise<{ ok: bo
       status: input.status,
       custody: Number.isFinite(input.custody) ? input.custody : 0,
       monthlySalary: Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0,
+      hasWallet: input.hasWallet,
     },
   });
 
   revalidatePath("/admin/employees");
+  revalidatePath("/admin/wallets");
   return { ok: true };
 }
 
@@ -90,11 +93,13 @@ export async function updateEmployee(
       status: input.status,
       custody: Number.isFinite(input.custody) ? input.custody : 0,
       monthlySalary: Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0,
+      hasWallet: input.hasWallet,
       ...(input.pin ? { pinHash: hashPin(input.pin) } : {}),
     },
   });
 
   revalidatePath("/admin/employees");
+  revalidatePath("/admin/wallets");
   return { ok: true };
 }
 
