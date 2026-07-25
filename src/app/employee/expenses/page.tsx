@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { formatAed, formatDate } from "@/lib/format";
 import { TopBar } from "@/components/TopBar";
+import { ToastOnMount } from "@/components/ToastOnMount";
 
 export default async function EmployeeExpensesPage() {
   const session = await getSession();
@@ -13,6 +15,9 @@ export default async function EmployeeExpensesPage() {
 
   return (
     <div className="pb-8">
+      <Suspense fallback={null}>
+        <ToastOnMount message="Expense added." />
+      </Suspense>
       <TopBar title="Expenses" />
       <div className="px-5 py-4 flex items-center justify-between">
         <p className="text-sm text-slate-500">{expenses.length} records</p>

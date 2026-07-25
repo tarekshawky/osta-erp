@@ -12,5 +12,5 @@ async function requireAdmin() {
 export async function deleteWarrantyCertificate(id: string) {
   await requireAdmin();
   await prisma.warrantyCertificate.delete({ where: { id } });
-  redirect("/admin/warranty-certificates");
+  redirect("/admin/warranty-certificates?toast=1");
 }

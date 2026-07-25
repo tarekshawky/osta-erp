@@ -12,5 +12,5 @@ async function requireAdmin() {
 export async function deleteQuotation(id: string) {
   await requireAdmin();
   await prisma.quotation.delete({ where: { id } });
-  redirect("/admin/quotations");
+  redirect("/admin/quotations?toast=1");
 }

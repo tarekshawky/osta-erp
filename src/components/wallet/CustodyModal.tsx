@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { addCustody, withdrawCustody } from "@/app/admin/wallets/actions";
 
 export function CustodyModal({
@@ -16,6 +17,7 @@ export function CustodyModal({
   trigger: React.ReactNode;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -37,6 +39,7 @@ export function CustodyModal({
       if (res.ok) {
         close();
         router.refresh();
+        showToast(mode === "add" ? "Custody added." : "Custody withdrawn.");
       } else {
         setError(res.error ?? "Something went wrong.");
       }

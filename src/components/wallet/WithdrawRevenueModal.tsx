@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { formatAed } from "@/lib/format";
 import { withdrawRevenue } from "@/app/admin/wallets/actions";
 
@@ -17,6 +18,7 @@ export function WithdrawRevenueModal({
   trigger: React.ReactNode;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export function WithdrawRevenueModal({
       if (res.ok) {
         close();
         router.refresh();
+        showToast("Revenue withdrawn.");
       } else {
         setError(res.error ?? "Something went wrong.");
       }

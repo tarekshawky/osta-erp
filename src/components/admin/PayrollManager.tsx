@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { formatAed, formatDate } from "@/lib/format";
 import { PayrollTypeBadge } from "./PayrollTypeBadge";
 import { PayrollForm, type PayrollFormValue } from "./PayrollForm";
@@ -61,6 +62,7 @@ export function PayrollManager({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showToast } = useToast();
   const [mode, setMode] = useState<"closed" | "add" | "edit">("closed");
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -135,6 +137,7 @@ export function PayrollManager({
             if (res.ok) {
               close();
               router.refresh();
+              showToast("Payroll entry added.");
             }
             return res;
           }}
@@ -150,6 +153,7 @@ export function PayrollManager({
             if (res.ok) {
               close();
               router.refresh();
+              showToast("Payroll entry updated.");
             }
             return res;
           }}

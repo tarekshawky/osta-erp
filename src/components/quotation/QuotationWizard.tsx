@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { StepHeader } from "@/components/invoice/StepHeader";
 import { CustomerStep } from "@/components/invoice/CustomerStep";
 import { ServiceStep } from "@/components/invoice/ServiceStep";
@@ -30,6 +31,7 @@ export function QuotationWizard({
   initialService?: ServiceFormData;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [step, setStep] = useState(0);
   const [customer, setCustomer] = useState<CustomerFormData>(initialCustomer ?? emptyCustomer);
   const [service, setService] = useState<ServiceFormData>(initialService ?? emptyService);
@@ -66,6 +68,7 @@ export function QuotationWizard({
           : await createQuotationFromWizard(customer, service);
       if (res.ok && res.number) {
         setResult({ number: res.number, amount: res.amount ?? 0 });
+        showToast(isEdit ? "Quotation updated." : "Quotation created.");
       } else {
         setError(res.error ?? "Something went wrong.");
       }

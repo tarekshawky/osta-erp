@@ -13,7 +13,7 @@ async function requireAdmin() {
 export async function deleteInvoice(id: string) {
   await requireAdmin();
   await prisma.invoice.delete({ where: { id } });
-  redirect("/admin/invoices");
+  redirect("/admin/invoices?toast=1");
 }
 
 export async function processRefund(

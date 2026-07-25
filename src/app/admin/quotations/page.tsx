@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatAed, formatDate } from "@/lib/format";
@@ -6,6 +7,7 @@ import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { Pagination } from "@/components/admin/Pagination";
 import { DeleteQuotationButton } from "@/components/quotation/DeleteQuotationButton";
+import { ToastOnMount } from "@/components/ToastOnMount";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { buildDateRange } from "@/lib/dateRangeFilter";
 import type { Prisma } from "@/generated/prisma";
@@ -54,6 +56,9 @@ export default async function AdminQuotationsPage({
 
   return (
     <div className="pb-10">
+      <Suspense fallback={null}>
+        <ToastOnMount message="Quotation deleted." />
+      </Suspense>
       <AdminTopBar
         title="Quotations"
         dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin/quotations" }}

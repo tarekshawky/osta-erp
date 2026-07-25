@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { EMIRATES, WARRANTY_DAYS } from "@/lib/invoiceData";
 import {
@@ -32,6 +33,7 @@ export function WarrantyCertificateForm({
   initial?: WarrantyCertificateFormInput;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [customerName, setCustomerName] = useState(initial?.customerName ?? "");
   const [emirate, setEmirate] = useState(initial?.emirate ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");
@@ -69,6 +71,7 @@ export function WarrantyCertificateForm({
           : await createWarrantyCertificate(payload);
       if (res.ok) {
         const id = mode === "edit" ? certificateId! : (res as { id?: string }).id!;
+        showToast(mode === "edit" ? "Warranty certificate updated." : "Warranty certificate created.");
         router.push(`${detailPathPrefix}/${id}`);
       } else {
         setError(res.error ?? "Something went wrong.");

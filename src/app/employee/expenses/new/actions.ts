@@ -49,5 +49,5 @@ export async function createExpense(formData: FormData) {
   revalidatePath("/admin/expenses");
   revalidatePath("/admin");
   revalidatePath("/employee");
-  redirect("/employee/expenses");
+  redirect("/employee/expenses?toast=1");
 }

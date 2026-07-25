@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { formatAed } from "@/lib/format";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { Pagination } from "@/components/admin/Pagination";
@@ -66,6 +67,7 @@ export function EmployeesManager({
   totalPages: number;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [mode, setMode] = useState<"closed" | "add" | "edit">("closed");
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -130,6 +132,7 @@ export function EmployeesManager({
             if (res.ok) {
               close();
               router.refresh();
+              showToast("Employee added.");
             }
             return res;
           }}
@@ -145,6 +148,7 @@ export function EmployeesManager({
             if (res.ok) {
               close();
               router.refresh();
+              showToast("Employee updated.");
             }
             return res;
           }}

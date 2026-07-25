@@ -2,10 +2,12 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { deletePayrollEntry } from "@/app/admin/payroll/actions";
 
 export function DeletePayrollButton({ entryId, className }: { entryId: string; className?: string }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
@@ -13,6 +15,7 @@ export function DeletePayrollButton({ entryId, className }: { entryId: string; c
     startTransition(async () => {
       await deletePayrollEntry(entryId);
       router.refresh();
+      showToast("Payroll entry deleted.");
     });
   }
 

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/format";
@@ -6,6 +7,7 @@ import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { Pagination } from "@/components/admin/Pagination";
 import { DeleteWarrantyCertificateButton } from "@/components/warranty/DeleteWarrantyCertificateButton";
+import { ToastOnMount } from "@/components/ToastOnMount";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { buildDateRange } from "@/lib/dateRangeFilter";
 import type { Prisma } from "@/generated/prisma";
@@ -50,6 +52,9 @@ export default async function AdminWarrantyCertificatesPage({
 
   return (
     <div className="pb-10">
+      <Suspense fallback={null}>
+        <ToastOnMount message="Warranty certificate deleted." />
+      </Suspense>
       <AdminTopBar
         title="Warranty Certificates"
         dateFilter={{

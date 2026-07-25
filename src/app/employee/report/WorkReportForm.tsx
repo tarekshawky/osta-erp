@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { EMIRATES } from "@/lib/invoiceData";
 import {
@@ -35,6 +36,7 @@ function updateItem(items: WorkReportItemInput[], index: number, patch: Partial<
 
 export function WorkReportForm() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [date, setDate] = useState(todayStr());
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -93,6 +95,7 @@ export function WorkReportForm() {
         setFlatNo("");
         setItems([emptyItem()]);
         router.refresh();
+        showToast("Work report submitted.");
       } else {
         setError(res.error ?? "Something went wrong.");
       }

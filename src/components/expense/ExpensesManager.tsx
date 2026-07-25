@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { formatAed, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TeamBadge } from "@/components/admin/TeamBadge";
@@ -72,6 +73,7 @@ export function ExpensesManager({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showToast } = useToast();
   const [mode, setMode] = useState<"closed" | "add" | "edit">("closed");
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -171,6 +173,7 @@ export function ExpensesManager({
             if (res.ok) {
               close();
               router.refresh();
+              showToast("Expense added.");
             }
             return res;
           }}
@@ -185,6 +188,7 @@ export function ExpensesManager({
             if (res.ok) {
               close();
               router.refresh();
+              showToast("Expense updated.");
             }
             return res;
           }}

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { StepHeader } from "./StepHeader";
 import { CustomerStep } from "./CustomerStep";
 import { ServiceStep } from "./ServiceStep";
@@ -37,6 +38,7 @@ export function InvoiceWizard({
   initialPayment?: PaymentFormData;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [step, setStep] = useState(0);
   const [customer, setCustomer] = useState<CustomerFormData>(initialCustomer ?? emptyCustomer);
   const [service, setService] = useState<ServiceFormData>(initialService ?? emptyService);
@@ -73,6 +75,7 @@ export function InvoiceWizard({
           : await createInvoiceFromWizard(customer, service, payment);
       if (res.ok && res.number) {
         setResult({ number: res.number, amount: res.amount ?? 0 });
+        showToast(mode === "edit" ? "Invoice updated." : "Invoice created.");
       } else {
         setError(res.error ?? "Something went wrong.");
       }

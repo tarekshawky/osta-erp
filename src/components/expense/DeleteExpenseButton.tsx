@@ -2,10 +2,12 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { deleteExpense } from "@/app/admin/expenses/actions";
 
 export function DeleteExpenseButton({ expenseId, className }: { expenseId: string; className?: string }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
@@ -13,6 +15,7 @@ export function DeleteExpenseButton({ expenseId, className }: { expenseId: strin
     startTransition(async () => {
       await deleteExpense(expenseId);
       router.refresh();
+      showToast("Expense deleted.");
     });
   }
 

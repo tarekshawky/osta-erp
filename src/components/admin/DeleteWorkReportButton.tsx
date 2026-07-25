@@ -2,10 +2,12 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { deleteWorkReport } from "@/app/admin/work-reports/actions";
 
 export function DeleteWorkReportButton({ reportId, className }: { reportId: string; className?: string }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
@@ -13,6 +15,7 @@ export function DeleteWorkReportButton({ reportId, className }: { reportId: stri
     startTransition(async () => {
       await deleteWorkReport(reportId);
       router.refresh();
+      showToast("Work report deleted.");
     });
   }
 

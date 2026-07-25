@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { formatAed } from "@/lib/format";
 import { processRefund } from "@/app/admin/invoices/[id]/actions";
 
@@ -19,6 +20,7 @@ export function RefundModal({
   className?: string;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"choose" | "partial">("choose");
   const [partialAmount, setPartialAmount] = useState("");
@@ -41,6 +43,7 @@ export function RefundModal({
       if (res.ok) {
         close();
         router.refresh();
+        showToast("Refund processed.");
       } else {
         setError(res.error ?? "Something went wrong.");
       }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatAed, formatDate } from "@/lib/format";
@@ -7,6 +8,7 @@ import { TeamBadge } from "@/components/admin/TeamBadge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Pagination } from "@/components/admin/Pagination";
 import { ImportModal } from "@/components/admin/ImportModal";
+import { ToastOnMount } from "@/components/ToastOnMount";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { buildDateRange } from "@/lib/dateRangeFilter";
 import { importInvoicesFromExcel } from "./import/actions";
@@ -63,6 +65,9 @@ export default async function AdminInvoicesPage({
 
   return (
     <div className="pb-10">
+      <Suspense fallback={null}>
+        <ToastOnMount message="Invoice deleted." />
+      </Suspense>
       <AdminTopBar
         title="Invoices"
         dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin/invoices" }}
