@@ -2,18 +2,20 @@
 
 import { useRef, useState } from "react";
 
+const PX_TO_MM = 25.4 / 96;
+const CAPTURE_SCALE = 2;
+const PAGE_MARGIN_MM = 4;
+
 export function DownloadPdfButton({
   targetId,
   fileName,
   className,
   label = "PDF",
-  orientation = "portrait",
 }: {
   targetId: string;
   fileName: string;
   className?: string;
   label?: string;
-  orientation?: "portrait" | "landscape";
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const ranOnce = useRef(false);
@@ -30,29 +32,19 @@ export function DownloadPdfButton({
         import("jspdf"),
       ]);
 
-      const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
+      const canvas = await html2canvas(node, { scale: CAPTURE_SCALE, backgroundColor: "#ffffff" });
       const imgData = canvas.toDataURL("image/png");
 
-      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
+      // Size the PDF page to the content itself (plus a small margin) instead of
+      // forcing it into a fixed A4 sheet -- otherwise viewers that open at "fit
+      // width" only show the top of a mostly-blank page, which reads as "zoomed in".
+      const contentWidth = (canvas.width / CAPTURE_SCALE) * PX_TO_MM;
+      const contentHeight = (canvas.height / CAPTURE_SCALE) * PX_TO_MM;
+      const pageWidth = contentWidth + PAGE_MARGIN_MM * 2;
+      const pageHeight = contentHeight + PAGE_MARGIN_MM * 2;
 
-      const margin = 10;
-      const maxWidth = pageWidth - margin * 2;
-      const maxHeight = pageHeight - margin * 2;
-      const canvasAspect = canvas.width / canvas.height;
-
-      let renderWidth = maxWidth;
-      let renderHeight = renderWidth / canvasAspect;
-      if (renderHeight > maxHeight) {
-        renderHeight = maxHeight;
-        renderWidth = renderHeight * canvasAspect;
-      }
-
-      const x = (pageWidth - renderWidth) / 2;
-      const y = (pageHeight - renderHeight) / 2;
-
-      pdf.addImage(imgData, "PNG", x, y, renderWidth, renderHeight);
+      const pdf = new jsPDF({ unit: "mm", format: [pageWidth, pageHeight] });
+      pdf.addImage(imgData, "PNG", PAGE_MARGIN_MM, PAGE_MARGIN_MM, contentWidth, contentHeight);
       pdf.save(`${fileName}.pdf`);
       ranOnce.current = true;
     } finally {
