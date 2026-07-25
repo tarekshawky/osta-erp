@@ -61,6 +61,16 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/work-reports",
+    label: "Work Reports",
+    icon: (
+      <>
+        <path d="M7 3h10a1 1 0 011 1v16l-3-2-2 2-2-2-2 2-3-2V4a1 1 0 011-1z" strokeLinejoin="round" />
+        <path d="M9 8h6M9 12h6M9 16h3" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/reports",
     label: "Reports",
     icon: (

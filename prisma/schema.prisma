@@ -19,11 +19,12 @@ enum CustomerType {
 }
 
 model Team {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  employees Employee[]
-  invoices  Invoice[]
-  expenses  Expense[]
+  id          String       @id @default(cuid())
+  name        String       @unique
+  employees   Employee[]
+  invoices    Invoice[]
+  expenses    Expense[]
+  workReports WorkReport[]
 }
 
 model Employee {
@@ -45,6 +46,7 @@ model Employee {
   expenses  Expense[]
   payrollEntries        PayrollEntry[] @relation("PayrollFor")
   payrollEntriesCreated PayrollEntry[] @relation("PayrollCreatedBy")
+  workReports           WorkReport[]
   createdAt DateTime   @default(now())
 }
 
@@ -109,6 +111,42 @@ model Expense {
   createdById    String
   createdBy      Employee @relation(fields: [createdById], references: [id])
   createdAt      DateTime @default(now())
+}
+
+model WorkReport {
+  id            String            @id @default(cuid())
+  date          DateTime
+  customerName  String?
+  customerPhone String?
+  emirate       String?
+  buildingName  String?
+  flatNo        String?
+  teamId        String?
+  team          Team?             @relation(fields: [teamId], references: [id])
+  createdById   String
+  createdBy     Employee          @relation(fields: [createdById], references: [id])
+  createdAt     DateTime          @default(now())
+  items         WorkReportItem[]
+}
+
+model WorkReportItem {
+  id          String            @id @default(cuid())
+  reportId    String
+  report      WorkReport        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  deviceType  String
+  tonnage     String?
+  gasType     String?
+  brand       String?
+  condition   String
+  description String?
+  photos      WorkReportPhoto[]
+}
+
+model WorkReportPhoto {
+  id      String         @id @default(cuid())
+  itemId  String
+  item    WorkReportItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  dataUrl String
 }
 
 model PayrollEntry {
