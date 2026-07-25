@@ -7,11 +7,13 @@ export function DownloadPdfButton({
   fileName,
   className,
   label = "PDF",
+  orientation = "portrait",
 }: {
   targetId: string;
   fileName: string;
   className?: string;
   label?: string;
+  orientation?: "portrait" | "landscape";
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const ranOnce = useRef(false);
@@ -31,7 +33,7 @@ export function DownloadPdfButton({
       const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
       const imgData = canvas.toDataURL("image/png");
 
-      const pdf = new jsPDF({ unit: "mm", format: "a4" });
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation });
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
 
