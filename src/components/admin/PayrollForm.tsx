@@ -37,7 +37,7 @@ export function PayrollForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Employee</span>
           <select
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.employeeId}
             onChange={(e) => setValue({ ...value, employeeId: e.target.value })}
           >
@@ -52,7 +52,7 @@ export function PayrollForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Type</span>
           <select
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.type}
             onChange={(e) => setValue({ ...value, type: e.target.value })}
           >
@@ -70,7 +70,7 @@ export function PayrollForm({
             step="0.01"
             min="0"
             placeholder="0.00"
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
             value={value.amount || ""}
             onChange={(e) => setValue({ ...value, amount: Number(e.target.value) })}
           />
@@ -79,7 +79,7 @@ export function PayrollForm({
           <span className="text-xs font-medium text-slate-600">Date</span>
           <input
             type="date"
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.date}
             onChange={(e) => setValue({ ...value, date: e.target.value })}
           />
@@ -89,7 +89,7 @@ export function PayrollForm({
           <input
             type="text"
             placeholder="Note..."
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
             value={value.note}
             onChange={(e) => setValue({ ...value, note: e.target.value })}
           />

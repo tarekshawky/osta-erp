@@ -138,7 +138,7 @@ export default async function AdminInvoicesPage({
           <select
             name="team"
             defaultValue={team}
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
           >
             <option value="all">All Teams</option>
             {teams.map((t) => (
@@ -150,7 +150,7 @@ export default async function AdminInvoicesPage({
           <select
             name="status"
             defaultValue={status}
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
           >
             <option value="all">All Statuses</option>
             <option value="Paid">Paid</option>

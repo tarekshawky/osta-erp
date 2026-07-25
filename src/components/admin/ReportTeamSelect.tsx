@@ -21,7 +21,7 @@ export function ReportTeamSelect({ teams, selectedTeam }: { teams: string[]; sel
     <select
       value={selectedTeam}
       onChange={(e) => updateTeam(e.target.value)}
-      className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+      className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
     >
       <option value="all">All Teams</option>
       {teams.map((t) => (

@@ -40,7 +40,7 @@ export function EmployeeForm({
           <input
             type="text"
             placeholder="E.g. EMP-001"
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
             value={value.code}
             onChange={(e) => setValue({ ...value, code: e.target.value })}
           />
@@ -50,7 +50,7 @@ export function EmployeeForm({
           <input
             type="text"
             placeholder="Full name"
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
             value={value.name}
             onChange={(e) => setValue({ ...value, name: e.target.value })}
           />
@@ -60,7 +60,7 @@ export function EmployeeForm({
           <input
             type="text"
             placeholder="Technician..."
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
             value={value.jobTitle}
             onChange={(e) => setValue({ ...value, jobTitle: e.target.value })}
           />
@@ -70,7 +70,7 @@ export function EmployeeForm({
           <input
             type="text"
             placeholder="+971..."
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
             value={value.phone}
             onChange={(e) => setValue({ ...value, phone: e.target.value })}
           />
@@ -78,7 +78,7 @@ export function EmployeeForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Team</span>
           <select
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.teamName}
             onChange={(e) => setValue({ ...value, teamName: e.target.value })}
           >
@@ -92,7 +92,7 @@ export function EmployeeForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Role</span>
           <select
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.role}
             onChange={(e) => setValue({ ...value, role: e.target.value as "employee" | "admin" })}
           >
@@ -109,7 +109,7 @@ export function EmployeeForm({
             inputMode="numeric"
             maxLength={4}
             placeholder="****"
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
             value={value.pin}
             onChange={(e) => setValue({ ...value, pin: e.target.value.replace(/\D/g, "").slice(0, 4) })}
           />
@@ -117,7 +117,7 @@ export function EmployeeForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Status</span>
           <select
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.status}
             onChange={(e) => setValue({ ...value, status: e.target.value as EmployeeFormValue["status"] })}
           >
@@ -132,7 +132,7 @@ export function EmployeeForm({
             type="number"
             min="0"
             step="0.01"
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.custody || 0}
             onChange={(e) => setValue({ ...value, custody: Number(e.target.value) })}
           />
@@ -143,7 +143,7 @@ export function EmployeeForm({
             type="number"
             min="0"
             step="0.01"
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.monthlySalary || 0}
             onChange={(e) => setValue({ ...value, monthlySalary: Number(e.target.value) })}
           />
@@ -151,7 +151,7 @@ export function EmployeeForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Wallet</span>
           <select
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.hasWallet ? "open" : "none"}
             onChange={(e) => setValue({ ...value, hasWallet: e.target.value === "open" })}
           >

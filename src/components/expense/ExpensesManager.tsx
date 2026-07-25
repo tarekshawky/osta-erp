@@ -117,7 +117,7 @@ export function ExpensesManager({
           <select
             value={selectedTeam}
             onChange={(e) => updateTeam(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
           >
             <option value="all">All Teams</option>
             {teams.map((t) => (

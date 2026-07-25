@@ -41,7 +41,7 @@ export function ExpenseForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Category</span>
           <select
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.category}
             onChange={(e) => setValue({ ...value, category: e.target.value, vehicle: "", subcategory: "" })}
           >
@@ -57,7 +57,7 @@ export function ExpenseForm({
             <label className="flex flex-col gap-1.5">
               <span className="text-xs font-medium text-slate-600">Vehicle</span>
               <select
-                className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
                 value={value.vehicle}
                 onChange={(e) => setValue({ ...value, vehicle: e.target.value })}
               >
@@ -72,7 +72,7 @@ export function ExpenseForm({
             <label className="flex flex-col gap-1.5">
               <span className="text-xs font-medium text-slate-600">Expense Type</span>
               <select
-                className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
                 value={value.subcategory}
                 onChange={(e) => setValue({ ...value, subcategory: e.target.value })}
               >
@@ -90,7 +90,7 @@ export function ExpenseForm({
           <label className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-slate-600">Platform</span>
             <select
-              className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
               value={value.subcategory}
               onChange={(e) => setValue({ ...value, subcategory: e.target.value })}
             >
@@ -106,7 +106,7 @@ export function ExpenseForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Payment Method</span>
           <select
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.payment}
             onChange={(e) => setValue({ ...value, payment: e.target.value })}
           >
@@ -124,7 +124,7 @@ export function ExpenseForm({
             step="0.01"
             min="0"
             placeholder="0.00"
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
             value={value.amount || ""}
             onChange={(e) => setValue({ ...value, amount: Number(e.target.value) })}
           />
@@ -133,7 +133,7 @@ export function ExpenseForm({
           <span className="text-xs font-medium text-slate-600">Date</span>
           <input
             type="date"
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.date}
             onChange={(e) => setValue({ ...value, date: e.target.value })}
           />
@@ -143,7 +143,7 @@ export function ExpenseForm({
           <input
             type="text"
             placeholder="Description..."
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
             value={value.description}
             onChange={(e) => setValue({ ...value, description: e.target.value })}
           />

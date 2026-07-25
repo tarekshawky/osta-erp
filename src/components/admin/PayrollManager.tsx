@@ -106,7 +106,7 @@ export function PayrollManager({
           <select
             value={selectedEmployee}
             onChange={(e) => updateEmployeeFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
           >
             <option value="all">All Employees</option>
             {employees.map((e) => (
