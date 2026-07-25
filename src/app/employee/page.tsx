@@ -144,7 +144,7 @@ export default async function EmployeeHomePage() {
           />
           <QuickActionTile
             href="/employee/quotation"
-            label="Quotation"
+            label="Create Quotation"
             iconBg="bg-sky-50"
             iconColor="text-sky-600"
             icon={
@@ -156,7 +156,7 @@ export default async function EmployeeHomePage() {
           />
           <QuickActionTile
             href="/employee/report"
-            label="Report"
+            label="Create Report"
             iconBg="bg-orange-50"
             iconColor="text-orange-500"
             icon={
@@ -190,14 +190,14 @@ export default async function EmployeeHomePage() {
             }
           />
           <QuickActionTile
-            href="/employee/statement"
-            label="Statement"
+            href="/employee/warranty-certificate"
+            label="Warranty Certificate"
             iconBg="bg-purple-50"
             iconColor="text-purple-600"
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="5" width="18" height="14" rx="2" />
-                <path d="M3 9h18" strokeLinecap="round" />
+                <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" strokeLinejoin="round" />
+                <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             }
           />

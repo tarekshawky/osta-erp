@@ -1,5 +1,14 @@
-import { ComingSoon } from "@/components/ComingSoon";
+import { requireEmployee } from "@/lib/auth";
+import { TopBar } from "@/components/TopBar";
+import { QuotationWizard } from "@/components/quotation/QuotationWizard";
 
-export default function QuotationPage() {
-  return <ComingSoon title="Quotation" backHref="/employee" />;
+export default async function QuotationPage() {
+  const employee = await requireEmployee("EMPLOYEE");
+
+  return (
+    <div className="pb-8">
+      <TopBar title="Quotation" />
+      <QuotationWizard createdByName={employee.name} />
+    </div>
+  );
 }

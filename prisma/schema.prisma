@@ -19,12 +19,14 @@ enum CustomerType {
 }
 
 model Team {
-  id          String       @id @default(cuid())
-  name        String       @unique
-  employees   Employee[]
-  invoices    Invoice[]
-  expenses    Expense[]
-  workReports WorkReport[]
+  id                   String                @id @default(cuid())
+  name                 String                @unique
+  employees            Employee[]
+  invoices             Invoice[]
+  expenses             Expense[]
+  workReports          WorkReport[]
+  quotations           Quotation[]
+  warrantyCertificates WarrantyCertificate[]
 }
 
 model Employee {
@@ -47,6 +49,8 @@ model Employee {
   payrollEntries        PayrollEntry[] @relation("PayrollFor")
   payrollEntriesCreated PayrollEntry[] @relation("PayrollCreatedBy")
   workReports           WorkReport[]
+  quotations            Quotation[]
+  warrantyCertificates  WarrantyCertificate[]
   createdAt DateTime   @default(now())
 }
 
@@ -147,6 +151,55 @@ model WorkReportPhoto {
   itemId  String
   item    WorkReportItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
   dataUrl String
+}
+
+model Quotation {
+  id           String          @id @default(cuid())
+  number       String          @unique
+  date         DateTime
+  customerType CustomerType    @default(INDIVIDUAL)
+  customerName String
+  companyName  String?
+  trn          String?
+  phone        String?
+  emirate      String?
+  buildingName String?
+  flatNo       String?
+  teamId       String?
+  team         Team?           @relation(fields: [teamId], references: [id])
+  createdById  String
+  createdBy    Employee        @relation(fields: [createdById], references: [id])
+  items        QuotationItem[]
+  createdAt    DateTime        @default(now())
+}
+
+model QuotationItem {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  serviceName String
+  description String?
+  qty         Int       @default(1)
+  unitPrice   Float
+}
+
+model WarrantyCertificate {
+  id                String   @id @default(cuid())
+  date              DateTime
+  customerName      String
+  emirate           String?
+  phone             String?
+  address           String?
+  serviceProvided   String
+  equipmentLocation String?
+  warrantyFrom      DateTime
+  warrantyTo        DateTime
+  teamSupervisor    String?
+  teamId            String?
+  team              Team?    @relation(fields: [teamId], references: [id])
+  createdById       String
+  createdBy         Employee @relation(fields: [createdById], references: [id])
+  createdAt         DateTime @default(now())
 }
 
 model PayrollEntry {
