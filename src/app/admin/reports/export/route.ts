@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   const selectedMonths = month ? [months[month - 1]] : months;
-  const { totalRevenue, totalExpenses, totalSalaries, netProfitBeforeTax, corporateTax, netProfitAfterTax } =
+  const { totalRevenue, totalExpenses, totalSalaries, netProfitBeforeTax, taxableProfit, corporateTax, netProfitAfterTax } =
     summarize(selectedMonths);
 
   const periodLabel = month ? `${MONTH_NAMES[month - 1]} ${year}` : String(year);
@@ -37,7 +37,8 @@ export async function GET(request: NextRequest) {
   rows.push(["Total Expenses", formatAed(totalExpenses), null, null, null]);
   rows.push(["Total Salaries", formatAed(totalSalaries), null, null, null]);
   rows.push(["Net Profit (Before Tax)", formatAed(netProfitBeforeTax), null, null, null]);
-  rows.push(["Corporate Tax (9%)", formatAed(corporateTax), null, null, null]);
+  rows.push(["Taxable Profit", formatAed(taxableProfit), null, null, null]);
+  rows.push(["Corporate Tax", formatAed(corporateTax), null, null, null]);
   rows.push(["Net Profit (After Tax)", formatAed(netProfitAfterTax), null, null, null]);
 
   const buffer = await buildWorkbookBuffer("Annual Report", headers, rows);

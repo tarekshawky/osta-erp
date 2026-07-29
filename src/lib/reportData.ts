@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 
 export const CORPORATE_TAX_RATE = 0.09;
+export const CORPORATE_TAX_EXEMPT_THRESHOLD = 375000;
 
 export const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -56,7 +57,11 @@ export function summarize(months: MonthFigures[]) {
   const totalExpenses = months.reduce((s, m) => s + m.expenses, 0);
   const totalSalaries = months.reduce((s, m) => s + m.salaries, 0);
   const netProfitBeforeTax = totalRevenue - totalExpenses - totalSalaries;
-  const corporateTax = Math.max(0, netProfitBeforeTax) * CORPORATE_TAX_RATE;
+  const taxableProfit = Math.max(0, netProfitBeforeTax);
+  const corporateTax =
+    taxableProfit <= CORPORATE_TAX_EXEMPT_THRESHOLD
+      ? 0
+      : (taxableProfit - CORPORATE_TAX_EXEMPT_THRESHOLD) * CORPORATE_TAX_RATE;
   const netProfitAfterTax = netProfitBeforeTax - corporateTax;
-  return { totalRevenue, totalExpenses, totalSalaries, netProfitBeforeTax, corporateTax, netProfitAfterTax };
+  return { totalRevenue, totalExpenses, totalSalaries, netProfitBeforeTax, taxableProfit, corporateTax, netProfitAfterTax };
 }

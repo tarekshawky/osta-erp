@@ -34,7 +34,7 @@ export default async function AdminReportsPage({
 
   const { months, monthsElapsed } = await computeAnnualReport(year, team);
   const selectedMonths = month ? [months[month - 1]] : months;
-  const { totalRevenue, totalExpenses, totalSalaries, netProfitBeforeTax, corporateTax, netProfitAfterTax } =
+  const { totalRevenue, totalExpenses, totalSalaries, netProfitBeforeTax, taxableProfit, corporateTax, netProfitAfterTax } =
     summarize(selectedMonths);
 
   const periodLabel = month ? `${MONTH_NAMES[month - 1]} ${year}` : String(year);
@@ -73,7 +73,7 @@ export default async function AdminReportsPage({
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
           <AdminStatCard label="Total Revenue" value={formatAed(totalRevenue)} valueClassName="text-blue-700" />
           <AdminStatCard label="Total Expenses" value={formatAed(totalExpenses)} valueClassName="text-red-500" />
           <AdminStatCard label="Total Salaries" value={formatAed(totalSalaries)} valueClassName="text-orange-500" />
@@ -82,7 +82,8 @@ export default async function AdminReportsPage({
             value={formatAed(netProfitBeforeTax)}
             valueClassName={netProfitBeforeTax >= 0 ? "text-green-600" : "text-red-500"}
           />
-          <AdminStatCard label="Corporate Tax (9%)" value={formatAed(corporateTax)} valueClassName="text-purple-600" />
+          <AdminStatCard label="Taxable Profit" value={formatAed(taxableProfit)} valueClassName="text-slate-700" />
+          <AdminStatCard label="Corporate Tax" value={formatAed(corporateTax)} valueClassName="text-purple-600" />
           <AdminStatCard
             label="Net Profit (After Tax)"
             value={formatAed(netProfitAfterTax)}
@@ -143,8 +144,8 @@ export default async function AdminReportsPage({
         </div>
 
         <p className="mt-3 text-xs text-slate-400">
-          Corporate tax is calculated at 9% of net profit before tax (no tax applied on a loss). Salaries are
-          accrued monthly for each employee starting the month they joined.
+          Corporate tax is 0% on taxable profit up to AED 375,000, and 9% on the portion above that (no tax
+          applied on a loss). Salaries are accrued monthly for each employee starting the month they joined.
         </p>
       </div>
     </div>
