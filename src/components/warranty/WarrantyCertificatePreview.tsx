@@ -1,4 +1,4 @@
-import { OstaLogo } from "@/components/OstaLogo";
+import { LogoImage } from "@/components/LogoImage";
 import { formatDate } from "@/lib/format";
 import { WARRANTY_DAYS, TERMS_URL } from "@/lib/invoiceData";
 
@@ -15,21 +15,6 @@ export type WarrantyCertificateData = {
   teamName: string | null;
   teamSupervisor: string | null;
 };
-
-function MedalIcon() {
-  return (
-    <svg width="76" height="94" viewBox="0 0 72 88" fill="none">
-      <path d="M20 52l-9 32 13-6.5 8.5 11 7-31z" fill="#0f2a63" />
-      <path d="M52 52l9 32-13-6.5-8.5 11-7-31z" fill="#0f2a63" />
-      <circle cx="36" cy="33" r="29" fill="#123a8c" stroke="#fbbf24" strokeWidth="3" />
-      <circle cx="36" cy="33" r="22" fill="none" stroke="#fde68a" strokeWidth="1.5" />
-      <path
-        d="M36 19l3.6 7.6 8.4.9-6.1 5.9 1.6 8.3L36 37.8l-7.5 3.9 1.6-8.3-6.1-5.9 8.4-.9z"
-        fill="#fbbf24"
-      />
-    </svg>
-  );
-}
 
 function Row({ ar, en }: { ar: string; en: string }) {
   return (
@@ -74,10 +59,7 @@ export function WarrantyCertificatePreview({
       </div>
 
       <div className="flex flex-col items-center pt-6 pb-2">
-        <MedalIcon />
-        <div className="mt-3">
-          <OstaLogo compact align="center" />
-        </div>
+        <LogoImage type="certificate" className="h-32 w-auto" />
         <p className="mt-3 text-sm text-slate-500 text-center max-w-md px-6">
           This certificate confirms the service below is covered by Osta Services&apos; official warranty.
         </p>

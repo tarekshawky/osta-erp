@@ -4,16 +4,26 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { compressImageFile } from "@/lib/imageCompress";
-import { DEFAULT_LOGO_SRC } from "@/lib/logo";
-import { updateLogo, resetLogo } from "@/app/actions/settings";
+import { DEFAULT_LOGO_SRC, DEFAULT_CERTIFICATE_LOGO_SRC } from "@/lib/logo";
+import { updateLogo, resetLogo, updateCertificateLogo, resetCertificateLogo } from "@/app/actions/settings";
 
-export function LogoSettingsForm({ currentSrc }: { currentSrc: string }) {
+export function LogoSettingsForm({
+  currentSrc,
+  kind = "main",
+}: {
+  currentSrc: string;
+  kind?: "main" | "certificate";
+}) {
   const router = useRouter();
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState(currentSrc);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const defaultSrc = kind === "certificate" ? DEFAULT_CERTIFICATE_LOGO_SRC : DEFAULT_LOGO_SRC;
+  const update = kind === "certificate" ? updateCertificateLogo : updateLogo;
+  const reset = kind === "certificate" ? resetCertificateLogo : resetLogo;
 
   async function handleFileSelected(file: File | undefined) {
     if (!file) return;
@@ -22,7 +32,7 @@ export function LogoSettingsForm({ currentSrc }: { currentSrc: string }) {
       const dataUrl = await compressImageFile(file);
       setPreview(dataUrl);
       startTransition(async () => {
-        const res = await updateLogo(dataUrl);
+        const res = await update(dataUrl);
         if (res.ok) {
           router.refresh();
           showToast("Logo updated.");
@@ -38,9 +48,9 @@ export function LogoSettingsForm({ currentSrc }: { currentSrc: string }) {
   function handleReset() {
     setError(null);
     startTransition(async () => {
-      const res = await resetLogo();
+      const res = await reset();
       if (res.ok) {
-        setPreview(DEFAULT_LOGO_SRC);
+        setPreview(defaultSrc);
         router.refresh();
         showToast("Logo reset to default.");
       } else {

@@ -19,9 +19,10 @@ enum CustomerType {
 }
 
 model Setting {
-  id        String   @id @default(cuid())
-  logoData  String?
-  updatedAt DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  logoData            String?
+  certificateLogoData String?
+  updatedAt           DateTime @updatedAt
 }
 
 model Team {
