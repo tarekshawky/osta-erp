@@ -30,7 +30,7 @@ export async function computeAnnualReport(
   const [invoices, expenses, employees] = await Promise.all([
     prisma.invoice.findMany({ where: teamFilter, select: { date: true, amount: true, refundedAmount: true } }),
     prisma.expense.findMany({ where: teamFilter, select: { date: true, amount: true, refundedAmount: true, category: true } }),
-    prisma.employee.findMany({ where: teamFilter, select: { monthlySalary: true, createdAt: true } }),
+    prisma.employee.findMany({ where: teamFilter, select: { monthlySalary: true, createdAt: true, status: true } }),
   ]);
 
   const months: MonthFigures[] = Array.from({ length: 12 }, () => ({
@@ -62,7 +62,7 @@ export async function computeAnnualReport(
     if (m + 1 > monthsElapsed) continue;
     const monthEnd = new Date(Date.UTC(year, m + 1, 1));
     for (const emp of employees) {
-      if (emp.createdAt < monthEnd) {
+      if (emp.status === "active" && emp.createdAt < monthEnd) {
         months[m].salaries += emp.monthlySalary;
       }
     }
