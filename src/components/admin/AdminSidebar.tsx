@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { initials } from "@/lib/format";
 import { logout } from "@/app/actions/logout";
+import { LogoImage } from "@/components/LogoImage";
 
 const NAV = [
   {
@@ -109,6 +110,20 @@ const NAV = [
       </>
     ),
   },
+  {
+    href: "/admin/settings",
+    label: "Settings",
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1.08-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </>
+    ),
+  },
 ];
 
 export function AdminSidebar({
@@ -130,8 +145,10 @@ export function AdminSidebar({
     >
       <div className="px-6 pt-6 pb-5 border-b border-white/10 flex items-center justify-between">
         <div>
-          <div className="text-xl font-black">OSTA</div>
-          <div className="text-xs text-blue-200">Services ERP</div>
+          <div className="bg-white rounded-lg px-2.5 py-1.5 inline-block">
+            <LogoImage className="h-6 w-auto" />
+          </div>
+          <div className="text-xs text-blue-200 mt-1.5">Services ERP</div>
         </div>
         <button onClick={onClose} className="md:hidden text-blue-200">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

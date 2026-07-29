@@ -18,6 +18,12 @@ enum CustomerType {
   COMPANY
 }
 
+model Setting {
+  id        String   @id @default(cuid())
+  logoData  String?
+  updatedAt DateTime @updatedAt
+}
+
 model Team {
   id                   String                @id @default(cuid())
   name                 String                @unique
