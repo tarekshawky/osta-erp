@@ -47,6 +47,7 @@ export async function createExpense(formData: FormData) {
   });
 
   revalidatePath("/admin/expenses");
+  revalidatePath("/admin/wallets");
   revalidatePath("/admin");
   revalidatePath("/employee");
   redirect("/employee/expenses?toast=1");

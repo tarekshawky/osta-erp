@@ -123,5 +123,6 @@ export async function importInvoicesFromExcel(formData: FormData): Promise<Impor
   }
 
   revalidatePath("/admin/invoices");
+  revalidatePath("/admin/wallets");
   return { ok: true, created, errors };
 }

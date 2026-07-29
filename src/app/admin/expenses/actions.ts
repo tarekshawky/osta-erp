@@ -53,6 +53,7 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
   });
 
   revalidatePath("/admin/expenses");
+  revalidatePath("/admin/wallets");
   return { ok: true };
 }
 
@@ -79,6 +80,7 @@ export async function updateExpense(
   });
 
   revalidatePath("/admin/expenses");
+  revalidatePath("/admin/wallets");
   return { ok: true };
 }
 
@@ -86,6 +88,7 @@ export async function deleteExpense(id: string) {
   await requireEmployee("ADMIN");
   await prisma.expense.delete({ where: { id } });
   revalidatePath("/admin/expenses");
+  revalidatePath("/admin/wallets");
 }
 
 export async function refundExpense(
@@ -192,5 +195,6 @@ export async function importExpensesFromExcel(formData: FormData): Promise<Impor
   }
 
   revalidatePath("/admin/expenses");
+  revalidatePath("/admin/wallets");
   return { ok: true, created, errors };
 }

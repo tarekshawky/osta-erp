@@ -13,6 +13,7 @@ async function requireAdmin() {
 export async function deleteInvoice(id: string) {
   await requireAdmin();
   await prisma.invoice.delete({ where: { id } });
+  revalidatePath("/admin/wallets");
   redirect("/admin/invoices?toast=1");
 }
 
@@ -40,5 +41,6 @@ export async function processRefund(
 
   revalidatePath(`/admin/invoices/${id}`);
   revalidatePath("/admin/invoices");
+  revalidatePath("/admin/wallets");
   return { ok: true };
 }

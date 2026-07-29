@@ -97,6 +97,7 @@ export async function createInvoiceFromWizard(
     },
   });
 
+  revalidatePath("/admin/wallets");
   return { ok: true, number: invoice.number, amount: invoice.amount };
 }
 
@@ -140,6 +141,7 @@ export async function updateInvoiceFromWizard(
 
   revalidatePath(`/admin/invoices/${invoiceId}`);
   revalidatePath("/admin/invoices");
+  revalidatePath("/admin/wallets");
 
   return { ok: true, number: existing.number, amount };
 }
