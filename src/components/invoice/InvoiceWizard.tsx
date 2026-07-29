@@ -144,8 +144,8 @@ export function InvoiceWizard({
         <PaymentStep value={payment} service={service} onChange={setPayment} onNext={() => setStep(3)} />
       )}
       {step === 3 && (
-        <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-4">
-          <div className="max-w-3xl mx-auto flex flex-col gap-4">
+        <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-4 lg:px-10">
+          <div className="max-w-3xl lg:max-w-6xl mx-auto flex flex-col gap-4">
             <InvoicePreviewCard
               number="DRAFT"
               isDraft

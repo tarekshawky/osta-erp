@@ -39,8 +39,8 @@ export default async function EmployeeInvoiceDetailPage({
         </div>
       </div>
 
-      <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-4">
-        <div id="invoice-preview" className="max-w-3xl mx-auto">
+      <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-4 lg:px-10">
+        <div id="invoice-preview" className="max-w-3xl lg:max-w-6xl mx-auto">
           <InvoicePreviewCard
             number={invoice.number}
             date={invoice.date}
