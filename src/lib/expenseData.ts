@@ -9,6 +9,15 @@ export const EXPENSE_CATEGORIES = [
   "Other",
 ] as const;
 
+// Expense categories that directly relate to delivering the service (Cost of Services
+// in the P&L sense). Everything else in EXPENSE_CATEGORIES is treated as an Operating
+// Expense. This is a classification layer only -- it doesn't change the category list
+// or any stored data, so existing expenses keep working unchanged.
+export const COST_OF_SERVICES_CATEGORIES: readonly (typeof EXPENSE_CATEGORIES)[number][] = [
+  "Materials",
+  "Transportation",
+];
+
 export const VEHICLES = ["Dodge Journey", "Toyota Yaris", "Toyota Camry", "MG ZST"] as const;
 
 export const VEHICLE_EXPENSE_TYPES = [
