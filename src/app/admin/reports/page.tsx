@@ -153,10 +153,10 @@ export default async function AdminReportsPage({
             ))}
           </div>
           <p className="mt-3 text-xs text-slate-400">
-            Cost of Services includes technician (employee) salaries plus Materials and Transportation expenses.
-            Operating Expenses covers the remaining expense categories (Vehicle, Advertising, Meals, Accommodation,
-            Maintenance, Other). Corporate tax is 0% on taxable profit up to AED 375,000, and 9% on the portion
-            above that.
+            Cost of Services includes salaries actually recorded on the Payroll page (Salary + Advance − Deduction)
+            plus Materials and Transportation expenses. Operating Expenses covers the remaining expense categories
+            (Vehicle, Advertising, Meals, Accommodation, Maintenance, Other). Corporate tax is 0% on taxable profit
+            up to AED 375,000, and 9% on the portion above that.
           </p>
         </div>
 
@@ -271,7 +271,7 @@ export default async function AdminReportsPage({
         )}
 
         <p className="mt-3 text-xs text-slate-400">
-          Salaries are accrued monthly for each employee starting the month they joined.
+          Salary figures reflect entries recorded on the Payroll page, not an automatic monthly accrual.
         </p>
       </div>
     </div>

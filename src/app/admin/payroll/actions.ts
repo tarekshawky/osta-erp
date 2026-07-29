@@ -42,6 +42,7 @@ export async function createPayrollEntry(input: PayrollFormInput): Promise<{ ok:
   });
 
   revalidatePath("/admin/payroll");
+  revalidatePath("/admin/reports");
   return { ok: true };
 }
 
@@ -66,6 +67,7 @@ export async function updatePayrollEntry(
   });
 
   revalidatePath("/admin/payroll");
+  revalidatePath("/admin/reports");
   return { ok: true };
 }
 
@@ -73,4 +75,5 @@ export async function deletePayrollEntry(id: string) {
   await requireEmployee("ADMIN");
   await prisma.payrollEntry.delete({ where: { id } });
   revalidatePath("/admin/payroll");
+  revalidatePath("/admin/reports");
 }

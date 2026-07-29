@@ -26,11 +26,12 @@ export async function computeAnnualReport(
   const monthsElapsed = year < currentYear ? 12 : year > currentYear ? 0 : currentMonth;
 
   const teamFilter = team && team !== "all" ? { team: { name: team } } : {};
+  const payrollTeamFilter = team && team !== "all" ? { employee: { team: { name: team } } } : {};
 
-  const [invoices, expenses, employees] = await Promise.all([
+  const [invoices, expenses, payrollEntries] = await Promise.all([
     prisma.invoice.findMany({ where: teamFilter, select: { date: true, amount: true, refundedAmount: true } }),
     prisma.expense.findMany({ where: teamFilter, select: { date: true, amount: true, refundedAmount: true, category: true } }),
-    prisma.employee.findMany({ where: teamFilter, select: { monthlySalary: true, createdAt: true, status: true } }),
+    prisma.payrollEntry.findMany({ where: payrollTeamFilter, select: { date: true, amount: true, type: true } }),
   ]);
 
   const months: MonthFigures[] = Array.from({ length: 12 }, () => ({
@@ -58,14 +59,14 @@ export async function computeAnnualReport(
     }
   }
 
-  for (let m = 0; m < 12; m++) {
-    if (m + 1 > monthsElapsed) continue;
-    const monthEnd = new Date(Date.UTC(year, m + 1, 1));
-    for (const emp of employees) {
-      if (emp.status === "active" && emp.createdAt < monthEnd) {
-        months[m].salaries += emp.monthlySalary;
-      }
-    }
+  // Salary cost comes from actual Payroll entries (Salary + Advance - Deduction, the
+  // same "Net Payroll" formula shown on the Payroll page) rather than an automatic
+  // accrual of the employee's Monthly Salary field, so Reports always matches what
+  // was actually recorded as paid.
+  for (const entry of payrollEntries) {
+    if (entry.date.getFullYear() !== year) continue;
+    const signed = entry.type === "Deduction" ? -entry.amount : entry.amount;
+    months[entry.date.getMonth()].salaries += signed;
   }
 
   return { months, monthsElapsed };
