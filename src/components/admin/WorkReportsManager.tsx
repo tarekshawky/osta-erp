@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { TeamBadge } from "./TeamBadge";
@@ -102,6 +103,15 @@ export function WorkReportsManager({
                   <span className="text-xs text-slate-400 whitespace-nowrap">
                     {formatDate(new Date(r.date))} · {r.createdByName}
                   </span>
+                  <Link
+                    href={`/admin/work-reports/${r.id}/edit`}
+                    title="Edit"
+                    className="text-blue-600 hover:text-blue-700 p-1"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinejoin="round" />
+                    </svg>
+                  </Link>
                   <DeleteWorkReportButton reportId={r.id} className="text-red-500 hover:text-red-600 p-1" />
                 </div>
               </div>

@@ -14,7 +14,8 @@ import {
   MAX_PHOTOS_PER_ITEM,
 } from "@/lib/workReportData";
 import { compressImageFile } from "@/lib/imageCompress";
-import { createWorkReport, type WorkReportItemInput } from "./actions";
+import { createWorkReport, type WorkReportItemInput, type WorkReportFormInput } from "./actions";
+import { updateWorkReport } from "@/app/admin/work-reports/actions";
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -34,16 +35,26 @@ function updateItem(items: WorkReportItemInput[], index: number, patch: Partial<
   return items.map((it, i) => (i === index ? { ...it, ...patch } : it));
 }
 
-export function WorkReportForm() {
+export function WorkReportForm({
+  mode = "create",
+  reportId,
+  initial,
+  redirectTo,
+}: {
+  mode?: "create" | "edit";
+  reportId?: string;
+  initial?: WorkReportFormInput;
+  redirectTo?: string;
+}) {
   const router = useRouter();
   const { showToast } = useToast();
-  const [date, setDate] = useState(todayStr());
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [emirate, setEmirate] = useState("");
-  const [buildingName, setBuildingName] = useState("");
-  const [flatNo, setFlatNo] = useState("");
-  const [items, setItems] = useState<WorkReportItemInput[]>([emptyItem()]);
+  const [date, setDate] = useState(initial?.date ?? todayStr());
+  const [customerName, setCustomerName] = useState(initial?.customerName ?? "");
+  const [customerPhone, setCustomerPhone] = useState(initial?.customerPhone ?? "");
+  const [emirate, setEmirate] = useState(initial?.emirate ?? "");
+  const [buildingName, setBuildingName] = useState(initial?.buildingName ?? "");
+  const [flatNo, setFlatNo] = useState(initial?.flatNo ?? "");
+  const [items, setItems] = useState<WorkReportItemInput[]>(initial?.items ?? [emptyItem()]);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -85,8 +96,15 @@ export function WorkReportForm() {
   function handleSubmit() {
     setError(null);
     startTransition(async () => {
-      const res = await createWorkReport({ date, customerName, customerPhone, emirate, buildingName, flatNo, items });
+      const payload = { date, customerName, customerPhone, emirate, buildingName, flatNo, items };
+      const res =
+        mode === "edit" && reportId ? await updateWorkReport(reportId, payload) : await createWorkReport(payload);
       if (res.ok) {
+        if (mode === "edit") {
+          showToast("Work report updated.");
+          router.push(redirectTo ?? "/admin/work-reports");
+          return;
+        }
         setDate(todayStr());
         setCustomerName("");
         setCustomerPhone("");
@@ -298,7 +316,7 @@ export function WorkReportForm() {
         onClick={handleSubmit}
         className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl py-3 font-medium text-sm"
       >
-        {isPending ? "Submitting..." : "Submit Report"}
+        {isPending ? "Saving..." : mode === "edit" ? "Save Changes" : "Submit Report"}
       </button>
     </div>
   );
