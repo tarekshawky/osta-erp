@@ -91,8 +91,13 @@ export async function importInvoicesFromExcel(formData: FormData): Promise<Impor
       const warrantyUntil = new Date(date);
       warrantyUntil.setDate(warrantyUntil.getDate() + WARRANTY_DAYS);
 
-      const count = await prisma.invoice.count();
-      const number = `INV-${date.getFullYear()}-${String(count + 1).padStart(6, "0")}`;
+      const numberPrefix = `INV-${date.getFullYear()}-`;
+      const lastInvoice = await prisma.invoice.findFirst({
+        where: { number: { startsWith: numberPrefix } },
+        orderBy: { number: "desc" },
+      });
+      const lastSeq = lastInvoice ? parseInt(lastInvoice.number.slice(numberPrefix.length), 10) : 0;
+      const number = `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
 
       await prisma.invoice.create({
         data: {

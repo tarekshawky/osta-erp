@@ -46,8 +46,13 @@ export async function createQuotationFromWizard(
 
   const amount = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
   const date = new Date();
-  const count = await prisma.quotation.count();
-  const number = `QUO-${date.getFullYear()}-${String(count + 1).padStart(6, "0")}`;
+  const numberPrefix = `QUO-${date.getFullYear()}-`;
+  const lastQuotation = await prisma.quotation.findFirst({
+    where: { number: { startsWith: numberPrefix } },
+    orderBy: { number: "desc" },
+  });
+  const lastSeq = lastQuotation ? parseInt(lastQuotation.number.slice(numberPrefix.length), 10) : 0;
+  const number = `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
 
   const quotation = await prisma.quotation.create({
     data: {
