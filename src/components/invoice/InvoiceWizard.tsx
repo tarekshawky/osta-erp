@@ -23,6 +23,7 @@ const STEP_META = [
 export function InvoiceWizard({
   basePath,
   createdByName,
+  createdByCode,
   mode = "create",
   editInvoiceId,
   initialCustomer,
@@ -31,6 +32,7 @@ export function InvoiceWizard({
 }: {
   basePath: "/admin" | "/employee";
   createdByName: string;
+  createdByCode?: string;
   mode?: "create" | "edit";
   editInvoiceId?: string;
   initialCustomer?: CustomerFormData;
@@ -142,33 +144,36 @@ export function InvoiceWizard({
         <PaymentStep value={payment} service={service} onChange={setPayment} onNext={() => setStep(3)} />
       )}
       {step === 3 && (
-        <div className="flex flex-col gap-4">
-          <InvoicePreviewCard
-            number="DRAFT"
-            isDraft
-            date={new Date()}
-            customer={{
-              type: customer.type,
-              name: customer.name,
-              companyName: customer.companyName,
-              trn: customer.trn,
-              phone: formatUaePhone(customer.phone),
-              emirate: customer.emirate,
-              buildingName: customer.buildingName,
-              flatNo: customer.flatNo,
-            }}
-            items={previewItems}
-            payment={payment.method}
-            createdByName={createdByName}
-          />
-          <button
-            type="button"
-            disabled={isPending || previewItems.length === 0}
-            onClick={handleSave}
-            className="w-full rounded-xl bg-blue-700 disabled:opacity-60 text-white font-medium text-sm py-3.5"
-          >
-            {isPending ? "Saving..." : mode === "edit" ? "Save Changes" : "Save & Create Invoice"}
-          </button>
+        <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-4">
+          <div className="max-w-3xl mx-auto flex flex-col gap-4">
+            <InvoicePreviewCard
+              number="DRAFT"
+              isDraft
+              date={new Date()}
+              customer={{
+                type: customer.type,
+                name: customer.name,
+                companyName: customer.companyName,
+                trn: customer.trn,
+                phone: formatUaePhone(customer.phone),
+                emirate: customer.emirate,
+                buildingName: customer.buildingName,
+                flatNo: customer.flatNo,
+              }}
+              items={previewItems}
+              payment={payment.method}
+              createdByName={createdByName}
+              createdByCode={createdByCode}
+            />
+            <button
+              type="button"
+              disabled={isPending || previewItems.length === 0}
+              onClick={handleSave}
+              className="w-full rounded-xl bg-blue-700 disabled:opacity-60 text-white font-medium text-sm py-3.5"
+            >
+              {isPending ? "Saving..." : mode === "edit" ? "Save Changes" : "Save & Create Invoice"}
+            </button>
+          </div>
         </div>
       )}
     </div>

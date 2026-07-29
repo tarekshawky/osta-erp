@@ -59,6 +59,7 @@ export default async function AdminInvoiceEditPage({
       <InvoiceWizard
         basePath="/admin"
         createdByName={admin.name}
+        createdByCode={admin.code}
         mode="edit"
         editInvoiceId={invoice.id}
         initialCustomer={initialCustomer}

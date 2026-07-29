@@ -63,7 +63,10 @@ export default async function AdminInvoiceDetailPage({
           />
         </div>
 
-        <div id="invoice-preview" className="mt-5">
+      </div>
+
+      <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-4">
+        <div id="invoice-preview" className="max-w-3xl mx-auto">
           <InvoicePreviewCard
             number={invoice.number}
             date={invoice.date}
@@ -81,6 +84,8 @@ export default async function AdminInvoiceDetailPage({
             payment={invoice.payment}
             warrantyUntil={invoice.warrantyUntil}
             createdByName={invoice.createdBy.name}
+            createdByCode={invoice.createdBy.code}
+            createdAt={invoice.createdAt}
           />
         </div>
       </div>

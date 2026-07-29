@@ -8,7 +8,7 @@ export default async function NewInvoicePage() {
   return (
     <div className="pb-8">
       <TopBar title="Invoices" />
-      <InvoiceWizard basePath="/employee" createdByName={employee.name} />
+      <InvoiceWizard basePath="/employee" createdByName={employee.name} createdByCode={employee.code} />
     </div>
   );
 }

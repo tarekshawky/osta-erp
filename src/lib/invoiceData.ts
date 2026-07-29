@@ -68,6 +68,8 @@ export const COMPANY_INFO = {
   trn: "105442240300001",
   license: "1601375",
   website: "www.ostaservices.com",
+  phone: "+971 50 903 0175",
+  address: "Ajman, United Arab Emirates",
 };
 
 export const TERMS_AND_CONDITIONS = [
@@ -80,3 +82,31 @@ export const TERMS_AND_CONDITIONS = [
 ];
 
 export const TERMS_URL = "www.ostaservices.com/terms-and-conditions";
+
+export const INVOICE_NOTE = {
+  en: "Thank you for choosing OSTA Services. We appreciate your trust and look forward to serving you again.",
+  ar: "شكرًا لاختياركم خدمات أسطا. نقدّر ثقتكم ونتطلع لخدمتكم مجددًا.",
+};
+
+export const INVOICE_TERMS: { en: string; ar: string }[] = [
+  {
+    en: "The payment for any maintenance is non-refundable under any circumstances.",
+    ar: "المبلغ المدفوع لاي صيانة غير قابل للاسترداد تحت أي ظرف من الظروف.",
+  },
+  {
+    en: "The company is responsible only for the work specified in this invoice.",
+    ar: "الشركة مسئولة فقط عن العمل المثبت بالفاتورة فقط.",
+  },
+  {
+    en: `Any intervention by another company voids the ${WARRANTY_DAYS}-day warranty.`,
+    ar: `اي تدخل شركة اخري يسقط ضمان ${WARRANTY_DAYS} يوم.`,
+  },
+  {
+    en: "The company is not responsible for misuse or improper handling in case of malfunction.",
+    ar: "الشركة غير مسئولة عن سوء الاستخدام او سوء التعامل في حين حدوث عطل.",
+  },
+  {
+    en: `To view the full terms and conditions, please visit: ${TERMS_URL}`,
+    ar: `للاطلاع على الشروط والأحكام زر الرابط: ${TERMS_URL}`,
+  },
+];
