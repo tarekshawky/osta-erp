@@ -7,6 +7,8 @@ import { TeamBadge } from "./TeamBadge";
 import { DeleteWorkReportButton } from "./DeleteWorkReportButton";
 import { Pagination } from "./Pagination";
 import { CONDITION_STYLES } from "@/lib/workReportData";
+import { DownloadPdfButton } from "@/components/invoice/DownloadPdfButton";
+import { WorkReportPreviewCard } from "@/components/workReport/WorkReportPreviewCard";
 
 export type WorkReportItemRow = {
   id: string;
@@ -112,6 +114,12 @@ export function WorkReportsManager({
                       <path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinejoin="round" />
                     </svg>
                   </Link>
+                  <DownloadPdfButton
+                    targetId={`work-report-pdf-${r.id}`}
+                    fileName={`Work-Report-${r.id.slice(-6).toUpperCase()}`}
+                    label=""
+                    className="text-green-600 hover:text-green-700 p-1"
+                  />
                   <DeleteWorkReportButton reportId={r.id} className="text-red-500 hover:text-red-600 p-1" />
                 </div>
               </div>
@@ -151,6 +159,25 @@ export function WorkReportsManager({
                     )}
                   </div>
                 ))}
+              </div>
+
+              <div className="absolute -left-[99999px] top-0" aria-hidden>
+                <div id={`work-report-pdf-${r.id}`}>
+                  <WorkReportPreviewCard
+                    report={{
+                      id: r.id,
+                      date: new Date(r.date),
+                      customerName: r.customerName,
+                      customerPhone: r.customerPhone,
+                      emirate: r.emirate,
+                      buildingName: r.buildingName,
+                      flatNo: r.flatNo,
+                      teamName: r.teamName,
+                      createdByName: r.createdByName,
+                      items: r.items,
+                    }}
+                  />
+                </div>
               </div>
             </div>
           );

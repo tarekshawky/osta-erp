@@ -156,7 +156,7 @@ export default async function EmployeeHomePage() {
           />
           <QuickActionTile
             href="/employee/report"
-            label="Create Report"
+            label="Reports"
             iconBg="bg-orange-50"
             iconColor="text-orange-500"
             icon={

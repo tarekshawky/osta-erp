@@ -105,6 +105,11 @@ export function WorkReportForm({
           router.push(redirectTo ?? "/admin/work-reports");
           return;
         }
+        showToast("Work report submitted.");
+        if (redirectTo) {
+          router.push(redirectTo);
+          return;
+        }
         setDate(todayStr());
         setCustomerName("");
         setCustomerPhone("");
@@ -113,7 +118,6 @@ export function WorkReportForm({
         setFlatNo("");
         setItems([emptyItem()]);
         router.refresh();
-        showToast("Work report submitted.");
       } else {
         setError(res.error ?? "Something went wrong.");
       }
