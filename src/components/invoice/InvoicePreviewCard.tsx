@@ -209,12 +209,12 @@ export function InvoicePreviewCard({
 
       {/* Header */}
       <div className="flex items-start justify-between gap-6 flex-wrap">
-        <div className="min-w-0">
-          <LogoImage className="h-12 w-auto" />
-          <div className="text-[10px] font-bold tracking-[0.35em] mt-1" style={{ color: NAVY }}>
+        <div className="min-w-0 flex flex-col">
+          <LogoImage className="h-24 sm:h-28 w-auto" />
+          <div className="text-xs font-bold tracking-[0.35em] mt-1.5" style={{ color: NAVY }}>
             SERVICES
           </div>
-          <div className="mt-4 text-base font-bold text-gray-900">{COMPANY_INFO.name}</div>
+          <div className="mt-6 text-base font-bold text-gray-900">{COMPANY_INFO.name}</div>
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
             <DocIcon />
             <span>
