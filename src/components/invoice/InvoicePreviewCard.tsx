@@ -200,7 +200,7 @@ export function InvoicePreviewCard({
   return (
     <div
       ref={innerRef}
-      className={`${inter.className} relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 sm:p-8`}
+      className={`${inter.className} relative overflow-hidden rounded-xl border border-gray-200 bg-white p-3 sm:p-8`}
     >
       <svg width="70" height="70" viewBox="0 0 70 70" className="absolute -left-px -top-px">
         <path d="M0 0H70L0 70V0Z" fill={BLUE} />
@@ -261,8 +261,8 @@ export function InvoicePreviewCard({
         </InfoCard>
       </div>
 
-      {/* Items table */}
-      <div className="mt-6 rounded-xl border border-gray-200 overflow-x-auto">
+      {/* Items table (sm and up) */}
+      <div className="mt-6 hidden sm:block rounded-xl border border-gray-200 overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="text-white text-[10px] font-bold tracking-wide whitespace-nowrap" style={{ backgroundColor: NAVY }}>
@@ -294,6 +294,35 @@ export function InvoicePreviewCard({
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Items list (mobile only) -- stacked cards so every detail is visible without scrolling */}
+      <div className="mt-6 sm:hidden space-y-2">
+        {items.map((item, i) => (
+          <div key={i} className="rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-3 py-2 text-white text-xs font-semibold flex items-center gap-2" style={{ backgroundColor: NAVY }}>
+              <span>#{i + 1}</span>
+              <span className="truncate">{item.serviceName}</span>
+            </div>
+            <div className="p-3">
+              {item.description && <div className="text-xs text-gray-500 mb-2">{item.description}</div>}
+              <div className="grid grid-cols-2 gap-y-1.5 text-xs">
+                <div className="text-gray-500">Qty</div>
+                <div className="text-right text-gray-900">{item.qty}</div>
+                <div className="text-gray-500">Unit</div>
+                <div className="text-right text-gray-900">Unit</div>
+                <div className="text-gray-500">Unit Price (AED)</div>
+                <div className="text-right text-gray-900">{formatNumber2(item.unitPrice)}</div>
+                <div className="text-gray-500">Discount (AED)</div>
+                <div className="text-right text-gray-900">0.00</div>
+                <div className="text-gray-700 font-semibold pt-1.5 border-t border-gray-100 mt-1.5">Total (AED)</div>
+                <div className="text-right font-bold text-gray-900 pt-1.5 border-t border-gray-100 mt-1.5">
+                  {formatNumber2(item.qty * item.unitPrice)}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Notes + Summary */}
