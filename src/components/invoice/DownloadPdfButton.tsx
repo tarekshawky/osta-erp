@@ -3,7 +3,16 @@
 import { useRef, useState } from "react";
 
 const CAPTURE_SCALE = 2;
-const MARGIN_MM = 8;
+// Matches the A4 print spec: top 20mm, bottom 18mm, left/right 18mm.
+const MARGIN_TOP_MM = 20;
+const MARGIN_BOTTOM_MM = 18;
+const MARGIN_SIDE_MM = 18;
+// The document has a responsive header (logo beside the INVOICE title) that wraps
+// onto its own line below a certain width. Capturing the live on-page element would
+// make the PDF's layout depend on whatever browser window size happened to be open
+// when "Download PDF" was clicked. Instead we clone the node into an offscreen
+// container at a fixed, print-safe width so the exported file always looks the same.
+const RENDER_WIDTH_PX = 1200;
 
 export function DownloadPdfButton({
   targetId,
@@ -31,7 +40,25 @@ export function DownloadPdfButton({
         import("jspdf"),
       ]);
 
-      const canvas = await html2canvas(node, { scale: CAPTURE_SCALE, backgroundColor: "#ffffff" });
+      const offscreen = document.createElement("div");
+      offscreen.style.position = "fixed";
+      offscreen.style.top = "0";
+      offscreen.style.left = "-99999px";
+      offscreen.style.width = `${RENDER_WIDTH_PX}px`;
+      offscreen.appendChild(node.cloneNode(true));
+      document.body.appendChild(offscreen);
+
+      let canvas;
+      try {
+        canvas = await html2canvas(offscreen.firstElementChild as HTMLElement, {
+          scale: CAPTURE_SCALE,
+          backgroundColor: "#ffffff",
+          width: RENDER_WIDTH_PX,
+          windowWidth: RENDER_WIDTH_PX,
+        });
+      } finally {
+        offscreen.remove();
+      }
 
       // Always lay the content out at full A4 width -- regardless of how wide the
       // source card happened to render on screen (a narrow phone view or a wide
@@ -41,13 +68,13 @@ export function DownloadPdfButton({
       const pdf = new jsPDF({ unit: "mm", format: "a4" });
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const contentWidth = pageWidth - MARGIN_MM * 2;
-      const maxContentHeight = pageHeight - MARGIN_MM * 2;
+      const contentWidth = pageWidth - MARGIN_SIDE_MM * 2;
+      const maxContentHeight = pageHeight - MARGIN_TOP_MM - MARGIN_BOTTOM_MM;
       const contentHeight = (canvas.height / canvas.width) * contentWidth;
 
       if (contentHeight <= maxContentHeight) {
         const imgData = canvas.toDataURL("image/png");
-        pdf.addImage(imgData, "PNG", MARGIN_MM, MARGIN_MM, contentWidth, contentHeight);
+        pdf.addImage(imgData, "PNG", MARGIN_SIDE_MM, MARGIN_TOP_MM, contentWidth, contentHeight);
       } else {
         const pageSliceHeightPx = (maxContentHeight / contentWidth) * canvas.width;
         let renderedPx = 0;
@@ -65,7 +92,7 @@ export function DownloadPdfButton({
 
           if (!isFirstPage) pdf.addPage();
           const sliceHeightMm = (sliceHeightPx / canvas.width) * contentWidth;
-          pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", MARGIN_MM, MARGIN_MM, contentWidth, sliceHeightMm);
+          pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", MARGIN_SIDE_MM, MARGIN_TOP_MM, contentWidth, sliceHeightMm);
 
           renderedPx += sliceHeightPx;
           isFirstPage = false;
