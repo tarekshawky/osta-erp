@@ -96,31 +96,33 @@ export function WorkReportsManager({
             .join(" · ");
           return (
             <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-slate-900">{customerLine || "No customer info"}</span>
                   <TeamBadge name={r.teamName} />
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between gap-3 sm:justify-end">
                   <span className="text-xs text-slate-400 whitespace-nowrap">
                     {formatDate(new Date(r.date))} · {r.createdByName}
                   </span>
-                  <Link
-                    href={`/admin/work-reports/${r.id}/edit`}
-                    title="Edit"
-                    className="text-blue-600 hover:text-blue-700 p-1"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinejoin="round" />
-                    </svg>
-                  </Link>
-                  <DownloadPdfButton
-                    targetId={`work-report-pdf-${r.id}`}
-                    fileName={`Work-Report-${r.id.slice(-6).toUpperCase()}`}
-                    label=""
-                    className="text-green-600 hover:text-green-700 p-1"
-                  />
-                  <DeleteWorkReportButton reportId={r.id} className="text-red-500 hover:text-red-600 p-1" />
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Link
+                      href={`/admin/work-reports/${r.id}/edit`}
+                      title="Edit"
+                      className="text-blue-600 hover:text-blue-700 p-1"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinejoin="round" />
+                      </svg>
+                    </Link>
+                    <DownloadPdfButton
+                      targetId={`work-report-pdf-${r.id}`}
+                      fileName={`Work-Report-${r.id.slice(-6).toUpperCase()}`}
+                      label=""
+                      className="text-green-600 hover:text-green-700 p-1"
+                    />
+                    <DeleteWorkReportButton reportId={r.id} className="text-red-500 hover:text-red-600 p-1" />
+                  </div>
                 </div>
               </div>
 
