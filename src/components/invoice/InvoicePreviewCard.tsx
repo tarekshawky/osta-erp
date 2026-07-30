@@ -4,10 +4,10 @@ import { formatNumber2, formatDateSlash, formatDateTimeSlash } from "@/lib/forma
 import { COMPANY_INFO, INVOICE_NOTE, INVOICE_TERMS, WARRANTY_DAYS } from "@/lib/invoiceData";
 import { amountInWordsAed } from "@/lib/numberToWords";
 
-const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
+export const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
-const NAVY = "#081E4B";
-const BLUE = "#0F5EFF";
+export const NAVY = "#081E4B";
+export const BLUE = "#0F5EFF";
 
 export type PreviewCustomer = {
   type: "INDIVIDUAL" | "COMPANY";
@@ -27,7 +27,7 @@ export type PreviewItem = {
   unitPrice: number;
 };
 
-function DocIcon() {
+export function DocIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M7 3h10a1 1 0 011 1v16l-3-2-2 2-2-2-2 2-3-2V4a1 1 0 011-1z" strokeLinejoin="round" />
@@ -36,7 +36,7 @@ function DocIcon() {
   );
 }
 
-function CalendarIcon() {
+export function CalendarIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="3" y="5" width="18" height="16" rx="2" />
@@ -45,7 +45,7 @@ function CalendarIcon() {
   );
 }
 
-function CardIcon() {
+export function CardIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -54,7 +54,7 @@ function CardIcon() {
   );
 }
 
-function PersonIcon() {
+export function PersonIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="8" r="3.5" />
@@ -72,7 +72,7 @@ function HardHatIcon() {
   );
 }
 
-function NotesIcon() {
+export function NotesIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M7 3h10a1 1 0 011 1v16l-3-2-2 2-2-2-2 2-3-2V4a1 1 0 011-1z" strokeLinejoin="round" />
@@ -90,7 +90,7 @@ function ShieldIcon() {
   );
 }
 
-function PhoneIcon() {
+export function PhoneIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z" strokeLinejoin="round" />
@@ -98,7 +98,7 @@ function PhoneIcon() {
   );
 }
 
-function MailIcon() {
+export function MailIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -107,7 +107,7 @@ function MailIcon() {
   );
 }
 
-function GlobeIcon() {
+export function GlobeIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="9" />
@@ -116,7 +116,7 @@ function GlobeIcon() {
   );
 }
 
-function PinIcon() {
+export function PinIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M12 21s7-6.5 7-11.5A7 7 0 105 9.5C5 14.5 12 21 12 21z" strokeLinejoin="round" />
@@ -125,7 +125,7 @@ function PinIcon() {
   );
 }
 
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+export function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3">
       <div
@@ -142,7 +142,7 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
-function InfoCard({
+export function InfoCard({
   title,
   icon,
   children,
@@ -447,7 +447,7 @@ export function InvoicePreviewCard({
 
       {/* Footer */}
       <div
-        className="mt-6 -mx-6 sm:-mx-8 -mb-6 sm:-mb-8 px-6 sm:px-8 py-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-white text-xs"
+        className="mt-6 -mx-3 sm:-mx-8 -mb-3 sm:-mb-8 px-3 sm:px-8 py-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-white text-xs"
         style={{ backgroundColor: NAVY }}
       >
         <span className="flex items-center gap-1.5">

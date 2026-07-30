@@ -49,11 +49,14 @@ export default async function AdminQuotationDetailPage({
           />
           <DeleteQuotationButton
             quotationId={quotation.id}
+            showLabel
             className="w-full rounded-xl border border-red-200 bg-red-50 text-red-600 text-xs font-medium py-2.5 flex flex-col items-center gap-1"
           />
         </div>
+      </div>
 
-        <div id="quotation-preview" className="mt-5">
+      <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-2 sm:px-4 lg:px-10">
+        <div id="quotation-preview" className="max-w-3xl lg:max-w-6xl mx-auto">
           <QuotationPreviewCard
             number={quotation.number}
             date={quotation.date}

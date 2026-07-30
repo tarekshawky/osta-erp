@@ -3,7 +3,15 @@
 import { useTransition } from "react";
 import { deleteQuotation } from "@/app/admin/quotations/actions";
 
-export function DeleteQuotationButton({ quotationId, className }: { quotationId: string; className?: string }) {
+export function DeleteQuotationButton({
+  quotationId,
+  className,
+  showLabel = false,
+}: {
+  quotationId: string;
+  className?: string;
+  showLabel?: boolean;
+}) {
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
@@ -18,6 +26,7 @@ export function DeleteQuotationButton({ quotationId, className }: { quotationId:
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6h12z" strokeLinejoin="round" />
       </svg>
+      {showLabel && "Delete"}
     </button>
   );
 }
