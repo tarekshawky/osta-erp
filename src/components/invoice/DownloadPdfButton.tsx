@@ -3,10 +3,11 @@
 import { useRef, useState } from "react";
 
 const CAPTURE_SCALE = 2;
-// Matches the A4 print spec: top 20mm, bottom 18mm, left/right 18mm.
-const MARGIN_TOP_MM = 20;
-const MARGIN_BOTTOM_MM = 18;
-const MARGIN_SIDE_MM = 18;
+// Tight margins so the content spans close to the full A4 page width instead of
+// leaving large blank borders.
+const MARGIN_TOP_MM = 10;
+const MARGIN_BOTTOM_MM = 10;
+const MARGIN_SIDE_MM = 8;
 // The document has a responsive header (logo beside the INVOICE title) that wraps
 // onto its own line below a certain width. Capturing the live on-page element would
 // make the PDF's layout depend on whatever browser window size happened to be open
