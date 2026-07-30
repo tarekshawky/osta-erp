@@ -262,10 +262,10 @@ export function InvoicePreviewCard({
       </div>
 
       {/* Items table */}
-      <div className="mt-6 overflow-hidden rounded-xl border border-gray-200">
-        <table className="w-full text-sm">
+      <div className="mt-6 rounded-xl border border-gray-200 overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="text-white text-[10px] font-bold tracking-wide" style={{ backgroundColor: NAVY }}>
+            <tr className="text-white text-[10px] font-bold tracking-wide whitespace-nowrap" style={{ backgroundColor: NAVY }}>
               <th className="px-3 py-3 text-center w-8">#</th>
               <th className="px-3 py-3 text-left">DESCRIPTION</th>
               <th className="px-3 py-3 text-center">QTY</th>
@@ -283,11 +283,11 @@ export function InvoicePreviewCard({
                   <div className="font-semibold text-gray-900">{item.serviceName}</div>
                   {item.description && <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>}
                 </td>
-                <td className="px-3 py-3 text-center text-gray-600">{item.qty}</td>
-                <td className="px-3 py-3 text-center text-gray-600">Unit</td>
-                <td className="px-3 py-3 text-right text-gray-600">{formatNumber2(item.unitPrice)}</td>
-                <td className="px-3 py-3 text-right text-gray-600">0.00</td>
-                <td className="px-3 py-3 text-right font-bold text-gray-900">
+                <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">{item.qty}</td>
+                <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">Unit</td>
+                <td className="px-3 py-3 text-right text-gray-600 whitespace-nowrap">{formatNumber2(item.unitPrice)}</td>
+                <td className="px-3 py-3 text-right text-gray-600 whitespace-nowrap">0.00</td>
+                <td className="px-3 py-3 text-right font-bold text-gray-900 whitespace-nowrap">
                   {formatNumber2(item.qty * item.unitPrice)}
                 </td>
               </tr>
