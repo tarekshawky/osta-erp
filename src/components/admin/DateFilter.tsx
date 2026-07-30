@@ -44,11 +44,15 @@ export function DateFilter({
   }
 
   const selectClass =
-    "px-3 py-1.5 rounded-full bg-white/10 text-sm text-white border-none focus:outline-none focus:ring-1 focus:ring-white/40 [&>option]:text-slate-900";
+    "bg-transparent text-xs sm:text-sm text-white border-none focus:outline-none [&>option]:text-slate-900 max-w-[6.5rem] sm:max-w-none";
 
   return (
-    <div className="flex items-center gap-2">
-      <select value={selectedMonth} onChange={(e) => updateParam("month", e.target.value)} className={selectClass}>
+    <div className="flex items-center rounded-full bg-white/10 divide-x divide-white/15 focus-within:ring-1 focus-within:ring-white/40">
+      <select
+        value={selectedMonth}
+        onChange={(e) => updateParam("month", e.target.value)}
+        className={`${selectClass} pl-3 pr-2 py-1.5 rounded-l-full`}
+      >
         <option value="all">All Months</option>
         {MONTHS.map((m, i) => (
           <option key={m} value={i + 1}>
@@ -56,7 +60,11 @@ export function DateFilter({
           </option>
         ))}
       </select>
-      <select value={selectedYear} onChange={(e) => updateParam("year", e.target.value)} className={selectClass}>
+      <select
+        value={selectedYear}
+        onChange={(e) => updateParam("year", e.target.value)}
+        className={`${selectClass} pl-2 pr-3 py-1.5 rounded-r-full`}
+      >
         <option value="all">All Years</option>
         {years.map((y) => (
           <option key={y} value={y}>
