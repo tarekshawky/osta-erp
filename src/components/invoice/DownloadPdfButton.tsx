@@ -75,7 +75,7 @@ export function DownloadPdfButton({
 
       if (contentHeight <= maxContentHeight) {
         const imgData = canvas.toDataURL("image/png");
-        pdf.addImage(imgData, "PNG", MARGIN_SIDE_MM, MARGIN_TOP_MM, contentWidth, contentHeight);
+        pdf.addImage(imgData, "PNG", MARGIN_SIDE_MM, MARGIN_TOP_MM, contentWidth, contentHeight, undefined, "MEDIUM");
       } else {
         const pageSliceHeightPx = (maxContentHeight / contentWidth) * canvas.width;
         let renderedPx = 0;
@@ -93,7 +93,16 @@ export function DownloadPdfButton({
 
           if (!isFirstPage) pdf.addPage();
           const sliceHeightMm = (sliceHeightPx / canvas.width) * contentWidth;
-          pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", MARGIN_SIDE_MM, MARGIN_TOP_MM, contentWidth, sliceHeightMm);
+          pdf.addImage(
+            sliceCanvas.toDataURL("image/png"),
+            "PNG",
+            MARGIN_SIDE_MM,
+            MARGIN_TOP_MM,
+            contentWidth,
+            sliceHeightMm,
+            undefined,
+            "MEDIUM"
+          );
 
           renderedPx += sliceHeightPx;
           isFirstPage = false;
