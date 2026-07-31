@@ -3,6 +3,12 @@
 import { useRef, useState } from "react";
 
 const CAPTURE_SCALE = 2;
+// JPEG at this quality is visually indistinguishable from the source screenshot for
+// a text/line-art document, and the browser's own encoder produces it -- unlike
+// jsPDF's built-in PNG "compression" option, which can emit a corrupted/truncated
+// image stream for large captures (renders fine in lenient viewers like pdf.js but
+// as a black block in stricter ones like macOS Preview or Acrobat).
+const JPEG_QUALITY = 0.92;
 // Tight margins so the content spans close to the full A4 page width instead of
 // leaving large blank borders.
 const MARGIN_TOP_MM = 10;
@@ -74,8 +80,8 @@ export function DownloadPdfButton({
       const contentHeight = (canvas.height / canvas.width) * contentWidth;
 
       if (contentHeight <= maxContentHeight) {
-        const imgData = canvas.toDataURL("image/png");
-        pdf.addImage(imgData, "PNG", MARGIN_SIDE_MM, MARGIN_TOP_MM, contentWidth, contentHeight, undefined, "MEDIUM");
+        const imgData = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+        pdf.addImage(imgData, "JPEG", MARGIN_SIDE_MM, MARGIN_TOP_MM, contentWidth, contentHeight);
       } else {
         const pageSliceHeightPx = (maxContentHeight / contentWidth) * canvas.width;
         let renderedPx = 0;
@@ -94,14 +100,12 @@ export function DownloadPdfButton({
           if (!isFirstPage) pdf.addPage();
           const sliceHeightMm = (sliceHeightPx / canvas.width) * contentWidth;
           pdf.addImage(
-            sliceCanvas.toDataURL("image/png"),
-            "PNG",
+            sliceCanvas.toDataURL("image/jpeg", JPEG_QUALITY),
+            "JPEG",
             MARGIN_SIDE_MM,
             MARGIN_TOP_MM,
             contentWidth,
-            sliceHeightMm,
-            undefined,
-            "MEDIUM"
+            sliceHeightMm
           );
 
           renderedPx += sliceHeightPx;
