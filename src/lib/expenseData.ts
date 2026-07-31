@@ -6,8 +6,14 @@ export const EXPENSE_CATEGORIES = [
   "Meals",
   "Accommodation",
   "Maintenance",
+  "Marketing Advertising",
   "Other",
 ] as const;
+
+// Expenses tagged with this category feed the Marketing dashboard's Total Marketing
+// Spend and campaign ROI figures (see src/lib/marketingData.ts). Kept distinct from
+// the existing "Advertising" category so historical data there is unaffected.
+export const MARKETING_EXPENSE_CATEGORY = "Marketing Advertising";
 
 // Expense categories that directly relate to delivering the service (Cost of Services
 // in the P&L sense). Everything else in EXPENSE_CATEGORIES is treated as an Operating
@@ -46,5 +52,6 @@ export const EXPENSE_CATEGORY_STYLES: Record<string, string> = {
   Meals: "bg-amber-50 text-amber-600",
   Accommodation: "bg-purple-50 text-purple-600",
   Maintenance: "bg-slate-100 text-slate-600",
+  "Marketing Advertising": "bg-pink-50 text-pink-600",
   Other: "bg-rose-50 text-rose-600",
 };

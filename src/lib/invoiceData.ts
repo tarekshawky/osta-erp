@@ -10,6 +10,13 @@ export const EMIRATES = [
 
 export const PAYMENT_METHODS = ["Cash", "Bank Transfer", "Ziina"] as const;
 
+// How the customer found us, chosen at invoice creation. Drives the Marketing
+// dashboard's per-campaign attribution (see src/lib/marketingData.ts) -- "Organic"
+// carries no ad spend by definition, so all Marketing Advertising expense is
+// attributed to "Meta Ads" for now.
+export const LEAD_SOURCES = ["Organic", "Meta Ads"] as const;
+export type LeadSource = (typeof LEAD_SOURCES)[number];
+
 export const SERVICE_TYPES = ["Repair", "Inspection"] as const;
 
 export const CATEGORIES = ["AC", "Plumbing", "Electrical", "General"] as const;

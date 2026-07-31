@@ -30,6 +30,7 @@ export default async function AdminInvoiceEditPage({
     emirate: invoice.customer.emirate,
     buildingName: invoice.customer.buildingName ?? "",
     flatNo: invoice.customer.flatNo ?? "",
+    leadSource: invoice.leadSource as CustomerFormData["leadSource"],
   };
 
   const initialService: ServiceFormData = {

@@ -60,6 +60,7 @@ export default async function AdminExpensesPage({
     amount: exp.amount,
     status: exp.status,
     refundedAmount: exp.refundedAmount,
+    attachmentUrl: exp.attachmentUrl,
     createdByName: exp.createdBy.name,
     teamName: exp.team?.name ?? null,
   }));

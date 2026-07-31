@@ -101,6 +101,15 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/marketing",
+    label: "Marketing",
+    icon: (
+      <>
+        <path d="M3 11l18-7-7 18-2-8-9-3z" strokeLinejoin="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/wallets",
     label: "Wallets",
     icon: (

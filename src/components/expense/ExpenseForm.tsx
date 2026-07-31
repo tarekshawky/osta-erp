@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_PAYMENT_METHODS,
@@ -8,6 +8,7 @@ import {
   VEHICLE_EXPENSE_TYPES,
   ADVERTISING_PLATFORMS,
 } from "@/lib/expenseData";
+import { compressImageFile } from "@/lib/imageCompress";
 import type { ExpenseFormInput } from "@/app/admin/expenses/actions";
 
 export type ExpenseFormValue = ExpenseFormInput;
@@ -24,6 +25,31 @@ export function ExpenseForm({
   const [value, setValue] = useState<ExpenseFormValue>(initial);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isAttaching, setIsAttaching] = useState(false);
+
+  function readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Could not read the file."));
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleFileSelected(file: File | undefined) {
+    if (!file) return;
+    setIsAttaching(true);
+    setError(null);
+    try {
+      const dataUrl = file.type.startsWith("image/") ? await compressImageFile(file) : await readFileAsDataUrl(file);
+      setValue((v) => ({ ...v, attachmentUrl: dataUrl }));
+    } catch {
+      setError("Could not process the selected file.");
+    } finally {
+      setIsAttaching(false);
+    }
+  }
 
   function handleSave() {
     setError(null);
@@ -148,6 +174,41 @@ export function ExpenseForm({
             onChange={(e) => setValue({ ...value, description: e.target.value })}
           />
         </label>
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <span className="text-xs font-medium text-slate-600">Attachment (optional)</span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            className="hidden"
+            onChange={(e) => {
+              handleFileSelected(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              disabled={isAttaching}
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded-lg border border-slate-200 disabled:opacity-60 text-slate-700 text-sm font-medium px-3 py-2"
+            >
+              {isAttaching ? "Processing..." : value.attachmentUrl ? "Replace File" : "Upload File"}
+            </button>
+            {value.attachmentUrl && (
+              <>
+                <span className="text-xs text-green-600">File attached</span>
+                <button
+                  type="button"
+                  onClick={() => setValue({ ...value, attachmentUrl: null })}
+                  className="text-xs text-red-500 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-500 mt-3">{error}</p>}

@@ -1,4 +1,4 @@
-import type { Category } from "@/lib/invoiceData";
+import type { Category, LeadSource } from "@/lib/invoiceData";
 
 export type CustomerFormData = {
   type: "INDIVIDUAL" | "COMPANY";
@@ -9,6 +9,7 @@ export type CustomerFormData = {
   emirate: string;
   buildingName: string;
   flatNo: string;
+  leadSource: LeadSource;
 };
 
 export type ServiceItemFormData = {
@@ -38,6 +39,7 @@ export const emptyCustomer: CustomerFormData = {
   emirate: "Dubai",
   buildingName: "",
   flatNo: "",
+  leadSource: "Organic",
 };
 
 export const emptyServiceItem: ServiceItemFormData = {

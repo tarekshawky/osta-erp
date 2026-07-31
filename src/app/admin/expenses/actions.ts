@@ -20,6 +20,7 @@ export type ExpenseFormInput = {
   amount: number;
   date: string;
   description: string;
+  attachmentUrl?: string | null;
 };
 
 function resolveVehicleAndSubcategory(input: Pick<ExpenseFormInput, "category" | "vehicle" | "subcategory">) {
@@ -47,6 +48,7 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
       ...resolveVehicleAndSubcategory(input),
       payment: input.payment,
       amount: input.amount,
+      attachmentUrl: input.attachmentUrl || null,
       teamId: employee.teamId,
       createdById: employee.id,
     },
@@ -54,6 +56,7 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
 
   revalidatePath("/admin/expenses");
   revalidatePath("/admin/wallets");
+  revalidatePath("/admin/marketing");
   return { ok: true };
 }
 
@@ -76,11 +79,13 @@ export async function updateExpense(
       ...resolveVehicleAndSubcategory(input),
       payment: input.payment,
       amount: input.amount,
+      attachmentUrl: input.attachmentUrl || null,
     },
   });
 
   revalidatePath("/admin/expenses");
   revalidatePath("/admin/wallets");
+  revalidatePath("/admin/marketing");
   return { ok: true };
 }
 
@@ -89,6 +94,7 @@ export async function deleteExpense(id: string) {
   await prisma.expense.delete({ where: { id } });
   revalidatePath("/admin/expenses");
   revalidatePath("/admin/wallets");
+  revalidatePath("/admin/marketing");
 }
 
 export async function refundExpense(
@@ -114,6 +120,7 @@ export async function refundExpense(
   });
 
   revalidatePath("/admin/expenses");
+  revalidatePath("/admin/marketing");
   return { ok: true };
 }
 
@@ -196,5 +203,6 @@ export async function importExpensesFromExcel(formData: FormData): Promise<Impor
 
   revalidatePath("/admin/expenses");
   revalidatePath("/admin/wallets");
+  revalidatePath("/admin/marketing");
   return { ok: true, created, errors };
 }

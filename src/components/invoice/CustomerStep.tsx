@@ -1,6 +1,6 @@
 "use client";
 
-import { EMIRATES } from "@/lib/invoiceData";
+import { EMIRATES, LEAD_SOURCES } from "@/lib/invoiceData";
 import { Field, inputClassName } from "@/components/FormField";
 import type { CustomerFormData } from "./types";
 
@@ -8,10 +8,12 @@ export function CustomerStep({
   value,
   onChange,
   onNext,
+  showLeadSource = true,
 }: {
   value: CustomerFormData;
   onChange: (value: CustomerFormData) => void;
   onNext: () => void;
+  showLeadSource?: boolean;
 }) {
   const isValid =
     value.phone.trim().length >= 7 &&
@@ -106,6 +108,22 @@ export function CustomerStep({
           />
         </div>
       </Field>
+
+      {showLeadSource && (
+        <Field label="Lead Source">
+          <select
+            className={inputClassName}
+            value={value.leadSource}
+            onChange={(e) => onChange({ ...value, leadSource: e.target.value as CustomerFormData["leadSource"] })}
+          >
+            {LEAD_SOURCES.map((source) => (
+              <option key={source} value={source}>
+                {source}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
 
       <Field label="Emirate">
         <select

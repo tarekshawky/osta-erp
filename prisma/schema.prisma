@@ -87,6 +87,7 @@ model Invoice {
   amount        Float
   status        String        @default("Paid")
   refundedAmount Float        @default(0)
+  leadSource    String        @default("Organic")
   warrantyUntil DateTime?
   teamId        String?
   team          Team?         @relation(fields: [teamId], references: [id])
@@ -117,6 +118,7 @@ model Expense {
   amount         Float
   status         String   @default("Recorded")
   refundedAmount Float    @default(0)
+  attachmentUrl  String?
   teamId         String?
   team           Team?    @relation(fields: [teamId], references: [id])
   createdById    String

@@ -162,7 +162,9 @@ export function QuotationWizard({
         onBack={handleBack}
       />
       {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
-      {step === 0 && <CustomerStep value={customer} onChange={setCustomer} onNext={() => setStep(1)} />}
+      {step === 0 && (
+        <CustomerStep value={customer} onChange={setCustomer} onNext={() => setStep(1)} showLeadSource={false} />
+      )}
       {step === 1 && <ServiceStep value={service} onChange={setService} onNext={() => setStep(2)} />}
       {step === 2 && (
         <div className="flex flex-col gap-4">

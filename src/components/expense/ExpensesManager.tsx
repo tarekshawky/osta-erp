@@ -26,6 +26,7 @@ export type ExpenseRow = {
   amount: number;
   status: string;
   refundedAmount: number;
+  attachmentUrl: string | null;
   createdByName: string;
   teamName: string | null;
 };
@@ -39,6 +40,7 @@ function toFormValue(expense: ExpenseRow): ExpenseFormValue {
     amount: expense.amount,
     date: expense.date.slice(0, 10),
     description: expense.description,
+    attachmentUrl: expense.attachmentUrl,
   };
 }
 
@@ -50,6 +52,7 @@ const emptyFormValue: ExpenseFormValue = {
   amount: 0,
   date: new Date().toISOString().slice(0, 10),
   description: "",
+  attachmentUrl: null,
 };
 
 export function ExpensesManager({

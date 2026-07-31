@@ -88,6 +88,7 @@ export async function createInvoiceFromWizard(
       payment: payment.method,
       amount,
       status: "Paid",
+      leadSource: customer.leadSource,
       warrantyUntil,
       teamId: employee.teamId,
       createdById: employee.id,
@@ -98,6 +99,7 @@ export async function createInvoiceFromWizard(
   });
 
   revalidatePath("/admin/wallets");
+  revalidatePath("/admin/marketing");
   return { ok: true, number: invoice.number, amount: invoice.amount };
 }
 
@@ -135,6 +137,7 @@ export async function updateInvoiceFromWizard(
       category: service.category,
       payment: payment.method,
       amount,
+      leadSource: customer.leadSource,
       items: { create: items },
     },
   });
@@ -142,6 +145,7 @@ export async function updateInvoiceFromWizard(
   revalidatePath(`/admin/invoices/${invoiceId}`);
   revalidatePath("/admin/invoices");
   revalidatePath("/admin/wallets");
+  revalidatePath("/admin/marketing");
 
   return { ok: true, number: existing.number, amount };
 }

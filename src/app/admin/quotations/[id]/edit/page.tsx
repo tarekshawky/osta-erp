@@ -39,6 +39,7 @@ export default async function AdminQuotationEditPage({
     emirate: quotation.emirate ?? "Dubai",
     buildingName: quotation.buildingName ?? "",
     flatNo: quotation.flatNo ?? "",
+    leadSource: "Organic",
   };
 
   const initialService: ServiceFormData = {
