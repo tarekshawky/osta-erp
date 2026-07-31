@@ -445,6 +445,8 @@ export function InvoicePreviewCard({
         </div>
       </div>
 
+      <div data-pdf-spacer="true" />
+
       {/* Footer */}
       <div
         className="mt-6 -mx-3 sm:-mx-8 -mb-3 sm:-mb-8 px-3 sm:px-8 py-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-white text-xs"

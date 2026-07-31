@@ -47,26 +47,6 @@ export function DownloadPdfButton({
         import("jspdf"),
       ]);
 
-      const offscreen = document.createElement("div");
-      offscreen.style.position = "fixed";
-      offscreen.style.top = "0";
-      offscreen.style.left = "-99999px";
-      offscreen.style.width = `${RENDER_WIDTH_PX}px`;
-      offscreen.appendChild(node.cloneNode(true));
-      document.body.appendChild(offscreen);
-
-      let canvas;
-      try {
-        canvas = await html2canvas(offscreen.firstElementChild as HTMLElement, {
-          scale: CAPTURE_SCALE,
-          backgroundColor: "#ffffff",
-          width: RENDER_WIDTH_PX,
-          windowWidth: RENDER_WIDTH_PX,
-        });
-      } finally {
-        offscreen.remove();
-      }
-
       // Always lay the content out at full A4 width -- regardless of how wide the
       // source card happened to render on screen (a narrow phone view or a wide
       // admin panel) -- so the exported file always looks like a real A4 sheet.
@@ -77,6 +57,42 @@ export function DownloadPdfButton({
       const pageHeight = pdf.internal.pageSize.getHeight();
       const contentWidth = pageWidth - MARGIN_SIDE_MM * 2;
       const maxContentHeight = pageHeight - MARGIN_TOP_MM - MARGIN_BOTTOM_MM;
+
+      const offscreen = document.createElement("div");
+      offscreen.style.position = "fixed";
+      offscreen.style.top = "0";
+      offscreen.style.left = "-99999px";
+      offscreen.style.width = `${RENDER_WIDTH_PX}px`;
+      const clone = node.cloneNode(true) as HTMLElement;
+      offscreen.appendChild(clone);
+      document.body.appendChild(offscreen);
+
+      // If the card's own content is shorter than a full page, stretch the spacer
+      // just above its footer so the footer ends up flush with the page's bottom
+      // margin instead of leaving a blank white gap below a short document. This is
+      // done by measuring and setting an explicit pixel height on a marked spacer
+      // element, rather than a CSS flex-grow spacer: html2canvas doesn't reliably
+      // resolve flex-grow distribution, so a flex-based spacer silently collapses
+      // back to zero height in the captured image.
+      const onePageHeightPx = (maxContentHeight / contentWidth) * RENDER_WIDTH_PX;
+      const naturalHeightPx = clone.getBoundingClientRect().height;
+      if (naturalHeightPx < onePageHeightPx) {
+        const spacer = clone.querySelector<HTMLElement>("[data-pdf-spacer]");
+        if (spacer) spacer.style.height = `${onePageHeightPx - naturalHeightPx}px`;
+      }
+
+      let canvas;
+      try {
+        canvas = await html2canvas(clone, {
+          scale: CAPTURE_SCALE,
+          backgroundColor: "#ffffff",
+          width: RENDER_WIDTH_PX,
+          windowWidth: RENDER_WIDTH_PX,
+        });
+      } finally {
+        offscreen.remove();
+      }
+
       const contentHeight = (canvas.height / canvas.width) * contentWidth;
 
       if (contentHeight <= maxContentHeight) {
