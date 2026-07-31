@@ -20,7 +20,7 @@ export default async function AdminWarrantyCertificateDetailPage({
   return (
     <div className="pb-10">
       <AdminTopBar title="Warranty Certificates" />
-      <div className="px-6 py-6 max-w-3xl mx-auto flex flex-col gap-4">
+      <div className="px-3 sm:px-6 py-6 max-w-3xl mx-auto flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div>
             <div className="font-bold text-slate-900">{certificate.customerName}</div>

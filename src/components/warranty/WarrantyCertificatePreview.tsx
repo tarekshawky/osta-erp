@@ -18,7 +18,7 @@ export type WarrantyCertificateData = {
 
 function Row({ ar, en }: { ar: string; en: string }) {
   return (
-    <div className="grid grid-cols-2 gap-6 py-2.5 border-b border-slate-100 last:border-0">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-2.5 border-b border-slate-100 last:border-0">
       <div dir="rtl" className="text-sm text-slate-700 text-right">
         {ar}
       </div>
@@ -29,7 +29,7 @@ function Row({ ar, en }: { ar: string; en: string }) {
 
 function SectionHeader({ ar, en }: { ar: string; en: string }) {
   return (
-    <div className="grid grid-cols-2 gap-6 pt-5 pb-1.5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-5 pb-1.5">
       <div dir="rtl" className="text-sm font-bold text-blue-900 text-right border-b-2 border-amber-300 pb-1 inline-block">
         {ar}
       </div>
@@ -47,9 +47,9 @@ export function WarrantyCertificatePreview({
 }) {
   return (
     <div ref={innerRef} className="rounded-2xl border-2 border-amber-300/50 bg-white overflow-hidden shadow-sm">
-      <div className="relative bg-gradient-to-b from-blue-950 to-blue-900 px-8 sm:px-12 pt-9 pb-8 text-center">
+      <div className="relative bg-gradient-to-b from-blue-950 to-blue-900 px-4 sm:px-12 pt-9 pb-8 text-center">
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-300" />
-        <div className="text-3xl sm:text-4xl font-black tracking-tight text-amber-300">WARRANTY CERTIFICATE</div>
+        <div className="text-2xl sm:text-4xl font-black tracking-tight text-amber-300">WARRANTY CERTIFICATE</div>
         <div className="text-xs sm:text-sm tracking-[0.35em] text-blue-200 mt-2 font-semibold">
           {WARRANTY_DAYS}-DAY PROTECTION
         </div>
@@ -59,14 +59,14 @@ export function WarrantyCertificatePreview({
       </div>
 
       <div className="flex flex-col items-center pt-6 pb-2">
-        <LogoImage type="certificate" className="h-32 w-auto" />
+        <LogoImage type="certificate" className="h-20 sm:h-32 w-auto" />
         <p className="mt-3 text-sm text-slate-500 text-center max-w-md px-6">
           This certificate confirms the service below is covered by Osta Services&apos; official warranty.
         </p>
       </div>
 
-      <div className="px-8 sm:px-12 pb-10">
-        <div className="grid grid-cols-2 gap-6 text-xs text-slate-600 pt-4 border-t border-slate-100">
+      <div className="px-4 sm:px-12 pb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs text-slate-600 pt-4 border-t border-slate-100">
           <p dir="rtl" className="text-right">
             تشهد خدمات آسطا بأن الخدمة الموضحة أدناه قد تم تنفيذها بواسطة فريقنا الفني المتخصص بتاريخ:{" "}
             {formatDate(data.date)}
@@ -93,7 +93,7 @@ export function WarrantyCertificatePreview({
           ar={`مدة الضمان: من تاريخ ${formatDate(data.warrantyFrom)} إلى تاريخ ${formatDate(data.warrantyTo)}`}
           en={`Warranty Period: From ${formatDate(data.warrantyFrom)} To ${formatDate(data.warrantyTo)}`}
         />
-        <div className="grid grid-cols-2 gap-6 py-2.5 text-xs text-slate-600">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-2.5 text-xs text-slate-600">
           <p dir="rtl" className="text-right">
             تقدم خدمات آسطا ضمانًا لمدة <strong>{WARRANTY_DAYS} يومًا</strong> على الخدمة المنفذة فقط، ويشمل الضمان
             أي مشكلة مرتبطة مباشرة بالأعمال التي تم تنفيذها بواسطة فريقنا الفني وفقًا لشروط وأحكام الضمان.
@@ -113,13 +113,13 @@ export function WarrantyCertificatePreview({
         <Row ar={`مسؤول الفريق: ${data.teamSupervisor ?? "—"}`} en={`Team Supervisor: ${data.teamSupervisor ?? "—"}`} />
 
         <SectionHeader ar="شروط وأحكام الضمان المختصرة" en="Warranty Terms & Conditions Summary" />
-        <div className="grid grid-cols-2 gap-6 py-1.5 text-xs text-slate-600">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-1.5 text-xs text-slate-600">
           <p dir="rtl" className="text-right">
             • الضمان يشمل الأعمال المنفذة فقط ولا يشمل الأعطال الجديدة أو سوء الاستخدام أو العوامل الخارجية.
           </p>
           <p>• Warranty applies only to the performed work and does not cover new faults, misuse, or external factors.</p>
         </div>
-        <div className="grid grid-cols-2 gap-6 py-1.5 text-xs text-slate-600">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-1.5 text-xs text-slate-600">
           <p dir="rtl" className="text-right">
             • يجب التواصل مع خدمات آسطا قبل أي إصلاح أو تدخل من طرف آخر، وإلا يعتبر الضمان ملغيًا.
           </p>
@@ -128,14 +128,14 @@ export function WarrantyCertificatePreview({
             the warranty will be void.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-6 py-1.5 text-xs text-slate-600">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-1.5 text-xs text-slate-600">
           <p dir="rtl" className="text-right">
             • لا يشمل الضمان قطع الغيار أو الأعطال غير المرتبطة مباشرة بالخدمة المقدمة.
           </p>
           <p>• Warranty does not cover spare parts or issues unrelated to the provided service.</p>
         </div>
 
-        <div className="mt-5 pt-4 border-t-2 border-amber-300/50 grid grid-cols-2 gap-6 text-xs">
+        <div className="mt-5 pt-4 border-t-2 border-amber-300/50 grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
           <div dir="rtl" className="text-right">
             <div className="text-slate-500">للاطلاع على الشروط والأحكام الكاملة:</div>
             <div className="text-blue-700 mt-0.5">{TERMS_URL}</div>
