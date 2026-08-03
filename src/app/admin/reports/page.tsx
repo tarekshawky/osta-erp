@@ -14,11 +14,12 @@ const QUARTERS = [
 
 function periodFigures(figures: MonthFigures[]) {
   const revenue = figures.reduce((s, m) => s + m.revenue, 0);
-  const costOfServices = figures.reduce((s, m) => s + m.costOfServiceExpenses + m.salaries, 0);
+  const salaries = figures.reduce((s, m) => s + m.salaries, 0);
+  const costOfServices = figures.reduce((s, m) => s + m.costOfServiceExpenses, 0) + salaries;
   const operatingExpenses = figures.reduce((s, m) => s + m.operatingExpenses, 0);
   const grossProfit = revenue - costOfServices;
   const netProfit = grossProfit - operatingExpenses;
-  return { revenue, costOfServices, grossProfit, operatingExpenses, netProfit };
+  return { revenue, salaries, costOfServices, grossProfit, operatingExpenses, netProfit };
 }
 
 export default async function AdminReportsPage({
@@ -52,6 +53,7 @@ export default async function AdminReportsPage({
   const selectedMonths = month ? [months[month - 1]] : months;
   const {
     totalRevenue,
+    totalSalaries,
     costOfServices,
     grossProfit,
     operatingExpenses,
@@ -65,6 +67,7 @@ export default async function AdminReportsPage({
 
   const summaryRows: { label: string; value: number; emphasis?: boolean }[] = [
     { label: "Total Revenue", value: totalRevenue },
+    { label: "Salary", value: totalSalaries },
     { label: "Total Cost (Cost of Services)", value: costOfServices },
     { label: "Gross Profit", value: grossProfit, emphasis: true },
     { label: "Operating Expenses", value: operatingExpenses },
@@ -167,6 +170,7 @@ export default async function AdminReportsPage({
               <tr className="text-left text-slate-500 border-b border-slate-100">
                 <th className="px-4 py-3 font-medium">Month</th>
                 <th className="px-4 py-3 font-medium text-right">Revenue</th>
+                <th className="px-4 py-3 font-medium text-right">Salary</th>
                 <th className="px-4 py-3 font-medium text-right">Cost of Services</th>
                 <th className="px-4 py-3 font-medium text-right">Gross Profit</th>
                 <th className="px-4 py-3 font-medium text-right">Operating Expenses</th>
@@ -187,6 +191,7 @@ export default async function AdminReportsPage({
                   >
                     <td className="px-4 py-3 text-slate-900 font-medium">{MONTH_NAMES[i]}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{included ? formatAed(f.revenue) : "—"}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">{included ? formatAed(f.salaries) : "—"}</td>
                     <td className="px-4 py-3 text-right text-slate-600">
                       {included ? formatAed(f.costOfServices) : "—"}
                     </td>
@@ -211,6 +216,7 @@ export default async function AdminReportsPage({
               <tr className="border-t border-slate-200 bg-slate-50/60 font-semibold">
                 <td className="px-4 py-3 text-slate-900">{month ? MONTH_NAMES[month - 1] : "Total"}</td>
                 <td className="px-4 py-3 text-right text-slate-900">{formatAed(totalRevenue)}</td>
+                <td className="px-4 py-3 text-right text-slate-900">{formatAed(totalSalaries)}</td>
                 <td className="px-4 py-3 text-right text-slate-900">{formatAed(costOfServices)}</td>
                 <td className="px-4 py-3 text-right text-slate-900">{formatAed(grossProfit)}</td>
                 <td className="px-4 py-3 text-right text-slate-900">{formatAed(operatingExpenses)}</td>
@@ -230,6 +236,7 @@ export default async function AdminReportsPage({
                 <tr className="text-left text-slate-500 border-b border-slate-100">
                   <th className="px-4 py-3 font-medium">Quarter</th>
                   <th className="px-4 py-3 font-medium text-right">Revenue</th>
+                  <th className="px-4 py-3 font-medium text-right">Salary</th>
                   <th className="px-4 py-3 font-medium text-right">Cost of Services</th>
                   <th className="px-4 py-3 font-medium text-right">Gross Profit</th>
                   <th className="px-4 py-3 font-medium text-right">Operating Expenses</th>
@@ -246,6 +253,7 @@ export default async function AdminReportsPage({
                         {q.label} ({MONTH_NAMES[q.months[0]].slice(0, 3)}–{MONTH_NAMES[q.months[2]].slice(0, 3)})
                       </td>
                       <td className="px-4 py-3 text-right text-slate-600">{included ? formatAed(f.revenue) : "—"}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">{included ? formatAed(f.salaries) : "—"}</td>
                       <td className="px-4 py-3 text-right text-slate-600">
                         {included ? formatAed(f.costOfServices) : "—"}
                       </td>

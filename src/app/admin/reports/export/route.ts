@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
   const headers = [
     "Month",
     "Revenue (AED)",
+    "Salary (AED)",
     "Cost of Services (AED)",
     "Gross Profit (AED)",
     "Operating Expenses (AED)",
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
     return [
       MONTH_NAMES[i],
       Number(m.revenue.toFixed(2)),
+      Number(m.salaries.toFixed(2)),
       Number(costOfServices.toFixed(2)),
       Number(grossProfit.toFixed(2)),
       Number(m.operatingExpenses.toFixed(2)),
@@ -41,6 +43,7 @@ export async function GET(request: NextRequest) {
   const selectedMonths = month ? [months[month - 1]] : months;
   const {
     totalRevenue,
+    totalSalaries,
     costOfServices,
     grossProfit,
     operatingExpenses,
@@ -52,16 +55,25 @@ export async function GET(request: NextRequest) {
 
   const periodLabel = month ? `${MONTH_NAMES[month - 1]} ${year}` : String(year);
 
-  rows.push([null, null, null, null, null, null]);
-  rows.push([`Financial Summary — ${periodLabel}${team !== "all" ? ` (${team})` : ""}`, null, null, null, null, null]);
-  rows.push(["Total Revenue", formatAed(totalRevenue), null, null, null, null]);
-  rows.push(["Total Cost (Cost of Services)", formatAed(costOfServices), null, null, null, null]);
-  rows.push(["Gross Profit", formatAed(grossProfit), null, null, null, null]);
-  rows.push(["Operating Expenses", formatAed(operatingExpenses), null, null, null, null]);
-  rows.push(["Net Profit Before Tax", formatAed(netProfitBeforeTax), null, null, null, null]);
-  rows.push(["Taxable Profit", formatAed(taxableProfit), null, null, null, null]);
-  rows.push(["Corporate Tax", formatAed(corporateTax), null, null, null, null]);
-  rows.push(["Net Profit After Tax", formatAed(netProfitAfterTax), null, null, null, null]);
+  rows.push([null, null, null, null, null, null, null]);
+  rows.push([
+    `Financial Summary — ${periodLabel}${team !== "all" ? ` (${team})` : ""}`,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ]);
+  rows.push(["Total Revenue", formatAed(totalRevenue), null, null, null, null, null]);
+  rows.push(["Salary", formatAed(totalSalaries), null, null, null, null, null]);
+  rows.push(["Total Cost (Cost of Services)", formatAed(costOfServices), null, null, null, null, null]);
+  rows.push(["Gross Profit", formatAed(grossProfit), null, null, null, null, null]);
+  rows.push(["Operating Expenses", formatAed(operatingExpenses), null, null, null, null, null]);
+  rows.push(["Net Profit Before Tax", formatAed(netProfitBeforeTax), null, null, null, null, null]);
+  rows.push(["Taxable Profit", formatAed(taxableProfit), null, null, null, null, null]);
+  rows.push(["Corporate Tax", formatAed(corporateTax), null, null, null, null, null]);
+  rows.push(["Net Profit After Tax", formatAed(netProfitAfterTax), null, null, null, null, null]);
 
   const buffer = await buildWorkbookBuffer("Financial Report", headers, rows);
 
