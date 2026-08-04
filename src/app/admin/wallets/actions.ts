@@ -48,6 +48,36 @@ export async function withdrawCustody(
   return { ok: true };
 }
 
+// Zeroes out a wallet's Current Balance (Custody + Cash - Expenses) by adjusting
+// Custody alone. No transfer to any other wallet — purely a reset for this wallet.
+export async function collectWallet(employeeId: string): Promise<{ ok: boolean; error?: string }> {
+  await requireEmployee("ADMIN");
+
+  const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
+  if (!employee) return { ok: false, error: "Employee not found." };
+
+  const [cashAgg, expenseAgg] = await Promise.all([
+    prisma.invoice.aggregate({
+      _sum: { amount: true },
+      where: { createdById: employeeId, status: "Paid", payment: "Cash" },
+    }),
+    prisma.expense.aggregate({ _sum: { amount: true }, where: { createdById: employeeId } }),
+  ]);
+
+  const cash = cashAgg._sum.amount ?? 0;
+  const expenses = expenseAgg._sum.amount ?? 0;
+  const balance = employee.custody + cash - expenses;
+  const newCustody = employee.custody - balance;
+
+  await prisma.employee.update({
+    where: { id: employeeId },
+    data: { custody: newCustody },
+  });
+
+  revalidatePath("/admin/wallets");
+  return { ok: true };
+}
+
 export async function withdrawRevenue(
   employeeId: string,
   amount: number

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatAed, initials } from "@/lib/format";
 import { CustodyModal } from "./CustodyModal";
 import { WithdrawRevenueModal } from "./WithdrawRevenueModal";
+import { CollectMoneyButton } from "./CollectMoneyButton";
 
 export function WalletCard({
   role,
@@ -85,7 +86,7 @@ export function WalletCard({
         </div>
       </div>
 
-      <div className={`grid bg-white text-xs ${role === "Employee" ? "grid-cols-5" : "grid-cols-4"}`}>
+      <div className={`grid bg-white text-xs ${role === "Employee" ? "grid-cols-3 sm:grid-cols-6" : "grid-cols-3 sm:grid-cols-5"}`}>
         <CustodyModal
           employeeId={employeeId}
           employeeName={name}
@@ -112,6 +113,7 @@ export function WalletCard({
             </div>
           }
         />
+        <CollectMoneyButton employeeId={employeeId} employeeName={name} />
         {role === "Employee" && (
           <WithdrawRevenueModal
             employeeId={employeeId}
