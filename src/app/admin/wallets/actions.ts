@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
-import { getEmployeeFinancials } from "@/lib/walletData";
+import { getEmployeeFinancials, recordCollectedAmount } from "@/lib/walletData";
 
 export async function addCustody(
   employeeId: string,
@@ -52,19 +52,25 @@ export async function withdrawCustody(
 // Resets a wallet like a cash till: Custody, RevenueWithdrawn, and (via walletResetAt)
 // Cash/Revenue/Expenses all go to 0. Nothing transfers to any other wallet — only
 // invoices/expenses dated from this point forward count again, until the next collect.
+// The balance that was zeroed out is added to the lifetime "Collect Money Total".
 export async function collectWallet(employeeId: string): Promise<{ ok: boolean; error?: string }> {
   await requireEmployee("ADMIN");
 
   const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
   if (!employee) return { ok: false, error: "Employee not found." };
 
+  const { cash, expenses } = await getEmployeeFinancials(employeeId, employee.walletResetAt);
+  const balance = employee.custody + cash - expenses;
+
   await prisma.employee.update({
     where: { id: employeeId },
     data: { custody: 0, revenueWithdrawn: 0, walletResetAt: new Date() },
   });
+  await recordCollectedAmount(balance);
 
   revalidatePath("/admin/wallets");
   revalidatePath("/admin/employees");
+  revalidatePath("/admin");
   revalidatePath("/employee");
   return { ok: true };
 }

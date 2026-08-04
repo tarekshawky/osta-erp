@@ -7,7 +7,7 @@ import { TeamBadge } from "@/components/admin/TeamBadge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getPaymentTotals } from "@/lib/reportData";
 import { buildDateRange } from "@/lib/dateRangeFilter";
-import { computeCollectMoneyTotal } from "@/lib/walletData";
+import { getCollectMoneyTotal } from "@/lib/walletData";
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -30,7 +30,7 @@ export default async function AdminDashboardPage({
       prisma.invoice.count({ where: dateRange ? { date: dateRange } : {} }),
       prisma.employee.count(),
       getPaymentTotals(dateRange ? { date: dateRange } : {}),
-      computeCollectMoneyTotal(),
+      getCollectMoneyTotal(),
       prisma.invoice.findMany({
         where: dateRange ? { date: dateRange } : {},
         orderBy: { date: "desc" },
@@ -75,7 +75,7 @@ export default async function AdminDashboardPage({
         <div className="mt-3 max-w-sm rounded-xl bg-gradient-to-br from-teal-700 to-emerald-600 text-white p-4">
           <div className="text-xs text-teal-100">Collect Money Total</div>
           <div className="text-2xl font-bold mt-1">{formatAed(collectMoneyTotal)}</div>
-          <div className="text-xs text-teal-100 mt-1">Sum of all negative wallet balances, all-time</div>
+          <div className="text-xs text-teal-100 mt-1">Lifetime total collected via Collect Money</div>
         </div>
 
         <div className="mt-8 flex items-center justify-between">

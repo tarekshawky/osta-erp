@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { SETTING_ID } from "./settings";
 
 export type EmployeeFinancials = {
   cash: number;
@@ -45,20 +46,19 @@ export async function getEmployeeFinancials(
   };
 }
 
-// Sum of every wallet-enabled employee's negative Current Balance (Custody + Cash -
-// Expenses), expressed as a positive amount — i.e. how much would need to be added via
-// "Collect Money" across everyone right now if every negative balance were collected.
-export async function computeCollectMoneyTotal(): Promise<number> {
-  const employees = await prisma.employee.findMany({
-    where: { hasWallet: true },
-    select: { id: true, custody: true, walletResetAt: true },
-  });
+// Lifetime running total of every amount ever collected via "Collect Money" — persists
+// across resets (unlike the per-wallet figures it zeroes out), only ever grows.
+export async function getCollectMoneyTotal(): Promise<number> {
+  const setting = await prisma.setting.findUnique({ where: { id: SETTING_ID } });
+  return setting?.collectMoneyTotal ?? 0;
+}
 
-  let total = 0;
-  for (const emp of employees) {
-    const financials = await getEmployeeFinancials(emp.id, emp.walletResetAt);
-    const balance = emp.custody + financials.cash - financials.expenses;
-    if (balance < 0) total += -balance;
-  }
-  return total;
+// Records a collection: adds the absolute value of the balance that was just zeroed
+// out to the lifetime running total.
+export async function recordCollectedAmount(amount: number): Promise<void> {
+  await prisma.setting.upsert({
+    where: { id: SETTING_ID },
+    create: { id: SETTING_ID, collectMoneyTotal: Math.abs(amount) },
+    update: { collectMoneyTotal: { increment: Math.abs(amount) } },
+  });
 }

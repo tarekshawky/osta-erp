@@ -1,14 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WalletsManager } from "@/components/wallet/WalletsManager";
-import { computeCollectMoneyTotal, getEmployeeFinancials } from "@/lib/walletData";
+import { getCollectMoneyTotal, getEmployeeFinancials } from "@/lib/walletData";
 
 export default async function AdminWalletsPage() {
   const employees = await prisma.employee.findMany({ where: { hasWallet: true }, orderBy: { createdAt: "asc" } });
 
   const [financialsList, collectMoneyTotal] = await Promise.all([
     Promise.all(employees.map((emp) => getEmployeeFinancials(emp.id, emp.walletResetAt))),
-    computeCollectMoneyTotal(),
+    getCollectMoneyTotal(),
   ]);
 
   const wallets = employees.map((emp, i) => {
