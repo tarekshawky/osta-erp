@@ -22,7 +22,7 @@ export function WalletsManager({ wallets }: { wallets: WalletRow[] }) {
   const admins = wallets.filter((w) => w.role === "ADMIN");
   const employees = wallets.filter((w) => w.role === "EMPLOYEE");
 
-  const adminTotal = admins.reduce((sum, w) => sum + w.revenue - w.expenses - w.revenueWithdrawn, 0);
+  const adminTotal = admins.reduce((sum, w) => sum + w.custody, 0);
   const employeeTotal = employees.reduce((sum, w) => sum + w.revenue - w.expenses - w.revenueWithdrawn, 0);
 
   const shown = tab === "admin" ? admins : employees;
