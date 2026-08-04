@@ -24,9 +24,10 @@ export default async function AdminInvoicesPage({
   const year = yearParam ? Number(yearParam) : null;
   const month = monthParam ? Number(monthParam) : null;
 
-  const [teams, allInvoices, invoiceDates] = await Promise.all([
+  const [teams, allInvoices, paidInvoices, invoiceDates] = await Promise.all([
     prisma.team.findMany({ orderBy: { name: "asc" } }),
     prisma.invoice.aggregate({ _sum: { amount: true }, _count: true }),
+    prisma.invoice.aggregate({ _sum: { amount: true }, where: { status: "Paid" } }),
     prisma.invoice.findMany({ select: { date: true } }),
   ]);
 
@@ -118,7 +119,7 @@ export default async function AdminInvoicesPage({
         </div>
 
         <div className="mt-4 grid grid-cols-2 lg:grid-cols-5 gap-3">
-          <AdminStatCard label="Total Revenue" value={formatAed(allInvoices._sum.amount ?? 0)} valueClassName="text-blue-700" />
+          <AdminStatCard label="Total Revenue" value={formatAed(paidInvoices._sum.amount ?? 0)} valueClassName="text-blue-700" />
           <AdminStatCard label="Total Invoices" value={String(allInvoices._count)} valueClassName="text-green-600" />
           <AdminStatCard label="Paid" value={String(paidCount)} valueClassName="text-green-600" />
           <AdminStatCard label="Partially Refunded" value={String(partiallyRefundedCount)} valueClassName="text-orange-500" />
