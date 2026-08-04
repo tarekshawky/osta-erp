@@ -18,17 +18,20 @@ export async function getEmployeeFinancials(
   employeeId: string,
   walletResetAt: Date | null
 ): Promise<EmployeeFinancials> {
+  // Filtered on createdAt (always a precise insert-time timestamp), not date — Expense.date
+  // is normalized to midnight UTC of the picked calendar day, so an expense entered hours
+  // after a same-day reset would otherwise have a date "before" the reset and get dropped.
   const dateFilter = walletResetAt ? { gte: walletResetAt } : undefined;
 
   const [invoicesByPayment, expenseAgg] = await Promise.all([
     prisma.invoice.groupBy({
       by: ["payment"],
       _sum: { amount: true },
-      where: { createdById: employeeId, status: "Paid", ...(dateFilter ? { date: dateFilter } : {}) },
+      where: { createdById: employeeId, status: "Paid", ...(dateFilter ? { createdAt: dateFilter } : {}) },
     }),
     prisma.expense.aggregate({
       _sum: { amount: true },
-      where: { createdById: employeeId, ...(dateFilter ? { date: dateFilter } : {}) },
+      where: { createdById: employeeId, ...(dateFilter ? { createdAt: dateFilter } : {}) },
     }),
   ]);
 
