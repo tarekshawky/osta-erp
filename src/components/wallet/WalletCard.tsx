@@ -26,7 +26,11 @@ export function WalletCard({
   // Guard against floating-point dust (e.g. -0.000000000007) from summing many decimal
   // amounts, which would otherwise render as a stray "-0.00".
   const availableRevenue = Math.abs(rawAvailableRevenue) < 0.005 ? 0 : rawAvailableRevenue;
-  const balance = availableRevenue;
+  // Employees: balance is revenue they've earned but not yet withdrawn (custody is a
+  // separate reimbursable float). Admin: custody largely *is* company cash (built up
+  // from employees' withdrawals + manual top-ups), so it belongs in their balance.
+  const rawBalance = role === "Admin" ? custody + availableRevenue : availableRevenue;
+  const balance = Math.abs(rawBalance) < 0.005 ? 0 : rawBalance;
 
   return (
     <div className="rounded-xl border border-slate-200 overflow-hidden">
