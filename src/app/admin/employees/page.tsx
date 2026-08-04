@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { EmployeesManager } from "@/components/employee-admin/EmployeesManager";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
+import { getEmployeeFinancials } from "@/lib/walletData";
 
 export default async function AdminEmployeesPage({
   searchParams,
@@ -15,19 +16,18 @@ export default async function AdminEmployeesPage({
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
 
-  const [employees, revenueByEmployee] = await Promise.all([
-    prisma.employee.findMany({
-      include: { team: true },
-      orderBy: { createdAt: "asc" },
-      skip: (safePage - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-    prisma.invoice.groupBy({ by: ["createdById"], _sum: { amount: true }, where: { status: "Paid" } }),
-  ]);
+  const employees = await prisma.employee.findMany({
+    include: { team: true },
+    orderBy: { createdAt: "asc" },
+    skip: (safePage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
 
-  const revenueMap = new Map(revenueByEmployee.map((r) => [r.createdById, r._sum.amount ?? 0]));
+  const financialsList = await Promise.all(
+    employees.map((emp) => getEmployeeFinancials(emp.id, emp.walletResetAt))
+  );
 
-  const rows = employees.map((emp) => ({
+  const rows = employees.map((emp, i) => ({
     id: emp.id,
     code: emp.code,
     name: emp.name,
@@ -37,7 +37,7 @@ export default async function AdminEmployeesPage({
     role: emp.role,
     status: emp.status,
     custody: emp.custody,
-    revenue: revenueMap.get(emp.id) ?? 0,
+    revenue: financialsList[i].revenue,
     monthlySalary: emp.monthlySalary,
     hasWallet: emp.hasWallet,
   }));

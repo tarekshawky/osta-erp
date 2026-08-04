@@ -1,46 +1,31 @@
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WalletsManager } from "@/components/wallet/WalletsManager";
-import { computeCollectMoneyTotal } from "@/lib/walletData";
+import { computeCollectMoneyTotal, getEmployeeFinancials } from "@/lib/walletData";
 
 export default async function AdminWalletsPage() {
-  const [employees, revenueByEmployee, expensesByEmployee, paymentByEmployee, collectMoneyTotal] = await Promise.all([
-    prisma.employee.findMany({ where: { hasWallet: true }, orderBy: { createdAt: "asc" } }),
-    prisma.invoice.groupBy({ by: ["createdById"], _sum: { amount: true }, where: { status: "Paid" } }),
-    prisma.expense.groupBy({ by: ["createdById"], _sum: { amount: true } }),
-    prisma.invoice.groupBy({
-      by: ["createdById", "payment"],
-      _sum: { amount: true },
-      where: { status: "Paid" },
-    }),
+  const employees = await prisma.employee.findMany({ where: { hasWallet: true }, orderBy: { createdAt: "asc" } });
+
+  const [financialsList, collectMoneyTotal] = await Promise.all([
+    Promise.all(employees.map((emp) => getEmployeeFinancials(emp.id, emp.walletResetAt))),
     computeCollectMoneyTotal(),
   ]);
 
-  const revenueMap = new Map(revenueByEmployee.map((r) => [r.createdById, r._sum.amount ?? 0]));
-  const expenseMap = new Map(expensesByEmployee.map((r) => [r.createdById, r._sum.amount ?? 0]));
-
-  const paymentMap = new Map<string, { cash: number; ziina: number; bankTransfer: number }>();
-  for (const row of paymentByEmployee) {
-    const entry = paymentMap.get(row.createdById) ?? { cash: 0, ziina: 0, bankTransfer: 0 };
-    const amount = row._sum.amount ?? 0;
-    if (row.payment === "Cash") entry.cash += amount;
-    else if (row.payment === "Ziina") entry.ziina += amount;
-    else if (row.payment === "Bank Transfer") entry.bankTransfer += amount;
-    paymentMap.set(row.createdById, entry);
-  }
-
-  const wallets = employees.map((emp) => ({
-    id: emp.id,
-    code: emp.code,
-    name: emp.name,
-    role: emp.role,
-    photoData: emp.photoData,
-    custody: emp.custody,
-    revenue: revenueMap.get(emp.id) ?? 0,
-    expenses: expenseMap.get(emp.id) ?? 0,
-    revenueWithdrawn: emp.revenueWithdrawn,
-    payments: paymentMap.get(emp.id) ?? { cash: 0, ziina: 0, bankTransfer: 0 },
-  }));
+  const wallets = employees.map((emp, i) => {
+    const financials = financialsList[i];
+    return {
+      id: emp.id,
+      code: emp.code,
+      name: emp.name,
+      role: emp.role,
+      photoData: emp.photoData,
+      custody: emp.custody,
+      revenue: financials.revenue,
+      expenses: financials.expenses,
+      revenueWithdrawn: emp.revenueWithdrawn,
+      payments: { cash: financials.cash, ziina: financials.ziina, bankTransfer: financials.bankTransfer },
+    };
+  });
 
   return (
     <div className="pb-10">

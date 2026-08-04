@@ -5,6 +5,7 @@ import { logout } from "@/app/actions/logout";
 import { TopBar } from "@/components/TopBar";
 import { StatCard } from "@/components/StatCard";
 import { QuickActionTile } from "@/components/QuickActionTile";
+import { getEmployeeFinancials } from "@/lib/walletData";
 
 export default async function EmployeeHomePage() {
   const session = await requireEmployee("EMPLOYEE");
@@ -13,20 +14,8 @@ export default async function EmployeeHomePage() {
     include: { team: true },
   });
 
-  const [revenueAgg, expenseAgg] = await Promise.all([
-    prisma.invoice.aggregate({
-      _sum: { amount: true },
-      where: { createdById: employee.id, status: "Paid" },
-    }),
-    prisma.expense.aggregate({
-      _sum: { amount: true },
-      where: { createdById: employee.id },
-    }),
-  ]);
-
-  const revenue = revenueAgg._sum.amount ?? 0;
-  const expenses = expenseAgg._sum.amount ?? 0;
-  const currentCash = employee.custody + revenue - expenses - employee.revenueWithdrawn;
+  const { revenue, expenses, cash } = await getEmployeeFinancials(employee.id, employee.walletResetAt);
+  const currentCash = employee.custody + cash - expenses;
   const number = (n: number) => new Intl.NumberFormat("en-US", { minimumFractionDigits: n % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 }).format(n);
 
   return (

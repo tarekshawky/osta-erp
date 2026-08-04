@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
+import { getEmployeeFinancials } from "@/lib/walletData";
 
 export async function addCustody(
   employeeId: string,
@@ -48,33 +49,23 @@ export async function withdrawCustody(
   return { ok: true };
 }
 
-// Zeroes out a wallet's Current Balance (Custody + Cash - Expenses) by adjusting
-// Custody alone. No transfer to any other wallet — purely a reset for this wallet.
+// Resets a wallet like a cash till: Custody, RevenueWithdrawn, and (via walletResetAt)
+// Cash/Revenue/Expenses all go to 0. Nothing transfers to any other wallet — only
+// invoices/expenses dated from this point forward count again, until the next collect.
 export async function collectWallet(employeeId: string): Promise<{ ok: boolean; error?: string }> {
   await requireEmployee("ADMIN");
 
   const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
   if (!employee) return { ok: false, error: "Employee not found." };
 
-  const [cashAgg, expenseAgg] = await Promise.all([
-    prisma.invoice.aggregate({
-      _sum: { amount: true },
-      where: { createdById: employeeId, status: "Paid", payment: "Cash" },
-    }),
-    prisma.expense.aggregate({ _sum: { amount: true }, where: { createdById: employeeId } }),
-  ]);
-
-  const cash = cashAgg._sum.amount ?? 0;
-  const expenses = expenseAgg._sum.amount ?? 0;
-  const balance = employee.custody + cash - expenses;
-  const newCustody = employee.custody - balance;
-
   await prisma.employee.update({
     where: { id: employeeId },
-    data: { custody: newCustody },
+    data: { custody: 0, revenueWithdrawn: 0, walletResetAt: new Date() },
   });
 
   revalidatePath("/admin/wallets");
+  revalidatePath("/admin/employees");
+  revalidatePath("/employee");
   return { ok: true };
 }
 
@@ -91,16 +82,7 @@ export async function withdrawRevenue(
   const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
   if (!employee) return { ok: false, error: "Employee not found." };
 
-  const [revenueAgg, expenseAgg] = await Promise.all([
-    prisma.invoice.aggregate({
-      _sum: { amount: true },
-      where: { createdById: employeeId, status: "Paid" },
-    }),
-    prisma.expense.aggregate({ _sum: { amount: true }, where: { createdById: employeeId } }),
-  ]);
-
-  const revenue = revenueAgg._sum.amount ?? 0;
-  const expenses = expenseAgg._sum.amount ?? 0;
+  const { revenue, expenses } = await getEmployeeFinancials(employeeId, employee.walletResetAt);
   const available = revenue - expenses - employee.revenueWithdrawn;
 
   if (amount > available + 0.001) {

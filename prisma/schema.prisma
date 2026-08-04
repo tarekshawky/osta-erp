@@ -48,6 +48,7 @@ model Employee {
   photoData String?
   custody   Float      @default(0)
   revenueWithdrawn Float @default(0)
+  walletResetAt DateTime?
   monthlySalary Float  @default(0)
   hasWallet Boolean    @default(true)
   teamId    String?
