@@ -22,7 +22,10 @@ export function WalletCard({
   expenses: number;
   revenueWithdrawn: number;
 }) {
-  const availableRevenue = revenue - expenses - revenueWithdrawn;
+  const rawAvailableRevenue = revenue - expenses - revenueWithdrawn;
+  // Guard against floating-point dust (e.g. -0.000000000007) from summing many decimal
+  // amounts, which would otherwise render as a stray "-0.00".
+  const availableRevenue = Math.abs(rawAvailableRevenue) < 0.005 ? 0 : rawAvailableRevenue;
   const balance = availableRevenue;
 
   return (
