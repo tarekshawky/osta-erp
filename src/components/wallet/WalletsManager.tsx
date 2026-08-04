@@ -17,7 +17,7 @@ export type WalletRow = {
   payments: { cash: number; ziina: number; bankTransfer: number };
 };
 
-export function WalletsManager({ wallets }: { wallets: WalletRow[] }) {
+export function WalletsManager({ wallets, collectMoneyTotal }: { wallets: WalletRow[]; collectMoneyTotal: number }) {
   const [tab, setTab] = useState<"admin" | "employee">("admin");
 
   const admins = wallets.filter((w) => w.role === "ADMIN");
@@ -44,6 +44,12 @@ export function WalletsManager({ wallets }: { wallets: WalletRow[] }) {
           <div className="text-2xl font-bold mt-1">{formatAed(employeeTotal)}</div>
           <div className="text-xs text-sky-100 mt-1">{employees.length} employee(s)</div>
         </div>
+      </div>
+
+      <div className="mt-3 rounded-xl bg-gradient-to-br from-teal-700 to-emerald-600 text-white p-4">
+        <div className="text-xs text-teal-100">Collect Money Total</div>
+        <div className="text-2xl font-bold mt-1">{formatAed(collectMoneyTotal)}</div>
+        <div className="text-xs text-teal-100 mt-1">Sum of all negative wallet balances</div>
       </div>
 
       <div className="mt-4 inline-flex rounded-lg border border-slate-200 bg-white p-1">

@@ -7,6 +7,7 @@ import { TeamBadge } from "@/components/admin/TeamBadge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getPaymentTotals } from "@/lib/reportData";
 import { buildDateRange } from "@/lib/dateRangeFilter";
+import { computeCollectMoneyTotal } from "@/lib/walletData";
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -18,7 +19,7 @@ export default async function AdminDashboardPage({
   const month = monthParam ? Number(monthParam) : null;
   const dateRange = buildDateRange(year, month);
 
-  const [invoiceDates, revenueAgg, expenseAgg, invoiceCount, employeeCount, paymentTotals, recentInvoices] =
+  const [invoiceDates, revenueAgg, expenseAgg, invoiceCount, employeeCount, paymentTotals, collectMoneyTotal, recentInvoices] =
     await Promise.all([
       prisma.invoice.findMany({ select: { date: true } }),
       prisma.invoice.aggregate({
@@ -29,6 +30,7 @@ export default async function AdminDashboardPage({
       prisma.invoice.count({ where: dateRange ? { date: dateRange } : {} }),
       prisma.employee.count(),
       getPaymentTotals(dateRange ? { date: dateRange } : {}),
+      computeCollectMoneyTotal(),
       prisma.invoice.findMany({
         where: dateRange ? { date: dateRange } : {},
         orderBy: { date: "desc" },
@@ -67,6 +69,13 @@ export default async function AdminDashboardPage({
             value={formatAed(paymentTotals.bankTransfer)}
             valueClassName="text-purple-600"
           />
+        </div>
+
+        <h3 className="mt-6 font-semibold text-slate-900">Wallets</h3>
+        <div className="mt-3 max-w-sm rounded-xl bg-gradient-to-br from-teal-700 to-emerald-600 text-white p-4">
+          <div className="text-xs text-teal-100">Collect Money Total</div>
+          <div className="text-2xl font-bold mt-1">{formatAed(collectMoneyTotal)}</div>
+          <div className="text-xs text-teal-100 mt-1">Sum of all negative wallet balances, all-time</div>
         </div>
 
         <div className="mt-8 flex items-center justify-between">

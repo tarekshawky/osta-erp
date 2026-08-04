@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WalletsManager } from "@/components/wallet/WalletsManager";
+import { computeCollectMoneyTotal } from "@/lib/walletData";
 
 export default async function AdminWalletsPage() {
-  const [employees, revenueByEmployee, expensesByEmployee, paymentByEmployee] = await Promise.all([
+  const [employees, revenueByEmployee, expensesByEmployee, paymentByEmployee, collectMoneyTotal] = await Promise.all([
     prisma.employee.findMany({ where: { hasWallet: true }, orderBy: { createdAt: "asc" } }),
     prisma.invoice.groupBy({ by: ["createdById"], _sum: { amount: true }, where: { status: "Paid" } }),
     prisma.expense.groupBy({ by: ["createdById"], _sum: { amount: true } }),
@@ -12,6 +13,7 @@ export default async function AdminWalletsPage() {
       _sum: { amount: true },
       where: { status: "Paid" },
     }),
+    computeCollectMoneyTotal(),
   ]);
 
   const revenueMap = new Map(revenueByEmployee.map((r) => [r.createdById, r._sum.amount ?? 0]));
@@ -44,7 +46,7 @@ export default async function AdminWalletsPage() {
     <div className="pb-10">
       <AdminTopBar title="Wallets" />
       <div className="px-6 py-6">
-        <WalletsManager wallets={wallets} />
+        <WalletsManager wallets={wallets} collectMoneyTotal={collectMoneyTotal} />
       </div>
     </div>
   );
