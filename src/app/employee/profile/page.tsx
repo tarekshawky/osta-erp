@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { initials } from "@/lib/format";
 import { logout } from "@/app/actions/logout";
 import { TopBar } from "@/components/TopBar";
+import { ProfilePhotoUpload } from "./ProfilePhotoUpload";
 
 export default async function EmployeeProfilePage() {
   const session = await requireEmployee("EMPLOYEE");
@@ -23,9 +24,7 @@ export default async function EmployeeProfilePage() {
       <TopBar title="Profile" />
 
       <div className="px-5 py-8 flex flex-col items-center border-b border-slate-100">
-        <div className="h-16 w-16 rounded-full bg-blue-950 text-white flex items-center justify-center text-xl font-semibold">
-          {initials(employee.name)}
-        </div>
+        <ProfilePhotoUpload name={employee.name} initials={initials(employee.name)} photoData={employee.photoData} />
         <div className="mt-3 font-bold text-slate-900">{employee.name}</div>
         <div className="text-sm text-slate-500">{employee.jobTitle}</div>
       </div>

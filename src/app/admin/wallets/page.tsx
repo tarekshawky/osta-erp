@@ -17,6 +17,7 @@ export default async function AdminWalletsPage() {
     code: emp.code,
     name: emp.name,
     role: emp.role,
+    photoData: emp.photoData,
     custody: emp.custody,
     revenue: revenueMap.get(emp.id) ?? 0,
     expenses: expenseMap.get(emp.id) ?? 0,

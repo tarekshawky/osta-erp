@@ -9,6 +9,7 @@ export type WalletRow = {
   code: string;
   name: string;
   role: "ADMIN" | "EMPLOYEE";
+  photoData?: string | null;
   custody: number;
   revenue: number;
   expenses: number;
@@ -72,6 +73,7 @@ export function WalletsManager({ wallets }: { wallets: WalletRow[] }) {
             role={w.role === "ADMIN" ? "Admin" : "Employee"}
             code={w.code}
             name={w.name}
+            photoData={w.photoData}
             employeeId={w.id}
             custody={w.custody}
             revenue={w.revenue}

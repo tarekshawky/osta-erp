@@ -7,6 +7,7 @@ export function WalletCard({
   role,
   code,
   name,
+  photoData,
   employeeId,
   custody,
   revenue,
@@ -16,6 +17,7 @@ export function WalletCard({
   role: "Admin" | "Employee";
   code: string;
   name: string;
+  photoData?: string | null;
   employeeId: string;
   custody: number;
   revenue: number;
@@ -37,9 +39,14 @@ export function WalletCard({
       <div className="bg-gradient-to-br from-blue-900 to-blue-700 text-white p-5 relative">
         <div className="flex items-center justify-between text-xs text-blue-200">
           <span className="flex items-center gap-1.5">
-            <span className="h-6 w-6 rounded-full bg-white/15 flex items-center justify-center text-[10px] font-semibold">
-              {initials(name)}
-            </span>
+            {photoData ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={photoData} alt={name} className="h-6 w-6 rounded-full object-cover" />
+            ) : (
+              <span className="h-6 w-6 rounded-full bg-white/15 flex items-center justify-center text-[10px] font-semibold">
+                {initials(name)}
+              </span>
+            )}
             {role} Wallet
           </span>
           <span>{code}</span>

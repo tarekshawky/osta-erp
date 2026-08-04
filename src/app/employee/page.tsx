@@ -35,9 +35,14 @@ export default async function EmployeeHomePage() {
 
       <div className="px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-full bg-blue-950 text-white flex items-center justify-center font-semibold">
-            {initials(employee.name)}
-          </div>
+          {employee.photoData ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={employee.photoData} alt={employee.name} className="h-11 w-11 rounded-full object-cover" />
+          ) : (
+            <div className="h-11 w-11 rounded-full bg-blue-950 text-white flex items-center justify-center font-semibold">
+              {initials(employee.name)}
+            </div>
+          )}
           <div>
             <div className="font-bold text-slate-900">{employee.name}</div>
             <div className="text-sm text-slate-500">
