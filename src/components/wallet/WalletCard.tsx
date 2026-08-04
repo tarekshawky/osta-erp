@@ -13,6 +13,7 @@ export function WalletCard({
   revenue,
   expenses,
   revenueWithdrawn,
+  payments,
 }: {
   role: "Admin" | "Employee";
   code: string;
@@ -23,6 +24,7 @@ export function WalletCard({
   revenue: number;
   expenses: number;
   revenueWithdrawn: number;
+  payments: { cash: number; ziina: number; bankTransfer: number };
 }) {
   const rawAvailableRevenue = revenue - expenses - revenueWithdrawn;
   // Guard against floating-point dust (e.g. -0.000000000007) from summing many decimal
@@ -65,6 +67,20 @@ export function WalletCard({
           <div>
             <div className="text-blue-300">Expenses</div>
             <div className="font-medium">{formatAed(expenses)}</div>
+          </div>
+        </div>
+        <div className="flex gap-6 mt-3 pt-3 border-t border-white/10 text-xs">
+          <div>
+            <div className="text-blue-300">Cash</div>
+            <div className="font-medium">{formatAed(payments.cash)}</div>
+          </div>
+          <div>
+            <div className="text-blue-300">Ziina</div>
+            <div className="font-medium">{formatAed(payments.ziina)}</div>
+          </div>
+          <div>
+            <div className="text-blue-300">Bank Transfer</div>
+            <div className="font-medium">{formatAed(payments.bankTransfer)}</div>
           </div>
         </div>
       </div>

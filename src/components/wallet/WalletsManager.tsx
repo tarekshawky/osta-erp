@@ -14,6 +14,7 @@ export type WalletRow = {
   revenue: number;
   expenses: number;
   revenueWithdrawn: number;
+  payments: { cash: number; ziina: number; bankTransfer: number };
 };
 
 export function WalletsManager({ wallets }: { wallets: WalletRow[] }) {
@@ -79,6 +80,7 @@ export function WalletsManager({ wallets }: { wallets: WalletRow[] }) {
             revenue={w.revenue}
             expenses={w.expenses}
             revenueWithdrawn={w.revenueWithdrawn}
+            payments={w.payments}
           />
         ))}
         {shown.length === 0 && <p className="text-sm text-slate-400 py-10 text-center col-span-2">No wallets found.</p>}

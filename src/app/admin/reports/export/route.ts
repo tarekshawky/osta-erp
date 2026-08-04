@@ -44,6 +44,9 @@ export async function GET(request: NextRequest) {
   const {
     totalRevenue,
     totalSalaries,
+    totalCash,
+    totalZiina,
+    totalBankTransfer,
     costOfServices,
     grossProfit,
     operatingExpenses,
@@ -52,6 +55,7 @@ export async function GET(request: NextRequest) {
     corporateTax,
     netProfitAfterTax,
   } = summarize(selectedMonths);
+  const paymentTotals = { cash: totalCash, ziina: totalZiina, bankTransfer: totalBankTransfer };
 
   const periodLabel = month ? `${MONTH_NAMES[month - 1]} ${year}` : String(year);
 
@@ -74,6 +78,11 @@ export async function GET(request: NextRequest) {
   rows.push(["Taxable Profit", formatAed(taxableProfit), null, null, null, null, null]);
   rows.push(["Corporate Tax", formatAed(corporateTax), null, null, null, null, null]);
   rows.push(["Net Profit After Tax", formatAed(netProfitAfterTax), null, null, null, null, null]);
+  rows.push([null, null, null, null, null, null, null]);
+  rows.push([`Revenue by Payment Method — ${periodLabel}`, null, null, null, null, null, null]);
+  rows.push(["Cash", formatAed(paymentTotals.cash), null, null, null, null, null]);
+  rows.push(["Ziina", formatAed(paymentTotals.ziina), null, null, null, null, null]);
+  rows.push(["Bank Transfer", formatAed(paymentTotals.bankTransfer), null, null, null, null, null]);
 
   const buffer = await buildWorkbookBuffer("Financial Report", headers, rows);
 

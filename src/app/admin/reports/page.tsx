@@ -51,9 +51,13 @@ export default async function AdminReportsPage({
 
   const { months, monthsElapsed } = await computeAnnualReport(year, team);
   const selectedMonths = month ? [months[month - 1]] : months;
+
   const {
     totalRevenue,
     totalSalaries,
+    totalCash,
+    totalZiina,
+    totalBankTransfer,
     costOfServices,
     grossProfit,
     operatingExpenses,
@@ -62,6 +66,7 @@ export default async function AdminReportsPage({
     corporateTax,
     netProfitAfterTax,
   } = summarize(selectedMonths);
+  const paymentTotals = { cash: totalCash, ziina: totalZiina, bankTransfer: totalBankTransfer };
 
   const periodLabel = month ? `${MONTH_NAMES[month - 1]} ${year}` : String(year);
 
@@ -127,6 +132,20 @@ export default async function AdminReportsPage({
             value={formatAed(netProfitAfterTax)}
             valueClassName={netProfitAfterTax >= 0 ? "text-green-600" : "text-red-500"}
           />
+        </div>
+
+        {/* Revenue by payment method */}
+        <div className="mt-6">
+          <h3 className="font-semibold text-slate-900">Revenue by Payment Method — {periodLabel}</h3>
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <AdminStatCard label="Cash" value={formatAed(paymentTotals.cash)} valueClassName="text-emerald-600" />
+            <AdminStatCard label="Ziina" value={formatAed(paymentTotals.ziina)} valueClassName="text-blue-700" />
+            <AdminStatCard
+              label="Bank Transfer"
+              value={formatAed(paymentTotals.bankTransfer)}
+              valueClassName="text-purple-600"
+            />
+          </div>
         </div>
 
         {/* Financial Summary */}

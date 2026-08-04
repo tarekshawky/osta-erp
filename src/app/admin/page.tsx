@@ -5,26 +5,48 @@ import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { StatusBadge } from "@/components/StatusBadge";
+import { getPaymentTotals } from "@/lib/reportData";
+import { buildDateRange } from "@/lib/dateRangeFilter";
 
-export default async function AdminDashboardPage() {
-  const [revenueAgg, expenseAgg, invoiceCount, employeeCount, recentInvoices] = await Promise.all([
-    prisma.invoice.aggregate({ _sum: { amount: true }, where: { status: "Paid" } }),
-    prisma.expense.aggregate({ _sum: { amount: true } }),
-    prisma.invoice.count(),
-    prisma.employee.count(),
-    prisma.invoice.findMany({
-      orderBy: { date: "desc" },
-      take: 8,
-      include: { team: true, createdBy: true, customer: true },
-    }),
-  ]);
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string; month?: string }>;
+}) {
+  const { year: yearParam, month: monthParam } = await searchParams;
+  const year = yearParam ? Number(yearParam) : null;
+  const month = monthParam ? Number(monthParam) : null;
+  const dateRange = buildDateRange(year, month);
 
+  const [invoiceDates, revenueAgg, expenseAgg, invoiceCount, employeeCount, paymentTotals, recentInvoices] =
+    await Promise.all([
+      prisma.invoice.findMany({ select: { date: true } }),
+      prisma.invoice.aggregate({
+        _sum: { amount: true },
+        where: { status: "Paid", ...(dateRange ? { date: dateRange } : {}) },
+      }),
+      prisma.expense.aggregate({ _sum: { amount: true }, where: dateRange ? { date: dateRange } : {} }),
+      prisma.invoice.count({ where: dateRange ? { date: dateRange } : {} }),
+      prisma.employee.count(),
+      getPaymentTotals(dateRange ? { date: dateRange } : {}),
+      prisma.invoice.findMany({
+        where: dateRange ? { date: dateRange } : {},
+        orderBy: { date: "desc" },
+        take: 8,
+        include: { team: true, createdBy: true, customer: true },
+      }),
+    ]);
+
+  const years = Array.from(new Set(invoiceDates.map((i) => i.date.getFullYear()))).sort((a, b) => b - a);
   const revenue = revenueAgg._sum.amount ?? 0;
   const expenses = expenseAgg._sum.amount ?? 0;
 
   return (
     <div className="pb-10">
-      <AdminTopBar title="Dashboard" />
+      <AdminTopBar
+        title="Dashboard"
+        dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin" }}
+      />
 
       <div className="px-6 py-6">
         <h2 className="text-2xl font-bold text-slate-900">Overview</h2>
@@ -34,6 +56,17 @@ export default async function AdminDashboardPage() {
           <AdminStatCard label="Total Invoices" value={String(invoiceCount)} valueClassName="text-green-600" />
           <AdminStatCard label="Total Expenses" value={formatAed(expenses)} valueClassName="text-red-500" />
           <AdminStatCard label="Employees" value={String(employeeCount)} />
+        </div>
+
+        <h3 className="mt-6 font-semibold text-slate-900">Revenue by Payment Method</h3>
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <AdminStatCard label="Cash" value={formatAed(paymentTotals.cash)} valueClassName="text-emerald-600" />
+          <AdminStatCard label="Ziina" value={formatAed(paymentTotals.ziina)} valueClassName="text-blue-700" />
+          <AdminStatCard
+            label="Bank Transfer"
+            value={formatAed(paymentTotals.bankTransfer)}
+            valueClassName="text-purple-600"
+          />
         </div>
 
         <div className="mt-8 flex items-center justify-between">
@@ -76,6 +109,13 @@ export default async function AdminDashboardPage() {
                   </td>
                 </tr>
               ))}
+              {recentInvoices.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
+                    No invoices in this period.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
