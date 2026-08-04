@@ -22,8 +22,8 @@ export function WalletCard({
   expenses: number;
   revenueWithdrawn: number;
 }) {
-  const balance = custody + revenue - expenses - revenueWithdrawn;
   const availableRevenue = revenue - expenses - revenueWithdrawn;
+  const balance = availableRevenue;
 
   return (
     <div className="rounded-xl border border-slate-200 overflow-hidden">
