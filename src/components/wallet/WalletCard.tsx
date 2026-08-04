@@ -30,9 +30,9 @@ export function WalletCard({
   // Guard against floating-point dust (e.g. -0.000000000007) from summing many decimal
   // amounts, which would otherwise render as a stray "-0.00".
   const availableRevenue = Math.abs(rawAvailableRevenue) < 0.005 ? 0 : rawAvailableRevenue;
-  // Balance = Custody + Revenue - Expenses - RevenueWithdrawn, for both roles: custody
-  // (cash on hand) plus revenue already earned but not yet withdrawn.
-  const rawBalance = custody + availableRevenue;
+  // Balance = Custody + Cash - Expenses, for both roles. Only cash payments are actual
+  // physical cash on hand — Ziina/Bank Transfer revenue never sits in anyone's custody.
+  const rawBalance = custody + payments.cash - expenses;
   const balance = Math.abs(rawBalance) < 0.005 ? 0 : rawBalance;
 
   return (
