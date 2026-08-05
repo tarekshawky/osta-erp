@@ -46,10 +46,12 @@ export function WalletsManager({ wallets, collectMoneyTotal }: { wallets: Wallet
         </div>
       </div>
 
-      <div className="mt-3 rounded-xl bg-gradient-to-br from-teal-700 to-emerald-600 text-white p-4">
-        <div className="text-xs text-teal-100">Collect Money Total</div>
-        <div className="text-2xl font-bold mt-1">{formatAed(collectMoneyTotal)}</div>
-        <div className="text-xs text-teal-100 mt-1">Lifetime total collected via Collect Money</div>
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-xl bg-gradient-to-br from-teal-700 to-emerald-600 text-white p-4">
+          <div className="text-xs text-teal-100">Collect Money Total</div>
+          <div className="text-2xl font-bold mt-1">{formatAed(collectMoneyTotal)}</div>
+          <div className="text-xs text-teal-100 mt-1">Lifetime total collected via Collect Money</div>
+        </div>
       </div>
 
       <div className="mt-4 inline-flex rounded-lg border border-slate-200 bg-white p-1">
