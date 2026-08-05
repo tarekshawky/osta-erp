@@ -29,6 +29,7 @@ export function InvoiceWizard({
   initialCustomer,
   initialService,
   initialPayment,
+  teamOptions = [],
 }: {
   basePath: "/admin" | "/employee";
   createdByName: string;
@@ -38,6 +39,7 @@ export function InvoiceWizard({
   initialCustomer?: CustomerFormData;
   initialService?: ServiceFormData;
   initialPayment?: PaymentFormData;
+  teamOptions?: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -141,7 +143,14 @@ export function InvoiceWizard({
       {step === 0 && <CustomerStep value={customer} onChange={setCustomer} onNext={() => setStep(1)} />}
       {step === 1 && <ServiceStep value={service} onChange={setService} onNext={() => setStep(2)} />}
       {step === 2 && (
-        <PaymentStep value={payment} service={service} onChange={setPayment} onNext={() => setStep(3)} />
+        <PaymentStep
+          value={payment}
+          service={service}
+          onChange={setPayment}
+          onNext={() => setStep(3)}
+          showInvoiceControls={basePath === "/admin"}
+          teamOptions={teamOptions}
+        />
       )}
       {step === 3 && (
         <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-2 sm:px-4 lg:px-10">
@@ -149,7 +158,7 @@ export function InvoiceWizard({
             <InvoicePreviewCard
               number="DRAFT"
               isDraft
-              date={new Date()}
+              date={new Date(`${payment.date}T12:00:00`)}
               customer={{
                 type: customer.type,
                 name: customer.name,

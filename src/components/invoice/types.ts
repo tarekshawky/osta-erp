@@ -28,6 +28,8 @@ export type ServiceFormData = {
 
 export type PaymentFormData = {
   method: "Cash" | "Bank Transfer" | "Ziina";
+  date: string;
+  teamId: string;
 };
 
 export const emptyCustomer: CustomerFormData = {
@@ -58,6 +60,8 @@ export const emptyService: ServiceFormData = {
 
 export const emptyPayment: PaymentFormData = {
   method: "Cash",
+  date: new Date().toISOString().slice(0, 10),
+  teamId: "",
 };
 
 export type CreateInvoiceResult = {

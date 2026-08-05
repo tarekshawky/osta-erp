@@ -17,6 +17,22 @@ function resolveItems(service: ServiceFormData) {
     .filter((item) => item.serviceName && item.unitPrice > 0);
 }
 
+function parseInvoiceDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? date : null;
+}
+
+async function resolveInvoiceTeamId(teamId: string, isAdmin: boolean, employeeTeamId: string | null) {
+  if (!isAdmin) return employeeTeamId;
+  const team = await prisma.team.findFirst({
+    where: { id: teamId, name: { in: ["Ajman", "Al Ain"] } },
+    select: { id: true },
+  });
+  return team?.id ?? null;
+}
+
 async function upsertCustomer(customer: CustomerFormData, billName: string) {
   return prisma.customer.upsert({
     where: { phone: customer.phone.trim() },
@@ -64,13 +80,15 @@ export async function createInvoiceFromWizard(
   }
 
   const amount = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
+  const date = parseInvoiceDate(payment.date);
+  if (!date) return { ok: false, error: "Enter a valid invoice date." };
+  const teamId = await resolveInvoiceTeamId(payment.teamId, session.role === "ADMIN", employee.teamId);
+  if (session.role === "ADMIN" && !teamId) return { ok: false, error: "Select Ajman or Al Ain team." };
   const dbCustomer = await upsertCustomer(customer, billName);
-
-  const date = new Date();
   const warrantyUntil = new Date(date);
-  warrantyUntil.setDate(warrantyUntil.getDate() + WARRANTY_DAYS);
+  warrantyUntil.setUTCDate(warrantyUntil.getUTCDate() + WARRANTY_DAYS);
 
-  const numberPrefix = `INV-${date.getFullYear()}-`;
+  const numberPrefix = `INV-${date.getUTCFullYear()}-`;
   const lastInvoice = await prisma.invoice.findFirst({
     where: { number: { startsWith: numberPrefix } },
     orderBy: { number: "desc" },
@@ -90,7 +108,7 @@ export async function createInvoiceFromWizard(
       status: "Paid",
       leadSource: customer.leadSource,
       warrantyUntil,
-      teamId: employee.teamId,
+      teamId,
       createdById: employee.id,
       items: {
         create: items,
@@ -126,7 +144,13 @@ export async function updateInvoiceFromWizard(
   }
 
   const amount = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
+  const date = parseInvoiceDate(payment.date);
+  if (!date) return { ok: false, error: "Enter a valid invoice date." };
+  const teamId = await resolveInvoiceTeamId(payment.teamId, true, null);
+  if (!teamId) return { ok: false, error: "Select Ajman or Al Ain team." };
   const dbCustomer = await upsertCustomer(customer, billName);
+  const warrantyUntil = new Date(date);
+  warrantyUntil.setUTCDate(warrantyUntil.getUTCDate() + WARRANTY_DAYS);
 
   await prisma.invoiceItem.deleteMany({ where: { invoiceId } });
   await prisma.invoice.update({
@@ -138,6 +162,9 @@ export async function updateInvoiceFromWizard(
       payment: payment.method,
       amount,
       leadSource: customer.leadSource,
+      date,
+      warrantyUntil,
+      teamId,
       items: { create: items },
     },
   });

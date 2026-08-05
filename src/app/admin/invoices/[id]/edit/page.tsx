@@ -12,9 +12,10 @@ export default async function AdminInvoiceEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [admin, invoice] = await Promise.all([
+  const [admin, invoice, teams] = await Promise.all([
     requireEmployee("ADMIN"),
     prisma.invoice.findUnique({ where: { id }, include: { customer: true, items: true } }),
+    prisma.team.findMany({ where: { name: { in: ["Ajman", "Al Ain"] } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   if (!invoice) notFound();
 
@@ -52,6 +53,8 @@ export default async function AdminInvoiceEditPage({
 
   const initialPayment: PaymentFormData = {
     method: invoice.payment as "Cash" | "Bank Transfer" | "Ziina",
+    date: invoice.date.toISOString().slice(0, 10),
+    teamId: invoice.teamId ?? "",
   };
 
   return (
@@ -66,6 +69,7 @@ export default async function AdminInvoiceEditPage({
         initialCustomer={initialCustomer}
         initialService={initialService}
         initialPayment={initialPayment}
+        teamOptions={teams}
       />
     </div>
   );

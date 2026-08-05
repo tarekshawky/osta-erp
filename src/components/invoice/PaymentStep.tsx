@@ -2,7 +2,10 @@
 
 import { formatAed } from "@/lib/format";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
+import { Field, inputClassName } from "@/components/FormField";
 import type { PaymentFormData, ServiceFormData } from "./types";
+
+type TeamOption = { id: string; name: string };
 
 const METHODS = [
   {
@@ -42,11 +45,15 @@ export function PaymentStep({
   service,
   onChange,
   onNext,
+  showInvoiceControls = false,
+  teamOptions = [],
 }: {
   value: PaymentFormData;
   service: ServiceFormData;
   onChange: (value: PaymentFormData) => void;
   onNext: () => void;
+  showInvoiceControls?: boolean;
+  teamOptions?: TeamOption[];
 }) {
   const total = service.items.reduce((sum, item) => {
     const hasService = item.service === CUSTOM_SERVICE_VALUE ? item.customName.trim().length > 0 : item.service.length > 0;
@@ -63,7 +70,7 @@ export function PaymentStep({
             <button
               key={m.id}
               type="button"
-              onClick={() => onChange({ method: m.id })}
+              onClick={() => onChange({ ...value, method: m.id })}
               className={`flex flex-col items-center gap-1 rounded-xl border py-4 text-xs font-medium ${
                 value.method === m.id ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"
               }`}
@@ -74,6 +81,33 @@ export function PaymentStep({
           ))}
         </div>
       </div>
+
+      {showInvoiceControls && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Invoice Date">
+            <input
+              type="date"
+              className={inputClassName}
+              value={value.date}
+              onChange={(event) => onChange({ ...value, date: event.target.value })}
+            />
+          </Field>
+          <Field label="Team">
+            <select
+              className={inputClassName}
+              value={value.teamId}
+              onChange={(event) => onChange({ ...value, teamId: event.target.value })}
+            >
+              <option value="">Select a team</option>
+              {teamOptions.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name} Team
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      )}
 
       <div className="rounded-xl bg-slate-50 p-4 text-sm">
         <div className="flex justify-between text-slate-500">
@@ -88,8 +122,9 @@ export function PaymentStep({
 
       <button
         type="button"
+        disabled={showInvoiceControls && (!value.date || !value.teamId)}
         onClick={onNext}
-        className="mt-2 w-full rounded-xl bg-blue-700 text-white font-medium text-sm py-3.5 flex items-center justify-center gap-2"
+        className="mt-2 w-full rounded-xl bg-blue-700 disabled:bg-blue-300 text-white font-medium text-sm py-3.5 flex items-center justify-center gap-2"
       >
         Next
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

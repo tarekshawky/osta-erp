@@ -3,6 +3,7 @@ export const EMIRATES = [
   "Dubai",
   "Sharjah",
   "Ajman",
+  "Al Ain",
   "Umm Al Quwain",
   "Ras Al Khaimah",
   "Fujairah",
