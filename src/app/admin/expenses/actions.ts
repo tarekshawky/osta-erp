@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { parseWorkbookRows, type ImportResult } from "@/lib/excel";
+import { findDuplicateExpense } from "@/lib/expenseDuplicate";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_PAYMENT_METHODS,
@@ -40,12 +41,27 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
     return { ok: false, error: "Please fill in a description and a valid amount." };
   }
 
+  const date = new Date(input.date);
+  const details = resolveVehicleAndSubcategory(input);
+  const duplicate = await findDuplicateExpense({
+    date,
+    description: input.description,
+    category: input.category,
+    ...details,
+    payment: input.payment,
+    amount: input.amount,
+    createdById: employee.id,
+  });
+  if (duplicate) {
+    return { ok: false, error: "This identical expense has already been recorded for this date." };
+  }
+
   await prisma.expense.create({
     data: {
-      date: new Date(input.date),
+      date,
       description: input.description.trim(),
       category: input.category,
-      ...resolveVehicleAndSubcategory(input),
+      ...details,
       payment: input.payment,
       amount: input.amount,
       attachmentUrl: input.attachmentUrl || null,

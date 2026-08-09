@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
+import { findDuplicateExpense } from "@/lib/expenseDuplicate";
 import { VEHICLES, VEHICLE_EXPENSE_TYPES, ADVERTISING_PLATFORMS } from "@/lib/expenseData";
 
 export async function createExpense(formData: FormData) {
@@ -33,9 +34,24 @@ export async function createExpense(formData: FormData) {
           : null
         : null;
 
+  const date = dateStr ? new Date(dateStr) : new Date();
+  const duplicate = await findDuplicateExpense({
+    date,
+    description,
+    category: category || null,
+    vehicle,
+    subcategory,
+    payment: "Cash",
+    amount,
+    createdById: employee.id,
+  });
+  if (duplicate) {
+    redirect("/employee/expenses/new?error=duplicate");
+  }
+
   await prisma.expense.create({
     data: {
-      date: dateStr ? new Date(dateStr) : new Date(),
+      date,
       description,
       category: category || null,
       vehicle,

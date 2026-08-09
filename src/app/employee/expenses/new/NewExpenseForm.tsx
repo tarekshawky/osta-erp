@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Field, inputClassName } from "@/components/FormField";
 import {
   EXPENSE_CATEGORIES,
@@ -12,9 +12,22 @@ import { createExpense } from "./actions";
 
 export function NewExpenseForm() {
   const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   return (
-    <form action={createExpense} className="px-5 py-5 flex flex-col gap-4">
+    <form
+      action={createExpense}
+      onSubmit={(event) => {
+        if (isSubmittingRef.current) {
+          event.preventDefault();
+          return;
+        }
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
+      }}
+      className="px-5 py-5 flex flex-col gap-4"
+    >
       <Field label="Description">
         <input name="description" required className={inputClassName} placeholder="e.g. Fuel" />
       </Field>
@@ -81,9 +94,10 @@ export function NewExpenseForm() {
       </Field>
       <button
         type="submit"
-        className="mt-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-medium text-sm"
+        disabled={isSubmitting}
+        className="mt-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl py-3 font-medium text-sm"
       >
-        Add Expense
+        {isSubmitting ? "Saving..." : "Add Expense"}
       </button>
     </form>
   );

@@ -12,7 +12,11 @@ export default async function NewExpensePage({
     <div className="pb-8">
       <TopBar title="Add Expense" />
       {error && (
-        <p className="text-sm text-red-500 px-5 pt-4">Please fill in all fields with a valid amount.</p>
+        <p className="text-sm text-red-500 px-5 pt-4">
+          {error === "duplicate"
+            ? "This identical expense has already been recorded for this date."
+            : "Please fill in all fields with a valid amount."}
+        </p>
       )}
       <NewExpenseForm />
     </div>

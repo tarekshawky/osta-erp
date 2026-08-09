@@ -25,6 +25,7 @@ export function ExpenseForm({
   const [value, setValue] = useState<ExpenseFormValue>(initial);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const isSavingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAttaching, setIsAttaching] = useState(false);
 
@@ -52,11 +53,14 @@ export function ExpenseForm({
   }
 
   function handleSave() {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
     setError(null);
     startTransition(async () => {
       const res = await onSave(value);
       if (!res.ok) {
         setError(res.error ?? "Something went wrong.");
+        isSavingRef.current = false;
       }
     });
   }
