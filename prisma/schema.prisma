@@ -114,6 +114,7 @@ model Expense {
   id             String   @id @default(cuid())
   date           DateTime
   description    String
+  notes          String?
   category       String?
   vehicle        String?
   subcategory    String?

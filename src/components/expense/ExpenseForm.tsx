@@ -169,13 +169,23 @@ export function ExpenseForm({
           />
         </label>
         <label className="flex flex-col gap-1.5 sm:col-span-2">
-          <span className="text-xs font-medium text-slate-600">Description / Notes</span>
+          <span className="text-xs font-medium text-slate-600">Shop Name</span>
           <input
             type="text"
-            placeholder="Description..."
+            placeholder="Enter shop name..."
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
             value={value.description}
             onChange={(e) => setValue({ ...value, description: e.target.value })}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 sm:col-span-2">
+          <span className="text-xs font-medium text-slate-600">Description (optional)</span>
+          <input
+            type="text"
+            placeholder="Add an optional note..."
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            value={value.notes ?? ""}
+            onChange={(e) => setValue({ ...value, notes: e.target.value })}
           />
         </label>
         <div className="flex flex-col gap-1.5 sm:col-span-2">

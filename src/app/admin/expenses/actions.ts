@@ -21,6 +21,7 @@ export type ExpenseFormInput = {
   amount: number;
   date: string;
   description: string;
+  notes?: string | null;
   attachmentUrl?: string | null;
 };
 
@@ -38,7 +39,7 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
   const employee = await requireEmployee("ADMIN");
 
   if (!input.description.trim() || !Number.isFinite(input.amount) || input.amount <= 0) {
-    return { ok: false, error: "Please fill in a description and a valid amount." };
+    return { ok: false, error: "Please fill in a shop name and a valid amount." };
   }
 
   const date = new Date(input.date);
@@ -60,6 +61,7 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
     data: {
       date,
       description: input.description.trim(),
+      notes: input.notes?.trim() || null,
       category: input.category,
       ...details,
       payment: input.payment,
@@ -83,7 +85,7 @@ export async function updateExpense(
   await requireEmployee("ADMIN");
 
   if (!input.description.trim() || !Number.isFinite(input.amount) || input.amount <= 0) {
-    return { ok: false, error: "Please fill in a description and a valid amount." };
+    return { ok: false, error: "Please fill in a shop name and a valid amount." };
   }
 
   await prisma.expense.update({
@@ -91,6 +93,7 @@ export async function updateExpense(
     data: {
       date: new Date(input.date),
       description: input.description.trim(),
+      notes: input.notes?.trim() || null,
       category: input.category,
       ...resolveVehicleAndSubcategory(input),
       payment: input.payment,
@@ -162,11 +165,12 @@ export async function importExpensesFromExcel(formData: FormData): Promise<Impor
     const row = rows[i];
     const rowNum = i + 2;
 
-    const description = row["Description"]?.trim();
+    const shopName = row["Shop Name"]?.trim() || row["Description"]?.trim();
+    const notes = row["Shop Name"] ? row["Description"]?.trim() || null : null;
     const amount = Number(row["Amount"]);
 
-    if (!description) {
-      errors.push({ row: rowNum, message: "Missing Description." });
+    if (!shopName) {
+      errors.push({ row: rowNum, message: "Missing Shop Name." });
       continue;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -201,7 +205,8 @@ export async function importExpensesFromExcel(formData: FormData): Promise<Impor
       await prisma.expense.create({
         data: {
           date,
-          description,
+          description: shopName,
+          notes,
           category,
           vehicle,
           subcategory,

@@ -11,6 +11,7 @@ export type ExpensePdfData = {
   vehicle: string | null;
   subcategory: string | null;
   description: string;
+  notes: string | null;
   payment: string;
   amount: number;
   status: string;
@@ -69,7 +70,8 @@ export function ExpensePdfButton({ expense, className }: { expense: ExpensePdfDa
         ["Category", expense.category ?? "—"],
         ...(expense.vehicle ? ([["Vehicle", expense.vehicle]] as [string, string][]) : []),
         ...(expense.subcategory ? ([["Type", expense.subcategory]] as [string, string][]) : []),
-        ["Description", expense.description],
+        ["Shop Name", expense.description],
+        ...(expense.notes ? ([["Description", expense.notes]] as [string, string][]) : []),
         ["Payment Method", expense.payment],
         ["Recorded By", expense.createdByName],
         ["Status", expense.status],

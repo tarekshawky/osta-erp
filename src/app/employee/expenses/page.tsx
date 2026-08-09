@@ -34,6 +34,7 @@ export default async function EmployeeExpensesPage() {
           <div key={exp.id} className="rounded-xl border border-slate-200 bg-white p-4 flex items-center justify-between">
             <div>
               <div className="font-medium text-slate-900 text-sm">{exp.description}</div>
+              {exp.notes && <div className="text-xs text-slate-600 mt-0.5">{exp.notes}</div>}
               <div className="text-xs text-slate-500 mt-0.5">
                 {formatDate(exp.date)} · {[exp.category, exp.vehicle, exp.subcategory].filter(Boolean).join(" · ")}
               </div>

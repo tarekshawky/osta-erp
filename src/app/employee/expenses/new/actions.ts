@@ -11,6 +11,7 @@ export async function createExpense(formData: FormData) {
   const employee = await requireEmployee("EMPLOYEE");
 
   const description = String(formData.get("description") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
   const category = String(formData.get("category") ?? "").trim();
   const vehicleInput = String(formData.get("vehicle") ?? "").trim();
   const subcategoryInput = String(formData.get("subcategory") ?? "").trim();
@@ -53,6 +54,7 @@ export async function createExpense(formData: FormData) {
     data: {
       date,
       description,
+      notes: notes || null,
       category: category || null,
       vehicle,
       subcategory,

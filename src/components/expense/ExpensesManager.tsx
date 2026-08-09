@@ -19,6 +19,7 @@ export type ExpenseRow = {
   id: string;
   date: string;
   description: string;
+  notes: string | null;
   category: string | null;
   vehicle: string | null;
   subcategory: string | null;
@@ -40,6 +41,7 @@ function toFormValue(expense: ExpenseRow): ExpenseFormValue {
     amount: expense.amount,
     date: expense.date.slice(0, 10),
     description: expense.description,
+    notes: expense.notes ?? "",
     attachmentUrl: expense.attachmentUrl,
   };
 }
@@ -52,6 +54,7 @@ const emptyFormValue: ExpenseFormValue = {
   amount: 0,
   date: new Date().toISOString().slice(0, 10),
   description: "",
+  notes: "",
   attachmentUrl: null,
 };
 
@@ -205,6 +208,7 @@ export function ExpensesManager({
             <tr className="text-left text-slate-500 border-b border-slate-100">
               <th className="px-4 py-3 font-medium">Date</th>
               <th className="px-4 py-3 font-medium">Type</th>
+              <th className="px-4 py-3 font-medium">Shop Name</th>
               <th className="px-4 py-3 font-medium">Description</th>
               <th className="px-4 py-3 font-medium">Team</th>
               <th className="px-4 py-3 font-medium">Employee</th>
@@ -227,6 +231,7 @@ export function ExpensesManager({
                   )}
                 </td>
                 <td className="px-4 py-3 text-slate-900">{exp.description}</td>
+                <td className="px-4 py-3 text-slate-600">{exp.notes ?? "—"}</td>
                 <td className="px-4 py-3">
                   <TeamBadge name={exp.teamName} />
                 </td>
@@ -258,6 +263,7 @@ export function ExpensesManager({
                         vehicle: exp.vehicle,
                         subcategory: exp.subcategory,
                         description: exp.description,
+                        notes: exp.notes,
                         payment: exp.payment,
                         amount: exp.amount,
                         status: exp.status,
@@ -280,7 +286,7 @@ export function ExpensesManager({
             ))}
             {expenses.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
                   No expenses recorded.
                 </td>
               </tr>

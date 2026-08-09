@@ -54,6 +54,7 @@ export default async function AdminExpensesPage({
     id: exp.id,
     date: exp.date.toISOString(),
     description: exp.description,
+    notes: exp.notes,
     category: exp.category,
     vehicle: exp.vehicle,
     subcategory: exp.subcategory,

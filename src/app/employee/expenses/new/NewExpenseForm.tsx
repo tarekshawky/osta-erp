@@ -28,8 +28,11 @@ export function NewExpenseForm() {
       }}
       className="px-5 py-5 flex flex-col gap-4"
     >
-      <Field label="Description">
-        <input name="description" required className={inputClassName} placeholder="e.g. Fuel" />
+      <Field label="Shop Name">
+        <input name="description" required className={inputClassName} placeholder="e.g. ADNOC" />
+      </Field>
+      <Field label="Description (optional)">
+        <input name="notes" className={inputClassName} placeholder="Add an optional note..." />
       </Field>
       <Field label="Category">
         <select
