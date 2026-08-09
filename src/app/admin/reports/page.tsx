@@ -55,6 +55,7 @@ export default async function AdminReportsPage({
   const {
     totalRevenue,
     totalSalaries,
+    totalExpenses,
     totalCash,
     totalZiina,
     totalBankTransfer,
@@ -75,7 +76,7 @@ export default async function AdminReportsPage({
     { label: "Salary", value: totalSalaries },
     { label: "Total Cost (Cost of Services)", value: costOfServices },
     { label: "Gross Profit", value: grossProfit, emphasis: true },
-    { label: "Operating Expenses", value: operatingExpenses },
+    { label: "All Expenses", value: totalExpenses },
     { label: "Net Profit Before Tax", value: netProfitBeforeTax, emphasis: true },
     { label: "Taxable Profit", value: taxableProfit },
     { label: "Corporate Tax", value: corporateTax },
@@ -120,7 +121,7 @@ export default async function AdminReportsPage({
         <div className="mt-5 grid grid-cols-2 lg:grid-cols-3 gap-3">
           <AdminStatCard label="Total Revenue" value={formatAed(totalRevenue)} valueClassName="text-blue-700" />
           <AdminStatCard label="Gross Profit" value={formatAed(grossProfit)} valueClassName="text-teal-600" />
-          <AdminStatCard label="Operating Expenses" value={formatAed(operatingExpenses)} valueClassName="text-red-500" />
+          <AdminStatCard label="All Expenses" value={formatAed(totalExpenses)} valueClassName="text-red-500" />
           <AdminStatCard
             label="Net Profit"
             value={formatAed(netProfitBeforeTax)}
@@ -175,9 +176,8 @@ export default async function AdminReportsPage({
             ))}
           </div>
           <p className="mt-3 text-xs text-slate-400">
-            Cost of Services includes salaries actually recorded on the Payroll page (Salary + Advance − Deduction)
-            plus Materials and Transportation expenses. Operating Expenses covers the remaining expense categories
-            (Vehicle, Advertising, Meals, Accommodation, Maintenance, Other). Corporate tax is 0% on taxable profit
+            All Expenses is the total of recorded expense entries, net of refunds. Salaries actually recorded on the
+            Payroll page (Salary + Advance − Deduction) are shown separately as Cost of Services. Corporate tax is 0% on taxable profit
             up to AED 375,000, and 9% on the portion above that.
           </p>
         </div>
@@ -192,7 +192,7 @@ export default async function AdminReportsPage({
                 <th className="px-4 py-3 font-medium text-right">Salary</th>
                 <th className="px-4 py-3 font-medium text-right">Cost of Services</th>
                 <th className="px-4 py-3 font-medium text-right">Gross Profit</th>
-                <th className="px-4 py-3 font-medium text-right">Operating Expenses</th>
+                <th className="px-4 py-3 font-medium text-right">All Expenses</th>
                 <th className="px-4 py-3 font-medium text-right">Net Profit</th>
               </tr>
             </thead>
@@ -258,7 +258,7 @@ export default async function AdminReportsPage({
                   <th className="px-4 py-3 font-medium text-right">Salary</th>
                   <th className="px-4 py-3 font-medium text-right">Cost of Services</th>
                   <th className="px-4 py-3 font-medium text-right">Gross Profit</th>
-                  <th className="px-4 py-3 font-medium text-right">Operating Expenses</th>
+                <th className="px-4 py-3 font-medium text-right">All Expenses</th>
                   <th className="px-4 py-3 font-medium text-right">Net Profit</th>
                 </tr>
               </thead>

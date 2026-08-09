@@ -26,7 +26,7 @@ export default async function AdminDashboardPage({
         _sum: { amount: true },
         where: { status: "Paid", ...(dateRange ? { date: dateRange } : {}) },
       }),
-      prisma.expense.aggregate({ _sum: { amount: true }, where: dateRange ? { date: dateRange } : {} }),
+      prisma.expense.aggregate({ _sum: { amount: true, refundedAmount: true }, where: dateRange ? { date: dateRange } : {} }),
       prisma.invoice.count({ where: dateRange ? { date: dateRange } : {} }),
       prisma.employee.count(),
       getPaymentTotals(dateRange ? { date: dateRange } : {}),
@@ -41,7 +41,7 @@ export default async function AdminDashboardPage({
 
   const years = Array.from(new Set(invoiceDates.map((i) => i.date.getFullYear()))).sort((a, b) => b - a);
   const revenue = revenueAgg._sum.amount ?? 0;
-  const expenses = expenseAgg._sum.amount ?? 0;
+  const expenses = (expenseAgg._sum.amount ?? 0) - (expenseAgg._sum.refundedAmount ?? 0);
 
   return (
     <div className="pb-10">
@@ -56,7 +56,7 @@ export default async function AdminDashboardPage({
         <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
           <AdminStatCard label="Total Revenue" value={formatAed(revenue)} valueClassName="text-blue-700" />
           <AdminStatCard label="Total Invoices" value={String(invoiceCount)} valueClassName="text-green-600" />
-          <AdminStatCard label="Total Expenses" value={formatAed(expenses)} valueClassName="text-red-500" />
+          <AdminStatCard label="All Expenses" value={formatAed(expenses)} valueClassName="text-red-500" />
           <AdminStatCard label="Employees" value={String(employeeCount)} />
         </div>
 

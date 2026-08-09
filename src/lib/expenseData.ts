@@ -15,14 +15,9 @@ export const EXPENSE_CATEGORIES = [
 // the existing "Advertising" category so historical data there is unaffected.
 export const MARKETING_EXPENSE_CATEGORY = "Marketing Advertising";
 
-// Expense categories that directly relate to delivering the service (Cost of Services
-// in the P&L sense). Everything else in EXPENSE_CATEGORIES is treated as an Operating
-// Expense. This is a classification layer only -- it doesn't change the category list
-// or any stored data, so existing expenses keep working unchanged.
-export const COST_OF_SERVICES_CATEGORIES: readonly (typeof EXPENSE_CATEGORIES)[number][] = [
-  "Materials",
-  "Transportation",
-];
+// Expense records are reported together as All Expenses. Payroll is the only direct
+// Cost of Services item, so recorded expense categories are not split in the P&L.
+export const COST_OF_SERVICES_CATEGORIES: readonly (typeof EXPENSE_CATEGORIES)[number][] = [];
 
 export const VEHICLES = ["Dodge Journey", "Toyota Yaris", "Toyota Camry", "MG ZST"] as const;
 

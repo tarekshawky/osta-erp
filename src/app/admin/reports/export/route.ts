@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     "Salary (AED)",
     "Cost of Services (AED)",
     "Gross Profit (AED)",
-    "Operating Expenses (AED)",
+    "All Expenses (AED)",
     "Net Profit (AED)",
   ];
 
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
   rows.push(["Salary", formatAed(totalSalaries), null, null, null, null, null]);
   rows.push(["Total Cost (Cost of Services)", formatAed(costOfServices), null, null, null, null, null]);
   rows.push(["Gross Profit", formatAed(grossProfit), null, null, null, null, null]);
-  rows.push(["Operating Expenses", formatAed(operatingExpenses), null, null, null, null, null]);
+  rows.push(["All Expenses", formatAed(operatingExpenses), null, null, null, null, null]);
   rows.push(["Net Profit Before Tax", formatAed(netProfitBeforeTax), null, null, null, null, null]);
   rows.push(["Taxable Profit", formatAed(taxableProfit), null, null, null, null, null]);
   rows.push(["Corporate Tax", formatAed(corporateTax), null, null, null, null, null]);

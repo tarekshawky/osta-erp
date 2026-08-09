@@ -29,15 +29,16 @@ export default async function AdminExpensesPage({
   if (team !== "all") where.team = { name: team };
 
   const [totalAgg, byCategory] = await Promise.all([
-    prisma.expense.aggregate({ _sum: { amount: true }, _count: true, where }),
+    prisma.expense.aggregate({ _sum: { amount: true, refundedAmount: true }, _count: true, where }),
     prisma.expense.groupBy({
       by: ["category"],
-      _sum: { amount: true },
+      _sum: { amount: true, refundedAmount: true },
       where,
       orderBy: { _sum: { amount: "desc" } },
       take: 2,
     }),
   ]);
+  const totalExpenses = (totalAgg._sum.amount ?? 0) - (totalAgg._sum.refundedAmount ?? 0);
   const totalPages = Math.max(1, Math.ceil(totalAgg._count / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
 
@@ -74,9 +75,13 @@ export default async function AdminExpensesPage({
 
       <div className="px-6 py-6">
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
-          <AdminStatCard label="Total Expenses" value={formatAed(totalAgg._sum.amount ?? 0)} valueClassName="text-red-500" />
+          <AdminStatCard label="All Expenses" value={formatAed(totalExpenses)} valueClassName="text-red-500" />
           {byCategory.map((c) => (
-            <AdminStatCard key={c.category ?? "none"} label={c.category ?? "Uncategorized"} value={formatAed(c._sum.amount ?? 0)} />
+            <AdminStatCard
+              key={c.category ?? "none"}
+              label={c.category ?? "Uncategorized"}
+              value={formatAed((c._sum.amount ?? 0) - (c._sum.refundedAmount ?? 0))}
+            />
           ))}
         </div>
 
