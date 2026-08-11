@@ -58,6 +58,7 @@ export function OrderDetail({
     customerName: displayName,
     phone: formatUaePhone(order.customer.phone),
     address: address || "—",
+    locationUrl: locationHref,
     orderType: order.orderType,
     priceAgreed: order.priceAgreed,
     customerLanguage: order.customerLanguage,

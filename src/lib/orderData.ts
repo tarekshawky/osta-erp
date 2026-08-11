@@ -59,6 +59,7 @@ export function buildWhatsAppUrl(order: {
   customerName: string;
   phone: string;
   address: string;
+  locationUrl: string;
   orderType: string;
   priceAgreed: string;
   customerLanguage: string;
@@ -73,6 +74,7 @@ export function buildWhatsAppUrl(order: {
     `Customer: ${order.customerName}`,
     `Phone: ${order.phone}`,
     `Address: ${order.address}`,
+    `Location: ${order.locationUrl}`,
     `Order Type: ${order.orderType}`,
     `Price Agreed: ${order.priceAgreed}`,
     `Customer Language: ${order.customerLanguage}`,
