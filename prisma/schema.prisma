@@ -116,23 +116,27 @@ model InvoiceItem {
 }
 
 model Order {
-  id           String    @id @default(cuid())
-  number       String    @unique
-  date         DateTime  @default(now())
-  scheduledAt  DateTime?
-  customerId   String
-  customer     Customer  @relation(fields: [customerId], references: [id])
-  notes        String?
-  status       String    @default("Pending")
-  teamId       String?
-  team         Team?     @relation(fields: [teamId], references: [id])
-  assignedToId String
-  assignedTo   Employee  @relation("OrderAssignedTo", fields: [assignedToId], references: [id])
-  createdById  String
-  createdBy    Employee  @relation("OrderCreatedBy", fields: [createdById], references: [id])
-  invoiceId    String?   @unique
-  invoice      Invoice?  @relation(fields: [invoiceId], references: [id])
-  createdAt    DateTime  @default(now())
+  id               String    @id @default(cuid())
+  number           String    @unique
+  date             DateTime  @default(now())
+  scheduledAt      DateTime?
+  customerId       String
+  customer         Customer  @relation(fields: [customerId], references: [id])
+  locationUrl      String?
+  orderType        String    @default("New Order")
+  priceAgreed      String    @default("No")
+  customerLanguage String    @default("Arabic")
+  notes            String?
+  status           String    @default("Pending")
+  teamId           String?
+  team             Team?     @relation(fields: [teamId], references: [id])
+  assignedToId     String
+  assignedTo       Employee  @relation("OrderAssignedTo", fields: [assignedToId], references: [id])
+  createdById      String
+  createdBy        Employee  @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  invoiceId        String?   @unique
+  invoice          Invoice?  @relation(fields: [invoiceId], references: [id])
+  createdAt        DateTime  @default(now())
 }
 
 model Expense {

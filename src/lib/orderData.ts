@@ -25,6 +25,10 @@ export const ORDER_STATUS_STYLES: Record<string, string> = {
   Done: "bg-green-50 text-green-600",
 };
 
+export const ORDER_TYPES = ["New Order", "Revisit", "Inspection"] as const;
+export const PRICE_AGREED_OPTIONS = ["Yes", "No"] as const;
+export const CUSTOMER_LANGUAGES = ["Arabic", "English"] as const;
+
 function toGoogleCalendarDate(date: Date) {
   return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 }

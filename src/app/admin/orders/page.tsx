@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDateTimeSlash } from "@/lib/format";
@@ -5,6 +6,8 @@ import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { Pagination } from "@/components/admin/Pagination";
+import { DeleteOrderButton } from "@/components/order/DeleteOrderButton";
+import { ToastOnMount } from "@/components/ToastOnMount";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { ORDER_STATUSES, ORDER_STATUS_STYLES } from "@/lib/orderData";
 import type { Prisma } from "@/generated/prisma";
@@ -48,6 +51,9 @@ export default async function AdminOrdersPage({
 
   return (
     <div className="pb-10">
+      <Suspense fallback={null}>
+        <ToastOnMount message="Order deleted." />
+      </Suspense>
       <AdminTopBar title="Orders" />
 
       <div className="px-6 py-6">
@@ -119,6 +125,7 @@ export default async function AdminOrdersPage({
                 <th className="px-4 py-3 font-medium">Team</th>
                 <th className="px-4 py-3 font-medium">Assigned To</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -143,11 +150,25 @@ export default async function AdminOrdersPage({
                       {order.status}
                     </span>
                   </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <Link
+                        href={`/admin/orders/${order.id}/edit`}
+                        title="Edit"
+                        className="text-blue-600 hover:text-blue-700 p-1.5"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinejoin="round" />
+                        </svg>
+                      </Link>
+                      <DeleteOrderButton orderId={order.id} className="text-red-500 hover:text-red-600 p-1.5" />
+                    </div>
+                  </td>
                 </tr>
               ))}
               {orders.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
                     No orders match your filters.
                   </td>
                 </tr>

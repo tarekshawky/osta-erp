@@ -8,6 +8,10 @@ type OrderDetailData = {
   number: string;
   date: Date;
   scheduledAt: Date | null;
+  locationUrl: string | null;
+  orderType: string;
+  priceAgreed: string;
+  customerLanguage: string;
   notes: string | null;
   status: string;
   customer: {
@@ -60,6 +64,15 @@ export function OrderDetail({
         {order.scheduledAt && (
           <div className="mt-1 text-sm text-slate-500">Scheduled: {formatDateTimeSlash(order.scheduledAt)}</div>
         )}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{order.orderType}</span>
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+            Price Agreed: {order.priceAgreed}
+          </span>
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+            {order.customerLanguage}
+          </span>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -78,6 +91,20 @@ export function OrderDetail({
             <dd className="text-slate-900 text-right">{address || "—"}</dd>
           </div>
         </dl>
+        {order.locationUrl && (
+          <a
+            href={order.locationUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-medium text-blue-600"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z" strokeLinejoin="round" />
+              <circle cx="12" cy="10" r="2.5" />
+            </svg>
+            Open Location
+          </a>
+        )}
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5">

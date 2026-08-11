@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { EMIRATES } from "@/lib/invoiceData";
-import { createOrder, type OrderCustomerInput } from "@/app/admin/orders/actions";
+import { ORDER_TYPES, PRICE_AGREED_OPTIONS, CUSTOMER_LANGUAGES } from "@/lib/orderData";
+import { createOrder, updateOrder, type OrderCustomerInput, type OrderDetailsInput } from "@/app/admin/orders/actions";
 
 type TeamOption = { id: string; name: string };
 type EmployeeOption = { id: string; name: string; code: string };
@@ -21,32 +22,53 @@ const emptyCustomer: OrderCustomerInput = {
   flatNo: "",
 };
 
+function emptyDetails(teamOptions: TeamOption[], employeeOptions: EmployeeOption[]): OrderDetailsInput {
+  return {
+    teamId: teamOptions[0]?.id ?? "",
+    assignedToId: employeeOptions[0]?.id ?? "",
+    notes: "",
+    scheduledAt: "",
+    locationUrl: "",
+    orderType: ORDER_TYPES[0],
+    priceAgreed: PRICE_AGREED_OPTIONS[1],
+    customerLanguage: CUSTOMER_LANGUAGES[0],
+  };
+}
+
 export function OrderForm({
   teamOptions,
   employeeOptions,
+  mode = "create",
+  editOrderId,
+  initialCustomer,
+  initialDetails,
 }: {
   teamOptions: TeamOption[];
   employeeOptions: EmployeeOption[];
+  mode?: "create" | "edit";
+  editOrderId?: string;
+  initialCustomer?: OrderCustomerInput;
+  initialDetails?: OrderDetailsInput;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
-  const [customer, setCustomer] = useState<OrderCustomerInput>(emptyCustomer);
-  const [teamId, setTeamId] = useState(teamOptions[0]?.id ?? "");
-  const [assignedToId, setAssignedToId] = useState(employeeOptions[0]?.id ?? "");
-  const [notes, setNotes] = useState("");
-  const [scheduledAt, setScheduledAt] = useState("");
+  const [customer, setCustomer] = useState<OrderCustomerInput>(initialCustomer ?? emptyCustomer);
+  const [details, setDetails] = useState<OrderDetailsInput>(initialDetails ?? emptyDetails(teamOptions, employeeOptions));
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
-  const isValid = customer.phone.trim().length >= 7 && billName.length > 0 && assignedToId.length > 0;
+  const isValid = customer.phone.trim().length >= 7 && billName.length > 0 && details.assignedToId.length > 0;
 
   function handleSubmit() {
     setError(null);
     startTransition(async () => {
-      const res = await createOrder(customer, teamId, assignedToId, notes, scheduledAt);
+      const res =
+        mode === "edit" && editOrderId
+          ? await updateOrder(editOrderId, customer, details)
+          : await createOrder(customer, details);
       if (res.ok && res.id) {
-        showToast("Order created.");
+        showToast(mode === "edit" ? "Order updated." : "Order created.");
         router.push(`/admin/orders/${res.id}`);
       } else {
         setError(res.error ?? "Something went wrong.");
@@ -167,9 +189,18 @@ export function OrderForm({
         </Field>
       </div>
 
+      <Field label="Location Link (Google Maps, optional)">
+        <input
+          className={inputClassName}
+          placeholder="Paste Google Maps link"
+          value={details.locationUrl}
+          onChange={(e) => setDetails({ ...details, locationUrl: e.target.value })}
+        />
+      </Field>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Team">
-          <select className={inputClassName} value={teamId} onChange={(e) => setTeamId(e.target.value)}>
+          <select className={inputClassName} value={details.teamId} onChange={(e) => setDetails({ ...details, teamId: e.target.value })}>
             {teamOptions.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -178,7 +209,11 @@ export function OrderForm({
           </select>
         </Field>
         <Field label="Assign To">
-          <select className={inputClassName} value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)}>
+          <select
+            className={inputClassName}
+            value={details.assignedToId}
+            onChange={(e) => setDetails({ ...details, assignedToId: e.target.value })}
+          >
             <option value="">Select employee</option>
             {employeeOptions.map((emp) => (
               <option key={emp.id} value={emp.id}>
@@ -189,12 +224,55 @@ export function OrderForm({
         </Field>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Order Type">
+          <select
+            className={inputClassName}
+            value={details.orderType}
+            onChange={(e) => setDetails({ ...details, orderType: e.target.value })}
+          >
+            {ORDER_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Price Agreed">
+          <select
+            className={inputClassName}
+            value={details.priceAgreed}
+            onChange={(e) => setDetails({ ...details, priceAgreed: e.target.value })}
+          >
+            {PRICE_AGREED_OPTIONS.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      <Field label="Customer Language">
+        <select
+          className={inputClassName}
+          value={details.customerLanguage}
+          onChange={(e) => setDetails({ ...details, customerLanguage: e.target.value })}
+        >
+          {CUSTOMER_LANGUAGES.map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
+      </Field>
+
       <Field label="Scheduled Date & Time (Optional)">
         <input
           type="datetime-local"
           className={inputClassName}
-          value={scheduledAt}
-          onChange={(e) => setScheduledAt(e.target.value)}
+          value={details.scheduledAt}
+          onChange={(e) => setDetails({ ...details, scheduledAt: e.target.value })}
         />
       </Field>
 
@@ -203,8 +281,8 @@ export function OrderForm({
           className={inputClassName}
           rows={3}
           placeholder="Any extra details about this order"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          value={details.notes}
+          onChange={(e) => setDetails({ ...details, notes: e.target.value })}
         />
       </Field>
 
@@ -214,7 +292,7 @@ export function OrderForm({
         onClick={handleSubmit}
         className="mt-2 w-full rounded-xl bg-blue-700 disabled:bg-blue-300 text-white font-medium text-sm py-3.5"
       >
-        {isPending ? "Creating..." : "Create Order"}
+        {isPending ? (mode === "edit" ? "Saving..." : "Creating...") : mode === "edit" ? "Save Changes" : "Create Order"}
       </button>
     </div>
   );

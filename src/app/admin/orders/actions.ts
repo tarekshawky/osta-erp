@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { getSession } from "@/lib/session";
@@ -17,7 +18,23 @@ export type OrderCustomerInput = {
   flatNo: string;
 };
 
+export type OrderDetailsInput = {
+  teamId: string;
+  assignedToId: string;
+  notes: string;
+  scheduledAt: string;
+  locationUrl: string;
+  orderType: string;
+  priceAgreed: string;
+  customerLanguage: string;
+};
+
 export type OrderActionResult = { ok: boolean; id?: string; error?: string };
+
+async function requireAdmin() {
+  const session = await getSession();
+  if (!session || session.role !== "ADMIN") redirect("/");
+}
 
 async function upsertOrderCustomer(customer: OrderCustomerInput, billName: string) {
   return prisma.customer.upsert({
@@ -44,20 +61,24 @@ async function upsertOrderCustomer(customer: OrderCustomerInput, billName: strin
   });
 }
 
+function validateOrderInput(customer: OrderCustomerInput, details: OrderDetailsInput) {
+  const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
+  if (!billName || !customer.phone.trim()) {
+    return "Customer name and phone are required.";
+  }
+  if (!details.assignedToId) return "Assign the order to an employee.";
+  return null;
+}
+
 export async function createOrder(
   customer: OrderCustomerInput,
-  teamId: string,
-  assignedToId: string,
-  notes: string,
-  scheduledAt: string
+  details: OrderDetailsInput
 ): Promise<OrderActionResult> {
   const admin = await requireEmployee("ADMIN");
 
   const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
-  if (!billName || !customer.phone.trim()) {
-    return { ok: false, error: "Customer name and phone are required." };
-  }
-  if (!assignedToId) return { ok: false, error: "Assign the order to an employee." };
+  const error = validateOrderInput(customer, details);
+  if (error) return { ok: false, error };
 
   const dbCustomer = await upsertOrderCustomer(customer, billName);
 
@@ -70,7 +91,7 @@ export async function createOrder(
   const lastSeq = lastOrder ? parseInt(lastOrder.number.slice(numberPrefix.length), 10) : 0;
   const number = `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
 
-  const parsedScheduledAt = scheduledAt ? new Date(scheduledAt) : null;
+  const parsedScheduledAt = details.scheduledAt ? new Date(details.scheduledAt) : null;
 
   const order = await prisma.order.create({
     data: {
@@ -78,10 +99,14 @@ export async function createOrder(
       date,
       scheduledAt: parsedScheduledAt && !Number.isNaN(parsedScheduledAt.getTime()) ? parsedScheduledAt : null,
       customerId: dbCustomer.id,
-      notes: notes.trim() || null,
+      locationUrl: details.locationUrl.trim() || null,
+      orderType: details.orderType,
+      priceAgreed: details.priceAgreed,
+      customerLanguage: details.customerLanguage,
+      notes: details.notes.trim() || null,
       status: "Pending",
-      teamId: teamId || null,
-      assignedToId,
+      teamId: details.teamId || null,
+      assignedToId: details.assignedToId,
       createdById: admin.id,
     },
   });
@@ -89,6 +114,52 @@ export async function createOrder(
   revalidatePath("/admin/orders");
   revalidatePath("/employee/orders");
   return { ok: true, id: order.id };
+}
+
+export async function updateOrder(
+  orderId: string,
+  customer: OrderCustomerInput,
+  details: OrderDetailsInput
+): Promise<OrderActionResult> {
+  await requireEmployee("ADMIN");
+
+  const existing = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!existing) return { ok: false, error: "Order not found." };
+
+  const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
+  const error = validateOrderInput(customer, details);
+  if (error) return { ok: false, error };
+
+  const dbCustomer = await upsertOrderCustomer(customer, billName);
+  const parsedScheduledAt = details.scheduledAt ? new Date(details.scheduledAt) : null;
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      customerId: dbCustomer.id,
+      scheduledAt: parsedScheduledAt && !Number.isNaN(parsedScheduledAt.getTime()) ? parsedScheduledAt : null,
+      locationUrl: details.locationUrl.trim() || null,
+      orderType: details.orderType,
+      priceAgreed: details.priceAgreed,
+      customerLanguage: details.customerLanguage,
+      notes: details.notes.trim() || null,
+      teamId: details.teamId || null,
+      assignedToId: details.assignedToId,
+    },
+  });
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath("/employee/orders");
+  revalidatePath(`/employee/orders/${orderId}`);
+  return { ok: true, id: orderId };
+}
+
+export async function deleteOrder(orderId: string) {
+  await requireAdmin();
+  await prisma.order.delete({ where: { id: orderId } });
+  revalidatePath("/employee/orders");
+  redirect("/admin/orders?toast=1");
 }
 
 export async function advanceOrderStatus(orderId: string): Promise<OrderActionResult> {
