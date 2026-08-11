@@ -60,14 +60,35 @@ export function buildGoogleCalendarUrl(order: {
   number: string;
   scheduledAt: Date | null;
   customerName: string;
+  phone: string;
   address: string;
+  locationUrl: string;
+  orderType: string;
+  priceAgreed: string;
+  customerLanguage: string;
+  team: string;
+  assignedTo: string;
+  notes: string | null;
 }) {
   const start = order.scheduledAt ?? new Date();
   const end = new Date(start.getTime() + 60 * 60 * 1000);
+  const detailLines = [
+    `OSTA Services - Order ${order.number}`,
+    `Customer: ${order.customerName}`,
+    `Phone: ${order.phone}`,
+    `Address: ${order.address}`,
+    `Location: ${order.locationUrl}`,
+    `Order Type: ${order.orderType}`,
+    `Price Agreed: ${order.priceAgreed}`,
+    `Customer Language: ${order.customerLanguage}`,
+    `Team: ${order.team}`,
+    `Assigned To: ${order.assignedTo}`,
+    order.notes ? `Notes: ${order.notes}` : null,
+  ].filter(Boolean);
   const params = new URLSearchParams({
     text: `OSTA Booking - ${order.customerName}`,
     dates: `${toGoogleCalendarDate(start)}/${toGoogleCalendarDate(end)}`,
-    details: `Order ${order.number} for ${order.customerName}.`,
+    details: detailLines.join("\n"),
     location: order.address,
   });
   return `https://calendar.google.com/calendar/u/0/r/eventedit?${params.toString()}`;

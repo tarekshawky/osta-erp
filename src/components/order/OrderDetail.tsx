@@ -51,7 +51,15 @@ export function OrderDetail({
     number: order.number,
     scheduledAt: order.scheduledAt,
     customerName: displayName,
-    address,
+    phone: formatUaePhone(order.customer.phone),
+    address: address || "—",
+    locationUrl: locationHref,
+    orderType: order.orderType,
+    priceAgreed: order.priceAgreed,
+    customerLanguage: order.customerLanguage,
+    team: order.team?.name ?? "—",
+    assignedTo: `${order.assignedTo.name} (${order.assignedTo.code})`,
+    notes: order.notes,
   });
   const whatsappUrl = buildWhatsAppUrl({
     number: order.number,
