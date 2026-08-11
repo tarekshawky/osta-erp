@@ -24,14 +24,26 @@ export function formatDate(date: Date) {
   }).format(date);
 }
 
+export const UAE_TIMEZONE = "Asia/Dubai";
+
 export function formatDateSlash(date: Date) {
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  return `${dd} / ${mm} / ${date.getFullYear()}`;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: UAE_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("day")} / ${get("month")} / ${get("year")}`;
 }
 
 export function formatDateTimeSlash(date: Date) {
-  const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).format(date);
+  const time = new Intl.DateTimeFormat("en-US", {
+    timeZone: UAE_TIMEZONE,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
   return `${formatDateSlash(date)}  ${time}`;
 }
 

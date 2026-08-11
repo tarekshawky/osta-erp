@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { getSession } from "@/lib/session";
-import { ORDER_STATUSES, NEXT_STATUS } from "@/lib/orderData";
+import { ORDER_STATUSES, NEXT_STATUS, parseUaeDateTimeLocal } from "@/lib/orderData";
 
 export type OrderCustomerInput = {
   type: "INDIVIDUAL" | "COMPANY";
@@ -91,13 +91,13 @@ export async function createOrder(
   const lastSeq = lastOrder ? parseInt(lastOrder.number.slice(numberPrefix.length), 10) : 0;
   const number = `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
 
-  const parsedScheduledAt = details.scheduledAt ? new Date(details.scheduledAt) : null;
+  const parsedScheduledAt = details.scheduledAt ? parseUaeDateTimeLocal(details.scheduledAt) : null;
 
   const order = await prisma.order.create({
     data: {
       number,
       date,
-      scheduledAt: parsedScheduledAt && !Number.isNaN(parsedScheduledAt.getTime()) ? parsedScheduledAt : null,
+      scheduledAt: parsedScheduledAt,
       customerId: dbCustomer.id,
       locationUrl: details.locationUrl.trim() || null,
       orderType: details.orderType,
@@ -131,13 +131,13 @@ export async function updateOrder(
   if (error) return { ok: false, error };
 
   const dbCustomer = await upsertOrderCustomer(customer, billName);
-  const parsedScheduledAt = details.scheduledAt ? new Date(details.scheduledAt) : null;
+  const parsedScheduledAt = details.scheduledAt ? parseUaeDateTimeLocal(details.scheduledAt) : null;
 
   await prisma.order.update({
     where: { id: orderId },
     data: {
       customerId: dbCustomer.id,
-      scheduledAt: parsedScheduledAt && !Number.isNaN(parsedScheduledAt.getTime()) ? parsedScheduledAt : null,
+      scheduledAt: parsedScheduledAt,
       locationUrl: details.locationUrl.trim() || null,
       orderType: details.orderType,
       priceAgreed: details.priceAgreed,

@@ -3,6 +3,7 @@ import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { OrderForm } from "@/components/order/OrderForm";
+import { toUaeDateTimeLocalValue } from "@/lib/orderData";
 import type { OrderCustomerInput, OrderDetailsInput } from "@/app/admin/orders/actions";
 
 export default async function AdminOrderEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -35,7 +36,7 @@ export default async function AdminOrderEditPage({ params }: { params: Promise<{
     teamId: order.teamId ?? "",
     assignedToId: order.assignedToId,
     notes: order.notes ?? "",
-    scheduledAt: order.scheduledAt ? order.scheduledAt.toISOString().slice(0, 16) : "",
+    scheduledAt: order.scheduledAt ? toUaeDateTimeLocalValue(order.scheduledAt) : "",
     locationUrl: order.locationUrl ?? "",
     orderType: order.orderType,
     priceAgreed: order.priceAgreed,
