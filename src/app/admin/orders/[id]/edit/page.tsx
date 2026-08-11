@@ -27,6 +27,7 @@ export default async function AdminOrderEditPage({ params }: { params: Promise<{
     companyName: order.customer.companyName ?? "",
     trn: order.customer.trn ?? "",
     phone: order.customer.phone,
+    whatsapp: order.customer.whatsapp ?? "",
     emirate: order.customer.emirate,
     buildingName: order.customer.buildingName ?? "",
     flatNo: order.customer.flatNo ?? "",

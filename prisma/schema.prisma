@@ -74,6 +74,7 @@ model Customer {
   companyName  String?
   trn          String?
   phone        String       @unique
+  whatsapp     String?
   emirate      String
   buildingName String?
   flatNo       String?

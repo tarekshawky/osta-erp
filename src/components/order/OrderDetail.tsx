@@ -24,6 +24,7 @@ type OrderDetailData = {
     name: string;
     companyName: string | null;
     phone: string;
+    whatsapp: string | null;
     emirate: string;
     buildingName: string | null;
     flatNo: string | null;
@@ -199,7 +200,7 @@ export function OrderDetail({
         <EmployeeOrderWorkflow
           order={{
             ...order,
-            customerPhone: order.customer.phone,
+            customerPhone: order.customer.whatsapp || order.customer.phone,
           }}
         />
       )}

@@ -13,6 +13,7 @@ export type OrderCustomerInput = {
   companyName: string;
   trn: string;
   phone: string;
+  whatsapp: string;
   emirate: string;
   buildingName: string;
   flatNo: string;
@@ -44,6 +45,7 @@ async function upsertOrderCustomer(customer: OrderCustomerInput, billName: strin
       name: customer.name.trim(),
       companyName: customer.type === "COMPANY" ? customer.companyName.trim() : null,
       trn: customer.type === "COMPANY" ? customer.trn.trim() || null : null,
+      whatsapp: customer.whatsapp.trim() || null,
       emirate: customer.emirate,
       buildingName: customer.buildingName.trim() || null,
       flatNo: customer.flatNo.trim() || null,
@@ -54,6 +56,7 @@ async function upsertOrderCustomer(customer: OrderCustomerInput, billName: strin
       name: customer.name.trim() || billName,
       companyName: customer.type === "COMPANY" ? customer.companyName.trim() : null,
       trn: customer.type === "COMPANY" ? customer.trn.trim() || null : null,
+      whatsapp: customer.whatsapp.trim() || null,
       emirate: customer.emirate,
       buildingName: customer.buildingName.trim() || null,
       flatNo: customer.flatNo.trim() || null,

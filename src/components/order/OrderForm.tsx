@@ -17,6 +17,7 @@ const emptyCustomer: OrderCustomerInput = {
   companyName: "",
   trn: "",
   phone: "",
+  whatsapp: "",
   emirate: "Dubai",
   buildingName: "",
   flatNo: "",
@@ -163,6 +164,18 @@ export function OrderForm({
             placeholder="5X XXX XXXX"
             value={customer.phone}
             onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+          />
+        </div>
+      </Field>
+
+      <Field label="WhatsApp Number (Optional, if different from phone)">
+        <div className="flex gap-2">
+          <span className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-500">+971</span>
+          <input
+            className={inputClassName}
+            placeholder="5X XXX XXXX"
+            value={customer.whatsapp}
+            onChange={(e) => setCustomer({ ...customer, whatsapp: e.target.value })}
           />
         </div>
       </Field>
