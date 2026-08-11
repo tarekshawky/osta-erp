@@ -17,8 +17,10 @@ import {
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { Pagination } from "@/components/admin/Pagination";
+import { ImportModal } from "@/components/admin/ImportModal";
 import { ToastOnMount } from "@/components/ToastOnMount";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
+import { importCustomersFromExcel } from "./import/actions";
 import type { Prisma } from "@/generated/prisma";
 
 export default async function AdminCustomersPage({
@@ -112,6 +114,19 @@ export default async function AdminCustomersPage({
               </svg>
               {exportParams ? "Export Current Results" : "Export XLSX"}
             </a>
+            <ImportModal
+              title="Import Customers"
+              templateHref="/admin/customers/import/template"
+              onImport={importCustomersFromExcel}
+              trigger={
+                <span className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2 flex items-center gap-1.5">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 21V9m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Import
+                </span>
+              }
+            />
             <Link
               href="/admin/customers/new"
               className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2"

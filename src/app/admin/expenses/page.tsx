@@ -5,6 +5,7 @@ import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { ExpensesManager } from "@/components/expense/ExpensesManager";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { buildDateRange } from "@/lib/dateRangeFilter";
+import { EXPENSE_PAYMENT_METHODS } from "@/lib/expenseData";
 import type { Prisma } from "@/generated/prisma";
 
 export default async function AdminExpensesPage({
@@ -28,7 +29,7 @@ export default async function AdminExpensesPage({
   if (dateRange) where.date = dateRange;
   if (team !== "all") where.team = { name: team };
 
-  const [totalAgg, byCategory] = await Promise.all([
+  const [totalAgg, byCategory, byPayment] = await Promise.all([
     prisma.expense.aggregate({ _sum: { amount: true, refundedAmount: true }, _count: true, where }),
     prisma.expense.groupBy({
       by: ["category"],
@@ -37,8 +38,19 @@ export default async function AdminExpensesPage({
       orderBy: { _sum: { amount: "desc" } },
       take: 2,
     }),
+    prisma.expense.groupBy({
+      by: ["payment"],
+      _sum: { amount: true, refundedAmount: true },
+      where,
+    }),
   ]);
   const totalExpenses = (totalAgg._sum.amount ?? 0) - (totalAgg._sum.refundedAmount ?? 0);
+  const paymentTotals = Object.fromEntries(
+    EXPENSE_PAYMENT_METHODS.map((method) => {
+      const row = byPayment.find((p) => p.payment === method);
+      return [method, (row?._sum.amount ?? 0) - (row?._sum.refundedAmount ?? 0)];
+    })
+  );
   const totalPages = Math.max(1, Math.ceil(totalAgg._count / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
 
@@ -75,6 +87,12 @@ export default async function AdminExpensesPage({
       />
 
       <div className="px-6 py-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+          <AdminStatCard label="Cash" value={formatAed(paymentTotals.Cash)} valueClassName="text-slate-900" />
+          <AdminStatCard label="Bank Transfer" value={formatAed(paymentTotals.Bank)} valueClassName="text-slate-900" />
+          <AdminStatCard label="Credit" value={formatAed(paymentTotals.Credit)} valueClassName="text-slate-900" />
+        </div>
+
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
           <AdminStatCard label="All Expenses" value={formatAed(totalExpenses)} valueClassName="text-red-500" />
           {byCategory.map((c) => (
