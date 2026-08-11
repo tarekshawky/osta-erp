@@ -61,7 +61,8 @@ async function upsertCustomer(customer: CustomerFormData, billName: string) {
 export async function createInvoiceFromWizard(
   customer: CustomerFormData,
   service: ServiceFormData,
-  payment: PaymentFormData
+  payment: PaymentFormData,
+  orderId?: string
 ): Promise<CreateInvoiceResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "Not signed in." };
@@ -115,6 +116,17 @@ export async function createInvoiceFromWizard(
       },
     },
   });
+
+  if (orderId) {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { invoiceId: invoice.id, status: "Done" },
+    });
+    revalidatePath("/admin/orders");
+    revalidatePath(`/admin/orders/${orderId}`);
+    revalidatePath("/employee/orders");
+    revalidatePath(`/employee/orders/${orderId}`);
+  }
 
   revalidatePath("/admin/wallets");
   revalidatePath("/admin/marketing");

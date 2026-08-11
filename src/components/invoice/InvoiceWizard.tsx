@@ -29,6 +29,8 @@ export function InvoiceWizard({
   initialCustomer,
   initialService,
   initialPayment,
+  initialStep = 0,
+  orderId,
   teamOptions = [],
 }: {
   basePath: "/admin" | "/employee";
@@ -39,11 +41,13 @@ export function InvoiceWizard({
   initialCustomer?: CustomerFormData;
   initialService?: ServiceFormData;
   initialPayment?: PaymentFormData;
+  initialStep?: number;
+  orderId?: string;
   teamOptions?: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const { showToast } = useToast();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialStep);
   const [customer, setCustomer] = useState<CustomerFormData>(initialCustomer ?? emptyCustomer);
   const [service, setService] = useState<ServiceFormData>(initialService ?? emptyService);
   const [payment, setPayment] = useState<PaymentFormData>(initialPayment ?? emptyPayment);
@@ -76,7 +80,7 @@ export function InvoiceWizard({
       const res =
         mode === "edit" && editInvoiceId
           ? await updateInvoiceFromWizard(editInvoiceId, customer, service, payment)
-          : await createInvoiceFromWizard(customer, service, payment);
+          : await createInvoiceFromWizard(customer, service, payment, orderId);
       if (res.ok && res.number) {
         setResult({ number: res.number, amount: res.amount ?? 0 });
         showToast(mode === "edit" ? "Invoice updated." : "Invoice created.");

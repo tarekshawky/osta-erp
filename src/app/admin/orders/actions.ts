@@ -1,0 +1,119 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
+import { requireEmployee } from "@/lib/auth";
+import { getSession } from "@/lib/session";
+import { ORDER_STATUSES, NEXT_STATUS } from "@/lib/orderData";
+
+export type OrderCustomerInput = {
+  type: "INDIVIDUAL" | "COMPANY";
+  name: string;
+  companyName: string;
+  trn: string;
+  phone: string;
+  emirate: string;
+  buildingName: string;
+  flatNo: string;
+};
+
+export type OrderActionResult = { ok: boolean; id?: string; error?: string };
+
+async function upsertOrderCustomer(customer: OrderCustomerInput, billName: string) {
+  return prisma.customer.upsert({
+    where: { phone: customer.phone.trim() },
+    update: {
+      type: customer.type,
+      name: customer.name.trim(),
+      companyName: customer.type === "COMPANY" ? customer.companyName.trim() : null,
+      trn: customer.type === "COMPANY" ? customer.trn.trim() || null : null,
+      emirate: customer.emirate,
+      buildingName: customer.buildingName.trim() || null,
+      flatNo: customer.flatNo.trim() || null,
+    },
+    create: {
+      phone: customer.phone.trim(),
+      type: customer.type,
+      name: customer.name.trim() || billName,
+      companyName: customer.type === "COMPANY" ? customer.companyName.trim() : null,
+      trn: customer.type === "COMPANY" ? customer.trn.trim() || null : null,
+      emirate: customer.emirate,
+      buildingName: customer.buildingName.trim() || null,
+      flatNo: customer.flatNo.trim() || null,
+    },
+  });
+}
+
+export async function createOrder(
+  customer: OrderCustomerInput,
+  teamId: string,
+  assignedToId: string,
+  notes: string,
+  scheduledAt: string
+): Promise<OrderActionResult> {
+  const admin = await requireEmployee("ADMIN");
+
+  const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
+  if (!billName || !customer.phone.trim()) {
+    return { ok: false, error: "Customer name and phone are required." };
+  }
+  if (!assignedToId) return { ok: false, error: "Assign the order to an employee." };
+
+  const dbCustomer = await upsertOrderCustomer(customer, billName);
+
+  const date = new Date();
+  const numberPrefix = `ORD-${date.getFullYear()}-`;
+  const lastOrder = await prisma.order.findFirst({
+    where: { number: { startsWith: numberPrefix } },
+    orderBy: { number: "desc" },
+  });
+  const lastSeq = lastOrder ? parseInt(lastOrder.number.slice(numberPrefix.length), 10) : 0;
+  const number = `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
+
+  const parsedScheduledAt = scheduledAt ? new Date(scheduledAt) : null;
+
+  const order = await prisma.order.create({
+    data: {
+      number,
+      date,
+      scheduledAt: parsedScheduledAt && !Number.isNaN(parsedScheduledAt.getTime()) ? parsedScheduledAt : null,
+      customerId: dbCustomer.id,
+      notes: notes.trim() || null,
+      status: "Pending",
+      teamId: teamId || null,
+      assignedToId,
+      createdById: admin.id,
+    },
+  });
+
+  revalidatePath("/admin/orders");
+  revalidatePath("/employee/orders");
+  return { ok: true, id: order.id };
+}
+
+export async function advanceOrderStatus(orderId: string): Promise<OrderActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "Not signed in." };
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) return { ok: false, error: "Order not found." };
+
+  const isAssignedEmployee = session.employeeId === order.assignedToId;
+  if (session.role !== "ADMIN" && !isAssignedEmployee) {
+    return { ok: false, error: "Not authorized." };
+  }
+
+  const currentStatus = ORDER_STATUSES.includes(order.status as (typeof ORDER_STATUSES)[number])
+    ? (order.status as (typeof ORDER_STATUSES)[number])
+    : "Pending";
+  const next = NEXT_STATUS[currentStatus];
+  if (!next) return { ok: false, error: "This order is already done." };
+
+  await prisma.order.update({ where: { id: orderId }, data: { status: next } });
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath("/employee/orders");
+  revalidatePath(`/employee/orders/${orderId}`);
+  return { ok: true, id: orderId };
+}

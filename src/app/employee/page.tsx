@@ -16,6 +16,9 @@ export default async function EmployeeHomePage() {
 
   const { revenue, expenses, cash } = await getEmployeeFinancials(employee.id, employee.walletResetAt);
   const currentCash = employee.custody + cash - expenses;
+  const openOrdersCount = await prisma.order.count({
+    where: { assignedToId: employee.id, status: { not: "Done" } },
+  });
   const number = (n: number) => new Intl.NumberFormat("en-US", { minimumFractionDigits: n % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 }).format(n);
 
   return (
@@ -64,7 +67,7 @@ export default async function EmployeeHomePage() {
             </div>
             <div>
               <div className="text-blue-300 text-xs">Orders</div>
-              <div className="font-semibold text-sm">0</div>
+              <div className="font-semibold text-sm">{openOrdersCount}</div>
             </div>
           </div>
         </div>
@@ -110,7 +113,7 @@ export default async function EmployeeHomePage() {
         <StatCard
           iconBg="bg-orange-50"
           iconColor="text-orange-500"
-          value="0"
+          value={String(openOrdersCount)}
           label="Orders"
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -156,6 +159,18 @@ export default async function EmployeeHomePage() {
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M4 20V10M12 20V4M20 20v-7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            }
+          />
+          <QuickActionTile
+            href="/employee/orders"
+            label="Orders"
+            iconBg="bg-orange-50"
+            iconColor="text-orange-500"
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v4l3 2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             }
           />
