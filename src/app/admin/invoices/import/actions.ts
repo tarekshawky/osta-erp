@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { parseWorkbookRows, type ImportResult } from "@/lib/excel";
 import { CATEGORIES, PAYMENT_METHODS, SERVICE_TYPES, WARRANTY_DAYS } from "@/lib/invoiceData";
+import { findOrCreateCustomer } from "@/lib/customerMatch";
 
 export async function importInvoicesFromExcel(formData: FormData): Promise<ImportResult> {
   const admin = await requireEmployee("ADMIN");
@@ -66,26 +67,19 @@ export async function importInvoicesFromExcel(formData: FormData): Promise<Impor
     const date = row["Date"] && !Number.isNaN(Date.parse(row["Date"])) ? new Date(row["Date"]) : new Date();
 
     try {
-      const customer = await prisma.customer.upsert({
-        where: { phone },
-        update: {
+      const customer = await findOrCreateCustomer(
+        {
           type: customerType,
           name: customerName,
-          companyName: customerType === "COMPANY" ? customerName : null,
-          emirate: row["Emirate"]?.trim() || "Dubai",
-          buildingName: row["Building Name"]?.trim() || null,
-          flatNo: row["Flat No"]?.trim() || null,
-        },
-        create: {
+          companyName: customerType === "COMPANY" ? customerName : "",
+          trn: "",
           phone,
-          type: customerType,
-          name: customerName,
-          companyName: customerType === "COMPANY" ? customerName : null,
           emirate: row["Emirate"]?.trim() || "Dubai",
-          buildingName: row["Building Name"]?.trim() || null,
-          flatNo: row["Flat No"]?.trim() || null,
+          buildingName: row["Building Name"]?.trim() || "",
+          flatNo: row["Flat No"]?.trim() || "",
         },
-      });
+        admin.id
+      );
 
       const amount = qty * unitPrice;
       const warrantyUntil = new Date(date);

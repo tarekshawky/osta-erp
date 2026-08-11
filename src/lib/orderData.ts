@@ -1,3 +1,5 @@
+import { toWaPhoneDigits } from "@/lib/phone";
+
 export const ORDER_STATUSES = ["Assigned", "Accepted", "On The Way", "Arrived", "In Progress", "Done"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
@@ -118,15 +120,6 @@ export function buildWhatsAppUrl(order: {
     order.notes ? `Notes: ${order.notes}` : null,
   ].filter(Boolean);
   return `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
-}
-
-// Normalizes a stored customer phone (e.g. "501212697" or "+971501212697")
-// into bare digits with the country code, as wa.me requires.
-function toWaPhoneDigits(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("971")) return digits;
-  const trimmed = digits.startsWith("0") ? digits.slice(1) : digits;
-  return `971${trimmed}`;
 }
 
 function bilingualMessage(customerLanguage: string, arabic: string, english: string) {

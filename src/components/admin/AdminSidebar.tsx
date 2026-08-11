@@ -20,6 +20,16 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/customers",
+    label: "Customers",
+    icon: (
+      <>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/invoices",
     label: "Invoices",
     icon: (

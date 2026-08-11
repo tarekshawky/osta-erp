@@ -64,23 +64,53 @@ model Employee {
   warrantyCertificates  WarrantyCertificate[]
   ordersAssigned        Order[]                @relation("OrderAssignedTo")
   ordersCreated         Order[]                @relation("OrderCreatedBy")
+  customersCreated      Customer[]             @relation("CustomerCreatedBy")
+  customersUpdated      Customer[]             @relation("CustomerUpdatedBy")
+  customerNotesCreated  CustomerNote[]
   createdAt DateTime   @default(now())
 }
 
 model Customer {
   id           String       @id @default(cuid())
+  code         String       @unique
   type         CustomerType @default(INDIVIDUAL)
   name         String
   companyName  String?
   trn          String?
   phone        String       @unique
   whatsapp     String?
+  email        String?
+  language     String       @default("Arabic")
   emirate      String
+  city         String?
+  area         String?
+  buildingType String?
   buildingName String?
   flatNo       String?
+  address      String?
+  locationUrl  String?
+  notes        String?
+  status       String       @default("Active")
+  createdById  String?
+  createdBy    Employee?    @relation("CustomerCreatedBy", fields: [createdById], references: [id])
+  updatedById  String?
+  updatedBy    Employee?    @relation("CustomerUpdatedBy", fields: [updatedById], references: [id])
+  updatedAt    DateTime     @default(now()) @updatedAt
   invoices     Invoice[]
   orders       Order[]
+  quotations   Quotation[]
+  customerNotes CustomerNote[]
   createdAt    DateTime     @default(now())
+}
+
+model CustomerNote {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  note        String
+  createdById String
+  createdBy   Employee @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
 }
 
 model Invoice {
@@ -229,6 +259,8 @@ model Quotation {
   emirate      String?
   buildingName String?
   flatNo       String?
+  customerId   String?
+  customer     Customer?       @relation(fields: [customerId], references: [id])
   teamId       String?
   team         Team?           @relation(fields: [teamId], references: [id])
   createdById  String

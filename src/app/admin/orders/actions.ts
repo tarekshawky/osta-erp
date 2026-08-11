@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { getSession } from "@/lib/session";
 import { parseUaeDateTimeLocal } from "@/lib/orderData";
+import { findOrCreateCustomer } from "@/lib/customerMatch";
 
 export type OrderCustomerInput = {
   type: "INDIVIDUAL" | "COMPANY";
@@ -37,33 +38,6 @@ async function requireAdmin() {
   if (!session || session.role !== "ADMIN") redirect("/");
 }
 
-async function upsertOrderCustomer(customer: OrderCustomerInput, billName: string) {
-  return prisma.customer.upsert({
-    where: { phone: customer.phone.trim() },
-    update: {
-      type: customer.type,
-      name: customer.name.trim(),
-      companyName: customer.type === "COMPANY" ? customer.companyName.trim() : null,
-      trn: customer.type === "COMPANY" ? customer.trn.trim() || null : null,
-      whatsapp: customer.whatsapp.trim() || null,
-      emirate: customer.emirate,
-      buildingName: customer.buildingName.trim() || null,
-      flatNo: customer.flatNo.trim() || null,
-    },
-    create: {
-      phone: customer.phone.trim(),
-      type: customer.type,
-      name: customer.name.trim() || billName,
-      companyName: customer.type === "COMPANY" ? customer.companyName.trim() : null,
-      trn: customer.type === "COMPANY" ? customer.trn.trim() || null : null,
-      whatsapp: customer.whatsapp.trim() || null,
-      emirate: customer.emirate,
-      buildingName: customer.buildingName.trim() || null,
-      flatNo: customer.flatNo.trim() || null,
-    },
-  });
-}
-
 function validateOrderInput(customer: OrderCustomerInput, details: OrderDetailsInput) {
   const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
   if (!billName || !customer.phone.trim()) {
@@ -79,11 +53,10 @@ export async function createOrder(
 ): Promise<OrderActionResult> {
   const admin = await requireEmployee("ADMIN");
 
-  const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
   const error = validateOrderInput(customer, details);
   if (error) return { ok: false, error };
 
-  const dbCustomer = await upsertOrderCustomer(customer, billName);
+  const dbCustomer = await findOrCreateCustomer(customer, admin.id);
 
   const date = new Date();
   const numberPrefix = `ORD-${date.getFullYear()}-`;
@@ -129,11 +102,10 @@ export async function updateOrder(
   const existing = await prisma.order.findUnique({ where: { id: orderId } });
   if (!existing) return { ok: false, error: "Order not found." };
 
-  const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
   const error = validateOrderInput(customer, details);
   if (error) return { ok: false, error };
 
-  const dbCustomer = await upsertOrderCustomer(customer, billName);
+  const dbCustomer = await findOrCreateCustomer(customer, existing.createdById);
   const parsedScheduledAt = details.scheduledAt ? parseUaeDateTimeLocal(details.scheduledAt) : null;
 
   await prisma.order.update({

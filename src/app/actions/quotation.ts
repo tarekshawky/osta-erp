@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
+import { findOrCreateCustomer } from "@/lib/customerMatch";
 import type { CustomerFormData, ServiceFormData } from "@/components/invoice/types";
 
 export type CreateQuotationResult = {
@@ -54,6 +55,8 @@ export async function createQuotationFromWizard(
   const lastSeq = lastQuotation ? parseInt(lastQuotation.number.slice(numberPrefix.length), 10) : 0;
   const number = `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
 
+  const dbCustomer = customer.phone.trim() ? await findOrCreateCustomer(customer, employee.id) : null;
+
   const quotation = await prisma.quotation.create({
     data: {
       number,
@@ -66,6 +69,7 @@ export async function createQuotationFromWizard(
       emirate: customer.emirate,
       buildingName: customer.buildingName.trim() || null,
       flatNo: customer.flatNo.trim() || null,
+      customerId: dbCustomer?.id,
       teamId: employee.teamId,
       createdById: employee.id,
       items: {
@@ -99,6 +103,7 @@ export async function updateQuotationFromWizard(
   }
 
   const amount = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
+  const dbCustomer = customer.phone.trim() ? await findOrCreateCustomer(customer, existing.createdById) : null;
 
   await prisma.quotationItem.deleteMany({ where: { quotationId } });
   await prisma.quotation.update({
@@ -112,6 +117,7 @@ export async function updateQuotationFromWizard(
       emirate: customer.emirate,
       buildingName: customer.buildingName.trim() || null,
       flatNo: customer.flatNo.trim() || null,
+      customerId: dbCustomer?.id,
       items: { create: items },
     },
   });

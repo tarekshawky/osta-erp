@@ -7,25 +7,27 @@ import type { CustomerFormData } from "@/components/invoice/types";
 export default async function AdminNewInvoicePage({
   searchParams,
 }: {
-  searchParams: Promise<{ orderId?: string }>;
+  searchParams: Promise<{ orderId?: string; customerId?: string }>;
 }) {
-  const { orderId } = await searchParams;
-  const [employee, teams, order] = await Promise.all([
+  const { orderId, customerId } = await searchParams;
+  const [employee, teams, order, customer] = await Promise.all([
     requireEmployee("ADMIN"),
     prisma.team.findMany({ where: { name: { in: ["Ajman", "Al Ain"] } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     orderId ? prisma.order.findUnique({ where: { id: orderId }, include: { customer: true } }) : null,
+    !orderId && customerId ? prisma.customer.findUnique({ where: { id: customerId } }) : null,
   ]);
 
-  const initialCustomer: CustomerFormData | undefined = order
+  const sourceCustomer = order?.customer ?? customer;
+  const initialCustomer: CustomerFormData | undefined = sourceCustomer
     ? {
-        type: order.customer.type,
-        name: order.customer.name,
-        companyName: order.customer.companyName ?? "",
-        trn: order.customer.trn ?? "",
-        phone: order.customer.phone,
-        emirate: order.customer.emirate,
-        buildingName: order.customer.buildingName ?? "",
-        flatNo: order.customer.flatNo ?? "",
+        type: sourceCustomer.type,
+        name: sourceCustomer.name,
+        companyName: sourceCustomer.companyName ?? "",
+        trn: sourceCustomer.trn ?? "",
+        phone: sourceCustomer.phone,
+        emirate: sourceCustomer.emirate,
+        buildingName: sourceCustomer.buildingName ?? "",
+        flatNo: sourceCustomer.flatNo ?? "",
         leadSource: "Organic",
       }
     : undefined;

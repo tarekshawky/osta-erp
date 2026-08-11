@@ -148,10 +148,12 @@ async function main() {
   ];
 
   const customers = [];
-  for (const c of customerSeeds) {
+  for (let i = 0; i < customerSeeds.length; i++) {
+    const c = customerSeeds[i];
     customers.push(
       await prisma.customer.create({
         data: {
+          code: `CUST-${String(i + 1).padStart(6, "0")}`,
           name: c.name,
           phone: c.phone,
           type: c.type ?? "INDIVIDUAL",

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { CUSTOM_SERVICE_VALUE, WARRANTY_DAYS } from "@/lib/invoiceData";
+import { findOrCreateCustomer } from "@/lib/customerMatch";
 import type { CustomerFormData, ServiceFormData, PaymentFormData, CreateInvoiceResult } from "@/components/invoice/types";
 
 function resolveItems(service: ServiceFormData) {
@@ -33,31 +34,6 @@ async function resolveInvoiceTeamId(teamId: string, isAdmin: boolean, employeeTe
   return team?.id ?? null;
 }
 
-async function upsertCustomer(customer: CustomerFormData, billName: string) {
-  return prisma.customer.upsert({
-    where: { phone: customer.phone.trim() },
-    update: {
-      type: customer.type,
-      name: customer.name.trim(),
-      companyName: customer.type === "COMPANY" ? customer.companyName.trim() : null,
-      trn: customer.type === "COMPANY" ? customer.trn.trim() || null : null,
-      emirate: customer.emirate,
-      buildingName: customer.buildingName.trim() || null,
-      flatNo: customer.flatNo.trim() || null,
-    },
-    create: {
-      phone: customer.phone.trim(),
-      type: customer.type,
-      name: customer.name.trim() || billName,
-      companyName: customer.type === "COMPANY" ? customer.companyName.trim() : null,
-      trn: customer.type === "COMPANY" ? customer.trn.trim() || null : null,
-      emirate: customer.emirate,
-      buildingName: customer.buildingName.trim() || null,
-      flatNo: customer.flatNo.trim() || null,
-    },
-  });
-}
-
 export async function createInvoiceFromWizard(
   customer: CustomerFormData,
   service: ServiceFormData,
@@ -85,7 +61,7 @@ export async function createInvoiceFromWizard(
   if (!date) return { ok: false, error: "Enter a valid invoice date." };
   const teamId = await resolveInvoiceTeamId(payment.teamId, session.role === "ADMIN", employee.teamId);
   if (session.role === "ADMIN" && !teamId) return { ok: false, error: "Select Ajman or Al Ain team." };
-  const dbCustomer = await upsertCustomer(customer, billName);
+  const dbCustomer = await findOrCreateCustomer(customer, employee.id);
   const warrantyUntil = new Date(date);
   warrantyUntil.setUTCDate(warrantyUntil.getUTCDate() + WARRANTY_DAYS);
 
@@ -160,7 +136,7 @@ export async function updateInvoiceFromWizard(
   if (!date) return { ok: false, error: "Enter a valid invoice date." };
   const teamId = await resolveInvoiceTeamId(payment.teamId, true, null);
   if (!teamId) return { ok: false, error: "Select Ajman or Al Ain team." };
-  const dbCustomer = await upsertCustomer(customer, billName);
+  const dbCustomer = await findOrCreateCustomer(customer, existing.createdById);
   const warrantyUntil = new Date(date);
   warrantyUntil.setUTCDate(warrantyUntil.getUTCDate() + WARRANTY_DAYS);
 
