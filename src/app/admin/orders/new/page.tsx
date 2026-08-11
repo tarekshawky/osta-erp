@@ -10,7 +10,7 @@ export default async function AdminNewOrderPage() {
     prisma.team.findMany({ where: { name: { in: ["Ajman", "Al Ain"] } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.employee.findMany({
       where: { status: "active", role: "EMPLOYEE" },
-      select: { id: true, name: true, code: true },
+      select: { id: true, name: true, code: true, teamId: true },
       orderBy: { name: "asc" },
     }),
   ]);

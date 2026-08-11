@@ -9,7 +9,7 @@ import { ORDER_TYPES, PRICE_AGREED_OPTIONS, CUSTOMER_LANGUAGES } from "@/lib/ord
 import { createOrder, updateOrder, type OrderCustomerInput, type OrderDetailsInput } from "@/app/admin/orders/actions";
 
 type TeamOption = { id: string; name: string };
-type EmployeeOption = { id: string; name: string; code: string };
+type EmployeeOption = { id: string; name: string; code: string; teamId: string | null };
 
 const emptyCustomer: OrderCustomerInput = {
   type: "INDIVIDUAL",
@@ -23,9 +23,10 @@ const emptyCustomer: OrderCustomerInput = {
 };
 
 function emptyDetails(teamOptions: TeamOption[], employeeOptions: EmployeeOption[]): OrderDetailsInput {
+  const teamId = teamOptions[0]?.id ?? "";
   return {
-    teamId: teamOptions[0]?.id ?? "",
-    assignedToId: employeeOptions[0]?.id ?? "",
+    teamId,
+    assignedToId: employeeOptions.find((e) => e.teamId === teamId)?.id ?? "",
     notes: "",
     scheduledAt: "",
     locationUrl: "",
@@ -59,6 +60,16 @@ export function OrderForm({
 
   const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
   const isValid = customer.phone.trim().length >= 7 && billName.length > 0 && details.assignedToId.length > 0;
+  const teamEmployees = employeeOptions.filter((emp) => emp.teamId === details.teamId);
+
+  function handleTeamChange(teamId: string) {
+    const stillAssigned = employeeOptions.some((emp) => emp.id === details.assignedToId && emp.teamId === teamId);
+    setDetails({
+      ...details,
+      teamId,
+      assignedToId: stillAssigned ? details.assignedToId : employeeOptions.find((emp) => emp.teamId === teamId)?.id ?? "",
+    });
+  }
 
   function handleSubmit() {
     setError(null);
@@ -200,7 +211,7 @@ export function OrderForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Team">
-          <select className={inputClassName} value={details.teamId} onChange={(e) => setDetails({ ...details, teamId: e.target.value })}>
+          <select className={inputClassName} value={details.teamId} onChange={(e) => handleTeamChange(e.target.value)}>
             {teamOptions.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -215,7 +226,7 @@ export function OrderForm({
             onChange={(e) => setDetails({ ...details, assignedToId: e.target.value })}
           >
             <option value="">Select employee</option>
-            {employeeOptions.map((emp) => (
+            {teamEmployees.map((emp) => (
               <option key={emp.id} value={emp.id}>
                 {emp.name} · {emp.code}
               </option>

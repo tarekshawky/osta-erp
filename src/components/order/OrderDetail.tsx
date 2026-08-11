@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { formatDateTimeSlash, formatUaePhone } from "@/lib/format";
-import { ORDER_STATUS_STYLES, buildGoogleCalendarUrl, buildWhatsAppUrl, type OrderStatus } from "@/lib/orderData";
+import {
+  ORDER_STATUS_STYLES,
+  buildGoogleCalendarUrl,
+  buildGoogleMapsSearchUrl,
+  buildWhatsAppUrl,
+  type OrderStatus,
+} from "@/lib/orderData";
 import { OrderStatusButton } from "./OrderStatusButton";
 
 type OrderDetailData = {
@@ -40,13 +46,27 @@ export function OrderDetail({
 }) {
   const displayName = order.customer.companyName || order.customer.name;
   const address = [order.customer.buildingName, order.customer.flatNo, order.customer.emirate].filter(Boolean).join(", ");
+  const locationHref = order.locationUrl || buildGoogleMapsSearchUrl(address);
   const calendarUrl = buildGoogleCalendarUrl({
     number: order.number,
     scheduledAt: order.scheduledAt,
     customerName: displayName,
     address,
   });
-  const whatsappUrl = buildWhatsAppUrl({ number: order.number, customerName: displayName, status: order.status });
+  const whatsappUrl = buildWhatsAppUrl({
+    number: order.number,
+    customerName: displayName,
+    phone: formatUaePhone(order.customer.phone),
+    address: address || "—",
+    orderType: order.orderType,
+    priceAgreed: order.priceAgreed,
+    customerLanguage: order.customerLanguage,
+    status: order.status,
+    team: order.team?.name ?? "—",
+    assignedTo: `${order.assignedTo.name} (${order.assignedTo.code})`,
+    scheduledAt: order.scheduledAt ? formatDateTimeSlash(order.scheduledAt) : null,
+    notes: order.notes,
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -91,20 +111,18 @@ export function OrderDetail({
             <dd className="text-slate-900 text-right">{address || "—"}</dd>
           </div>
         </dl>
-        {order.locationUrl && (
-          <a
-            href={order.locationUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-medium text-blue-600"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z" strokeLinejoin="round" />
-              <circle cx="12" cy="10" r="2.5" />
-            </svg>
-            Open Location
-          </a>
-        )}
+        <a
+          href={locationHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-medium text-blue-600"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z" strokeLinejoin="round" />
+            <circle cx="12" cy="10" r="2.5" />
+          </svg>
+          Open Location
+        </a>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -136,6 +154,8 @@ export function OrderDetail({
       <div className="grid grid-cols-2 gap-3">
         <a
           href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 text-sm font-medium text-green-600"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">

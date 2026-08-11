@@ -50,7 +50,37 @@ export function buildGoogleCalendarUrl(order: {
   return `https://calendar.google.com/calendar/u/0/r/eventedit?${params.toString()}`;
 }
 
-export function buildWhatsAppUrl(order: { number: string; customerName: string; status: string }) {
-  const message = `Hi ${order.customerName}, this is OSTA Services regarding your order ${order.number} (status: ${order.status}).`;
-  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+export function buildGoogleMapsSearchUrl(address: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+}
+
+export function buildWhatsAppUrl(order: {
+  number: string;
+  customerName: string;
+  phone: string;
+  address: string;
+  orderType: string;
+  priceAgreed: string;
+  customerLanguage: string;
+  status: string;
+  team: string;
+  assignedTo: string;
+  scheduledAt: string | null;
+  notes: string | null;
+}) {
+  const lines = [
+    `OSTA Services - Order ${order.number}`,
+    `Customer: ${order.customerName}`,
+    `Phone: ${order.phone}`,
+    `Address: ${order.address}`,
+    `Order Type: ${order.orderType}`,
+    `Price Agreed: ${order.priceAgreed}`,
+    `Customer Language: ${order.customerLanguage}`,
+    `Team: ${order.team}`,
+    `Assigned To: ${order.assignedTo}`,
+    order.scheduledAt ? `Scheduled: ${order.scheduledAt}` : null,
+    `Status: ${order.status}`,
+    order.notes ? `Notes: ${order.notes}` : null,
+  ].filter(Boolean);
+  return `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
 }
