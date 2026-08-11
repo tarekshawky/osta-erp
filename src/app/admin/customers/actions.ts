@@ -44,6 +44,56 @@ export async function checkDuplicateCustomer(phone: string, whatsapp: string, em
   return findPossibleDuplicate({ phone, whatsapp, email, excludeId });
 }
 
+export type CustomerSearchResult = {
+  id: string;
+  code: string;
+  type: CustomerType;
+  name: string;
+  companyName: string | null;
+  trn: string | null;
+  phone: string;
+  whatsapp: string | null;
+  emirate: string;
+  buildingName: string | null;
+  flatNo: string | null;
+};
+
+// Live search used by the New Order form's Customer Name field, so an existing
+// customer can be picked instead of retyping their details (and risking a
+// near-duplicate the phone-uniqueness check wouldn't catch, e.g. same person
+// under a slightly different phone).
+export async function searchCustomersByName(query: string): Promise<CustomerSearchResult[]> {
+  await requireEmployee("ADMIN");
+  const q = query.trim();
+  if (q.length < 2) return [];
+
+  const customers = await prisma.customer.findMany({
+    where: {
+      OR: [
+        { name: { contains: q, mode: "insensitive" } },
+        { companyName: { contains: q, mode: "insensitive" } },
+        { phone: { contains: q } },
+      ],
+    },
+    orderBy: { name: "asc" },
+    take: 8,
+  });
+
+  return customers.map((c) => ({
+    id: c.id,
+    code: c.code,
+    type: c.type,
+    name: c.name,
+    companyName: c.companyName,
+    trn: c.trn,
+    phone: c.phone,
+    whatsapp: c.whatsapp,
+    emirate: c.emirate,
+    buildingName: c.buildingName,
+    flatNo: c.flatNo,
+  }));
+}
+
 export async function createCustomer(input: CustomerFormInput, force = false): Promise<CustomerActionResult> {
   const admin = await requireEmployee("ADMIN");
   const error = validate(input);

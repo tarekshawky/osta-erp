@@ -4,7 +4,17 @@ import { useTransition } from "react";
 import { useToast } from "@/components/Toast";
 import { deleteCustomer } from "@/app/admin/customers/actions";
 
-export function DeleteCustomerButton({ customerId }: { customerId: string }) {
+export function DeleteCustomerButton({
+  customerId,
+  label = "Delete Customer Permanently",
+  pendingLabel = "Deleting...",
+  className = "text-sm font-medium text-red-600 hover:text-red-700",
+}: {
+  customerId: string;
+  label?: string;
+  pendingLabel?: string;
+  className?: string;
+}) {
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
@@ -17,13 +27,8 @@ export function DeleteCustomerButton({ customerId }: { customerId: string }) {
   }
 
   return (
-    <button
-      type="button"
-      disabled={isPending}
-      onClick={handleClick}
-      className="text-sm font-medium text-red-600 hover:text-red-700"
-    >
-      {isPending ? "Deleting..." : "Delete Customer Permanently"}
+    <button type="button" disabled={isPending} onClick={handleClick} className={className}>
+      {isPending ? pendingLabel : label}
     </button>
   );
 }

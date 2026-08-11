@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { EMIRATES } from "@/lib/invoiceData";
 import { ORDER_TYPES, PRICE_AGREED_OPTIONS, CUSTOMER_LANGUAGES } from "@/lib/orderData";
 import { createOrder, updateOrder, type OrderCustomerInput, type OrderDetailsInput } from "@/app/admin/orders/actions";
+import { searchCustomersByName, type CustomerSearchResult } from "@/app/admin/customers/actions";
 
 type TeamOption = { id: string; name: string };
 type EmployeeOption = { id: string; name: string; code: string; teamId: string | null };
@@ -58,10 +59,59 @@ export function OrderForm({
   const [details, setDetails] = useState<OrderDetailsInput>(initialDetails ?? emptyDetails(teamOptions, employeeOptions));
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [customerResults, setCustomerResults] = useState<CustomerSearchResult[]>([]);
+  const [showCustomerResults, setShowCustomerResults] = useState(false);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const billName = customer.type === "COMPANY" ? customer.companyName.trim() : customer.name.trim();
   const isValid = customer.phone.trim().length >= 7 && billName.length > 0 && details.assignedToId.length > 0;
   const teamEmployees = employeeOptions.filter((emp) => emp.teamId === details.teamId);
+
+  function handleNameSearch(value: string) {
+    setShowCustomerResults(true);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
+      searchCustomersByName(value).then(setCustomerResults);
+    }, 300);
+  }
+
+  function selectExistingCustomer(c: CustomerSearchResult) {
+    setCustomer({
+      type: c.type,
+      name: c.name,
+      companyName: c.companyName ?? "",
+      trn: c.trn ?? "",
+      phone: c.phone,
+      whatsapp: c.whatsapp ?? "",
+      emirate: c.emirate,
+      buildingName: c.buildingName ?? "",
+      flatNo: c.flatNo ?? "",
+    });
+    setShowCustomerResults(false);
+    setCustomerResults([]);
+  }
+
+  function renderCustomerResults() {
+    if (!showCustomerResults || customerResults.length === 0) return null;
+    return (
+      <div className="absolute z-10 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg max-h-56 overflow-y-auto">
+        <div className="px-3 py-1.5 text-xs text-slate-400 border-b border-slate-100">Existing customers found</div>
+        {customerResults.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onMouseDown={() => selectExistingCustomer(c)}
+            className="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-0"
+          >
+            <div className="text-sm font-medium text-slate-900">{c.type === "COMPANY" ? c.companyName || c.name : c.name}</div>
+            <div className="text-xs text-slate-500">
+              {c.code} · {c.phone}
+            </div>
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   function handleTeamChange(teamId: string) {
     const stillAssigned = employeeOptions.some((emp) => emp.id === details.assignedToId && emp.teamId === teamId);
@@ -118,14 +168,22 @@ export function OrderForm({
 
       {customer.type === "COMPANY" && (
         <>
-          <Field label="Company Name">
-            <input
-              className={inputClassName}
-              placeholder="Enter company name"
-              value={customer.companyName}
-              onChange={(e) => setCustomer({ ...customer, companyName: e.target.value })}
-            />
-          </Field>
+          <div className="relative">
+            <Field label="Company Name">
+              <input
+                className={inputClassName}
+                placeholder="Enter company name"
+                value={customer.companyName}
+                onChange={(e) => {
+                  setCustomer({ ...customer, companyName: e.target.value });
+                  handleNameSearch(e.target.value);
+                }}
+                onFocus={() => setShowCustomerResults(customerResults.length > 0)}
+                onBlur={() => setShowCustomerResults(false)}
+              />
+            </Field>
+            {renderCustomerResults()}
+          </div>
           <Field label="TRN (Optional)">
             <input
               className={inputClassName}
@@ -146,14 +204,22 @@ export function OrderForm({
       )}
 
       {customer.type === "INDIVIDUAL" && (
-        <Field label="Customer Name">
-          <input
-            className={inputClassName}
-            placeholder="Enter full name"
-            value={customer.name}
-            onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-          />
-        </Field>
+        <div className="relative">
+          <Field label="Customer Name">
+            <input
+              className={inputClassName}
+              placeholder="Enter full name"
+              value={customer.name}
+              onChange={(e) => {
+                setCustomer({ ...customer, name: e.target.value });
+                handleNameSearch(e.target.value);
+              }}
+              onFocus={() => setShowCustomerResults(customerResults.length > 0)}
+              onBlur={() => setShowCustomerResults(false)}
+            />
+          </Field>
+          {renderCustomerResults()}
+        </div>
       )}
 
       <Field label="Phone Number">

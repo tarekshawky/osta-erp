@@ -19,6 +19,7 @@ import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { Pagination } from "@/components/admin/Pagination";
 import { ImportModal } from "@/components/admin/ImportModal";
 import { ToastOnMount } from "@/components/ToastOnMount";
+import { CustomerRowActions } from "@/components/customer/CustomerRowActions";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { importCustomersFromExcel } from "./import/actions";
 import type { Prisma } from "@/generated/prisma";
@@ -112,7 +113,7 @@ export default async function AdminCustomersPage({
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              {exportParams ? "Export Current Results" : "Export XLSX"}
+              {exportParams ? "Export Current Results" : "Export Excel"}
             </a>
             <ImportModal
               title="Import Customers"
@@ -123,7 +124,7 @@ export default async function AdminCustomersPage({
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 21V9m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  Import
+                  Import Excel
                 </span>
               }
             />
@@ -207,6 +208,7 @@ export default async function AdminCustomersPage({
                 <th className="px-4 py-3 font-medium text-right">Outstanding</th>
                 <th className="px-4 py-3 font-medium">Last Order</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -242,12 +244,15 @@ export default async function AdminCustomersPage({
                         {c.status}
                       </span>
                     </td>
+                    <td className="px-4 py-3">
+                      <CustomerRowActions customerId={c.id} status={c.status} />
+                    </td>
                   </tr>
                 );
               })}
               {pageCustomers.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
                     No customers match your filters.
                   </td>
                 </tr>
