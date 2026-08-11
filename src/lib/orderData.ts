@@ -25,9 +25,6 @@ export const ORDER_STATUS_STYLES: Record<string, string> = {
   Done: "bg-green-50 text-green-600",
 };
 
-// 0568676036 in international (no +) format, for wa.me links.
-export const ORDER_WHATSAPP_NUMBER = "971568676036";
-
 function toGoogleCalendarDate(date: Date) {
   return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 }
@@ -51,5 +48,5 @@ export function buildGoogleCalendarUrl(order: {
 
 export function buildWhatsAppUrl(order: { number: string; customerName: string; status: string }) {
   const message = `Hi ${order.customerName}, this is OSTA Services regarding your order ${order.number} (status: ${order.status}).`;
-  return `https://wa.me/${ORDER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
