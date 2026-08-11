@@ -10,7 +10,15 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
   const order = await prisma.order.findUnique({
     where: { id },
-    include: { customer: true, team: true, assignedTo: true, createdBy: true, invoice: true },
+    include: {
+      customer: true,
+      team: true,
+      assignedTo: true,
+      createdBy: true,
+      invoice: true,
+      photos: true,
+      whatsappLogs: { include: { sentBy: true }, orderBy: { sentAt: "asc" } },
+    },
   });
   if (!order) notFound();
 
@@ -18,7 +26,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
     <div className="pb-10">
       <AdminTopBar title="Order Details" />
       <div className="px-5 py-4 max-w-xl">
-        <OrderDetail order={order} basePath="/admin" canAdvance />
+        <OrderDetail order={order} basePath="/admin" />
       </div>
     </div>
   );

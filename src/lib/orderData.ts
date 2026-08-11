@@ -1,29 +1,21 @@
-export const ORDER_STATUSES = ["Pending", "Confirmed", "On The Way", "Arrived", "Done"] as const;
+export const ORDER_STATUSES = ["Assigned", "Accepted", "On The Way", "Arrived", "In Progress", "Done"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const NEXT_STATUS: Record<OrderStatus, OrderStatus | null> = {
-  Pending: "Confirmed",
-  Confirmed: "On The Way",
-  "On The Way": "Arrived",
-  Arrived: "Done",
-  Done: null,
-};
-
-export const STATUS_ACTION_LABEL: Record<OrderStatus, string | null> = {
-  Pending: "Confirm Order",
-  Confirmed: "Mark On The Way",
-  "On The Way": "Mark Arrived",
-  Arrived: "Mark Done",
-  Done: null,
-};
-
 export const ORDER_STATUS_STYLES: Record<string, string> = {
-  Pending: "bg-slate-100 text-slate-600",
-  Confirmed: "bg-blue-50 text-blue-600",
+  Assigned: "bg-slate-100 text-slate-600",
+  Accepted: "bg-blue-50 text-blue-600",
   "On The Way": "bg-amber-50 text-amber-600",
   Arrived: "bg-purple-50 text-purple-600",
+  "In Progress": "bg-orange-50 text-orange-600",
   Done: "bg-green-50 text-green-600",
 };
+
+export const ORDER_PHOTO_KINDS = ["Before", "After"] as const;
+export type OrderPhotoKind = (typeof ORDER_PHOTO_KINDS)[number];
+export const MAX_ORDER_PHOTOS_PER_KIND = 6;
+
+export const WHATSAPP_MESSAGE_TYPES = ["Accepted", "On The Way", "Arrived"] as const;
+export type WhatsAppMessageType = (typeof WHATSAPP_MESSAGE_TYPES)[number];
 
 export const ORDER_TYPES = ["New Order", "Revisit", "Inspection"] as const;
 export const PRICE_AGREED_OPTIONS = ["Yes", "No"] as const;
@@ -129,4 +121,40 @@ export function buildWhatsAppUrl(order: {
     order.notes ? `Notes: ${order.notes}` : null,
   ].filter(Boolean);
   return `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
+}
+
+// Normalizes a stored customer phone (e.g. "501212697" or "+971501212697")
+// into bare digits with the country code, as wa.me requires.
+export function toWaPhoneDigits(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("971")) return digits;
+  const trimmed = digits.startsWith("0") ? digits.slice(1) : digits;
+  return `971${trimmed}`;
+}
+
+export function buildCustomerWhatsAppUrl(phone: string, message: string) {
+  return `https://wa.me/${toWaPhoneDigits(phone)}?text=${encodeURIComponent(message)}`;
+}
+
+function bilingualMessage(customerLanguage: string, arabic: string, english: string) {
+  const [first, second] = customerLanguage === "English" ? [english, arabic] : [arabic, english];
+  return `${first}\n\n----------\n\n${second}`;
+}
+
+export function buildAcceptedWhatsAppMessage(customerName: string, employeeName: string, customerLanguage: string) {
+  const ar = `مرحباً ${customerName}،\n\nتم استلام طلبكم بواسطة الموظف ${employeeName}.\n\nنعمل حالياً على إنهاء الأعمال الحالية.\n\nوسوف نوافيكم بآخر المستجدات.\n\nشكراً لاختياركم OSTA Services.`;
+  const en = `Hello ${customerName},\n\nYour service request has been accepted by our employee ${employeeName}.\n\nWe are currently completing our ongoing jobs.\n\nWe will keep you updated shortly.\n\nThank you for choosing OSTA Services.`;
+  return bilingualMessage(customerLanguage, ar, en);
+}
+
+export function buildOnTheWayWhatsAppMessage(customerName: string, etaMinutes: string, customerLanguage: string) {
+  const ar = `مرحباً ${customerName}،\n\nالموظف في الطريق إليكم الآن.\n\nالوقت المتوقع للوصول ${etaMinutes} دقيقة.`;
+  const en = `Hello ${customerName},\n\nOur employee is on the way.\n\nEstimated arrival: ${etaMinutes} Minutes.`;
+  return bilingualMessage(customerLanguage, ar, en);
+}
+
+export function buildArrivedWhatsAppMessage(customerName: string, customerLanguage: string) {
+  const ar = `مرحباً ${customerName}،\n\nوصل الموظف إلى موقعكم.\n\nونحن الآن بانتظاركم خارج المبنى.`;
+  const en = `Hello ${customerName},\n\nOur employee has arrived.\n\nWe are waiting outside.`;
+  return bilingualMessage(customerLanguage, ar, en);
 }

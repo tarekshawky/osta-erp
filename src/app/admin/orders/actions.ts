@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { getSession } from "@/lib/session";
-import { ORDER_STATUSES, NEXT_STATUS, parseUaeDateTimeLocal } from "@/lib/orderData";
+import { parseUaeDateTimeLocal, WHATSAPP_MESSAGE_TYPES, type WhatsAppMessageType } from "@/lib/orderData";
 
 export type OrderCustomerInput = {
   type: "INDIVIDUAL" | "COMPANY";
@@ -104,7 +104,7 @@ export async function createOrder(
       priceAgreed: details.priceAgreed,
       customerLanguage: details.customerLanguage,
       notes: details.notes.trim() || null,
-      status: "Pending",
+      status: "Assigned",
       teamId: details.teamId || null,
       assignedToId: details.assignedToId,
       createdById: admin.id,
@@ -162,29 +162,22 @@ export async function deleteOrder(orderId: string) {
   redirect("/admin/orders?toast=1");
 }
 
-export async function advanceOrderStatus(orderId: string): Promise<OrderActionResult> {
-  const session = await getSession();
-  if (!session) return { ok: false, error: "Not signed in." };
+const RESEND_FIELD: Record<WhatsAppMessageType, "acceptedWhatsAppSentAt" | "onTheWayWhatsAppSentAt" | "arrivedWhatsAppSentAt"> = {
+  Accepted: "acceptedWhatsAppSentAt",
+  "On The Way": "onTheWayWhatsAppSentAt",
+  Arrived: "arrivedWhatsAppSentAt",
+};
 
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order) return { ok: false, error: "Order not found." };
+export async function allowResendWhatsApp(orderId: string, messageType: WhatsAppMessageType): Promise<OrderActionResult> {
+  await requireAdmin();
+  if (!WHATSAPP_MESSAGE_TYPES.includes(messageType)) return { ok: false, error: "Unknown message type." };
 
-  const isAssignedEmployee = session.employeeId === order.assignedToId;
-  if (session.role !== "ADMIN" && !isAssignedEmployee) {
-    return { ok: false, error: "Not authorized." };
-  }
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { [RESEND_FIELD[messageType]]: null },
+  });
 
-  const currentStatus = ORDER_STATUSES.includes(order.status as (typeof ORDER_STATUSES)[number])
-    ? (order.status as (typeof ORDER_STATUSES)[number])
-    : "Pending";
-  const next = NEXT_STATUS[currentStatus];
-  if (!next) return { ok: false, error: "This order is already done." };
-
-  await prisma.order.update({ where: { id: orderId }, data: { status: next } });
-
-  revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
-  revalidatePath("/employee/orders");
   revalidatePath(`/employee/orders/${orderId}`);
   return { ok: true, id: orderId };
 }

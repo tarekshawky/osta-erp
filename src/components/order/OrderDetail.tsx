@@ -5,9 +5,9 @@ import {
   buildGoogleCalendarUrl,
   buildGoogleMapsSearchUrl,
   buildWhatsAppUrl,
-  type OrderStatus,
 } from "@/lib/orderData";
-import { OrderStatusButton } from "./OrderStatusButton";
+import { EmployeeOrderWorkflow } from "./EmployeeOrderWorkflow";
+import { AdminOrderWorkflow } from "./AdminOrderWorkflow";
 
 type OrderDetailData = {
   id: string;
@@ -33,16 +33,27 @@ type OrderDetailData = {
   createdBy: { name: string };
   invoiceId: string | null;
   invoice: { number: string } | null;
+  acceptedAt: Date | null;
+  acceptedWhatsAppSentAt: Date | null;
+  departedAt: Date | null;
+  etaMinutes: string | null;
+  onTheWayWhatsAppSentAt: Date | null;
+  arrivedAt: Date | null;
+  arrivalGpsLat: number | null;
+  arrivalGpsLng: number | null;
+  arrivedWhatsAppSentAt: Date | null;
+  workStartedAt: Date | null;
+  jobNotes: string | null;
+  photos: { id: string; kind: string; dataUrl: string }[];
+  whatsappLogs: { id: string; messageType: string; sentAt: Date; sentBy: { name: string } }[];
 };
 
 export function OrderDetail({
   order,
   basePath,
-  canAdvance,
 }: {
   order: OrderDetailData;
   basePath: "/admin" | "/employee";
-  canAdvance: boolean;
 }) {
   const displayName = order.customer.companyName || order.customer.name;
   const address = [order.customer.buildingName, order.customer.flatNo, order.customer.emirate].filter(Boolean).join(", ");
@@ -188,9 +199,9 @@ export function OrderDetail({
         </div>
       )}
 
-      {canAdvance && order.status !== "Done" && (
-        <OrderStatusButton orderId={order.id} status={order.status as OrderStatus} />
-      )}
+      {basePath === "/employee" && order.status !== "Done" && <EmployeeOrderWorkflow order={order} />}
+
+      {basePath === "/admin" && <AdminOrderWorkflow order={order} />}
 
       {order.status === "Done" && (
         <Link

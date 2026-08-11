@@ -10,7 +10,15 @@ export default async function EmployeeOrderDetailPage({ params }: { params: Prom
 
   const order = await prisma.order.findUnique({
     where: { id },
-    include: { customer: true, team: true, assignedTo: true, createdBy: true, invoice: true },
+    include: {
+      customer: true,
+      team: true,
+      assignedTo: true,
+      createdBy: true,
+      invoice: true,
+      photos: true,
+      whatsappLogs: { include: { sentBy: true }, orderBy: { sentAt: "asc" } },
+    },
   });
   if (!order || order.assignedToId !== session!.employeeId) notFound();
 
@@ -18,7 +26,7 @@ export default async function EmployeeOrderDetailPage({ params }: { params: Prom
     <div className="pb-8">
       <TopBar title="Order Details" />
       <div className="px-5 py-4">
-        <OrderDetail order={order} basePath="/employee" canAdvance />
+        <OrderDetail order={order} basePath="/employee" />
       </div>
     </div>
   );
