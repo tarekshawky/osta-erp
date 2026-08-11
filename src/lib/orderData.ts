@@ -120,3 +120,35 @@ export function buildWhatsAppUrl(order: {
   return `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
 }
 
+// Normalizes a stored customer phone (e.g. "501212697" or "+971501212697")
+// into bare digits with the country code, as wa.me requires.
+function toWaPhoneDigits(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("971")) return digits;
+  const trimmed = digits.startsWith("0") ? digits.slice(1) : digits;
+  return `971${trimmed}`;
+}
+
+function bilingualMessage(customerLanguage: string, arabic: string, english: string) {
+  const [first, second] = customerLanguage === "English" ? [english, arabic] : [arabic, english];
+  return `${first}\n\n${second}`;
+}
+
+export function buildDepartureWhatsAppUrl(phone: string, etaMinutes: string, customerLanguage: string) {
+  const message = bilingualMessage(
+    customerLanguage,
+    `الموظف في الطريق إليكم الآن. الوقت المتوقع للوصول ${etaMinutes} دقيقة.`,
+    `Our employee is on the way. Estimated arrival: ${etaMinutes} minutes.`
+  );
+  return `https://wa.me/${toWaPhoneDigits(phone)}?text=${encodeURIComponent(message)}`;
+}
+
+export function buildArrivedWhatsAppUrl(phone: string, customerLanguage: string) {
+  const message = bilingualMessage(
+    customerLanguage,
+    "وصل الموظف إلى موقعكم.",
+    "Our employee has arrived."
+  );
+  return `https://wa.me/${toWaPhoneDigits(phone)}?text=${encodeURIComponent(message)}`;
+}
+
