@@ -109,8 +109,6 @@ export function OrderDetail({
       <div className="grid grid-cols-2 gap-3">
         <a
           href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 text-sm font-medium text-green-600"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
