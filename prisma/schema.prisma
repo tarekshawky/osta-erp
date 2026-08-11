@@ -64,7 +64,6 @@ model Employee {
   warrantyCertificates  WarrantyCertificate[]
   ordersAssigned        Order[]                @relation("OrderAssignedTo")
   ordersCreated         Order[]                @relation("OrderCreatedBy")
-  orderWhatsAppLogsSent OrderWhatsAppLog[]      @relation("OrderWhatsAppSentBy")
   createdAt DateTime   @default(now())
 }
 
@@ -138,20 +137,16 @@ model Order {
   invoiceId        String?   @unique
   invoice          Invoice?  @relation(fields: [invoiceId], references: [id])
 
-  acceptedAt             DateTime?
-  acceptedWhatsAppSentAt DateTime?
-  departedAt             DateTime?
-  etaMinutes             String?
-  onTheWayWhatsAppSentAt DateTime?
-  arrivedAt              DateTime?
-  arrivalGpsLat          Float?
-  arrivalGpsLng          Float?
-  arrivedWhatsAppSentAt  DateTime?
-  workStartedAt          DateTime?
-  jobNotes               String?
+  acceptedAt    DateTime?
+  departedAt    DateTime?
+  etaMinutes    String?
+  arrivedAt     DateTime?
+  arrivalGpsLat Float?
+  arrivalGpsLng Float?
+  workStartedAt DateTime?
+  jobNotes      String?
 
-  photos       OrderPhoto[]
-  whatsappLogs OrderWhatsAppLog[]
+  photos OrderPhoto[]
 
   createdAt DateTime @default(now())
 }
@@ -163,16 +158,6 @@ model OrderPhoto {
   kind      String
   dataUrl   String
   createdAt DateTime @default(now())
-}
-
-model OrderWhatsAppLog {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  messageType String
-  sentById    String
-  sentBy      Employee @relation("OrderWhatsAppSentBy", fields: [sentById], references: [id])
-  sentAt      DateTime @default(now())
 }
 
 model Expense {

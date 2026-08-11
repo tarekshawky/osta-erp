@@ -17,7 +17,6 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       createdBy: true,
       invoice: true,
       photos: true,
-      whatsappLogs: { include: { sentBy: true }, orderBy: { sentAt: "asc" } },
     },
   });
   if (!order) notFound();

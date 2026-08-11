@@ -17,7 +17,6 @@ export default async function EmployeeOrderDetailPage({ params }: { params: Prom
       createdBy: true,
       invoice: true,
       photos: true,
-      whatsappLogs: { include: { sentBy: true }, orderBy: { sentAt: "asc" } },
     },
   });
   if (!order || order.assignedToId !== session!.employeeId) notFound();

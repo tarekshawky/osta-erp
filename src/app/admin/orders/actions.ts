@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { getSession } from "@/lib/session";
-import { parseUaeDateTimeLocal, WHATSAPP_MESSAGE_TYPES, type WhatsAppMessageType } from "@/lib/orderData";
+import { parseUaeDateTimeLocal } from "@/lib/orderData";
 
 export type OrderCustomerInput = {
   type: "INDIVIDUAL" | "COMPANY";
@@ -160,24 +160,4 @@ export async function deleteOrder(orderId: string) {
   await prisma.order.delete({ where: { id: orderId } });
   revalidatePath("/employee/orders");
   redirect("/admin/orders?toast=1");
-}
-
-const RESEND_FIELD: Record<WhatsAppMessageType, "acceptedWhatsAppSentAt" | "onTheWayWhatsAppSentAt" | "arrivedWhatsAppSentAt"> = {
-  Accepted: "acceptedWhatsAppSentAt",
-  "On The Way": "onTheWayWhatsAppSentAt",
-  Arrived: "arrivedWhatsAppSentAt",
-};
-
-export async function allowResendWhatsApp(orderId: string, messageType: WhatsAppMessageType): Promise<OrderActionResult> {
-  await requireAdmin();
-  if (!WHATSAPP_MESSAGE_TYPES.includes(messageType)) return { ok: false, error: "Unknown message type." };
-
-  await prisma.order.update({
-    where: { id: orderId },
-    data: { [RESEND_FIELD[messageType]]: null },
-  });
-
-  revalidatePath(`/admin/orders/${orderId}`);
-  revalidatePath(`/employee/orders/${orderId}`);
-  return { ok: true, id: orderId };
 }

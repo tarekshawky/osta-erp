@@ -34,18 +34,14 @@ type OrderDetailData = {
   invoiceId: string | null;
   invoice: { number: string } | null;
   acceptedAt: Date | null;
-  acceptedWhatsAppSentAt: Date | null;
   departedAt: Date | null;
   etaMinutes: string | null;
-  onTheWayWhatsAppSentAt: Date | null;
   arrivedAt: Date | null;
   arrivalGpsLat: number | null;
   arrivalGpsLng: number | null;
-  arrivedWhatsAppSentAt: Date | null;
   workStartedAt: Date | null;
   jobNotes: string | null;
   photos: { id: string; kind: string; dataUrl: string }[];
-  whatsappLogs: { id: string; messageType: string; sentAt: Date; sentBy: { name: string } }[];
 };
 
 export function OrderDetail({
