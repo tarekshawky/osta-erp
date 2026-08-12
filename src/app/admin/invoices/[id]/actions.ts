@@ -8,6 +8,41 @@ import { getSession } from "@/lib/session";
 async function requireAdmin() {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") redirect("/");
+  return session;
+}
+
+// Admin-only Paid <-> Unpaid toggle. Refunded/Partially Refunded are a separate
+// concern owned by the Refund flow, so the toggle is only offered while the
+// invoice is still in Paid or Unpaid.
+export async function setInvoiceStatus(id: string, status: "Paid" | "Unpaid"): Promise<{ ok: boolean; error?: string }> {
+  const session = await requireAdmin();
+
+  const invoice = await prisma.invoice.findUnique({ where: { id } });
+  if (!invoice) return { ok: false, error: "Invoice not found." };
+  if (invoice.status !== "Paid" && invoice.status !== "Unpaid") {
+    return { ok: false, error: "This invoice has been refunded and its status can no longer be toggled." };
+  }
+  if (invoice.status === status) return { ok: true };
+
+  await prisma.$transaction([
+    prisma.invoice.update({ where: { id }, data: { status } }),
+    prisma.invoiceStatusChange.create({
+      data: {
+        invoiceId: id,
+        previousStatus: invoice.status,
+        newStatus: status,
+        changedById: session.employeeId,
+      },
+    }),
+  ]);
+
+  revalidatePath(`/admin/invoices/${id}`);
+  revalidatePath("/admin/invoices");
+  revalidatePath("/admin/wallets");
+  revalidatePath("/admin/reports");
+  revalidatePath("/admin/marketing");
+  revalidatePath("/admin/customers");
+  return { ok: true };
 }
 
 export async function deleteInvoice(id: string) {

@@ -33,8 +33,9 @@ export default async function AdminInvoicesPage({
 
   const years = Array.from(new Set(invoiceDates.map((i) => i.date.getFullYear()))).sort((a, b) => b - a);
 
-  const [paidCount, partiallyRefundedCount, refundedCount] = await Promise.all([
+  const [paidCount, unpaidCount, partiallyRefundedCount, refundedCount] = await Promise.all([
     prisma.invoice.count({ where: { status: "Paid" } }),
+    prisma.invoice.count({ where: { status: "Unpaid" } }),
     prisma.invoice.count({ where: { status: "Partially Refunded" } }),
     prisma.invoice.count({ where: { status: "Refunded" } }),
   ]);
@@ -118,10 +119,11 @@ export default async function AdminInvoicesPage({
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="mt-4 grid grid-cols-2 lg:grid-cols-6 gap-3">
           <AdminStatCard label="Total Revenue" value={formatAed(paidInvoices._sum.amount ?? 0)} valueClassName="text-blue-700" />
           <AdminStatCard label="Total Invoices" value={String(allInvoices._count)} valueClassName="text-green-600" />
           <AdminStatCard label="Paid" value={String(paidCount)} valueClassName="text-green-600" />
+          <AdminStatCard label="Unpaid" value={String(unpaidCount)} valueClassName="text-amber-600" />
           <AdminStatCard label="Partially Refunded" value={String(partiallyRefundedCount)} valueClassName="text-orange-500" />
           <AdminStatCard label="Refunded" value={String(refundedCount)} valueClassName="text-red-500" />
         </div>
@@ -155,6 +157,7 @@ export default async function AdminInvoicesPage({
           >
             <option value="all">All Statuses</option>
             <option value="Paid">Paid</option>
+            <option value="Unpaid">Unpaid</option>
             <option value="Pending">Pending</option>
             <option value="Partially Refunded">Partially Refunded</option>
             <option value="Refunded">Refunded</option>

@@ -3,6 +3,11 @@ import { toWaPhoneDigits } from "@/lib/phone";
 export const ORDER_STATUSES = ["Assigned", "Accepted", "On The Way", "Arrived", "In Progress", "Done"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
+// Admin-only overrides, layered on top of the employee workflow statuses above.
+// The employee workflow never sets these -- only the admin status control does.
+export const ADMIN_ONLY_ORDER_STATUSES = ["Cancelled", "Reschedule"] as const;
+export const ADMIN_ORDER_STATUSES = [...ORDER_STATUSES, ...ADMIN_ONLY_ORDER_STATUSES] as const;
+
 export const ORDER_STATUS_STYLES: Record<string, string> = {
   Assigned: "bg-slate-100 text-slate-600",
   Accepted: "bg-blue-50 text-blue-600",
@@ -10,6 +15,8 @@ export const ORDER_STATUS_STYLES: Record<string, string> = {
   Arrived: "bg-purple-50 text-purple-600",
   "In Progress": "bg-orange-50 text-orange-600",
   Done: "bg-green-50 text-green-600",
+  Cancelled: "bg-red-50 text-red-600",
+  Reschedule: "bg-indigo-50 text-indigo-600",
 };
 
 export const ORDER_PHOTO_KINDS = ["Before", "After"] as const;

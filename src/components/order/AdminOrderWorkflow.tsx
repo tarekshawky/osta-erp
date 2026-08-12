@@ -10,6 +10,24 @@ type AdminWorkflowOrder = {
   workStartedAt: Date | null;
   jobNotes: string | null;
   photos: { id: string; kind: string; dataUrl: string }[];
+  doneAt: Date | null;
+  doneBy: { name: string } | null;
+  cancelledAt: Date | null;
+  cancelledBy: { name: string } | null;
+  cancellationReason: string | null;
+  rescheduledAt: Date | null;
+  rescheduledBy: { name: string } | null;
+  rescheduleReason: string | null;
+  statusChanges: {
+    id: string;
+    previousStatus: string;
+    newStatus: string;
+    reason: string | null;
+    previousScheduledAt: Date | null;
+    newScheduledAt: Date | null;
+    changedBy: { name: string };
+    createdAt: Date;
+  }[];
 };
 
 function Row({ label, timestamp, extra }: { label: string; timestamp: Date | null; extra?: string | null }) {
@@ -71,6 +89,60 @@ export function AdminOrderWorkflow({ order }: { order: AdminWorkflowOrder }) {
             ))}
           </div>
         </>
+      )}
+
+      {order.doneAt && (
+        <div className="mt-4 rounded-lg bg-green-50 px-3 py-2.5 text-sm text-green-700">
+          <span className="font-medium">Marked Done</span>
+          {order.doneBy && <> by {order.doneBy.name}</>} · {formatDateTimeSlash(order.doneAt)}
+        </div>
+      )}
+
+      {order.cancelledAt && (
+        <div className="mt-4 rounded-lg bg-red-50 px-3 py-2.5 text-sm text-red-700">
+          <div>
+            <span className="font-medium">Order Cancelled</span>
+            {order.cancelledBy && <> · Cancelled By: {order.cancelledBy.name}</>} · {formatDateTimeSlash(order.cancelledAt)}
+          </div>
+          {order.cancellationReason && <div className="mt-1 text-red-600">Reason: {order.cancellationReason}</div>}
+        </div>
+      )}
+
+      {order.rescheduledAt && (
+        <div className="mt-4 rounded-lg bg-indigo-50 px-3 py-2.5 text-sm text-indigo-700">
+          <div>
+            <span className="font-medium">Order Rescheduled</span>
+            {order.rescheduledBy && <> · By: {order.rescheduledBy.name}</>} · {formatDateTimeSlash(order.rescheduledAt)}
+          </div>
+          {order.rescheduleReason && <div className="mt-1 text-indigo-600">Reason: {order.rescheduleReason}</div>}
+        </div>
+      )}
+
+      {order.statusChanges.length > 0 && (
+        <div className="mt-4">
+          <h4 className="text-xs font-medium text-slate-500 mb-1.5">Status History</h4>
+          <div className="flex flex-col gap-2">
+            {order.statusChanges.map((change) => (
+              <div key={change.id} className="text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0">
+                <div>
+                  <span className="font-medium text-slate-900">
+                    {change.previousStatus} → {change.newStatus}
+                  </span>
+                  <span className="text-slate-500">
+                    {" "}
+                    · {change.changedBy.name} · {formatDateTimeSlash(change.createdAt)}
+                  </span>
+                </div>
+                {change.reason && <div className="text-xs text-slate-500 mt-0.5">Reason: {change.reason}</div>}
+                {change.previousScheduledAt && change.newScheduledAt && (
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    Original: {formatDateTimeSlash(change.previousScheduledAt)} → New: {formatDateTimeSlash(change.newScheduledAt)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

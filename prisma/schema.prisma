@@ -64,6 +64,11 @@ model Employee {
   warrantyCertificates  WarrantyCertificate[]
   ordersAssigned        Order[]                @relation("OrderAssignedTo")
   ordersCreated         Order[]                @relation("OrderCreatedBy")
+  ordersDone            Order[]                @relation("OrderDoneBy")
+  ordersCancelled       Order[]                @relation("OrderCancelledBy")
+  ordersRescheduled     Order[]                @relation("OrderRescheduledBy")
+  orderStatusChanges    OrderStatusChange[]
+  invoiceStatusChanges  InvoiceStatusChange[]
   customersCreated      Customer[]             @relation("CustomerCreatedBy")
   customersUpdated      Customer[]             @relation("CustomerUpdatedBy")
   customerNotesCreated  CustomerNote[]
@@ -132,8 +137,20 @@ model Invoice {
   createdById   String
   createdBy     Employee      @relation(fields: [createdById], references: [id])
   items         InvoiceItem[]
+  statusChanges InvoiceStatusChange[]
   order         Order?
   createdAt     DateTime      @default(now())
+}
+
+model InvoiceStatusChange {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  previousStatus String
+  newStatus      String
+  changedById    String
+  changedBy      Employee @relation(fields: [changedById], references: [id])
+  createdAt      DateTime @default(now())
 }
 
 model InvoiceItem {
@@ -179,7 +196,38 @@ model Order {
 
   photos OrderPhoto[]
 
+  // Admin-only status overrides (Done / Cancelled / Reschedule) -- see OrderStatusChange
+  // for the full audit trail, including the before/after appointment on each reschedule.
+  doneAt             DateTime?
+  doneById           String?
+  doneBy             Employee? @relation("OrderDoneBy", fields: [doneById], references: [id])
+  cancelledAt        DateTime?
+  cancelledById      String?
+  cancelledBy        Employee? @relation("OrderCancelledBy", fields: [cancelledById], references: [id])
+  cancellationReason String?
+  rescheduledAt      DateTime?
+  rescheduledById    String?
+  rescheduledBy      Employee? @relation("OrderRescheduledBy", fields: [rescheduledById], references: [id])
+  rescheduleReason   String?
+  statusChanges      OrderStatusChange[]
+
   createdAt DateTime @default(now())
+}
+
+model OrderStatusChange {
+  id                  String   @id @default(cuid())
+  orderId             String
+  order               Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  previousStatus      String
+  newStatus           String
+  reason              String?
+  // Only set on Reschedule changes -- preserves the appointment that was in effect
+  // right before this change, so a chain of reschedules stays fully reconstructable.
+  previousScheduledAt DateTime?
+  newScheduledAt      DateTime?
+  changedById         String
+  changedBy           Employee @relation(fields: [changedById], references: [id])
+  createdAt           DateTime @default(now())
 }
 
 model OrderPhoto {

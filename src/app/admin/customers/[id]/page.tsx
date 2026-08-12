@@ -25,7 +25,7 @@ export default async function AdminCustomerProfilePage({ params }: { params: Pro
     include: {
       orders: {
         orderBy: { createdAt: "desc" },
-        include: { assignedTo: true, invoice: true },
+        include: { assignedTo: true, invoice: true, doneBy: true, cancelledBy: true, rescheduledBy: true },
       },
       invoices: {
         orderBy: { date: "desc" },

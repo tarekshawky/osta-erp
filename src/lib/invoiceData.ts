@@ -11,6 +11,10 @@ export const EMIRATES = [
 
 export const PAYMENT_METHODS = ["Cash", "Bank Transfer", "Ziina"] as const;
 
+// The admin-only Paid/Unpaid toggle. Refunded/Partially Refunded are a separate
+// concern handled by the existing Refund flow, not this control.
+export const ADMIN_INVOICE_STATUSES = ["Paid", "Unpaid"] as const;
+
 // How the customer found us, chosen at invoice creation. Drives the Marketing
 // dashboard's per-campaign attribution (see src/lib/marketingData.ts) -- "Organic"
 // carries no ad spend by definition, so all Marketing Advertising expense is

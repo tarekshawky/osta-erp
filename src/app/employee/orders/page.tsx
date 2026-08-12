@@ -8,7 +8,7 @@ import { ORDER_STATUS_STYLES } from "@/lib/orderData";
 export default async function EmployeeOrdersPage() {
   const session = await getSession();
   const orders = await prisma.order.findMany({
-    where: { assignedToId: session!.employeeId },
+    where: { assignedToId: session!.employeeId, status: { not: "Cancelled" } },
     orderBy: { createdAt: "desc" },
     include: { customer: true, team: true },
   });

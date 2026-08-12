@@ -17,6 +17,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       createdBy: true,
       invoice: true,
       photos: true,
+      doneBy: true,
+      cancelledBy: true,
+      rescheduledBy: true,
+      statusChanges: { orderBy: { createdAt: "desc" }, include: { changedBy: true } },
     },
   });
   if (!order) notFound();

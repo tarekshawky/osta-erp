@@ -40,7 +40,7 @@ export async function computeMarketingDashboard(
 
   const [invoices, expenses] = await Promise.all([
     prisma.invoice.findMany({
-      where: dateFilter,
+      where: { ...dateFilter, status: { not: "Unpaid" } },
       select: { customerId: true, amount: true, refundedAmount: true, leadSource: true },
     }),
     prisma.expense.findMany({
@@ -152,7 +152,9 @@ export async function computeCampaignDetail(
   }));
 
   const totalInvoices = invoices.length;
-  const totalRevenue = invoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
+  // Unpaid invoices stay visible in the list (with their status badge) but don't
+  // count toward revenue/ROI until the admin marks them collected.
+  const totalRevenue = invoices.filter((inv) => inv.status !== "Unpaid").reduce((sum, inv) => sum + inv.grandTotal, 0);
   const netRevenue = totalRevenue - totalMarketingSpend;
   const numberOfCustomers = new Set(invoiceRows.map((inv) => inv.customerId)).size;
   const averageInvoiceValue = totalInvoices > 0 ? totalRevenue / totalInvoices : 0;

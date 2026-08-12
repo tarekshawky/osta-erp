@@ -52,7 +52,7 @@ export async function computeAnnualReport(
 
   const [invoices, expenses, payrollEntries] = await Promise.all([
     prisma.invoice.findMany({
-      where: teamFilter,
+      where: { ...teamFilter, status: { not: "Unpaid" } },
       select: { date: true, amount: true, refundedAmount: true, payment: true },
     }),
     prisma.expense.findMany({ where: teamFilter, select: { date: true, amount: true, refundedAmount: true, category: true } }),

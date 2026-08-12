@@ -39,12 +39,11 @@ export type CustomerFinancials = {
   totalOrders: number;
   completedOrders: number;
   invoiceCount: number;
+  // Gross billed value across every invoice regardless of status.
   totalRevenue: number;
+  // Actually collected: totalRevenue minus refunds minus whatever is still Unpaid.
   paidAmount: number;
-  // This system has no accounts-receivable/partial-payment concept: every invoice is
-  // created fully paid, and refunds are the only post-creation financial event. So
-  // outstanding is always 0 today; kept as a field so the UI/export shape matches the
-  // spec and stays correct if partial payments are introduced later.
+  // Sum of invoice.amount for invoices currently marked Unpaid by the admin.
   outstandingAmount: number;
   lastOrderDate: Date | null;
   lastInvoiceDate: Date | null;
@@ -61,12 +60,12 @@ const EMPTY_FINANCIALS: CustomerFinancials = {
   lastInvoiceDate: null,
 };
 
-// Batched aggregation (3 queries total, independent of customer count) so the
+// Batched aggregation (4 queries total, independent of customer count) so the
 // Customers list/export can show revenue/orders columns without N+1 queries.
 export async function getCustomersFinancialMap(customerIds?: string[]): Promise<Map<string, CustomerFinancials>> {
   const customerFilter = customerIds ? { customerId: { in: customerIds } } : {};
 
-  const [orderStats, completedStats, invoiceStats] = await Promise.all([
+  const [orderStats, completedStats, invoiceStats, unpaidStats] = await Promise.all([
     prisma.order.groupBy({ by: ["customerId"], where: customerFilter, _count: { _all: true }, _max: { date: true } }),
     prisma.order.groupBy({
       by: ["customerId"],
@@ -79,6 +78,14 @@ export async function getCustomersFinancialMap(customerIds?: string[]): Promise<
       _count: { _all: true },
       _sum: { amount: true, refundedAmount: true },
       _max: { date: true },
+    }),
+    // Unpaid invoices always carry refundedAmount 0 (a refund can only be recorded
+    // against a Paid/Partially Refunded/Refunded invoice), so their full amount is
+    // what's still owed.
+    prisma.invoice.groupBy({
+      by: ["customerId"],
+      where: { ...customerFilter, status: "Unpaid" },
+      _sum: { amount: true },
     }),
   ]);
 
@@ -104,8 +111,14 @@ export async function getCustomersFinancialMap(customerIds?: string[]): Promise<
     const entry = get(row.customerId);
     entry.invoiceCount = row._count._all;
     entry.totalRevenue = row._sum.amount ?? 0;
+    // Paid = billed - refunded - still-unpaid; corrected below once unpaidStats is applied.
     entry.paidAmount = (row._sum.amount ?? 0) - (row._sum.refundedAmount ?? 0);
     entry.lastInvoiceDate = row._max.date;
+  }
+  for (const row of unpaidStats) {
+    const entry = get(row.customerId);
+    entry.outstandingAmount = row._sum.amount ?? 0;
+    entry.paidAmount -= entry.outstandingAmount;
   }
 
   return map;
@@ -162,6 +175,14 @@ export function buildCustomerActivity(customer: {
     arrivedAt: Date | null;
     status: string;
     assignedTo: { name: string };
+    doneAt: Date | null;
+    doneBy: { name: string } | null;
+    cancelledAt: Date | null;
+    cancelledBy: { name: string } | null;
+    cancellationReason: string | null;
+    rescheduledAt: Date | null;
+    rescheduledBy: { name: string } | null;
+    rescheduleReason: string | null;
   }[];
   invoices: { number: string; createdAt: Date }[];
   quotations: { number: string; createdAt: Date }[];
@@ -174,7 +195,37 @@ export function buildCustomerActivity(customer: {
     if (order.acceptedAt) events.push({ date: order.acceptedAt, title: "Order Accepted", detail: `Employee: ${order.assignedTo.name}` });
     if (order.departedAt) events.push({ date: order.departedAt, title: "Employee On The Way", detail: order.number });
     if (order.arrivedAt) events.push({ date: order.arrivedAt, title: "Employee Arrived", detail: order.number });
-    if (order.status === "Done") events.push({ date: order.createdAt, title: "Order Completed", detail: order.number });
+    if (order.status === "Done") {
+      events.push({
+        date: order.doneAt ?? order.createdAt,
+        title: "Order Completed",
+        detail: order.doneBy ? `${order.number} · Marked by ${order.doneBy.name}` : order.number,
+      });
+    }
+    if (order.cancelledAt) {
+      events.push({
+        date: order.cancelledAt,
+        title: "Order Cancelled",
+        detail: [
+          order.cancelledBy ? `Cancelled By: ${order.cancelledBy.name}` : null,
+          order.cancellationReason,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      });
+    }
+    if (order.rescheduledAt) {
+      events.push({
+        date: order.rescheduledAt,
+        title: "Order Rescheduled",
+        detail: [
+          order.rescheduledBy ? `By: ${order.rescheduledBy.name}` : null,
+          order.rescheduleReason,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      });
+    }
   }
   for (const invoice of customer.invoices) {
     events.push({ date: invoice.createdAt, title: "Invoice Created", detail: invoice.number });

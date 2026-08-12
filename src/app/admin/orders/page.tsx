@@ -9,7 +9,7 @@ import { Pagination } from "@/components/admin/Pagination";
 import { DeleteOrderButton } from "@/components/order/DeleteOrderButton";
 import { ToastOnMount } from "@/components/ToastOnMount";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
-import { ORDER_STATUSES, ORDER_STATUS_STYLES } from "@/lib/orderData";
+import { ADMIN_ORDER_STATUSES, ORDER_STATUS_STYLES } from "@/lib/orderData";
 import type { Prisma } from "@/generated/prisma";
 
 export default async function AdminOrdersPage({
@@ -23,7 +23,7 @@ export default async function AdminOrdersPage({
   const [teams, totalOrdersCount, openOrdersCount] = await Promise.all([
     prisma.team.findMany({ orderBy: { name: "asc" } }),
     prisma.order.count(),
-    prisma.order.count({ where: { status: { not: "Done" } } }),
+    prisma.order.count({ where: { status: { notIn: ["Done", "Cancelled"] } } }),
   ]);
 
   const where: Prisma.OrderWhereInput = {};
@@ -89,7 +89,7 @@ export default async function AdminOrdersPage({
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
           >
             <option value="all">All Statuses</option>
-            {ORDER_STATUSES.map((s) => (
+            {ADMIN_ORDER_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>

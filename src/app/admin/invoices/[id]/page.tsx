@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { formatUaePhone } from "@/lib/format";
+import { formatUaePhone, formatDateTimeSlash } from "@/lib/format";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { InvoicePreviewCard } from "@/components/invoice/InvoicePreviewCard";
 import { DownloadPdfButton } from "@/components/invoice/DownloadPdfButton";
 import { DeleteInvoiceButton } from "@/components/invoice/DeleteInvoiceButton";
 import { RefundModal } from "@/components/invoice/RefundModal";
+import { InvoiceStatusControl } from "@/components/invoice/InvoiceStatusControl";
 import { StatusBadge } from "@/components/StatusBadge";
 
 export default async function AdminInvoiceDetailPage({
@@ -16,9 +17,15 @@ export default async function AdminInvoiceDetailPage({
   const { id } = await params;
   const invoice = await prisma.invoice.findUnique({
     where: { id },
-    include: { customer: true, items: true, createdBy: true },
+    include: {
+      customer: true,
+      items: true,
+      createdBy: true,
+      statusChanges: { orderBy: { createdAt: "desc" }, include: { changedBy: true } },
+    },
   });
   if (!invoice) notFound();
+  const canToggleStatus = invoice.status === "Paid" || invoice.status === "Unpaid";
 
   return (
     <div className="pb-10">
@@ -63,6 +70,30 @@ export default async function AdminInvoiceDetailPage({
           />
         </div>
 
+        {canToggleStatus && (
+          <div className="mt-4">
+            <InvoiceStatusControl invoiceId={invoice.id} currentStatus={invoice.status} />
+          </div>
+        )}
+
+        {invoice.statusChanges.length > 0 && (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+            <h3 className="text-xs font-semibold text-slate-500 mb-2">Status History</h3>
+            <div className="flex flex-col gap-2">
+              {invoice.statusChanges.map((change) => (
+                <div key={change.id} className="text-sm">
+                  <span className="font-medium text-slate-900">
+                    {change.previousStatus} → {change.newStatus}
+                  </span>
+                  <span className="text-slate-500">
+                    {" "}
+                    · {change.changedBy.name} · {formatDateTimeSlash(change.createdAt)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-2 sm:px-4 lg:px-10">

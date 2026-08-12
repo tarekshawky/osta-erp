@@ -8,6 +8,7 @@ import {
 } from "@/lib/orderData";
 import { EmployeeOrderWorkflow } from "./EmployeeOrderWorkflow";
 import { AdminOrderWorkflow } from "./AdminOrderWorkflow";
+import { AdminOrderStatusControl } from "./AdminOrderStatusControl";
 
 type OrderDetailData = {
   id: string;
@@ -43,7 +44,27 @@ type OrderDetailData = {
   workStartedAt: Date | null;
   jobNotes: string | null;
   photos: { id: string; kind: string; dataUrl: string }[];
+  doneAt: Date | null;
+  doneBy: { name: string } | null;
+  cancelledAt: Date | null;
+  cancelledBy: { name: string } | null;
+  cancellationReason: string | null;
+  rescheduledAt: Date | null;
+  rescheduledBy: { name: string } | null;
+  rescheduleReason: string | null;
+  statusChanges: {
+    id: string;
+    previousStatus: string;
+    newStatus: string;
+    reason: string | null;
+    previousScheduledAt: Date | null;
+    newScheduledAt: Date | null;
+    changedBy: { name: string };
+    createdAt: Date;
+  }[];
 };
+
+const EMPLOYEE_WORKFLOW_STATUSES = new Set(["Assigned", "Accepted", "On The Way", "Arrived", "In Progress"]);
 
 export function OrderDetail({
   order,
@@ -111,6 +132,21 @@ export function OrderDetail({
           </span>
         </div>
       </div>
+
+      {order.status === "Cancelled" && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="font-medium">This order has been cancelled.</div>
+          {order.cancellationReason && <div className="mt-1">Reason: {order.cancellationReason}</div>}
+        </div>
+      )}
+
+      {order.status === "Reschedule" && (
+        <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-700">
+          <div className="font-medium">This order has been rescheduled.</div>
+          {order.scheduledAt && <div className="mt-1">New appointment: {formatDateTimeSlash(order.scheduledAt)}</div>}
+          {order.rescheduleReason && <div className="mt-1">Reason: {order.rescheduleReason}</div>}
+        </div>
+      )}
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <h3 className="text-sm font-semibold text-slate-900 mb-3">Customer</h3>
@@ -196,13 +232,17 @@ export function OrderDetail({
         </div>
       )}
 
-      {basePath === "/employee" && order.status !== "Done" && (
+      {basePath === "/employee" && EMPLOYEE_WORKFLOW_STATUSES.has(order.status) && (
         <EmployeeOrderWorkflow
           order={{
             ...order,
             customerPhone: order.customer.whatsapp || order.customer.phone,
           }}
         />
+      )}
+
+      {basePath === "/admin" && (
+        <AdminOrderStatusControl orderId={order.id} currentStatus={order.status} currentScheduledAt={order.scheduledAt} />
       )}
 
       {basePath === "/admin" && <AdminOrderWorkflow order={order} />}
