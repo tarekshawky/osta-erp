@@ -30,6 +30,7 @@ export type OrderDetailsInput = {
   orderType: string;
   priceAgreed: string;
   customerLanguage: string;
+  leadSource: string;
 };
 
 export type OrderActionResult = { ok: boolean; id?: string; error?: string };
@@ -57,7 +58,7 @@ export async function createOrder(
   const error = validateOrderInput(customer, details);
   if (error) return { ok: false, error };
 
-  const dbCustomer = await findOrCreateCustomer(customer, admin.id);
+  const dbCustomer = await findOrCreateCustomer({ ...customer, leadSource: details.leadSource }, admin.id);
 
   const date = new Date();
   const numberPrefix = `ORD-${date.getFullYear()}-`;
@@ -80,6 +81,7 @@ export async function createOrder(
       orderType: details.orderType,
       priceAgreed: details.priceAgreed,
       customerLanguage: details.customerLanguage,
+      leadSource: details.leadSource,
       notes: details.notes.trim() || null,
       status: "Assigned",
       teamId: details.teamId || null,
@@ -106,7 +108,7 @@ export async function updateOrder(
   const error = validateOrderInput(customer, details);
   if (error) return { ok: false, error };
 
-  const dbCustomer = await findOrCreateCustomer(customer, existing.createdById);
+  const dbCustomer = await findOrCreateCustomer({ ...customer, leadSource: details.leadSource }, existing.createdById);
   const parsedScheduledAt = details.scheduledAt ? parseUaeDateTimeLocal(details.scheduledAt) : null;
 
   await prisma.order.update({
@@ -118,6 +120,7 @@ export async function updateOrder(
       orderType: details.orderType,
       priceAgreed: details.priceAgreed,
       customerLanguage: details.customerLanguage,
+      leadSource: details.leadSource,
       notes: details.notes.trim() || null,
       teamId: details.teamId || null,
       assignedToId: details.assignedToId,

@@ -96,6 +96,11 @@ model Customer {
   locationUrl  String?
   notes        String?
   status       String       @default("Active")
+  // First-touch attribution: how this customer originally found OSTA. Set once at
+  // creation (by whichever flow -- Add Customer, New Order, or New Invoice -- created
+  // the record) and not overwritten afterward, unlike Invoice.leadSource which is
+  // chosen per-invoice and drives the Marketing dashboard's revenue attribution.
+  leadSource   String       @default("Organic")
   createdById  String?
   createdBy    Employee?    @relation("CustomerCreatedBy", fields: [createdById], references: [id])
   updatedById  String?
@@ -174,6 +179,7 @@ model Order {
   orderType        String    @default("New Order")
   priceAgreed      String    @default("No")
   customerLanguage String    @default("Arabic")
+  leadSource       String    @default("Organic")
   notes            String?
   status           String    @default("Assigned")
   teamId           String?

@@ -31,6 +31,7 @@ export default async function AdminEditCustomerPage({ params }: { params: Promis
     locationUrl: customer.locationUrl ?? "",
     notes: customer.notes ?? "",
     status: customer.status,
+    leadSource: customer.leadSource,
   };
 
   return (

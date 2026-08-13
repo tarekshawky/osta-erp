@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
-import { EMIRATES } from "@/lib/invoiceData";
+import { EMIRATES, LEAD_SOURCES } from "@/lib/invoiceData";
 import { CUSTOMER_LANGUAGES } from "@/lib/orderData";
 import { BUILDING_TYPES, CUSTOMER_STATUSES } from "@/lib/customerData";
 import { createCustomer, updateCustomer, type CustomerFormInput } from "@/app/admin/customers/actions";
@@ -29,6 +29,7 @@ const emptyCustomer: CustomerFormInput = {
   locationUrl: "",
   notes: "",
   status: "Active",
+  leadSource: LEAD_SOURCES[0],
 };
 
 export function CustomerForm({
@@ -179,19 +180,34 @@ export function CustomerForm({
         />
       </Field>
 
-      <Field label="Language *">
-        <select
-          className={inputClassName}
-          value={customer.language}
-          onChange={(e) => setCustomer({ ...customer, language: e.target.value })}
-        >
-          {CUSTOMER_LANGUAGES.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Language *">
+          <select
+            className={inputClassName}
+            value={customer.language}
+            onChange={(e) => setCustomer({ ...customer, language: e.target.value })}
+          >
+            {CUSTOMER_LANGUAGES.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Lead Source">
+          <select
+            className={inputClassName}
+            value={customer.leadSource}
+            onChange={(e) => setCustomer({ ...customer, leadSource: e.target.value })}
+          >
+            {LEAD_SOURCES.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
 
       <Field label="Emirate *">
         <select

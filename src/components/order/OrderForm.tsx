@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
-import { EMIRATES } from "@/lib/invoiceData";
+import { EMIRATES, LEAD_SOURCES } from "@/lib/invoiceData";
 import { ORDER_TYPES, PRICE_AGREED_OPTIONS, CUSTOMER_LANGUAGES } from "@/lib/orderData";
 import { createOrder, updateOrder, type OrderCustomerInput, type OrderDetailsInput } from "@/app/admin/orders/actions";
 import { searchCustomersByName, type CustomerSearchResult } from "@/app/admin/customers/actions";
@@ -35,6 +35,7 @@ function emptyDetails(teamOptions: TeamOption[], employeeOptions: EmployeeOption
     orderType: ORDER_TYPES[0],
     priceAgreed: PRICE_AGREED_OPTIONS[1],
     customerLanguage: CUSTOMER_LANGUAGES[0],
+    leadSource: LEAD_SOURCES[0],
   };
 }
 
@@ -343,19 +344,34 @@ export function OrderForm({
         </Field>
       </div>
 
-      <Field label="Customer Language">
-        <select
-          className={inputClassName}
-          value={details.customerLanguage}
-          onChange={(e) => setDetails({ ...details, customerLanguage: e.target.value })}
-        >
-          {CUSTOMER_LANGUAGES.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Customer Language">
+          <select
+            className={inputClassName}
+            value={details.customerLanguage}
+            onChange={(e) => setDetails({ ...details, customerLanguage: e.target.value })}
+          >
+            {CUSTOMER_LANGUAGES.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Lead Source">
+          <select
+            className={inputClassName}
+            value={details.leadSource}
+            onChange={(e) => setDetails({ ...details, leadSource: e.target.value })}
+          >
+            {LEAD_SOURCES.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
 
       <Field label="Scheduled Date & Time (Optional)">
         <input

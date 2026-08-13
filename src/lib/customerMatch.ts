@@ -12,6 +12,8 @@ export type TransactionCustomerInput = {
   emirate: string;
   buildingName?: string | null;
   flatNo?: string | null;
+  // First-touch attribution, used only if this call ends up creating a new customer.
+  leadSource?: string | null;
 };
 
 // Used by Order/Invoice/Quotation creation: link to the existing Customer master
@@ -36,6 +38,7 @@ export async function findOrCreateCustomer(input: TransactionCustomerInput, crea
       emirate: input.emirate,
       buildingName: input.buildingName?.trim() || null,
       flatNo: input.flatNo?.trim() || null,
+      leadSource: input.leadSource?.trim() || "Organic",
       createdById,
     },
   });

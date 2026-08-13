@@ -27,6 +27,7 @@ export type CustomerFormInput = {
   locationUrl: string;
   notes: string;
   status: string;
+  leadSource: string;
 };
 
 export type CustomerActionResult = { ok: boolean; id?: string; error?: string; duplicate?: DuplicateMatch };
@@ -134,6 +135,7 @@ export async function createCustomer(input: CustomerFormInput, force = false): P
       locationUrl: input.locationUrl.trim() || null,
       notes: input.notes.trim() || null,
       status: "Active",
+      leadSource: input.leadSource || "Organic",
       createdById: admin.id,
     },
   });
@@ -176,6 +178,7 @@ export async function updateCustomer(customerId: string, input: CustomerFormInpu
       locationUrl: input.locationUrl.trim() || null,
       notes: input.notes.trim() || null,
       status: input.status,
+      leadSource: input.leadSource || "Organic",
       updatedById: admin.id,
     },
   });

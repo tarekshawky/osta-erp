@@ -42,6 +42,7 @@ export default async function AdminOrderEditPage({ params }: { params: Promise<{
     orderType: order.orderType,
     priceAgreed: order.priceAgreed,
     customerLanguage: order.customerLanguage,
+    leadSource: order.leadSource,
   };
 
   return (
