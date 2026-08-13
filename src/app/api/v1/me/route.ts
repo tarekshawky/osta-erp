@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 import { requireCustomer } from "@/lib/customerAuth";
-import { apiSuccess } from "@/lib/apiResponse";
+import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 export async function GET(request: NextRequest) {
   const auth = await requireCustomer(request);

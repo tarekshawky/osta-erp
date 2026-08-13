@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiError } from "@/lib/apiResponse";
 import type { Customer } from "@/generated/prisma";
 
 const TOKEN_TTL = "30d";
@@ -29,7 +30,7 @@ export async function issueCustomerToken(customerId: string): Promise<string> {
 }
 
 function unauthorized(message: string) {
-  return NextResponse.json({ error: { code: "unauthorized", message } }, { status: 401 });
+  return apiError("unauthorized", message, 401);
 }
 
 // Non-redirecting counterpart to requireEmployee (src/lib/auth.ts) for JSON API

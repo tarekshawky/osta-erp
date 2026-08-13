@@ -1,8 +1,12 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCustomer } from "@/lib/customerAuth";
-import { apiSuccess, apiError, parseJsonBody, parsePagination } from "@/lib/apiResponse";
+import { apiSuccess, apiError, parseJsonBody, parsePagination, corsPreflight } from "@/lib/apiResponse";
 import { ORDER_TYPES, CUSTOMER_LANGUAGES, generateOrderNumber, parseUaeDateTimeLocal } from "@/lib/orderData";
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 const orderSelect = {
   id: true,

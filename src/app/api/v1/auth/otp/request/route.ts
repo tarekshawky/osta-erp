@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requestOtp } from "@/lib/otp";
-import { apiSuccess, apiError, parseJsonBody } from "@/lib/apiResponse";
+import { apiSuccess, apiError, parseJsonBody, corsPreflight } from "@/lib/apiResponse";
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 export async function POST(request: NextRequest) {
   const body = await parseJsonBody<{ phone?: string }>(request);

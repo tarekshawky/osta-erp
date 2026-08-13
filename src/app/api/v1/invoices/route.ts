@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCustomer } from "@/lib/customerAuth";
-import { apiSuccess, parsePagination } from "@/lib/apiResponse";
+import { apiSuccess, parsePagination, corsPreflight } from "@/lib/apiResponse";
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 const invoiceSelect = {
   id: true,

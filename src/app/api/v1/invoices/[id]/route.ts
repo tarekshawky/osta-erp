@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCustomer } from "@/lib/customerAuth";
-import { apiSuccess, apiError } from "@/lib/apiResponse";
+import { apiSuccess, apiError, corsPreflight } from "@/lib/apiResponse";
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const auth = await requireCustomer(request);
