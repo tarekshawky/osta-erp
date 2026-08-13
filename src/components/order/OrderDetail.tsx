@@ -31,8 +31,8 @@ type OrderDetailData = {
     flatNo: string | null;
   };
   team: { name: string } | null;
-  assignedTo: { name: string; code: string };
-  createdBy: { name: string };
+  assignedTo: { name: string; code: string } | null;
+  createdBy: { name: string } | null;
   invoiceId: string | null;
   invoice: { number: string } | null;
   acceptedAt: Date | null;
@@ -87,7 +87,7 @@ export function OrderDetail({
     priceAgreed: order.priceAgreed,
     customerLanguage: order.customerLanguage,
     team: order.team?.name ?? "—",
-    assignedTo: `${order.assignedTo.name} (${order.assignedTo.code})`,
+    assignedTo: order.assignedTo ? `${order.assignedTo.name} (${order.assignedTo.code})` : "Unassigned",
     notes: order.notes,
   });
   const whatsappUrl = buildWhatsAppUrl({
@@ -101,7 +101,7 @@ export function OrderDetail({
     customerLanguage: order.customerLanguage,
     status: order.status,
     team: order.team?.name ?? "—",
-    assignedTo: `${order.assignedTo.name} (${order.assignedTo.code})`,
+    assignedTo: order.assignedTo ? `${order.assignedTo.name} (${order.assignedTo.code})` : "Unassigned",
     scheduledAt: order.scheduledAt ? formatDateTimeSlash(order.scheduledAt) : null,
     notes: order.notes,
   });
@@ -184,7 +184,7 @@ export function OrderDetail({
           <div className="flex justify-between">
             <dt className="text-slate-500">Assigned To</dt>
             <dd className="text-slate-900 font-medium">
-              {order.assignedTo.name} · {order.assignedTo.code}
+              {order.assignedTo ? `${order.assignedTo.name} · ${order.assignedTo.code}` : "Unassigned"}
             </dd>
           </div>
           <div className="flex justify-between">
@@ -193,7 +193,7 @@ export function OrderDetail({
           </div>
           <div className="flex justify-between">
             <dt className="text-slate-500">Created By</dt>
-            <dd className="text-slate-900">{order.createdBy.name}</dd>
+            <dd className="text-slate-900">{order.createdBy?.name ?? "Customer (self-booked)"}</dd>
           </div>
         </dl>
         {order.notes && (

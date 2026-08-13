@@ -1,4 +1,5 @@
 import { toWaPhoneDigits } from "@/lib/phone";
+import { prisma } from "@/lib/prisma";
 
 export const ORDER_STATUSES = ["Assigned", "Accepted", "On The Way", "Arrived", "In Progress", "Done"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
@@ -8,7 +9,15 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export const ADMIN_ONLY_ORDER_STATUSES = ["Cancelled", "Reschedule"] as const;
 export const ADMIN_ORDER_STATUSES = [...ORDER_STATUSES, ...ADMIN_ONLY_ORDER_STATUSES] as const;
 
+// "Requested" is set only by the customer-facing self-service booking API
+// (src/app/api/v1/orders) and cleared automatically once an admin triages the
+// order (assigns a team/employee via the Edit Order form) -- it's intentionally
+// excluded from ORDER_STATUSES/ADMIN_ORDER_STATUSES so it never appears as a
+// manually-selectable option in the employee workflow or admin status control.
+export const ORDER_LIST_FILTER_STATUSES = ["Requested", ...ADMIN_ORDER_STATUSES] as const;
+
 export const ORDER_STATUS_STYLES: Record<string, string> = {
+  Requested: "bg-yellow-50 text-yellow-700",
   Assigned: "bg-slate-100 text-slate-600",
   Accepted: "bg-blue-50 text-blue-600",
   "On The Way": "bg-amber-50 text-amber-600",
@@ -18,6 +27,19 @@ export const ORDER_STATUS_STYLES: Record<string, string> = {
   Cancelled: "bg-red-50 text-red-600",
   Reschedule: "bg-indigo-50 text-indigo-600",
 };
+
+// Shared by admin's createOrder action and the customer-facing booking endpoint
+// so both produce identically-formatted, non-colliding order numbers.
+export async function generateOrderNumber(): Promise<string> {
+  const date = new Date();
+  const numberPrefix = `ORD-${date.getFullYear()}-`;
+  const lastOrder = await prisma.order.findFirst({
+    where: { number: { startsWith: numberPrefix } },
+    orderBy: { number: "desc" },
+  });
+  const lastSeq = lastOrder ? parseInt(lastOrder.number.slice(numberPrefix.length), 10) : 0;
+  return `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
+}
 
 export const ORDER_PHOTO_KINDS = ["Before", "After"] as const;
 export type OrderPhotoKind = (typeof ORDER_PHOTO_KINDS)[number];

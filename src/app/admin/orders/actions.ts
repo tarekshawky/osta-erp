@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { getSession } from "@/lib/session";
-import { parseUaeDateTimeLocal } from "@/lib/orderData";
+import { parseUaeDateTimeLocal, generateOrderNumber } from "@/lib/orderData";
 import { findOrCreateCustomer } from "@/lib/customerMatch";
 import type { Prisma } from "@/generated/prisma";
 
@@ -60,21 +60,13 @@ export async function createOrder(
 
   const dbCustomer = await findOrCreateCustomer({ ...customer, leadSource: details.leadSource }, admin.id);
 
-  const date = new Date();
-  const numberPrefix = `ORD-${date.getFullYear()}-`;
-  const lastOrder = await prisma.order.findFirst({
-    where: { number: { startsWith: numberPrefix } },
-    orderBy: { number: "desc" },
-  });
-  const lastSeq = lastOrder ? parseInt(lastOrder.number.slice(numberPrefix.length), 10) : 0;
-  const number = `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
-
+  const number = await generateOrderNumber();
   const parsedScheduledAt = details.scheduledAt ? parseUaeDateTimeLocal(details.scheduledAt) : null;
 
   const order = await prisma.order.create({
     data: {
       number,
-      date,
+      date: new Date(),
       scheduledAt: parsedScheduledAt,
       customerId: dbCustomer.id,
       locationUrl: details.locationUrl.trim() || null,
@@ -100,7 +92,7 @@ export async function updateOrder(
   customer: OrderCustomerInput,
   details: OrderDetailsInput
 ): Promise<OrderActionResult> {
-  await requireEmployee("ADMIN");
+  const admin = await requireEmployee("ADMIN");
 
   const existing = await prisma.order.findUnique({ where: { id: orderId } });
   if (!existing) return { ok: false, error: "Order not found." };
@@ -108,7 +100,14 @@ export async function updateOrder(
   const error = validateOrderInput(customer, details);
   if (error) return { ok: false, error };
 
-  const dbCustomer = await findOrCreateCustomer({ ...customer, leadSource: details.leadSource }, existing.createdById);
+  // existing.createdById is null for customer self-booked ("Requested") orders --
+  // fall back to the admin doing this edit as the attribution if a new Customer
+  // record ends up being created here (rare in the edit flow, but findOrCreateCustomer
+  // always needs a createdById).
+  const dbCustomer = await findOrCreateCustomer(
+    { ...customer, leadSource: details.leadSource },
+    existing.createdById ?? admin.id
+  );
   const parsedScheduledAt = details.scheduledAt ? parseUaeDateTimeLocal(details.scheduledAt) : null;
 
   await prisma.order.update({
@@ -124,6 +123,9 @@ export async function updateOrder(
       notes: details.notes.trim() || null,
       teamId: details.teamId || null,
       assignedToId: details.assignedToId,
+      // A customer-booked order starts as "Requested" (no team/employee yet); the
+      // moment an admin assigns one here, it moves into the normal employee workflow.
+      ...(existing.status === "Requested" ? { status: "Assigned" } : {}),
     },
   });
 

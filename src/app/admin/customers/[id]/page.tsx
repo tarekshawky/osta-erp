@@ -198,7 +198,7 @@ export default async function AdminCustomerProfilePage({ params }: { params: Pro
             date: o.date,
             scheduledAt: o.scheduledAt,
             status: o.status,
-            assignedToName: o.assignedTo.name,
+            assignedToName: o.assignedTo?.name ?? "Unassigned",
             emirate: customer.emirate,
             invoiceNumber: o.invoice?.number ?? null,
             invoiceId: o.invoiceId,

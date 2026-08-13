@@ -1,0 +1,436 @@
+openapi: 3.0.3
+info:
+  title: OSTA Services ERP - Customer API
+  version: "1.0.0"
+  description: |
+    Customer-facing API for the OSTA Services ERP. Customers authenticate with their
+    phone number and a one-time code (OTP), then use a bearer token to view their own
+    orders and invoices and to book a new order.
+
+    **Note on OTP delivery**: SMS/WhatsApp delivery is currently a pluggable stub
+    (see `src/lib/otpSender.ts` in the repository). In non-production environments,
+    the `POST /auth/otp/request` response includes a `devCode` field with the plaintext
+    code for testing. In production, no `devCode` is returned, and until a real
+    provider is wired in, the code is only written to the server log -- it does not yet
+    reach a customer's phone.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /auth/otp/request:
+    post:
+      summary: Request a one-time login code
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+                  example: "501234567"
+      responses:
+        "200":
+          description: Code sent (or logged, in production without a real provider configured)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      sent:
+                        type: boolean
+                      devCode:
+                        type: string
+                        description: Only present outside production.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: No customer found for this phone number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many codes requested recently
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/otp/verify:
+    post:
+      summary: Verify a one-time code and receive an access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone:
+                  type: string
+                code:
+                  type: string
+                  example: "482913"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                      customer:
+                        $ref: "#/components/schemas/CustomerSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          description: Incorrect or expired code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No customer found for this phone number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /me:
+    get:
+      summary: Get the authenticated customer's profile
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Customer"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /orders:
+    get:
+      summary: List the authenticated customer's orders
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by exact order status (e.g. "Requested", "Assigned", "Done").
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Order"
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  total:
+                    type: integer
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Book a new order
+      description: |
+        Creates an order with status "Requested" and no team/employee assigned yet.
+        An admin triages it (assigns a team + employee) via the internal Edit Order
+        page, which automatically moves the status to "Assigned".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderType:
+                  type: string
+                  enum: [New Order, Revisit, Inspection]
+                  default: New Order
+                scheduledAt:
+                  type: string
+                  description: 'Local UAE time, formatted as YYYY-MM-DDTHH:mm.'
+                  example: "2026-08-20T14:30"
+                locationUrl:
+                  type: string
+                customerLanguage:
+                  type: string
+                  enum: [Arabic, English]
+                notes:
+                  type: string
+      responses:
+        "201":
+          description: Order booked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /orders/{id}:
+    get:
+      summary: Get one of the authenticated customer's orders
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/OrderDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Order not found, or not owned by the authenticated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /invoices:
+    get:
+      summary: List the authenticated customer's invoices
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Invoice"
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  total:
+                    type: integer
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /invoices/{id}:
+    get:
+      summary: Get one of the authenticated customer's invoices
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/InvoiceDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Invoice not found, or not owned by the authenticated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        default: 20
+        maximum: 50
+
+  responses:
+    BadRequest:
+      description: Invalid request body
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Missing, invalid, or expired bearer token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    CustomerSummary:
+      type: object
+      properties:
+        id: { type: string }
+        code: { type: string }
+        name: { type: string }
+        companyName: { type: string, nullable: true }
+        phone: { type: string }
+        email: { type: string, nullable: true }
+        language: { type: string }
+
+    Customer:
+      allOf:
+        - $ref: "#/components/schemas/CustomerSummary"
+        - type: object
+          properties:
+            type: { type: string, enum: [INDIVIDUAL, COMPANY] }
+            whatsapp: { type: string, nullable: true }
+            emirate: { type: string }
+            city: { type: string, nullable: true }
+            area: { type: string, nullable: true }
+            buildingName: { type: string, nullable: true }
+            flatNo: { type: string, nullable: true }
+            address: { type: string, nullable: true }
+
+    Order:
+      type: object
+      properties:
+        id: { type: string }
+        number: { type: string }
+        date: { type: string, format: date-time }
+        scheduledAt: { type: string, format: date-time, nullable: true }
+        locationUrl: { type: string, nullable: true }
+        orderType: { type: string }
+        priceAgreed: { type: string }
+        customerLanguage: { type: string }
+        notes: { type: string, nullable: true }
+        status: { type: string }
+        team:
+          type: object
+          nullable: true
+          properties:
+            name: { type: string }
+        assignedTo:
+          type: object
+          nullable: true
+          properties:
+            name: { type: string }
+        invoiceId: { type: string, nullable: true }
+        doneAt: { type: string, format: date-time, nullable: true }
+        cancelledAt: { type: string, format: date-time, nullable: true }
+        cancellationReason: { type: string, nullable: true }
+        rescheduledAt: { type: string, format: date-time, nullable: true }
+        rescheduleReason: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    OrderDetail:
+      allOf:
+        - $ref: "#/components/schemas/Order"
+        - type: object
+          properties:
+            priceAgreed: { type: string }
+            invoice:
+              type: object
+              nullable: true
+              properties:
+                number: { type: string }
+                amount: { type: number }
+                status: { type: string }
+            acceptedAt: { type: string, format: date-time, nullable: true }
+            departedAt: { type: string, format: date-time, nullable: true }
+            etaMinutes: { type: string, nullable: true }
+            arrivedAt: { type: string, format: date-time, nullable: true }
+            workStartedAt: { type: string, format: date-time, nullable: true }
+
+    Invoice:
+      type: object
+      properties:
+        id: { type: string }
+        number: { type: string }
+        date: { type: string, format: date-time }
+        serviceType: { type: string }
+        category: { type: string }
+        payment: { type: string }
+        amount: { type: number }
+        status: { type: string }
+        refundedAmount: { type: number }
+        warrantyUntil: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    InvoiceDetail:
+      allOf:
+        - $ref: "#/components/schemas/Invoice"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  serviceName: { type: string }
+                  description: { type: string, nullable: true }
+                  qty: { type: integer }
+                  unitPrice: { type: number }

@@ -174,7 +174,7 @@ export function buildCustomerActivity(customer: {
     departedAt: Date | null;
     arrivedAt: Date | null;
     status: string;
-    assignedTo: { name: string };
+    assignedTo: { name: string } | null;
     doneAt: Date | null;
     doneBy: { name: string } | null;
     cancelledAt: Date | null;
@@ -192,7 +192,7 @@ export function buildCustomerActivity(customer: {
 
   for (const order of customer.orders) {
     events.push({ date: order.createdAt, title: "New Order Created", detail: order.number });
-    if (order.acceptedAt) events.push({ date: order.acceptedAt, title: "Order Accepted", detail: `Employee: ${order.assignedTo.name}` });
+    if (order.acceptedAt) events.push({ date: order.acceptedAt, title: "Order Accepted", detail: `Employee: ${order.assignedTo?.name ?? "—"}` });
     if (order.departedAt) events.push({ date: order.departedAt, title: "Employee On The Way", detail: order.number });
     if (order.arrivedAt) events.push({ date: order.arrivedAt, title: "Employee Arrived", detail: order.number });
     if (order.status === "Done") {

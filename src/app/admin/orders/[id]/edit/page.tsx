@@ -33,9 +33,15 @@ export default async function AdminOrderEditPage({ params }: { params: Promise<{
     flatNo: order.customer.flatNo ?? "",
   };
 
+  // When an order has no team yet (e.g. a customer self-booked "Requested" order),
+  // fall back to the first team -- matching OrderForm's own emptyDetails() default --
+  // so the Team <select> and Assign To list stay in sync from first render, instead of
+  // the browser visually defaulting the <select> to a team the React state doesn't hold.
+  const fallbackTeamId = teams[0]?.id ?? "";
+  const teamId = order.teamId ?? fallbackTeamId;
   const initialDetails: OrderDetailsInput = {
-    teamId: order.teamId ?? "",
-    assignedToId: order.assignedToId,
+    teamId,
+    assignedToId: order.assignedToId ?? employees.find((e) => e.teamId === teamId)?.id ?? "",
     notes: order.notes ?? "",
     scheduledAt: order.scheduledAt ? toUaeDateTimeLocalValue(order.scheduledAt) : "",
     locationUrl: order.locationUrl ?? "",

@@ -9,7 +9,7 @@ import { Pagination } from "@/components/admin/Pagination";
 import { DeleteOrderButton } from "@/components/order/DeleteOrderButton";
 import { ToastOnMount } from "@/components/ToastOnMount";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
-import { ADMIN_ORDER_STATUSES, ORDER_STATUS_STYLES } from "@/lib/orderData";
+import { ORDER_LIST_FILTER_STATUSES, ORDER_STATUS_STYLES } from "@/lib/orderData";
 import type { Prisma } from "@/generated/prisma";
 
 export default async function AdminOrdersPage({
@@ -89,7 +89,7 @@ export default async function AdminOrdersPage({
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
           >
             <option value="all">All Statuses</option>
-            {ADMIN_ORDER_STATUSES.map((s) => (
+            {ORDER_LIST_FILTER_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
@@ -143,7 +143,7 @@ export default async function AdminOrdersPage({
                     <TeamBadge name={order.team?.name} />
                   </td>
                   <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
-                    {order.assignedTo.name.split(" ").slice(0, 2).join(" ")}
+                    {order.assignedTo ? order.assignedTo.name.split(" ").slice(0, 2).join(" ") : "Unassigned"}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ORDER_STATUS_STYLES[order.status] ?? "bg-slate-100 text-slate-600"}`}>
