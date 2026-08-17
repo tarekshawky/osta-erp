@@ -53,6 +53,7 @@ model Employee {
   walletResetAt DateTime?
   monthlySalary Float  @default(0)
   hasWallet Boolean    @default(true)
+  canViewCreditCardWallets Boolean @default(false)
   teamId    String?
   team      Team?      @relation(fields: [teamId], references: [id])
   invoices  Invoice[]
@@ -72,6 +73,9 @@ model Employee {
   customersCreated      Customer[]             @relation("CustomerCreatedBy")
   customersUpdated      Customer[]             @relation("CustomerUpdatedBy")
   customerNotesCreated  CustomerNote[]
+  creditCardsCreated         CreditCard[]         @relation("CreditCardCreatedBy")
+  creditCardPaymentsRecorded CreditCardPayment[]  @relation("CreditCardPaymentRecordedBy")
+  creditCardAuditLogs        CreditCardAuditLog[] @relation("CreditCardAuditLogPerformedBy")
   createdAt DateTime   @default(now())
 }
 
@@ -267,8 +271,11 @@ model OrderPhoto {
 
 model Expense {
   id             String   @id @default(cuid())
+  number         String?  @unique
   date           DateTime
   description    String
+  vendor         String?
+  referenceNumber String?
   notes          String?
   category       String?
   vehicle        String?
@@ -280,9 +287,71 @@ model Expense {
   attachmentUrl  String?
   teamId         String?
   team           Team?    @relation(fields: [teamId], references: [id])
+  creditCardId   String?
+  creditCard     CreditCard? @relation(fields: [creditCardId], references: [id])
   createdById    String
   createdBy      Employee @relation(fields: [createdById], references: [id])
   createdAt      DateTime @default(now())
+}
+
+// One card = one independent wallet: its own limit, expenses, payments, statement.
+// Only the last 4 digits of the card number are ever persisted -- the full number
+// is never sent to the server or stored, since this app never needs to redisplay
+// or reuse it (avoids taking on PCI-DSS scope for zero functional benefit).
+model CreditCard {
+  id             String               @id @default(cuid())
+  name           String
+  cardHolder     String?
+  lastFour       String
+  creditLimit    Float                @default(0)
+  billingCycle   String?
+  paymentDueDate Int?
+  status         String               @default("Active")
+  notes          String?
+  expenses       Expense[]
+  payments       CreditCardPayment[]
+  auditLogs      CreditCardAuditLog[]
+  createdById    String
+  createdBy      Employee             @relation("CreditCardCreatedBy", fields: [createdById], references: [id])
+  createdAt      DateTime             @default(now())
+}
+
+// Settlement/payment against a card's outstanding balance -- deliberately never
+// creates or touches an Expense row, so a payment can never double-count as spend.
+model CreditCardPayment {
+  id              String     @id @default(cuid())
+  creditCardId    String
+  creditCard      CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  date            DateTime
+  amount          Float
+  paymentMethod   String
+  bankAccount     String?
+  referenceNumber String?
+  notes           String?
+  recordedById    String
+  recordedBy      Employee   @relation("CreditCardPaymentRecordedBy", fields: [recordedById], references: [id])
+  createdAt       DateTime   @default(now())
+}
+
+model CreditCardAuditLog {
+  id            String     @id @default(cuid())
+  creditCardId  String
+  creditCard    CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  action        String
+  description   String
+  oldValue      String?
+  newValue      String?
+  performedById String
+  performedBy   Employee   @relation("CreditCardAuditLogPerformedBy", fields: [performedById], references: [id])
+  createdAt     DateTime   @default(now())
+}
+
+// Admin-added expense categories on top of the hardcoded EXPENSE_CATEGORIES list
+// in src/lib/expenseData.ts -- additive only (no edit/delete in this pass).
+model ExpenseCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
 }
 
 model WorkReport {

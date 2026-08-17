@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatAed } from "@/lib/format";
 import { WalletCard } from "./WalletCard";
+import { CreditCardsManager, type CreditCardManagerRow } from "@/components/credit-card/CreditCardsManager";
 
 export type WalletRow = {
   id: string;
@@ -17,14 +18,23 @@ export type WalletRow = {
   payments: { cash: number; ziina: number; bankTransfer: number };
 };
 
-export function WalletsManager({ wallets, collectMoneyTotal }: { wallets: WalletRow[]; collectMoneyTotal: number }) {
-  const [tab, setTab] = useState<"admin" | "employee">("admin");
+export function WalletsManager({
+  wallets,
+  collectMoneyTotal,
+  creditCards,
+}: {
+  wallets: WalletRow[];
+  collectMoneyTotal: number;
+  creditCards: CreditCardManagerRow[];
+}) {
+  const [tab, setTab] = useState<"admin" | "employee" | "credit">("admin");
 
   const admins = wallets.filter((w) => w.role === "ADMIN");
   const employees = wallets.filter((w) => w.role === "EMPLOYEE");
 
   const adminTotal = admins.reduce((sum, w) => sum + w.custody + w.payments.cash - w.expenses, 0);
   const employeeTotal = employees.reduce((sum, w) => sum + w.custody + w.payments.cash - w.expenses, 0);
+  const creditCardTotal = creditCards.reduce((sum, c) => sum + c.currentUsed, 0);
 
   const shown = tab === "admin" ? admins : employees;
 
@@ -52,6 +62,11 @@ export function WalletsManager({ wallets, collectMoneyTotal }: { wallets: Wallet
           <div className="text-2xl font-bold mt-1">{formatAed(collectMoneyTotal)}</div>
           <div className="text-xs text-teal-100 mt-1">Lifetime total collected via Collect Money</div>
         </div>
+        <div className="rounded-xl bg-gradient-to-br from-amber-700 to-orange-600 text-white p-4">
+          <div className="text-xs text-amber-100">Credit Card Wallets</div>
+          <div className="text-2xl font-bold mt-1">{formatAed(creditCardTotal)} <span className="text-sm font-normal">Used</span></div>
+          <div className="text-xs text-amber-100 mt-1">{creditCards.length} card(s)</div>
+        </div>
       </div>
 
       <div className="mt-4 inline-flex rounded-lg border border-slate-200 bg-white p-1">
@@ -73,26 +88,41 @@ export function WalletsManager({ wallets, collectMoneyTotal }: { wallets: Wallet
         >
           Employee Wallets ({employees.length})
         </button>
+        <button
+          type="button"
+          onClick={() => setTab("credit")}
+          className={`rounded-md px-4 py-1.5 text-sm font-medium ${
+            tab === "credit" ? "bg-blue-700 text-white" : "text-slate-600"
+          }`}
+        >
+          Credit Card Wallets ({creditCards.length})
+        </button>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {shown.map((w) => (
-          <WalletCard
-            key={w.id}
-            role={w.role === "ADMIN" ? "Admin" : "Employee"}
-            code={w.code}
-            name={w.name}
-            photoData={w.photoData}
-            employeeId={w.id}
-            custody={w.custody}
-            revenue={w.revenue}
-            expenses={w.expenses}
-            revenueWithdrawn={w.revenueWithdrawn}
-            payments={w.payments}
-          />
-        ))}
-        {shown.length === 0 && <p className="text-sm text-slate-400 py-10 text-center col-span-2">No wallets found.</p>}
-      </div>
+      {tab === "credit" ? (
+        <div className="mt-4">
+          <CreditCardsManager cards={creditCards} />
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {shown.map((w) => (
+            <WalletCard
+              key={w.id}
+              role={w.role === "ADMIN" ? "Admin" : "Employee"}
+              code={w.code}
+              name={w.name}
+              photoData={w.photoData}
+              employeeId={w.id}
+              custody={w.custody}
+              revenue={w.revenue}
+              expenses={w.expenses}
+              revenueWithdrawn={w.revenueWithdrawn}
+              payments={w.payments}
+            />
+          ))}
+          {shown.length === 0 && <p className="text-sm text-slate-400 py-10 text-center col-span-2">No wallets found.</p>}
+        </div>
+      )}
     </div>
   );
 }

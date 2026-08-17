@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/prisma";
+
 export const EXPENSE_CATEGORIES = [
   "Vehicle",
   "Advertising",
@@ -7,6 +9,12 @@ export const EXPENSE_CATEGORIES = [
   "Accommodation",
   "Maintenance",
   "Marketing Advertising",
+  "Fuel",
+  "Office Supplies",
+  "Software",
+  "Subscriptions",
+  "Utilities",
+  "Equipment",
   "Other",
 ] as const;
 
@@ -37,7 +45,20 @@ export const VEHICLE_EXPENSE_TYPES = [
 
 export const ADVERTISING_PLATFORMS = ["Meta Ads", "Google Ads", "Meta Verified", "Others"] as const;
 
-export const EXPENSE_PAYMENT_METHODS = ["Cash", "Bank", "Credit"] as const;
+export const EXPENSE_PAYMENT_METHODS = ["Cash", "Bank Transfer", "Credit Card"] as const;
+
+// Historical Expense rows stored the old "Bank"/"Credit" values (before Credit Card
+// Wallets shipped) -- never migrated, since dev and prod share one live database.
+// Every place that groups, sums, or displays a payment value must go through
+// canonicalExpensePayment() so old and new rows roll up together correctly.
+export const LEGACY_EXPENSE_PAYMENT_ALIASES: Record<string, string> = {
+  Bank: "Bank Transfer",
+  Credit: "Credit Card",
+};
+
+export function canonicalExpensePayment(payment: string): string {
+  return LEGACY_EXPENSE_PAYMENT_ALIASES[payment] ?? payment;
+}
 
 export const EXPENSE_CATEGORY_STYLES: Record<string, string> = {
   Vehicle: "bg-orange-50 text-orange-600",
@@ -48,5 +69,26 @@ export const EXPENSE_CATEGORY_STYLES: Record<string, string> = {
   Accommodation: "bg-purple-50 text-purple-600",
   Maintenance: "bg-slate-100 text-slate-600",
   "Marketing Advertising": "bg-pink-50 text-pink-600",
+  Fuel: "bg-orange-50 text-orange-500",
+  "Office Supplies": "bg-cyan-50 text-cyan-600",
+  Software: "bg-violet-50 text-violet-600",
+  Subscriptions: "bg-fuchsia-50 text-fuchsia-600",
+  Utilities: "bg-yellow-50 text-yellow-700",
+  Equipment: "bg-lime-50 text-lime-700",
   Other: "bg-rose-50 text-rose-600",
 };
+
+// Shared by admin's createExpense action and the employee expense form so both
+// produce identically-formatted, non-colliding expense numbers -- mirrors
+// generateOrderNumber() in src/lib/orderData.ts. Nullable/not backfilled: only
+// expenses created after this shipped get one, historical rows show "--".
+export async function generateExpenseNumber(): Promise<string> {
+  const date = new Date();
+  const numberPrefix = `EXP-${date.getFullYear()}-`;
+  const lastExpense = await prisma.expense.findFirst({
+    where: { number: { startsWith: numberPrefix } },
+    orderBy: { number: "desc" },
+  });
+  const lastSeq = lastExpense?.number ? parseInt(lastExpense.number.slice(numberPrefix.length), 10) : 0;
+  return `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
+}
