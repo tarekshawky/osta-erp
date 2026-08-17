@@ -149,6 +149,19 @@ export default async function AdminQuotationsPage({
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <Link
+                          href={quo.invoiceId ? `/admin/invoices/${quo.invoiceId}` : `/admin/invoices/new?quotationId=${quo.id}`}
+                          title={quo.invoiceId ? "View Invoice" : "Convert to Invoice"}
+                          className="text-green-600 hover:text-green-700 p-1.5"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path
+                              d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </Link>
+                        <Link
                           href={`/admin/quotations/${quo.id}/edit`}
                           title="Edit"
                           className="text-blue-600 hover:text-blue-700 p-1.5"
