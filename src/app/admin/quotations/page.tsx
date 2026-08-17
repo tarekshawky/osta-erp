@@ -148,7 +148,12 @@ export default async function AdminQuotationsPage({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <Link
+                        {/* Plain <a>, not next/link: forces a full navigation so the invoice
+                            wizard always gets a fresh server render with this quotationId --
+                            a client-side Link can serve a stale prefetch of the same
+                            /admin/invoices/new pathname (without the query param) picked up
+                            from the Invoices list page's own "+ New Invoice" link. */}
+                        <a
                           href={quo.invoiceId ? `/admin/invoices/${quo.invoiceId}` : `/admin/invoices/new?quotationId=${quo.id}`}
                           title={quo.invoiceId ? "View Invoice" : "Convert to Invoice"}
                           className="text-green-600 hover:text-green-700 p-1.5"
@@ -160,7 +165,7 @@ export default async function AdminQuotationsPage({
                               strokeLinejoin="round"
                             />
                           </svg>
-                        </Link>
+                        </a>
                         <Link
                           href={`/admin/quotations/${quo.id}/edit`}
                           title="Edit"

@@ -152,6 +152,18 @@ export default async function EmployeeHomePage() {
             }
           />
           <QuickActionTile
+            href="/employee/quotations"
+            label="Quotations"
+            iconBg="bg-sky-50"
+            iconColor="text-sky-600"
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="4" y="4" width="16" height="16" rx="2" />
+                <path d="M8 9h8M8 13h5" strokeLinecap="round" />
+              </svg>
+            }
+          />
+          <QuickActionTile
             href="/employee/report"
             label="Reports"
             iconBg="bg-orange-50"
