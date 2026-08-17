@@ -8,17 +8,22 @@ import {
   VEHICLE_EXPENSE_TYPES,
   ADVERTISING_PLATFORMS,
 } from "@/lib/expenseData";
+import { maskCardNumber } from "@/lib/creditCardData";
 import { compressImageFile } from "@/lib/imageCompress";
 import type { ExpenseFormInput } from "@/app/admin/expenses/actions";
 
 export type ExpenseFormValue = ExpenseFormInput;
 
+export type ActiveCreditCardOption = { id: string; name: string; cardHolder: string | null; lastFour: string };
+
 export function ExpenseForm({
   initial,
+  activeCards,
   onSave,
   onCancel,
 }: {
   initial: ExpenseFormValue;
+  activeCards: ActiveCreditCardOption[];
   onSave: (value: ExpenseFormValue) => Promise<{ ok: boolean; error?: string }>;
   onCancel: () => void;
 }) {
@@ -54,6 +59,10 @@ export function ExpenseForm({
 
   function handleSave() {
     if (isSavingRef.current) return;
+    if (value.payment === "Credit Card" && !value.creditCardId) {
+      setError("Select a credit card.");
+      return;
+    }
     isSavingRef.current = true;
     setError(null);
     startTransition(async () => {
@@ -138,7 +147,10 @@ export function ExpenseForm({
           <select
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.payment}
-            onChange={(e) => setValue({ ...value, payment: e.target.value })}
+            onChange={(e) => {
+              const payment = e.target.value;
+              setValue({ ...value, payment, creditCardId: payment === "Credit Card" ? value.creditCardId : null });
+            }}
           >
             {EXPENSE_PAYMENT_METHODS.map((p) => (
               <option key={p} value={p}>
@@ -146,6 +158,43 @@ export function ExpenseForm({
               </option>
             ))}
           </select>
+        </label>
+        {value.payment === "Credit Card" && (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-slate-600">Select Credit Card</span>
+            <select
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+              value={value.creditCardId ?? ""}
+              onChange={(e) => setValue({ ...value, creditCardId: e.target.value || null })}
+            >
+              <option value="">Select card...</option>
+              {activeCards.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.cardHolder || c.name} — {maskCardNumber(c.lastFour)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Vendor (optional)</span>
+          <input
+            type="text"
+            placeholder="e.g. Meta"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            value={value.vendor ?? ""}
+            onChange={(e) => setValue({ ...value, vendor: e.target.value })}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Invoice/Receipt Number (optional)</span>
+          <input
+            type="text"
+            placeholder="e.g. INV-1234"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+            value={value.referenceNumber ?? ""}
+            onChange={(e) => setValue({ ...value, referenceNumber: e.target.value })}
+          />
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Amount (AED)</span>

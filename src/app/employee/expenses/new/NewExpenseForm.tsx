@@ -4,14 +4,19 @@ import { useRef, useState } from "react";
 import { Field, inputClassName } from "@/components/FormField";
 import {
   EXPENSE_CATEGORIES,
+  EXPENSE_PAYMENT_METHODS,
   VEHICLES,
   VEHICLE_EXPENSE_TYPES,
   ADVERTISING_PLATFORMS,
 } from "@/lib/expenseData";
+import { maskCardNumber } from "@/lib/creditCardData";
 import { createExpense } from "./actions";
 
-export function NewExpenseForm() {
+export type ActiveCreditCardOption = { id: string; name: string; cardHolder: string | null; lastFour: string };
+
+export function NewExpenseForm({ activeCards }: { activeCards: ActiveCreditCardOption[] }) {
   const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
+  const [payment, setPayment] = useState<string>(EXPENSE_PAYMENT_METHODS[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
 
@@ -33,6 +38,9 @@ export function NewExpenseForm() {
       </Field>
       <Field label="Description (optional)">
         <input name="notes" className={inputClassName} placeholder="Add an optional note..." />
+      </Field>
+      <Field label="Vendor (optional)">
+        <input name="vendor" className={inputClassName} placeholder="e.g. Meta" />
       </Field>
       <Field label="Category">
         <select
@@ -84,6 +92,35 @@ export function NewExpenseForm() {
           </select>
         </Field>
       )}
+      <Field label="Payment Method">
+        <select
+          name="payment"
+          className={inputClassName}
+          value={payment}
+          onChange={(e) => setPayment(e.target.value)}
+        >
+          {EXPENSE_PAYMENT_METHODS.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+      </Field>
+      {payment === "Credit Card" && (
+        <Field label="Select Credit Card">
+          <select name="creditCardId" className={inputClassName} defaultValue="" required>
+            <option value="">Select card...</option>
+            {activeCards.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.cardHolder || c.name} — {maskCardNumber(c.lastFour)}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
+      <Field label="Invoice/Receipt Number (optional)">
+        <input name="referenceNumber" className={inputClassName} placeholder="e.g. INV-1234" />
+      </Field>
       <Field label="Amount (AED)">
         <input name="amount" type="number" step="0.01" min="0.01" required className={inputClassName} />
       </Field>

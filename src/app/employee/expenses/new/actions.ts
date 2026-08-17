@@ -5,7 +5,14 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { findDuplicateExpense } from "@/lib/expenseDuplicate";
-import { VEHICLES, VEHICLE_EXPENSE_TYPES, ADVERTISING_PLATFORMS } from "@/lib/expenseData";
+import {
+  VEHICLES,
+  VEHICLE_EXPENSE_TYPES,
+  ADVERTISING_PLATFORMS,
+  EXPENSE_PAYMENT_METHODS,
+  canonicalExpensePayment,
+  generateExpenseNumber,
+} from "@/lib/expenseData";
 
 export async function createExpense(formData: FormData) {
   const employee = await requireEmployee("EMPLOYEE");
@@ -17,9 +24,25 @@ export async function createExpense(formData: FormData) {
   const subcategoryInput = String(formData.get("subcategory") ?? "").trim();
   const amount = Number(formData.get("amount"));
   const dateStr = String(formData.get("date") ?? "");
+  const vendor = String(formData.get("vendor") ?? "").trim();
+  const referenceNumber = String(formData.get("referenceNumber") ?? "").trim();
+  const paymentInput = String(formData.get("payment") ?? "Cash").trim();
+  const creditCardIdInput = String(formData.get("creditCardId") ?? "").trim();
 
   if (!description || !Number.isFinite(amount) || amount <= 0) {
     redirect("/employee/expenses/new?error=1");
+  }
+
+  const payment = EXPENSE_PAYMENT_METHODS.includes(paymentInput as (typeof EXPENSE_PAYMENT_METHODS)[number])
+    ? paymentInput
+    : "Cash";
+
+  let creditCardId: string | null = null;
+  if (canonicalExpensePayment(payment) === "Credit Card") {
+    if (!creditCardIdInput) redirect("/employee/expenses/new?error=1");
+    const card = await prisma.creditCard.findUnique({ where: { id: creditCardIdInput } });
+    if (!card || card.status !== "Active") redirect("/employee/expenses/new?error=1");
+    creditCardId = creditCardIdInput;
   }
 
   const vehicle =
@@ -42,26 +65,47 @@ export async function createExpense(formData: FormData) {
     category: category || null,
     vehicle,
     subcategory,
-    payment: "Cash",
+    payment,
     amount,
     createdById: employee.id,
+    creditCardId,
   });
   if (duplicate) {
     redirect("/employee/expenses/new?error=duplicate");
   }
 
-  await prisma.expense.create({
-    data: {
-      date,
-      description,
-      notes: notes || null,
-      category: category || null,
-      vehicle,
-      subcategory,
-      amount,
-      teamId: employee.teamId,
-      createdById: employee.id,
-    },
+  const number = await generateExpenseNumber();
+
+  await prisma.$transaction(async (tx) => {
+    const expense = await tx.expense.create({
+      data: {
+        number,
+        date,
+        description,
+        notes: notes || null,
+        category: category || null,
+        vehicle,
+        subcategory,
+        payment,
+        amount,
+        vendor: vendor || null,
+        referenceNumber: referenceNumber || null,
+        creditCardId,
+        teamId: employee.teamId,
+        createdById: employee.id,
+      },
+    });
+    if (creditCardId) {
+      await tx.creditCardAuditLog.create({
+        data: {
+          creditCardId,
+          action: "Expense Added",
+          description: `Expense ${expense.number ?? expense.id} "${expense.description}" added — AED ${expense.amount.toFixed(2)}`,
+          newValue: expense.amount.toFixed(2),
+          performedById: employee.id,
+        },
+      });
+    }
   });
 
   revalidatePath("/admin/expenses");
@@ -69,5 +113,6 @@ export async function createExpense(formData: FormData) {
   revalidatePath("/admin/marketing");
   revalidatePath("/admin");
   revalidatePath("/employee");
+  if (creditCardId) revalidatePath(`/admin/wallets/credit-cards/${creditCardId}`);
   redirect("/employee/expenses?toast=1");
 }

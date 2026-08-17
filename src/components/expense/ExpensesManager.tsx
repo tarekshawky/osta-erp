@@ -7,12 +7,14 @@ import { formatAed, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { CategoryBadge } from "./CategoryBadge";
-import { ExpenseForm, type ExpenseFormValue } from "./ExpenseForm";
+import { ExpenseForm, type ExpenseFormValue, type ActiveCreditCardOption } from "./ExpenseForm";
 import { ExpenseRefundModal } from "./ExpenseRefundModal";
 import { DeleteExpenseButton } from "./DeleteExpenseButton";
 import { ExpensePdfButton } from "./ExpensePdfButton";
 import { Pagination } from "@/components/admin/Pagination";
 import { ImportModal } from "@/components/admin/ImportModal";
+import { canonicalExpensePayment } from "@/lib/expenseData";
+import { maskCardNumber } from "@/lib/creditCardData";
 import { createExpense, updateExpense, importExpensesFromExcel } from "@/app/admin/expenses/actions";
 
 export type ExpenseRow = {
@@ -30,6 +32,10 @@ export type ExpenseRow = {
   attachmentUrl: string | null;
   createdByName: string;
   teamName: string | null;
+  vendor: string | null;
+  referenceNumber: string | null;
+  creditCardId: string | null;
+  creditCardLastFour: string | null;
 };
 
 function toFormValue(expense: ExpenseRow): ExpenseFormValue {
@@ -43,6 +49,9 @@ function toFormValue(expense: ExpenseRow): ExpenseFormValue {
     description: expense.description,
     notes: expense.notes ?? "",
     attachmentUrl: expense.attachmentUrl,
+    vendor: expense.vendor ?? "",
+    referenceNumber: expense.referenceNumber ?? "",
+    creditCardId: expense.creditCardId,
   };
 }
 
@@ -56,6 +65,9 @@ const emptyFormValue: ExpenseFormValue = {
   description: "",
   notes: "",
   attachmentUrl: null,
+  vendor: "",
+  referenceNumber: "",
+  creditCardId: null,
 };
 
 export function ExpensesManager({
@@ -67,6 +79,7 @@ export function ExpensesManager({
   month,
   teams,
   selectedTeam,
+  activeCards,
 }: {
   expenses: ExpenseRow[];
   totalCount: number;
@@ -76,6 +89,7 @@ export function ExpensesManager({
   month?: string;
   teams: string[];
   selectedTeam: string;
+  activeCards: ActiveCreditCardOption[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -174,6 +188,7 @@ export function ExpensesManager({
       {mode === "add" && (
         <ExpenseForm
           initial={emptyFormValue}
+          activeCards={activeCards}
           onSave={async (value) => {
             const res = await createExpense(value);
             if (res.ok) {
@@ -189,6 +204,7 @@ export function ExpensesManager({
       {mode === "edit" && editingExpense && (
         <ExpenseForm
           initial={toFormValue(editingExpense)}
+          activeCards={activeCards}
           onSave={async (value) => {
             const res = await updateExpense(editingExpense.id, value);
             if (res.ok) {
@@ -236,7 +252,12 @@ export function ExpensesManager({
                   <TeamBadge name={exp.teamName} />
                 </td>
                 <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{exp.createdByName}</td>
-                <td className="px-4 py-3 text-slate-600">{exp.payment}</td>
+                <td className="px-4 py-3 text-slate-600">
+                  {canonicalExpensePayment(exp.payment)}
+                  {exp.creditCardLastFour && (
+                    <div className="text-xs text-slate-400 font-mono mt-0.5">{maskCardNumber(exp.creditCardLastFour)}</div>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-right font-semibold text-red-500 whitespace-nowrap">
                   -{formatAed(exp.amount)}
                 </td>

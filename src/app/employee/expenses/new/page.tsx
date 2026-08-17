@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { TopBar } from "@/components/TopBar";
 import { NewExpenseForm } from "./NewExpenseForm";
 
@@ -7,6 +8,11 @@ export default async function NewExpensePage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
+  const activeCards = await prisma.creditCard.findMany({
+    where: { status: "Active" },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, cardHolder: true, lastFour: true },
+  });
 
   return (
     <div className="pb-8">
@@ -18,7 +24,7 @@ export default async function NewExpensePage({
             : "Please fill in all fields with a valid amount."}
         </p>
       )}
-      <NewExpenseForm />
+      <NewExpenseForm activeCards={activeCards} />
     </div>
   );
 }

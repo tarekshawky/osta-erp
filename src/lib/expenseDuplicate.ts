@@ -9,11 +9,14 @@ type ExpenseDuplicateInput = {
   payment: string;
   amount: number;
   createdById: string;
+  creditCardId?: string | null;
 };
 
 // An exact expense submitted by the same employee for the same day is almost
 // certainly an accidental second submission. Keeping the check employee-scoped
 // still allows different employees to record legitimate matching expenses.
+// creditCardId is part of the match so identical expenses on two different cards
+// (or one card vs. cash) aren't falsely flagged.
 export async function findDuplicateExpense(input: ExpenseDuplicateInput) {
   const startOfDay = new Date(
     Date.UTC(input.date.getUTCFullYear(), input.date.getUTCMonth(), input.date.getUTCDate())
@@ -31,6 +34,7 @@ export async function findDuplicateExpense(input: ExpenseDuplicateInput) {
       subcategory: input.subcategory,
       payment: input.payment,
       amount: input.amount,
+      creditCardId: input.creditCardId ?? null,
     },
     select: { id: true },
   });

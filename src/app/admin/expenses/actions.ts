@@ -11,6 +11,8 @@ import {
   VEHICLES,
   VEHICLE_EXPENSE_TYPES,
   ADVERTISING_PLATFORMS,
+  canonicalExpensePayment,
+  generateExpenseNumber,
 } from "@/lib/expenseData";
 
 export type ExpenseFormInput = {
@@ -23,7 +25,24 @@ export type ExpenseFormInput = {
   description: string;
   notes?: string | null;
   attachmentUrl?: string | null;
+  vendor?: string | null;
+  referenceNumber?: string | null;
+  creditCardId?: string | null;
 };
+
+// Returns the card id to persist (or an error) for a payment method that resolves
+// to "Credit Card" -- a card must be selected and Active, otherwise wallet totals
+// would drift from what the admin sees on screen.
+async function resolveCreditCard(
+  payment: string,
+  creditCardId: string | null | undefined
+): Promise<{ ok: true; creditCardId: string | null } | { ok: false; error: string }> {
+  if (canonicalExpensePayment(payment) !== "Credit Card") return { ok: true, creditCardId: null };
+  if (!creditCardId) return { ok: false, error: "Select a credit card." };
+  const card = await prisma.creditCard.findUnique({ where: { id: creditCardId } });
+  if (!card || card.status !== "Active") return { ok: false, error: "Select an active credit card." };
+  return { ok: true, creditCardId: card.id };
+}
 
 function resolveVehicleAndSubcategory(input: Pick<ExpenseFormInput, "category" | "vehicle" | "subcategory">) {
   if (input.category === "Vehicle") {
@@ -42,6 +61,10 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
     return { ok: false, error: "Please fill in a shop name and a valid amount." };
   }
 
+  const cardResult = await resolveCreditCard(input.payment, input.creditCardId);
+  if (!cardResult.ok) return { ok: false, error: cardResult.error };
+  const { creditCardId } = cardResult;
+
   const date = new Date(input.date);
   const details = resolveVehicleAndSubcategory(input);
   const duplicate = await findDuplicateExpense({
@@ -52,29 +75,50 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
     payment: input.payment,
     amount: input.amount,
     createdById: employee.id,
+    creditCardId,
   });
   if (duplicate) {
     return { ok: false, error: "This identical expense has already been recorded for this date." };
   }
 
-  await prisma.expense.create({
-    data: {
-      date,
-      description: input.description.trim(),
-      notes: input.notes?.trim() || null,
-      category: input.category,
-      ...details,
-      payment: input.payment,
-      amount: input.amount,
-      attachmentUrl: input.attachmentUrl || null,
-      teamId: employee.teamId,
-      createdById: employee.id,
-    },
+  const number = await generateExpenseNumber();
+
+  await prisma.$transaction(async (tx) => {
+    const expense = await tx.expense.create({
+      data: {
+        number,
+        date,
+        description: input.description.trim(),
+        notes: input.notes?.trim() || null,
+        category: input.category,
+        ...details,
+        payment: input.payment,
+        amount: input.amount,
+        attachmentUrl: input.attachmentUrl || null,
+        vendor: input.vendor?.trim() || null,
+        referenceNumber: input.referenceNumber?.trim() || null,
+        creditCardId,
+        teamId: employee.teamId,
+        createdById: employee.id,
+      },
+    });
+    if (creditCardId) {
+      await tx.creditCardAuditLog.create({
+        data: {
+          creditCardId,
+          action: "Expense Added",
+          description: `Expense ${expense.number ?? expense.id} "${expense.description}" added — AED ${expense.amount.toFixed(2)}`,
+          newValue: expense.amount.toFixed(2),
+          performedById: employee.id,
+        },
+      });
+    }
   });
 
   revalidatePath("/admin/expenses");
   revalidatePath("/admin/wallets");
   revalidatePath("/admin/marketing");
+  if (creditCardId) revalidatePath(`/admin/wallets/credit-cards/${creditCardId}`);
   return { ok: true };
 }
 
@@ -82,38 +126,65 @@ export async function updateExpense(
   id: string,
   input: ExpenseFormInput
 ): Promise<{ ok: boolean; error?: string }> {
-  await requireEmployee("ADMIN");
+  const employee = await requireEmployee("ADMIN");
 
   if (!input.description.trim() || !Number.isFinite(input.amount) || input.amount <= 0) {
     return { ok: false, error: "Please fill in a shop name and a valid amount." };
   }
 
-  await prisma.expense.update({
-    where: { id },
-    data: {
-      date: new Date(input.date),
-      description: input.description.trim(),
-      notes: input.notes?.trim() || null,
-      category: input.category,
-      ...resolveVehicleAndSubcategory(input),
-      payment: input.payment,
-      amount: input.amount,
-      attachmentUrl: input.attachmentUrl || null,
-    },
+  const cardResult = await resolveCreditCard(input.payment, input.creditCardId);
+  if (!cardResult.ok) return { ok: false, error: cardResult.error };
+  const { creditCardId } = cardResult;
+
+  const existing = await prisma.expense.findUnique({ where: { id } });
+  if (!existing) return { ok: false, error: "Expense not found." };
+
+  await prisma.$transaction(async (tx) => {
+    const expense = await tx.expense.update({
+      where: { id },
+      data: {
+        date: new Date(input.date),
+        description: input.description.trim(),
+        notes: input.notes?.trim() || null,
+        category: input.category,
+        ...resolveVehicleAndSubcategory(input),
+        payment: input.payment,
+        amount: input.amount,
+        attachmentUrl: input.attachmentUrl || null,
+        vendor: input.vendor?.trim() || null,
+        referenceNumber: input.referenceNumber?.trim() || null,
+        creditCardId,
+      },
+    });
+    if (creditCardId) {
+      await tx.creditCardAuditLog.create({
+        data: {
+          creditCardId,
+          action: "Expense Updated",
+          description: `Expense ${expense.number ?? expense.id} "${expense.description}" updated — AED ${expense.amount.toFixed(2)}`,
+          oldValue: existing.amount.toFixed(2),
+          newValue: expense.amount.toFixed(2),
+          performedById: employee.id,
+        },
+      });
+    }
   });
 
   revalidatePath("/admin/expenses");
   revalidatePath("/admin/wallets");
   revalidatePath("/admin/marketing");
+  if (existing.creditCardId) revalidatePath(`/admin/wallets/credit-cards/${existing.creditCardId}`);
+  if (creditCardId && creditCardId !== existing.creditCardId) revalidatePath(`/admin/wallets/credit-cards/${creditCardId}`);
   return { ok: true };
 }
 
 export async function deleteExpense(id: string) {
   await requireEmployee("ADMIN");
-  await prisma.expense.delete({ where: { id } });
+  const expense = await prisma.expense.delete({ where: { id } });
   revalidatePath("/admin/expenses");
   revalidatePath("/admin/wallets");
   revalidatePath("/admin/marketing");
+  if (expense.creditCardId) revalidatePath(`/admin/wallets/credit-cards/${expense.creditCardId}`);
 }
 
 export async function refundExpense(
@@ -140,6 +211,7 @@ export async function refundExpense(
 
   revalidatePath("/admin/expenses");
   revalidatePath("/admin/marketing");
+  if (expense.creditCardId) revalidatePath(`/admin/wallets/credit-cards/${expense.creditCardId}`);
   return { ok: true };
 }
 
@@ -181,9 +253,13 @@ export async function importExpensesFromExcel(formData: FormData): Promise<Impor
     const category = EXPENSE_CATEGORIES.includes(row["Category"] as (typeof EXPENSE_CATEGORIES)[number])
       ? row["Category"]
       : "Other";
-    const payment = EXPENSE_PAYMENT_METHODS.includes(row["Payment"] as (typeof EXPENSE_PAYMENT_METHODS)[number])
-      ? row["Payment"]
-      : "Cash";
+    // Bulk import has no way to pick a specific card, so "Credit Card" (which
+    // requires a linked CreditCard) is never accepted here -- falls back to Cash.
+    const payment =
+      EXPENSE_PAYMENT_METHODS.includes(row["Payment"] as (typeof EXPENSE_PAYMENT_METHODS)[number]) &&
+      row["Payment"] !== "Credit Card"
+        ? row["Payment"]
+        : "Cash";
     const date = row["Date"] && !Number.isNaN(Date.parse(row["Date"])) ? new Date(row["Date"]) : new Date();
 
     const vehicle =

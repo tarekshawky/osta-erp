@@ -5,7 +5,7 @@ import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { ExpensesManager } from "@/components/expense/ExpensesManager";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { buildDateRange } from "@/lib/dateRangeFilter";
-import { EXPENSE_PAYMENT_METHODS } from "@/lib/expenseData";
+import { EXPENSE_PAYMENT_METHODS, canonicalExpensePayment } from "@/lib/expenseData";
 import type { Prisma } from "@/generated/prisma";
 
 export default async function AdminExpensesPage({
@@ -18,9 +18,14 @@ export default async function AdminExpensesPage({
   const year = yearParam ? Number(yearParam) : null;
   const month = monthParam ? Number(monthParam) : null;
 
-  const [expenseDates, teams] = await Promise.all([
+  const [expenseDates, teams, activeCards] = await Promise.all([
     prisma.expense.findMany({ select: { date: true } }),
     prisma.team.findMany({ orderBy: { name: "asc" } }),
+    prisma.creditCard.findMany({
+      where: { status: "Active" },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, cardHolder: true, lastFour: true },
+    }),
   ]);
   const years = Array.from(new Set(expenseDates.map((e) => e.date.getFullYear()))).sort((a, b) => b - a);
 
@@ -45,19 +50,19 @@ export default async function AdminExpensesPage({
     }),
   ]);
   const totalExpenses = (totalAgg._sum.amount ?? 0) - (totalAgg._sum.refundedAmount ?? 0);
-  const paymentTotals = Object.fromEntries(
-    EXPENSE_PAYMENT_METHODS.map((method) => {
-      const row = byPayment.find((p) => p.payment === method);
-      return [method, (row?._sum.amount ?? 0) - (row?._sum.refundedAmount ?? 0)];
-    })
-  );
+  const paymentTotals: Record<string, number> = Object.fromEntries(EXPENSE_PAYMENT_METHODS.map((m) => [m, 0]));
+  for (const row of byPayment) {
+    const canonical = canonicalExpensePayment(row.payment);
+    const net = (row._sum.amount ?? 0) - (row._sum.refundedAmount ?? 0);
+    paymentTotals[canonical] = (paymentTotals[canonical] ?? 0) + net;
+  }
   const totalPages = Math.max(1, Math.ceil(totalAgg._count / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
 
   const expenses = await prisma.expense.findMany({
     where,
     orderBy: { date: "desc" },
-    include: { createdBy: true, team: true },
+    include: { createdBy: true, team: true, creditCard: { select: { lastFour: true } } },
     skip: (safePage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
   });
@@ -77,6 +82,10 @@ export default async function AdminExpensesPage({
     attachmentUrl: exp.attachmentUrl,
     createdByName: exp.createdBy.name,
     teamName: exp.team?.name ?? null,
+    vendor: exp.vendor,
+    referenceNumber: exp.referenceNumber,
+    creditCardId: exp.creditCardId,
+    creditCardLastFour: exp.creditCard?.lastFour ?? null,
   }));
 
   return (
@@ -89,8 +98,8 @@ export default async function AdminExpensesPage({
       <div className="px-6 py-6">
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
           <AdminStatCard label="Cash" value={formatAed(paymentTotals.Cash)} valueClassName="text-slate-900" />
-          <AdminStatCard label="Bank Transfer" value={formatAed(paymentTotals.Bank)} valueClassName="text-slate-900" />
-          <AdminStatCard label="Credit" value={formatAed(paymentTotals.Credit)} valueClassName="text-slate-900" />
+          <AdminStatCard label="Bank Transfer" value={formatAed(paymentTotals["Bank Transfer"])} valueClassName="text-slate-900" />
+          <AdminStatCard label="Credit Card" value={formatAed(paymentTotals["Credit Card"])} valueClassName="text-slate-900" />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
@@ -113,6 +122,7 @@ export default async function AdminExpensesPage({
           month={month ? String(month) : undefined}
           teams={teams.map((t) => t.name)}
           selectedTeam={team}
+          activeCards={activeCards}
         />
       </div>
     </div>
