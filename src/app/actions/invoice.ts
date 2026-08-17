@@ -38,7 +38,8 @@ export async function createInvoiceFromWizard(
   customer: CustomerFormData,
   service: ServiceFormData,
   payment: PaymentFormData,
-  orderId?: string
+  orderId?: string,
+  quotationId?: string
 ): Promise<CreateInvoiceResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "Not signed in." };
@@ -102,6 +103,15 @@ export async function createInvoiceFromWizard(
     revalidatePath(`/admin/orders/${orderId}`);
     revalidatePath("/employee/orders");
     revalidatePath(`/employee/orders/${orderId}`);
+  }
+
+  if (quotationId) {
+    await prisma.quotation.update({
+      where: { id: quotationId },
+      data: { invoiceId: invoice.id },
+    });
+    revalidatePath("/admin/quotations");
+    revalidatePath(`/admin/quotations/${quotationId}`);
   }
 
   revalidatePath("/admin/wallets");

@@ -31,6 +31,7 @@ export function InvoiceWizard({
   initialPayment,
   initialStep = 0,
   orderId,
+  quotationId,
   teamOptions = [],
 }: {
   basePath: "/admin" | "/employee";
@@ -43,6 +44,7 @@ export function InvoiceWizard({
   initialPayment?: PaymentFormData;
   initialStep?: number;
   orderId?: string;
+  quotationId?: string;
   teamOptions?: { id: string; name: string }[];
 }) {
   const router = useRouter();
@@ -80,7 +82,7 @@ export function InvoiceWizard({
       const res =
         mode === "edit" && editInvoiceId
           ? await updateInvoiceFromWizard(editInvoiceId, customer, service, payment)
-          : await createInvoiceFromWizard(customer, service, payment, orderId);
+          : await createInvoiceFromWizard(customer, service, payment, orderId, quotationId);
       if (res.ok && res.number) {
         setResult({ number: res.number, amount: res.amount ?? 0 });
         showToast(mode === "edit" ? "Invoice updated." : "Invoice created.");

@@ -160,6 +160,7 @@ model Invoice {
   items         InvoiceItem[]
   statusChanges InvoiceStatusChange[]
   order         Order?
+  quotation     Quotation?
   createdAt     DateTime      @default(now())
 }
 
@@ -339,6 +340,8 @@ model Quotation {
   createdById  String
   createdBy    Employee        @relation(fields: [createdById], references: [id])
   items        QuotationItem[]
+  invoiceId    String?         @unique
+  invoice      Invoice?        @relation(fields: [invoiceId], references: [id])
   createdAt    DateTime        @default(now())
 }
 

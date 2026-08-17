@@ -53,6 +53,13 @@ export default async function AdminQuotationDetailPage({
             className="w-full rounded-xl border border-red-200 bg-red-50 text-red-600 text-xs font-medium py-2.5 flex flex-col items-center gap-1"
           />
         </div>
+
+        <a
+          href={quotation.invoiceId ? `/admin/invoices/${quotation.invoiceId}` : `/admin/invoices/new?quotationId=${quotation.id}`}
+          className="mt-3 block w-full rounded-xl bg-green-600 text-white font-medium text-sm py-3.5 text-center"
+        >
+          {quotation.invoiceId ? "View Invoice" : "Convert to Invoice"}
+        </a>
       </div>
 
       <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-2 sm:px-4 lg:px-10">
