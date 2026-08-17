@@ -6,9 +6,9 @@ import {
   EXPENSE_CATEGORIES,
   EXPENSE_PAYMENT_METHODS,
   VEHICLES,
-  VEHICLE_EXPENSE_TYPES,
   ADVERTISING_PLATFORMS,
 } from "@/lib/expenseData";
+import { VEHICLE_EXPENSE_TYPES } from "@/lib/vehicleData";
 import { maskCardNumber } from "@/lib/creditCardData";
 import { createExpense } from "./actions";
 

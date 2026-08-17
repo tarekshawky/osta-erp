@@ -7,12 +7,12 @@ import { requireEmployee } from "@/lib/auth";
 import { findDuplicateExpense } from "@/lib/expenseDuplicate";
 import {
   VEHICLES,
-  VEHICLE_EXPENSE_TYPES,
   ADVERTISING_PLATFORMS,
   EXPENSE_PAYMENT_METHODS,
   canonicalExpensePayment,
   generateExpenseNumber,
 } from "@/lib/expenseData";
+import { VEHICLE_EXPENSE_TYPES } from "@/lib/vehicleData";
 
 export async function createExpense(formData: FormData) {
   const employee = await requireEmployee("EMPLOYEE");

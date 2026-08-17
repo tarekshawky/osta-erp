@@ -9,11 +9,11 @@ import {
   EXPENSE_CATEGORIES,
   EXPENSE_PAYMENT_METHODS,
   VEHICLES,
-  VEHICLE_EXPENSE_TYPES,
   ADVERTISING_PLATFORMS,
   canonicalExpensePayment,
   generateExpenseNumber,
 } from "@/lib/expenseData";
+import { VEHICLE_EXPENSE_TYPES } from "@/lib/vehicleData";
 
 export type ExpenseFormInput = {
   category: string;

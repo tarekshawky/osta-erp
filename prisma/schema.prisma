@@ -76,6 +76,8 @@ model Employee {
   creditCardsCreated         CreditCard[]         @relation("CreditCardCreatedBy")
   creditCardPaymentsRecorded CreditCardPayment[]  @relation("CreditCardPaymentRecordedBy")
   creditCardAuditLogs        CreditCardAuditLog[] @relation("CreditCardAuditLogPerformedBy")
+  vehiclesCreated            Vehicle[]            @relation("VehicleCreatedBy")
+  vehicleExpensesResponsible Expense[]            @relation("ExpenseResponsibleEmployee")
   createdAt DateTime   @default(now())
 }
 
@@ -289,6 +291,24 @@ model Expense {
   team           Team?    @relation(fields: [teamId], references: [id])
   creditCardId   String?
   creditCard     CreditCard? @relation(fields: [creditCardId], references: [id])
+  // Vehicle Management System fields -- vehicle is left as the legacy free-text
+  // label (only ever read for the one-time historical backfill / display fallback);
+  // new Vehicle-category expenses only ever set vehicleId going forward.
+  vehicleId              String?
+  vehicleRef             Vehicle?  @relation("ExpenseVehicle", fields: [vehicleId], references: [id])
+  odometer               Int?
+  // Second-level type within a Vehicle expense's subcategory: Service Type when
+  // subcategory=Service, Fuel Type when subcategory="Petrol / Fuel", Fine Type
+  // when subcategory=Fine -- reuses one column the same way `subcategory` already
+  // serves both Vehicle and Advertising categories.
+  detailType             String?
+  liters                 Float?
+  responsibleEmployeeId  String?
+  responsibleEmployee    Employee? @relation("ExpenseResponsibleEmployee", fields: [responsibleEmployeeId], references: [id])
+  companyAmount          Float?    // Fine only
+  employeeAmount         Float?    // Fine only
+  nextServiceInterval    Int?      // Service only, in KM
+  fineInstallments       VehicleFineInstallment[]
   createdById    String
   createdBy      Employee @relation(fields: [createdById], references: [id])
   createdAt      DateTime @default(now())
@@ -352,6 +372,57 @@ model ExpenseCategory {
   id        String   @id @default(cuid())
   name      String   @unique
   createdAt DateTime @default(now())
+}
+
+// Current odometer and next-service-due are deliberately NOT stored here -- both
+// are computed on the fly from Expense rows (src/lib/vehicleData.ts), mirroring
+// how getCreditCardWalletSummary never denormalizes a running balance onto
+// CreditCard. initialOdometer is the one stored baseline, used only when a
+// vehicle has zero odometer-bearing Expense rows yet.
+model Vehicle {
+  id                 String    @id @default(cuid())
+  name               String    @unique // must match historical Expense.vehicle strings for backfill
+  owner              String?
+  plateType          String?
+  plateNumber        String?
+  licensingAuthority String?
+  trafficCode        String?
+  licenseExpiry      DateTime?
+  insuranceExpiry    DateTime?
+  policyNumber       String?
+  insuranceCompany   String?
+  insuranceType      String?
+  year               Int?
+  chassisNumber      String?
+  initialOdometer    Int       @default(0)
+  registrationDocUrl String?
+  insuranceDocUrl    String?
+  status             String    @default("Active") // "Active" | "Inactive"
+  notes              String?
+  expenses           Expense[] @relation("ExpenseVehicle")
+  createdById        String
+  createdBy          Employee  @relation("VehicleCreatedBy", fields: [createdById], references: [id])
+  createdAt          DateTime  @default(now())
+}
+
+// One row per fine-deduction installment, created upfront (all N at once,
+// atomically with Expense.create) at fine-save time -- never lazily
+// materialized. Remembers which PayrollEntry belongs to which fine / which
+// installment-of-N so the Fines tab can render "2 of 3 deducted" without
+// string-matching PayrollEntry.note. onDelete: Cascade on payrollEntry means
+// deleting a Deduction row from the existing Payroll page automatically keeps
+// this table's counts (and therefore the derived fine status) accurate.
+model VehicleFineInstallment {
+  id             String       @id @default(cuid())
+  expenseId      String
+  expense        Expense      @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  installmentNo  Int          // 1-based, 1..totalCount
+  totalCount     Int          // N -- 1 for "One Time"
+  amount         Float
+  month          DateTime     // first-of-month marker, mirrors the linked PayrollEntry's date
+  payrollEntryId String       @unique
+  payrollEntry   PayrollEntry @relation(fields: [payrollEntryId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
 }
 
 model WorkReport {
@@ -454,4 +525,5 @@ model PayrollEntry {
   createdById String
   createdBy   Employee @relation("PayrollCreatedBy", fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
+  vehicleFineInstallment VehicleFineInstallment?
 }

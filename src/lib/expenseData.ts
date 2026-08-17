@@ -27,21 +27,11 @@ export const MARKETING_EXPENSE_CATEGORY = "Marketing Advertising";
 // Cost of Services item, so recorded expense categories are not split in the P&L.
 export const COST_OF_SERVICES_CATEGORIES: readonly (typeof EXPENSE_CATEGORIES)[number][] = [];
 
+// Legacy free-text vehicle names, matched exactly against historical Expense.vehicle
+// values by the one-off scripts/seedVehiclesAndBackfill.ts script. Dead for new
+// entries -- the Vehicle model + Expense.vehicleId (see src/lib/vehicleData.ts) is
+// the real, FK-based replacement.
 export const VEHICLES = ["Dodge Journey", "Toyota Yaris", "Toyota Camry", "MG ZST"] as const;
-
-export const VEHICLE_EXPENSE_TYPES = [
-  "Fuel",
-  "Repair",
-  "Service",
-  "Registration",
-  "Insurance",
-  "Car Wash",
-  "Tires",
-  "Battery",
-  "Parking",
-  "Salik",
-  "DARB",
-] as const;
 
 export const ADVERTISING_PLATFORMS = ["Meta Ads", "Google Ads", "Meta Verified", "Others"] as const;
 

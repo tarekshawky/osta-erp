@@ -4,9 +4,9 @@ import { EMIRATES, SERVICE_CATALOG, CATEGORIES, WARRANTY_DAYS, type Category } f
 import {
   EXPENSE_CATEGORIES,
   VEHICLES,
-  VEHICLE_EXPENSE_TYPES,
   ADVERTISING_PLATFORMS,
 } from "../src/lib/expenseData";
+import { VEHICLE_EXPENSE_TYPES } from "../src/lib/vehicleData";
 
 const prisma = new PrismaClient();
 
