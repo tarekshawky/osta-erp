@@ -109,6 +109,7 @@ model Employee {
   liabilitiesCreated         Liability[]          @relation("LiabilityCreatedBy")
   cashPositionUpdates        CashPosition[]       @relation("CashPositionUpdatedBy")
   settingsAsShareholder      Setting[]            @relation("SettingShareholder")
+  rentalAgreementsCreated    RentalAgreement[]    @relation("RentalAgreementCreatedBy")
   createdAt DateTime   @default(now())
 }
 
@@ -148,6 +149,7 @@ model Customer {
   quotations   Quotation[]
   customerNotes CustomerNote[]
   otps         CustomerOtp[]
+  rentalAgreements RentalAgreement[]
   createdAt    DateTime     @default(now())
 }
 
@@ -174,6 +176,54 @@ model CustomerNote {
   createdById String
   createdBy   Employee @relation(fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
+}
+
+// A second, independent financial relationship a Customer can have with OSTA --
+// OSTA renting accommodation/office/etc. FROM that customer. Deliberately kept
+// entirely separate from Invoice/Order revenue and Accounts Receivable (see
+// RentalTransaction below) so the two flows -- Customer -> OSTA revenue, and
+// OSTA -> Customer rent expense -- never net against each other.
+model RentalAgreement {
+  id               String    @id @default(cuid())
+  customerId       String
+  customer         Customer  @relation(fields: [customerId], references: [id])
+  agreementName    String
+  rentalType       String    // Accommodation | Office | Warehouse | Shop | Staff Accommodation | Other
+  monthlyRent      Float
+  paymentFrequency String    @default("Monthly") // Monthly | Quarterly | Semi-Annual | Annual | Custom
+  startDate        DateTime
+  endDate          DateTime?
+  paymentDueDay    Int       @default(1) // 1-31
+  paymentMethod    String    @default("Bank Transfer")
+  notes            String?
+  status           String    @default("Active") // Active | Suspended | Expired | Cancelled
+  createdById      String
+  createdBy        Employee  @relation("RentalAgreementCreatedBy", fields: [createdById], references: [id])
+  createdAt        DateTime  @default(now())
+  transactions     RentalTransaction[]
+}
+
+// One row per billing period, mirroring VehicleFineInstallment's expenseId-pairing
+// pattern. The @@unique constraint is what structurally guarantees "do not create
+// duplicate transactions if the monthly transaction already exists" -- generation
+// pre-queries existing periods, and this is the hard backstop against races.
+model RentalTransaction {
+  id                String          @id @default(cuid())
+  rentalAgreementId String
+  rentalAgreement   RentalAgreement @relation(fields: [rentalAgreementId], references: [id], onDelete: Cascade)
+  billingPeriod     DateTime        // first-of-month marker for the period this covers
+  dueDate           DateTime
+  amount            Float
+  paymentStatus     String          @default("Pending") // Pending | Due | Overdue | Paid | Cancelled
+  paymentDate       DateTime?
+  paymentMethod     String?
+  referenceNumber   String?
+  notes             String?
+  expenseId         String?         @unique
+  expense           Expense?        @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+  createdAt         DateTime        @default(now())
+
+  @@unique([rentalAgreementId, billingPeriod])
 }
 
 model Invoice {
@@ -340,6 +390,7 @@ model Expense {
   employeeAmount         Float?    // Fine only
   nextServiceInterval    Int?      // Service only, in KM
   fineInstallments       VehicleFineInstallment[]
+  rentalTransaction      RentalTransaction?
   createdById    String
   createdBy      Employee @relation(fields: [createdById], references: [id])
   createdAt      DateTime @default(now())

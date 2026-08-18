@@ -114,6 +114,7 @@ const EXPLICITLY_MAPPED_CATEGORIES = new Set([
   "Trade License Renewal Fee",
   "Insurance",
   "Visa Expenses",
+  "Rent / Accommodation",
 ]);
 
 async function sumExpensesByCategory(category: string, range: DateRange): Promise<number> {
@@ -168,6 +169,7 @@ export const ADMIN_EXPENSE_LINES: AdminExpenseLine[] = [
   { label: "Office Expenses", compute: (r) => sumExpensesByCategory("Office Supplies", r) },
   { label: "Other Expenses", compute: (r) => sumOtherExpenses(r) },
   { label: "Rent", compute: (r) => sumExpensesByCategory("Rent", r) },
+  { label: "Rent / Accommodation", compute: (r) => sumExpensesByCategory("Rent / Accommodation", r) },
   { label: "Salary", compute: (r) => sumSalaryExpense(r) },
   { label: "Telephone Expenses", compute: (r) => sumExpensesByCategory("Telephone Expenses", r) },
   { label: "Trade License Renewal Fee", compute: (r) => sumExpensesByCategory("Trade License Renewal Fee", r) },

@@ -25,6 +25,7 @@ export const EXPENSE_CATEGORIES = [
   "Trade License Renewal Fee",
   "Insurance",
   "Visa Expenses",
+  "Rent / Accommodation",
 ] as const;
 
 // Expenses tagged with this category feed the Marketing dashboard's Total Marketing
@@ -84,6 +85,7 @@ export const EXPENSE_CATEGORY_STYLES: Record<string, string> = {
   "Trade License Renewal Fee": "bg-indigo-50 text-indigo-700",
   Insurance: "bg-purple-50 text-purple-700",
   "Visa Expenses": "bg-cyan-50 text-cyan-700",
+  "Rent / Accommodation": "bg-orange-50 text-orange-700",
 };
 
 // Shared by admin's createExpense action and the employee expense form so both
