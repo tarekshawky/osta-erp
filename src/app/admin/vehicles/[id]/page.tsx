@@ -107,6 +107,7 @@ export default async function VehicleProfilePage({ params }: { params: Promise<{
 
         <div className="mt-4">
           <VehicleProfileTabs
+            vehicleId={vehicle.id}
             currentOdometer={currentOdometer}
             lastServiceOdometer={nextService?.lastServiceOdometer ?? null}
             nextServiceOdometer={nextService?.nextServiceOdometer ?? null}

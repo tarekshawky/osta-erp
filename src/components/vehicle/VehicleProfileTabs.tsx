@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { VehicleOverviewPanel, type TimelineExpense } from "./VehicleOverviewPanel";
 import { VehicleExpensesTable, type VehicleExpenseRow } from "./VehicleExpensesTable";
 import { VehicleServiceTable } from "./VehicleServiceTable";
@@ -13,6 +14,7 @@ import type { ServiceRow, FuelRow, FuelSummary, OdometerLogRow, ServiceDueStatus
 type Tab = "overview" | "expenses" | "service" | "fuel" | "fines" | "mileage" | "documents";
 
 export function VehicleProfileTabs({
+  vehicleId,
   currentOdometer,
   lastServiceOdometer,
   nextServiceOdometer,
@@ -27,6 +29,7 @@ export function VehicleProfileTabs({
   mileageLog,
   documents,
 }: {
+  vehicleId: string;
   currentOdometer: number;
   lastServiceOdometer: number | null;
   nextServiceOdometer: number | null;
@@ -82,7 +85,19 @@ export function VehicleProfileTabs({
         {tab === "expenses" && <VehicleExpensesTable expenses={expenses} />}
         {tab === "service" && <VehicleServiceTable history={serviceHistory} />}
         {tab === "fuel" && <VehicleFuelTable history={fuelHistory} summary={fuelSummary} />}
-        {tab === "fines" && <VehicleFinesTable fines={fines} />}
+        {tab === "fines" && (
+          <div>
+            <div className="flex justify-end mb-3">
+              <Link
+                href={`/admin/vehicles/fines/new?vehicleId=${vehicleId}`}
+                className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2"
+              >
+                + Add Fine
+              </Link>
+            </div>
+            <VehicleFinesTable fines={fines} />
+          </div>
+        )}
         {tab === "mileage" && <VehicleMileageLog log={mileageLog} />}
         {tab === "documents" && (
           <VehicleDocumentsPanel
