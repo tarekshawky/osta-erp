@@ -3,6 +3,12 @@ import { requireEmployee } from "@/lib/auth";
 import { buildWorkbookBuffer } from "@/lib/excel";
 import { computeAnnualReport, summarize, MONTH_NAMES } from "@/lib/reportData";
 import { formatAed } from "@/lib/format";
+import {
+  computeVehicleExpenseReportSummary,
+  computeFineReportSummary,
+  computeMileageReportSummary,
+  computeFuelReportSummary,
+} from "@/lib/vehicleData";
 
 export async function GET(request: NextRequest) {
   await requireEmployee("ADMIN");
@@ -83,6 +89,56 @@ export async function GET(request: NextRequest) {
   rows.push(["Cash", formatAed(paymentTotals.cash), null, null, null, null, null]);
   rows.push(["Ziina", formatAed(paymentTotals.ziina), null, null, null, null, null]);
   rows.push(["Bank Transfer", formatAed(paymentTotals.bankTransfer), null, null, null, null, null]);
+
+  const [vehicleExpenseSummary, fineSummary, mileageSummary, fuelSummary] = await Promise.all([
+    computeVehicleExpenseReportSummary({ year, month }),
+    computeFineReportSummary({ year, month }),
+    computeMileageReportSummary(),
+    computeFuelReportSummary({ year, month }),
+  ]);
+
+  rows.push([null, null, null, null, null, null, null]);
+  rows.push([`Vehicle Expense Report — ${periodLabel}`, null, null, null, null, null, null]);
+  rows.push(["Total Vehicle Expenses", formatAed(vehicleExpenseSummary.total), null, null, null, null, null]);
+  for (const [type, amount] of Object.entries(vehicleExpenseSummary.bySubcategory)) {
+    rows.push([type, formatAed(amount), null, null, null, null, null]);
+  }
+
+  rows.push([null, null, null, null, null, null, null]);
+  rows.push([`Fine Report — ${periodLabel}`, null, null, null, null, null, null]);
+  rows.push(["Total Fines", formatAed(fineSummary.totalFines), null, null, null, null, null]);
+  rows.push(["Company Contribution", formatAed(fineSummary.totalCompany), null, null, null, null, null]);
+  rows.push(["Employee Responsibility", formatAed(fineSummary.totalEmployee), null, null, null, null, null]);
+  rows.push(["Amount Deducted", formatAed(fineSummary.deducted), null, null, null, null, null]);
+  rows.push(["Remaining", formatAed(fineSummary.remaining), null, null, null, null, null]);
+  for (const [name, amount] of Object.entries(fineSummary.byVehicle)) {
+    rows.push([`Fines by Vehicle — ${name}`, formatAed(amount), null, null, null, null, null]);
+  }
+  for (const [name, amount] of Object.entries(fineSummary.byEmployee)) {
+    rows.push([`Fines by Employee — ${name}`, formatAed(amount), null, null, null, null, null]);
+  }
+
+  rows.push([null, null, null, null, null, null, null]);
+  rows.push(["Mileage Report", null, null, null, null, null, null]);
+  rows.push(["Vehicle", "Current Odometer", "Last Service Odometer", "Next Service Odometer", null, null, null]);
+  for (const v of mileageSummary) {
+    rows.push([
+      v.vehicleName,
+      `${v.currentOdometer.toLocaleString()} KM`,
+      v.lastServiceOdometer != null ? `${v.lastServiceOdometer.toLocaleString()} KM` : "—",
+      v.nextServiceOdometer != null ? `${v.nextServiceOdometer.toLocaleString()} KM` : "—",
+      null,
+      null,
+      null,
+    ]);
+  }
+
+  rows.push([null, null, null, null, null, null, null]);
+  rows.push([`Fuel Report — ${periodLabel}`, null, null, null, null, null, null]);
+  rows.push(["Total Fuel Cost", formatAed(fuelSummary.totalCost), null, null, null, null, null]);
+  rows.push(["Total Liters", `${fuelSummary.totalLiters.toLocaleString()} L`, null, null, null, null, null]);
+  rows.push(["Avg KM/L", fuelSummary.avgKmPerLiter != null ? fuelSummary.avgKmPerLiter.toFixed(2) : "—", null, null, null, null, null]);
+  rows.push(["Avg Cost/KM", fuelSummary.avgCostPerKm != null ? formatAed(fuelSummary.avgCostPerKm) : "—", null, null, null, null, null]);
 
   const buffer = await buildWorkbookBuffer("Financial Report", headers, rows);
 
