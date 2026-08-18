@@ -9,6 +9,7 @@ import {
   computeMileageReportSummary,
   computeFuelReportSummary,
 } from "@/lib/vehicleData";
+import { OdometerCorrectionModal } from "@/components/vehicle/OdometerCorrectionModal";
 
 export default async function VehicleExpenseReportPage({
   searchParams,
@@ -113,6 +114,7 @@ export default async function VehicleExpenseReportPage({
                 <th className="px-4 py-3 font-medium text-right">Current Odometer</th>
                 <th className="px-4 py-3 font-medium text-right">Last Service Odometer</th>
                 <th className="px-4 py-3 font-medium text-right">Next Service Odometer</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -126,11 +128,14 @@ export default async function VehicleExpenseReportPage({
                   <td className="px-4 py-3 text-right text-slate-600">
                     {v.nextServiceOdometer != null ? `${v.nextServiceOdometer.toLocaleString()} KM` : "—"}
                   </td>
+                  <td className="px-4 py-3">
+                    <OdometerCorrectionModal vehicleId={v.vehicleId} vehicleName={v.vehicleName} currentOdometer={v.currentOdometer} />
+                  </td>
                 </tr>
               ))}
               {mileageSummary.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
+                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
                     No active vehicles.
                   </td>
                 </tr>

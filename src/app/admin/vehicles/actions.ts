@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
-import { VEHICLE_STATUSES } from "@/lib/vehicleData";
+import { VEHICLE_STATUSES, getVehicleCurrentOdometer } from "@/lib/vehicleData";
 
 export type VehicleFormInput = {
   name: string;
@@ -103,5 +103,36 @@ export async function updateVehicle(vehicleId: string, input: VehicleFormInput):
 
   revalidatePath("/admin/vehicles");
   revalidatePath(`/admin/vehicles/${vehicleId}`);
+  return { ok: true, id: vehicleId };
+}
+
+// Narrow, single-field correction for the Mileage Report's quick-edit action --
+// deliberately not routed through updateVehicle()/VehicleFormInput, which would
+// force carrying every other vehicle field just to change one number. Odometer
+// is never stored directly (see getVehicleCurrentOdometer): it's always
+// max(initialOdometer, MAX(Expense.odometer)), so this only ever raises the
+// floor. A value below what's already on record in an Expense row would be
+// silently ignored by that max(), so it's rejected here with a clear reason
+// instead of failing invisibly.
+export async function correctVehicleOdometer(vehicleId: string, odometer: number): Promise<VehicleActionResult> {
+  await requireEmployee("ADMIN");
+  if (!(odometer >= 0)) return { ok: false, error: "Enter a valid odometer reading." };
+
+  const vehicle = await prisma.vehicle.findUnique({ where: { id: vehicleId } });
+  if (!vehicle) return { ok: false, error: "Vehicle not found." };
+
+  const expenseMax = await getVehicleCurrentOdometer(vehicleId, 0);
+  if (odometer < expenseMax) {
+    return {
+      ok: false,
+      error: `A recorded expense already shows ${expenseMax.toLocaleString()} KM — the odometer can't be corrected below that.`,
+    };
+  }
+
+  await prisma.vehicle.update({ where: { id: vehicleId }, data: { initialOdometer: odometer } });
+
+  revalidatePath("/admin/vehicles");
+  revalidatePath(`/admin/vehicles/${vehicleId}`);
+  revalidatePath("/admin/vehicles/expense-report");
   return { ok: true, id: vehicleId };
 }
