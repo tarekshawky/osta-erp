@@ -75,7 +75,7 @@ export const CUSTOM_SERVICE_VALUE = "Custom / مخصص";
 export const WARRANTY_DAYS = 14;
 
 export const COMPANY_INFO = {
-  name: "OSTAA TECHNICAL SERVICES CO. L.L.C S.O.C",
+  name: "OSTA TECHNICAL SERVICES CO. L.L.C S.O.C",
   email: "Info@ostaservices.com",
   trn: "105442240300001",
   license: "1601375",
