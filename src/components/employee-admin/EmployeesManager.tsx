@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { formatAed, formatDate } from "@/lib/format";
@@ -213,6 +214,16 @@ export function EmployeesManager({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
+                    <Link
+                      href={`/admin/employees/${emp.id}`}
+                      title="View Profile"
+                      className="text-slate-400 hover:text-slate-600 p-1.5"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" strokeLinecap="round" />
+                      </svg>
+                    </Link>
                     <button
                       type="button"
                       onClick={() => openEdit(emp)}

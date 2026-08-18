@@ -7,6 +7,7 @@ import {
   INVENTORY_UNITS,
   INVENTORY_CATEGORIES,
   INVENTORY_ITEM_STATUSES,
+  MAIN_LOCATION,
   addStock as addStockLib,
   recordSupplierPurchase as recordSupplierPurchaseLib,
   distributeStock as distributeStockLib,
@@ -114,11 +115,13 @@ export async function recordSupplierPurchase(input: SupplierPurchaseFormInput): 
   return result;
 }
 
-function revalidateStockPaths() {
+function revalidateStockPaths(employeeId?: string) {
   revalidatePath("/admin/inventory");
   revalidatePath("/admin/inventory/warehouse");
   revalidatePath("/admin/inventory/employees");
   revalidatePath("/admin/inventory/transactions");
+  revalidatePath("/admin");
+  if (employeeId) revalidatePath(`/admin/employees/${employeeId}`);
 }
 
 export async function distributeStock(
@@ -127,7 +130,7 @@ export async function distributeStock(
 ): Promise<InventoryActionResult> {
   const admin = await requireEmployee("ADMIN");
   const result = await distributeStockLib(admin.id, employeeId, lines);
-  if (result.ok) revalidateStockPaths();
+  if (result.ok) revalidateStockPaths(employeeId);
   return result;
 }
 
@@ -138,7 +141,7 @@ export async function returnToWarehouse(
 ): Promise<InventoryActionResult> {
   const admin = await requireEmployee("ADMIN");
   const result = await returnToWarehouseLib(admin.id, employeeId, inventoryItemId, quantity);
-  if (result.ok) revalidateStockPaths();
+  if (result.ok) revalidateStockPaths(employeeId);
   return result;
 }
 
@@ -151,7 +154,7 @@ export async function recordDamaged(
 ): Promise<InventoryActionResult> {
   const admin = await requireEmployee("ADMIN");
   const result = await recordDamagedLib(admin.id, location, inventoryItemId, quantity, reason, notes);
-  if (result.ok) revalidateStockPaths();
+  if (result.ok) revalidateStockPaths(location !== MAIN_LOCATION ? location : undefined);
   return result;
 }
 
@@ -164,7 +167,7 @@ export async function recordLost(
 ): Promise<InventoryActionResult> {
   const admin = await requireEmployee("ADMIN");
   const result = await recordLostLib(admin.id, location, inventoryItemId, quantity, reason, notes);
-  if (result.ok) revalidateStockPaths();
+  if (result.ok) revalidateStockPaths(location !== MAIN_LOCATION ? location : undefined);
   return result;
 }
 
@@ -178,4 +181,25 @@ export async function adjustStock(
   const result = await adjustStockLib(admin.id, location, inventoryItemId, newPhysicalCount, reason);
   if (result.ok) revalidateStockPaths();
   return result;
+}
+
+export async function setEmployeeInventoryRequirement(
+  employeeId: string,
+  inventoryItemId: string,
+  requiredQuantity: number,
+  minimumQuantity: number
+): Promise<InventoryActionResult> {
+  const admin = await requireEmployee("ADMIN");
+  if (!(requiredQuantity >= 0)) return { ok: false, error: "Enter a valid required quantity." };
+  if (!(minimumQuantity >= 0)) return { ok: false, error: "Enter a valid minimum quantity." };
+
+  await prisma.employeeInventoryRequirement.upsert({
+    where: { employeeId_inventoryItemId: { employeeId, inventoryItemId } },
+    create: { employeeId, inventoryItemId, requiredQuantity, minimumQuantity, createdById: admin.id },
+    update: { requiredQuantity, minimumQuantity },
+  });
+
+  revalidateStockPaths(employeeId);
+  revalidatePath("/admin/inventory/requirements");
+  return { ok: true };
 }

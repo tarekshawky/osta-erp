@@ -10,6 +10,7 @@ import { buildDateRange } from "@/lib/dateRangeFilter";
 import { getCollectMoneyTotal } from "@/lib/walletData";
 import { getVehicleAlerts } from "@/lib/vehicleData";
 import { getRentalAlerts } from "@/lib/rentalData";
+import { getEmployeesRequiringStock } from "@/lib/inventoryData";
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -32,6 +33,7 @@ export default async function AdminDashboardPage({
     recentInvoices,
     vehicleAlerts,
     rentalAlerts,
+    employeesRequiringStock,
   ] = await Promise.all([
     prisma.invoice.findMany({ select: { date: true } }),
     prisma.invoice.aggregate({
@@ -51,6 +53,7 @@ export default async function AdminDashboardPage({
     }),
     getVehicleAlerts(),
     getRentalAlerts(),
+    getEmployeesRequiringStock(),
   ]);
 
   const years = Array.from(new Set(invoiceDates.map((i) => i.date.getFullYear()))).sort((a, b) => b - a);
@@ -119,6 +122,27 @@ export default async function AdminDashboardPage({
                 <div className="text-xs text-amber-100">{rentalAlerts.length} rental alert(s)</div>
                 <div className="text-2xl font-bold mt-1">Needs Attention</div>
                 <div className="text-xs text-amber-100 mt-1">Rent payments due soon or overdue</div>
+              </div>
+            </Link>
+          </>
+        )}
+
+        {employeesRequiringStock.length > 0 && (
+          <>
+            <h3 className="mt-6 font-semibold text-slate-900">Employees Requiring Stock</h3>
+            <Link
+              href="/admin/inventory/requirements"
+              className="mt-3 max-w-sm flex rounded-xl bg-gradient-to-br from-amber-600 to-red-500 text-white p-4 hover:opacity-90"
+            >
+              <div>
+                <div className="text-xs text-amber-100">{employeesRequiringStock.length} employee(s) short on stock</div>
+                <div className="text-2xl font-bold mt-1">Needs Attention</div>
+                <div className="text-xs text-amber-100 mt-1">
+                  {employeesRequiringStock
+                    .slice(0, 3)
+                    .map((e) => `${e.severity === "high" ? "🔴" : "🟡"} ${e.employeeName} — ${e.itemsNeeded.toLocaleString()} needed`)
+                    .join(" · ")}
+                </div>
               </div>
             </Link>
           </>
