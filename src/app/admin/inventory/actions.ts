@@ -7,7 +7,6 @@ import {
   INVENTORY_UNITS,
   INVENTORY_CATEGORIES,
   INVENTORY_ITEM_STATUSES,
-  MAIN_LOCATION,
   addStock as addStockLib,
   recordSupplierPurchase as recordSupplierPurchaseLib,
   distributeStock as distributeStockLib,
@@ -82,9 +81,14 @@ export async function updateInventoryItem(itemId: string, input: InventoryItemFo
   return { ok: true };
 }
 
-export async function addStock(inventoryItemId: string, quantity: number, notes: string): Promise<InventoryActionResult> {
+export async function addStock(
+  warehouseId: string,
+  inventoryItemId: string,
+  quantity: number,
+  notes: string
+): Promise<InventoryActionResult> {
   const admin = await requireEmployee("ADMIN");
-  const result = await addStockLib(admin.id, inventoryItemId, quantity, notes);
+  const result = await addStockLib(admin.id, warehouseId, inventoryItemId, quantity, notes);
   if (result.ok) {
     revalidatePath("/admin/inventory");
     revalidatePath("/admin/inventory/warehouse");
@@ -94,6 +98,7 @@ export async function addStock(inventoryItemId: string, quantity: number, notes:
 }
 
 export type SupplierPurchaseFormInput = {
+  warehouseId: string;
   inventoryItemId: string;
   quantity: number;
   supplierName: string;
@@ -125,36 +130,43 @@ function revalidateStockPaths(employeeId?: string) {
 }
 
 export async function distributeStock(
+  fromWarehouseId: string,
   employeeId: string,
   lines: { inventoryItemId: string; quantity: number }[]
 ): Promise<InventoryActionResult> {
   const admin = await requireEmployee("ADMIN");
-  const result = await distributeStockLib(admin.id, employeeId, lines);
+  const result = await distributeStockLib(admin.id, fromWarehouseId, employeeId, lines);
   if (result.ok) revalidateStockPaths(employeeId);
   return result;
 }
 
 export async function returnToWarehouse(
   employeeId: string,
+  toWarehouseId: string,
   inventoryItemId: string,
   quantity: number
 ): Promise<InventoryActionResult> {
   const admin = await requireEmployee("ADMIN");
-  const result = await returnToWarehouseLib(admin.id, employeeId, inventoryItemId, quantity);
+  const result = await returnToWarehouseLib(admin.id, employeeId, toWarehouseId, inventoryItemId, quantity);
   if (result.ok) revalidateStockPaths(employeeId);
   return result;
 }
 
+// `employeeId` is passed explicitly by the caller (rather than derived by
+// comparing `location` against a sentinel) since location is now either a
+// real Warehouse.id or an Employee.id -- the component rendering the action
+// already knows which, from which table it's rendered in.
 export async function recordDamaged(
   location: string,
   inventoryItemId: string,
   quantity: number,
   reason: string,
-  notes: string
+  notes: string,
+  employeeId?: string
 ): Promise<InventoryActionResult> {
   const admin = await requireEmployee("ADMIN");
   const result = await recordDamagedLib(admin.id, location, inventoryItemId, quantity, reason, notes);
-  if (result.ok) revalidateStockPaths(location !== MAIN_LOCATION ? location : undefined);
+  if (result.ok) revalidateStockPaths(employeeId);
   return result;
 }
 
@@ -163,11 +175,12 @@ export async function recordLost(
   inventoryItemId: string,
   quantity: number,
   reason: string,
-  notes: string
+  notes: string,
+  employeeId?: string
 ): Promise<InventoryActionResult> {
   const admin = await requireEmployee("ADMIN");
   const result = await recordLostLib(admin.id, location, inventoryItemId, quantity, reason, notes);
-  if (result.ok) revalidateStockPaths(location !== MAIN_LOCATION ? location : undefined);
+  if (result.ok) revalidateStockPaths(employeeId);
   return result;
 }
 

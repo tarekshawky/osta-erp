@@ -22,10 +22,12 @@ export function EmployeeInventoryReportPanel({
   employeeId,
   report,
   movementHistory,
+  warehouses,
 }: {
   employeeId: string;
   report: EmployeeInventoryReport;
   movementHistory: InventoryTransactionRow[];
+  warehouses: { id: string; name: string }[];
 }) {
   const { rows, summary, value } = report;
   const neededRows = rows.filter((r) => r.needed > 0);
@@ -79,7 +81,7 @@ export function EmployeeInventoryReportPanel({
                     <td className="px-4 py-3 text-right text-slate-600 whitespace-nowrap">{(r.required ?? 0).toLocaleString()} {r.unit}</td>
                     <td className="px-4 py-3 text-right font-semibold text-red-500 whitespace-nowrap">{r.needed.toLocaleString()} {r.unit}</td>
                     <td className="px-4 py-3">
-                      <ReplenishModal employeeId={employeeId} inventoryItemId={r.itemId} displayName={r.displayName} unit={r.unit} recommendedQuantity={r.needed} />
+                      <ReplenishModal employeeId={employeeId} inventoryItemId={r.itemId} displayName={r.displayName} unit={r.unit} recommendedQuantity={r.needed} warehouses={warehouses} />
                     </td>
                   </tr>
                 ))}

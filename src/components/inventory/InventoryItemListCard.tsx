@@ -38,7 +38,7 @@ export function InventoryItemListCard({ item, onEdit }: { item: InventoryItemRow
 
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div>
-          <div className="text-xs text-slate-400">Main Stock</div>
+          <div className="text-xs text-slate-400">Warehouse Stock</div>
           <div className="font-semibold text-slate-900">
             {item.mainQty.toLocaleString()} {item.unit}
           </div>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { EmployeeInventoryReportPanel } from "@/components/inventory/EmployeeInventoryReportPanel";
-import { getEmployeeInventoryReport, getInventoryTransactions } from "@/lib/inventoryData";
+import { getEmployeeInventoryReport, getInventoryTransactions, getWarehouses } from "@/lib/inventoryData";
 
 export default async function EmployeeProfilePage({
   params,
@@ -15,9 +15,10 @@ export default async function EmployeeProfilePage({
   const employee = await prisma.employee.findUnique({ where: { id } });
   if (!employee) notFound();
 
-  const [report, movementHistory] = await Promise.all([
+  const [report, movementHistory, warehouses] = await Promise.all([
     getEmployeeInventoryReport(id),
     getInventoryTransactions({ employeeId: id }),
+    getWarehouses("Active"),
   ]);
 
   return (
@@ -43,7 +44,7 @@ export default async function EmployeeProfilePage({
           </div>
 
           <div className="mt-4">
-            <EmployeeInventoryReportPanel employeeId={id} report={report} movementHistory={movementHistory} />
+            <EmployeeInventoryReportPanel employeeId={id} report={report} movementHistory={movementHistory} warehouses={warehouses} />
           </div>
         </div>
       </div>

@@ -59,13 +59,16 @@ export const INVENTORY_TRANSACTION_TYPES = [
   "Stock Reversed",
 ] as const;
 
-// Sentinel used in InventoryTransaction.fromLocation/toLocation for the Main
-// Warehouse. The other two possible values for those columns are an
-// Employee.id, or null (meaning external -- a supplier on receipt, or
+// InventoryTransaction.fromLocation/toLocation hold either a real Warehouse.id,
+// an Employee.id, or null (meaning external -- a supplier on receipt, or
 // consumed/damaged/lost/reversed on the way out). Kept as plain strings, not
-// real Prisma relations, since a relation can't conditionally point at a
-// sentinel or a real row -- resolved to employee names in application code.
-export const MAIN_LOCATION = "MAIN";
+// real Prisma relations, since a relation can't conditionally point at either
+// kind of row -- resolved to warehouse/employee names in application code.
+export const WAREHOUSE_SEED_NAMES = ["Ajman", "Al Ain", "Dubai", "Sharjah", "Other"] as const;
+
+export async function getWarehouses(status?: string): Promise<{ id: string; name: string; status: string }[]> {
+  return prisma.warehouse.findMany({ where: status ? { status } : undefined, orderBy: { name: "asc" } });
+}
 
 export type EmployeeStockStatus = "Available" | "Low Stock" | "Shortage" | "Out of Stock";
 export type MainStockStatus = "OK" | "Low Stock" | "Out of Stock";
@@ -122,6 +125,16 @@ export async function getItemTotalQuantity(db: Db, inventoryItemId: string): Pro
   return (inSum._sum.quantity ?? 0) - (outSum._sum.quantity ?? 0);
 }
 
+// Sum of an item's stock across every real Warehouse (never employee-held
+// stock) -- used to split getItemTotalQuantity's system-wide figure into
+// "in a warehouse" vs. "with an employee" now that there's more than one
+// warehouse and a plain subtraction against a single MAIN qty no longer works.
+export async function getAllWarehousesQuantity(db: Db, inventoryItemId: string): Promise<number> {
+  const warehouses = await prisma.warehouse.findMany({ select: { id: true } });
+  const sums = await Promise.all(warehouses.map((w) => getLocationQuantity(db, inventoryItemId, w.id)));
+  return sums.reduce((s, q) => s + q, 0);
+}
+
 // Mirrors generateExpenseNumber()/generateOrderNumber(): nullable, not
 // backfilled -- only transactions created after this shipped get one. Accepts
 // an explicit db handle so callers creating several numbered rows inside one
@@ -138,12 +151,12 @@ export async function generateInventoryTransactionNumber(db: Db = prisma): Promi
   return `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
 }
 
-export type MainWarehouseRow = {
+export type WarehouseStockRow = {
   itemId: string;
   displayName: string;
   unit: string;
   category: string;
-  mainQty: number;
+  warehouseQty: number;
   employeeQty: number;
   totalQty: number;
   minimumMainStock: number;
@@ -151,29 +164,41 @@ export type MainWarehouseRow = {
   status: MainStockStatus;
 };
 
-export async function getMainWarehouseSummary(): Promise<MainWarehouseRow[]> {
+export async function getWarehouseStockSummary(warehouseId: string): Promise<WarehouseStockRow[]> {
   const items = await prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } });
   return Promise.all(
     items.map(async (item) => {
-      const [mainQty, totalQty] = await Promise.all([
-        getLocationQuantity(prisma, item.id, MAIN_LOCATION),
+      const [warehouseQty, totalQty, allWarehousesQty] = await Promise.all([
+        getLocationQuantity(prisma, item.id, warehouseId),
         getItemTotalQuantity(prisma, item.id),
+        getAllWarehousesQuantity(prisma, item.id),
       ]);
       const status: MainStockStatus =
-        mainQty === 0 ? "Out of Stock" : mainQty <= item.minimumMainStock ? "Low Stock" : "OK";
+        warehouseQty === 0 ? "Out of Stock" : warehouseQty <= item.minimumMainStock ? "Low Stock" : "OK";
       return {
         itemId: item.id,
         displayName: getInventoryItemDisplayName(item),
         unit: item.unit,
         category: item.category,
-        mainQty,
-        employeeQty: totalQty - mainQty,
+        warehouseQty,
+        // System-wide employee-held quantity (not scoped to this warehouse) --
+        // totalQty minus stock sitting in ANY warehouse, not just this one.
+        employeeQty: totalQty - allWarehousesQty,
         totalQty,
         minimumMainStock: item.minimumMainStock,
         costPrice: item.costPrice,
         status,
       };
     })
+  );
+}
+
+export type AllWarehousesSummaryRow = { warehouseId: string; warehouseName: string; rows: WarehouseStockRow[] };
+
+export async function getAllWarehousesStockSummary(): Promise<AllWarehousesSummaryRow[]> {
+  const warehouses = await getWarehouses("Active");
+  return Promise.all(
+    warehouses.map(async (w) => ({ warehouseId: w.id, warehouseName: w.name, rows: await getWarehouseStockSummary(w.id) }))
   );
 }
 
@@ -219,6 +244,7 @@ export async function getEmployeeInventory(employeeId: string): Promise<Employee
 
 export async function distributeStock(
   adminId: string,
+  fromWarehouseId: string,
   employeeId: string,
   lines: { inventoryItemId: string; quantity: number }[]
 ): Promise<InventoryActionResult> {
@@ -228,7 +254,7 @@ export async function distributeStock(
   try {
     await prisma.$transaction(async (tx) => {
       for (const line of lines) {
-        const available = await getLocationQuantity(tx, line.inventoryItemId, MAIN_LOCATION);
+        const available = await getLocationQuantity(tx, line.inventoryItemId, fromWarehouseId);
         if (line.quantity > available) {
           const item = await tx.inventoryItem.findUnique({ where: { id: line.inventoryItemId } });
           throw new InsufficientStockError(
@@ -242,7 +268,7 @@ export async function distributeStock(
             inventoryItemId: line.inventoryItemId,
             type: "Stock Transfer",
             quantity: line.quantity,
-            fromLocation: MAIN_LOCATION,
+            fromLocation: fromWarehouseId,
             toLocation: employeeId,
             createdById: adminId,
           },
@@ -258,13 +284,18 @@ export async function distributeStock(
 
 export async function addStock(
   adminId: string,
+  warehouseId: string,
   inventoryItemId: string,
   quantity: number,
   notes?: string
 ): Promise<InventoryActionResult> {
   if (!(quantity > 0)) return { ok: false, error: "Enter a valid quantity." };
-  const item = await prisma.inventoryItem.findUnique({ where: { id: inventoryItemId } });
+  const [item, warehouse] = await Promise.all([
+    prisma.inventoryItem.findUnique({ where: { id: inventoryItemId } }),
+    prisma.warehouse.findUnique({ where: { id: warehouseId } }),
+  ]);
   if (!item) return { ok: false, error: "Inventory item not found." };
+  if (!warehouse) return { ok: false, error: "Warehouse not found." };
 
   const number = await generateInventoryTransactionNumber();
   await prisma.inventoryTransaction.create({
@@ -274,7 +305,7 @@ export async function addStock(
       type: "Stock Received",
       quantity,
       fromLocation: null,
-      toLocation: MAIN_LOCATION,
+      toLocation: warehouseId,
       notes: notes?.trim() || null,
       createdById: adminId,
     },
@@ -283,6 +314,7 @@ export async function addStock(
 }
 
 export type SupplierPurchaseInput = {
+  warehouseId: string;
   inventoryItemId: string;
   quantity: number;
   supplierName: string;
@@ -291,11 +323,14 @@ export type SupplierPurchaseInput = {
   notes?: string;
 };
 
-// No Supplier/Vendor/PurchaseOrder model exists anywhere in this app (confirmed
-// via exploration) -- this pairs the stock-in transaction with a plain Expense
+// No Vendor/PurchaseOrder model exists anywhere in this app (confirmed via
+// exploration) -- this pairs the stock-in transaction with a plain Expense
 // row (category "Inventory Purchase", vendor = supplier name), the same shape
 // createExpense() already produces, done inline here since it's atomic with
 // the InventoryTransaction rather than routed through that action.
+// supplierName is free text here (matching Expense.vendor's convention) --
+// independent of the new, real Supplier register, which InventoryItem.supplierId
+// links to for catalog purposes only.
 export async function recordSupplierPurchase(
   adminId: string,
   input: SupplierPurchaseInput
@@ -304,8 +339,12 @@ export async function recordSupplierPurchase(
   if (!(input.unitCost >= 0)) return { ok: false, error: "Enter a valid unit cost." };
   if (!input.supplierName.trim()) return { ok: false, error: "Supplier name is required." };
 
-  const item = await prisma.inventoryItem.findUnique({ where: { id: input.inventoryItemId } });
+  const [item, warehouse] = await Promise.all([
+    prisma.inventoryItem.findUnique({ where: { id: input.inventoryItemId } }),
+    prisma.warehouse.findUnique({ where: { id: input.warehouseId } }),
+  ]);
   if (!item) return { ok: false, error: "Inventory item not found." };
+  if (!warehouse) return { ok: false, error: "Warehouse not found." };
 
   const total = input.quantity * input.unitCost;
   const [stkNumber, expNumber] = await Promise.all([generateInventoryTransactionNumber(), generateExpenseNumber()]);
@@ -318,7 +357,7 @@ export async function recordSupplierPurchase(
         type: "Stock Received",
         quantity: input.quantity,
         fromLocation: null,
-        toLocation: MAIN_LOCATION,
+        toLocation: input.warehouseId,
         notes: input.notes?.trim() || null,
         createdById: adminId,
       },
@@ -327,7 +366,7 @@ export async function recordSupplierPurchase(
       data: {
         number: expNumber,
         date: input.date,
-        description: `Stock purchase — ${getInventoryItemDisplayName(item)} × ${input.quantity.toLocaleString()}`,
+        description: `Stock purchase — ${getInventoryItemDisplayName(item)} × ${input.quantity.toLocaleString()} (${warehouse.name})`,
         category: "Inventory Purchase",
         payment: "Bank Transfer",
         amount: total,
@@ -342,6 +381,7 @@ export async function recordSupplierPurchase(
 export async function returnToWarehouse(
   adminId: string,
   employeeId: string,
+  toWarehouseId: string,
   inventoryItemId: string,
   quantity: number
 ): Promise<InventoryActionResult> {
@@ -361,7 +401,7 @@ export async function returnToWarehouse(
       type: "Stock Returned",
       quantity,
       fromLocation: employeeId,
-      toLocation: MAIN_LOCATION,
+      toLocation: toWarehouseId,
       createdById: adminId,
     },
   });
@@ -738,21 +778,25 @@ export async function getInventoryTransactions(filters: InventoryTransactionFilt
     orderBy: { createdAt: "desc" },
   });
 
-  const employeeIds = new Set<string>();
+  const locationIds = new Set<string>();
   for (const t of transactions) {
-    if (t.fromLocation && t.fromLocation !== MAIN_LOCATION) employeeIds.add(t.fromLocation);
-    if (t.toLocation && t.toLocation !== MAIN_LOCATION) employeeIds.add(t.toLocation);
+    if (t.fromLocation) locationIds.add(t.fromLocation);
+    if (t.toLocation) locationIds.add(t.toLocation);
   }
-  const employees = await prisma.employee.findMany({ where: { id: { in: [...employeeIds] } } });
+  const [warehouses, employees] = await Promise.all([
+    prisma.warehouse.findMany({ where: { id: { in: [...locationIds] } } }),
+    prisma.employee.findMany({ where: { id: { in: [...locationIds] } } }),
+  ]);
+  const warehouseName = new Map(warehouses.map((w) => [w.id, w.name]));
   const employeeName = new Map(employees.map((e) => [e.id, e.name]));
 
   const resolveLocation = (loc: string | null): string => {
     if (loc === null) return "—";
-    if (loc === MAIN_LOCATION) return "Main Warehouse";
+    if (warehouseName.has(loc)) return warehouseName.get(loc)!;
     return employeeName.get(loc) ?? "Unknown Employee";
   };
   const resolveEmployeeLabel = (loc: string | null): string | null =>
-    loc && loc !== MAIN_LOCATION ? employeeName.get(loc) ?? null : null;
+    loc && !warehouseName.has(loc) ? employeeName.get(loc) ?? null : null;
 
   return transactions
     .filter((t) => !filters.search || getInventoryItemDisplayName(t.inventoryItem).toLowerCase().includes(filters.search!.toLowerCase()))
@@ -775,7 +819,7 @@ export async function getInventoryTransactions(filters: InventoryTransactionFilt
 export type InventoryDashboardSummary = {
   totalItems: number;
   totalStock: number;
-  mainStock: number;
+  warehouseStock: number;
   employeeStock: number;
   lowStock: number;
   outOfStock: number;
@@ -783,32 +827,35 @@ export type InventoryDashboardSummary = {
   totalInventoryValue: number;
 };
 
+// Company-wide rollup -- warehouseStock/lowStock/outOfStock are summed across
+// EVERY warehouse combined, not scoped to any one of them (see the per-warehouse
+// view, getWarehouseStockSummary, for a single warehouse's own status).
 export async function computeInventoryDashboardSummary(): Promise<InventoryDashboardSummary> {
   const items = await prisma.inventoryItem.findMany({ where: { status: "Active" } });
-  let mainStock = 0;
+  let warehouseStock = 0;
   let employeeStock = 0;
   let lowStock = 0;
   let outOfStock = 0;
   let totalInventoryValue = 0;
 
   for (const item of items) {
-    const [mainQty, totalQty] = await Promise.all([
-      getLocationQuantity(prisma, item.id, MAIN_LOCATION),
+    const [allWarehousesQty, totalQty] = await Promise.all([
+      getAllWarehousesQuantity(prisma, item.id),
       getItemTotalQuantity(prisma, item.id),
     ]);
-    mainStock += mainQty;
-    employeeStock += totalQty - mainQty;
-    if (mainQty === 0) outOfStock++;
-    else if (mainQty <= item.minimumMainStock) lowStock++;
-    // Main Warehouse valuation only, per spec §44 -- not the employee-held portion.
-    totalInventoryValue += mainQty * (item.costPrice ?? 0);
+    warehouseStock += allWarehousesQty;
+    employeeStock += totalQty - allWarehousesQty;
+    if (allWarehousesQty === 0) outOfStock++;
+    else if (allWarehousesQty <= item.minimumMainStock) lowStock++;
+    // Warehouse valuation only, per spec §44 -- not the employee-held portion.
+    totalInventoryValue += allWarehousesQty * (item.costPrice ?? 0);
   }
 
   const employeesRequiringStock = await getEmployeesRequiringStock();
   return {
     totalItems: items.length,
-    totalStock: mainStock + employeeStock,
-    mainStock,
+    totalStock: warehouseStock + employeeStock,
+    warehouseStock,
     employeeStock,
     lowStock,
     outOfStock,

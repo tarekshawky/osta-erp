@@ -5,24 +5,28 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { distributeStock } from "@/app/admin/inventory/actions";
 
-type ItemOption = { id: string; displayName: string; unit: string; mainQty: number };
+type ItemOption = { id: string; displayName: string; unit: string; quantitiesByWarehouse: Record<string, number> };
 type Line = { inventoryItemId: string; quantity: string };
 
 export function DistributeStockForm({
   employees,
   items,
+  warehouses,
 }: {
   employees: { id: string; name: string }[];
   items: ItemOption[];
+  warehouses: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const { showToast } = useToast();
   const [employeeId, setEmployeeId] = useState(employees[0]?.id ?? "");
+  const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id ?? "");
   const [lines, setLines] = useState<Line[]>([{ inventoryItemId: items[0]?.id ?? "", quantity: "" }]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const itemById = new Map(items.map((i) => [i.id, i]));
+  const availableFor = (itemId: string) => itemById.get(itemId)?.quantitiesByWarehouse[warehouseId] ?? 0;
 
   function updateLine(index: number, patch: Partial<Line>) {
     setLines((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
@@ -46,16 +50,17 @@ export function DistributeStockForm({
     }
     for (const line of parsedLines) {
       const item = itemById.get(line.inventoryItemId);
-      if (item && line.quantity > item.mainQty) {
+      const available = availableFor(line.inventoryItemId);
+      if (item && line.quantity > available) {
         setError(
-          `Insufficient Stock for ${item.displayName} — Available: ${item.mainQty.toLocaleString()}, Requested: ${line.quantity.toLocaleString()}.`
+          `Insufficient Stock for ${item.displayName} — Available: ${available.toLocaleString()}, Requested: ${line.quantity.toLocaleString()}.`
         );
         return;
       }
     }
 
     startTransition(async () => {
-      const res = await distributeStock(employeeId, parsedLines);
+      const res = await distributeStock(warehouseId, employeeId, parsedLines);
       if (res.ok) {
         setLines([{ inventoryItemId: items[0]?.id ?? "", quantity: "" }]);
         router.refresh();
@@ -68,20 +73,36 @@ export function DistributeStockForm({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
-      <label className="flex flex-col gap-1.5 max-w-sm">
-        <span className="text-xs font-medium text-slate-600">Employee</span>
-        <select
-          value={employeeId}
-          onChange={(e) => setEmployeeId(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
-        >
-          {employees.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="grid grid-cols-2 gap-3 max-w-xl">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">From Warehouse</span>
+          <select
+            value={warehouseId}
+            onChange={(e) => setWarehouseId(e.target.value)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+          >
+            {warehouses.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Employee</span>
+          <select
+            value={employeeId}
+            onChange={(e) => setEmployeeId(e.target.value)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+          >
+            {employees.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <div className="mt-4 space-y-3">
         {lines.map((line, index) => {
@@ -97,7 +118,7 @@ export function DistributeStockForm({
                 >
                   {items.map((i) => (
                     <option key={i.id} value={i.id}>
-                      {i.displayName} — {i.mainQty.toLocaleString()} {i.unit} available
+                      {i.displayName} — {(i.quantitiesByWarehouse[warehouseId] ?? 0).toLocaleString()} {i.unit} available
                     </option>
                   ))}
                 </select>
@@ -142,7 +163,7 @@ export function DistributeStockForm({
       <div className="mt-5">
         <button
           type="button"
-          disabled={isPending || !employeeId || items.length === 0}
+          disabled={isPending || !employeeId || !warehouseId || items.length === 0}
           onClick={submit}
           className="rounded-xl bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-6 py-2.5 flex items-center gap-2"
         >

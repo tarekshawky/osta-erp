@@ -1,5 +1,5 @@
 import { formatAed } from "@/lib/format";
-import { MAIN_LOCATION, type MainWarehouseRow } from "@/lib/inventoryData";
+import type { WarehouseStockRow } from "@/lib/inventoryData";
 import { AdjustStockModal } from "./AdjustStockModal";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -8,7 +8,7 @@ const STATUS_STYLES: Record<string, string> = {
   "Out of Stock": "bg-red-50 text-red-700",
 };
 
-export function MainWarehouseTable({ rows }: { rows: MainWarehouseRow[] }) {
+export function MainWarehouseTable({ rows, warehouseId }: { rows: WarehouseStockRow[]; warehouseId: string }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
       <table className="w-full text-sm">
@@ -16,7 +16,7 @@ export function MainWarehouseTable({ rows }: { rows: MainWarehouseRow[] }) {
           <tr className="text-left text-slate-500 border-b border-slate-100">
             <th className="px-4 py-3 font-medium">Item</th>
             <th className="px-4 py-3 font-medium">Category</th>
-            <th className="px-4 py-3 font-medium text-right">Main Warehouse</th>
+            <th className="px-4 py-3 font-medium text-right">This Warehouse</th>
             <th className="px-4 py-3 font-medium text-right">Employee Stock</th>
             <th className="px-4 py-3 font-medium text-right">Total</th>
             <th className="px-4 py-3 font-medium text-right">Value</th>
@@ -30,7 +30,7 @@ export function MainWarehouseTable({ rows }: { rows: MainWarehouseRow[] }) {
               <td className="px-4 py-3 text-slate-900 font-medium">{r.displayName}</td>
               <td className="px-4 py-3 text-slate-600">{r.category}</td>
               <td className="px-4 py-3 text-right text-slate-900 font-medium whitespace-nowrap">
-                {r.mainQty.toLocaleString()} {r.unit}
+                {r.warehouseQty.toLocaleString()} {r.unit}
               </td>
               <td className="px-4 py-3 text-right text-slate-600 whitespace-nowrap">
                 {r.employeeQty.toLocaleString()} {r.unit}
@@ -39,7 +39,7 @@ export function MainWarehouseTable({ rows }: { rows: MainWarehouseRow[] }) {
                 {r.totalQty.toLocaleString()} {r.unit}
               </td>
               <td className="px-4 py-3 text-right text-slate-600 whitespace-nowrap">
-                {r.costPrice != null ? formatAed(r.mainQty * r.costPrice) : "—"}
+                {r.costPrice != null ? formatAed(r.warehouseQty * r.costPrice) : "—"}
               </td>
               <td className="px-4 py-3">
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[r.status] ?? "bg-slate-100 text-slate-600"}`}>
@@ -48,11 +48,11 @@ export function MainWarehouseTable({ rows }: { rows: MainWarehouseRow[] }) {
               </td>
               <td className="px-4 py-3">
                 <AdjustStockModal
-                  location={MAIN_LOCATION}
+                  location={warehouseId}
                   inventoryItemId={r.itemId}
                   displayName={r.displayName}
                   unit={r.unit}
-                  currentQty={r.mainQty}
+                  currentQty={r.warehouseQty}
                 />
               </td>
             </tr>

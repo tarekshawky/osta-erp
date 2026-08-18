@@ -5,11 +5,20 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { addStock } from "@/app/admin/inventory/actions";
 
-export function AddStockModal({ items }: { items: { id: string; displayName: string; unit: string }[] }) {
+export function AddStockModal({
+  items,
+  warehouses,
+  defaultWarehouseId,
+}: {
+  items: { id: string; displayName: string; unit: string }[];
+  warehouses: { id: string; name: string }[];
+  defaultWarehouseId?: string;
+}) {
   const router = useRouter();
   const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const [inventoryItemId, setInventoryItemId] = useState(items[0]?.id ?? "");
+  const [warehouseId, setWarehouseId] = useState(defaultWarehouseId ?? warehouses[0]?.id ?? "");
   const [quantity, setQuantity] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +36,7 @@ export function AddStockModal({ items }: { items: { id: string; displayName: str
   function confirm() {
     setError(null);
     startTransition(async () => {
-      const res = await addStock(inventoryItemId, Number(quantity), notes);
+      const res = await addStock(warehouseId, inventoryItemId, Number(quantity), notes);
       if (res.ok) {
         close();
         router.refresh();
@@ -43,7 +52,7 @@ export function AddStockModal({ items }: { items: { id: string; displayName: str
       <button
         type="button"
         onClick={() => setOpen(true)}
-        disabled={items.length === 0}
+        disabled={items.length === 0 || warehouses.length === 0}
         className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-50 rounded-lg px-4 py-2.5"
       >
         + Add Stock
@@ -60,6 +69,19 @@ export function AddStockModal({ items }: { items: { id: string; displayName: str
                 </svg>
               </button>
             </div>
+
+            <label className="mt-3 block text-xs font-medium text-slate-600">Warehouse</label>
+            <select
+              value={warehouseId}
+              onChange={(e) => setWarehouseId(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            >
+              {warehouses.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
 
             <label className="mt-3 block text-xs font-medium text-slate-600">Item</label>
             <select
@@ -105,7 +127,7 @@ export function AddStockModal({ items }: { items: { id: string; displayName: str
               </button>
               <button
                 type="button"
-                disabled={isPending || !quantity || !inventoryItemId}
+                disabled={isPending || !quantity || !inventoryItemId || !warehouseId}
                 onClick={confirm}
                 className="flex-1 rounded-xl bg-blue-700 disabled:opacity-60 text-white text-sm font-medium py-2.5 flex items-center justify-center gap-2"
               >

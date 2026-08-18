@@ -11,17 +11,20 @@ export function ReturnStockModal({
   displayName,
   unit,
   currentQty,
+  warehouses,
 }: {
   employeeId: string;
   inventoryItemId: string;
   displayName: string;
   unit: string;
   currentQty: number;
+  warehouses: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const [quantity, setQuantity] = useState("");
+  const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -34,7 +37,7 @@ export function ReturnStockModal({
   function confirm() {
     setError(null);
     startTransition(async () => {
-      const res = await returnToWarehouse(employeeId, inventoryItemId, Number(quantity));
+      const res = await returnToWarehouse(employeeId, warehouseId, inventoryItemId, Number(quantity));
       if (res.ok) {
         close();
         router.refresh();
@@ -67,6 +70,18 @@ export function ReturnStockModal({
             <p className="mt-3 text-sm text-slate-500">
               {displayName} — Current: <span className="font-semibold text-slate-900">{currentQty.toLocaleString()} {unit}</span>
             </p>
+            <label className="mt-3 block text-xs font-medium text-slate-600">To Warehouse</label>
+            <select
+              value={warehouseId}
+              onChange={(e) => setWarehouseId(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            >
+              {warehouses.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
             <label className="mt-3 block text-xs font-medium text-slate-600">Quantity</label>
             <input
               type="number"
@@ -82,7 +97,7 @@ export function ReturnStockModal({
               </button>
               <button
                 type="button"
-                disabled={isPending || !quantity}
+                disabled={isPending || !quantity || !warehouseId}
                 onClick={confirm}
                 className="flex-1 rounded-xl bg-blue-700 disabled:opacity-60 text-white text-sm font-medium py-2.5"
               >

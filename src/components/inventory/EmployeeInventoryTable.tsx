@@ -9,7 +9,15 @@ const STATUS_STYLES: Record<string, string> = {
   "Out of Stock": "bg-slate-100 text-slate-600",
 };
 
-export function EmployeeInventoryTable({ employeeId, rows }: { employeeId: string; rows: EmployeeInventoryRow[] }) {
+export function EmployeeInventoryTable({
+  employeeId,
+  rows,
+  warehouses,
+}: {
+  employeeId: string;
+  rows: EmployeeInventoryRow[];
+  warehouses: { id: string; name: string }[];
+}) {
   if (rows.length === 0) {
     return <p className="text-sm text-slate-400 py-4">No inventory items yet.</p>;
   }
@@ -43,8 +51,22 @@ export function EmployeeInventoryTable({ employeeId, rows }: { employeeId: strin
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1">
-                  <ReturnStockModal employeeId={employeeId} inventoryItemId={r.itemId} displayName={r.displayName} unit={r.unit} currentQty={r.current} />
-                  <DamagedLostModal location={employeeId} inventoryItemId={r.itemId} displayName={r.displayName} unit={r.unit} currentQty={r.current} />
+                  <ReturnStockModal
+                    employeeId={employeeId}
+                    inventoryItemId={r.itemId}
+                    displayName={r.displayName}
+                    unit={r.unit}
+                    currentQty={r.current}
+                    warehouses={warehouses}
+                  />
+                  <DamagedLostModal
+                    location={employeeId}
+                    inventoryItemId={r.itemId}
+                    displayName={r.displayName}
+                    unit={r.unit}
+                    currentQty={r.current}
+                    employeeId={employeeId}
+                  />
                 </div>
               </td>
             </tr>

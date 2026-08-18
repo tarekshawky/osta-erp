@@ -1,10 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { EmployeeInventoryTable } from "@/components/inventory/EmployeeInventoryTable";
-import { getEmployeeInventory } from "@/lib/inventoryData";
+import { getEmployeeInventory, getWarehouses } from "@/lib/inventoryData";
 
 export default async function EmployeeInventoryPage() {
-  const employees = await prisma.employee.findMany({ where: { status: "active" }, orderBy: { name: "asc" } });
+  const [employees, warehouses] = await Promise.all([
+    prisma.employee.findMany({ where: { status: "active" }, orderBy: { name: "asc" } }),
+    getWarehouses("Active"),
+  ]);
 
   const rowsByEmployee = await Promise.all(employees.map((e) => getEmployeeInventory(e.id)));
 
@@ -28,7 +31,7 @@ export default async function EmployeeInventoryPage() {
             {employeesWithItems.map(({ employee, rows }) => (
               <div key={employee.id}>
                 <h3 className="font-semibold text-slate-900 mb-2">{employee.name}</h3>
-                <EmployeeInventoryTable employeeId={employee.id} rows={rows} />
+                <EmployeeInventoryTable employeeId={employee.id} rows={rows} warehouses={warehouses} />
               </div>
             ))}
           </div>

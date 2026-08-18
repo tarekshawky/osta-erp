@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { InventoryItemsManager } from "@/components/inventory/InventoryItemsManager";
-import { getInventoryItemDisplayName, getLocationQuantity, MAIN_LOCATION } from "@/lib/inventoryData";
+import { getInventoryItemDisplayName, getAllWarehousesQuantity } from "@/lib/inventoryData";
 
 export default async function InventoryItemsPage() {
   const items = await prisma.inventoryItem.findMany({ orderBy: { name: "asc" } });
@@ -19,7 +19,9 @@ export default async function InventoryItemsPage() {
       sellingPrice: item.sellingPrice,
       minimumMainStock: item.minimumMainStock,
       status: item.status,
-      mainQty: await getLocationQuantity(prisma, item.id, MAIN_LOCATION),
+      // Total across every warehouse (not employee-held) -- see InventoryItemListCard's
+      // "Warehouse Stock" label.
+      mainQty: await getAllWarehousesQuantity(prisma, item.id),
     }))
   );
 

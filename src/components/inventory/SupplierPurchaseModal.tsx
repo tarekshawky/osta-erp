@@ -10,11 +10,20 @@ function todayInput() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function SupplierPurchaseModal({ items }: { items: { id: string; displayName: string; unit: string }[] }) {
+export function SupplierPurchaseModal({
+  items,
+  warehouses,
+  defaultWarehouseId,
+}: {
+  items: { id: string; displayName: string; unit: string }[];
+  warehouses: { id: string; name: string }[];
+  defaultWarehouseId?: string;
+}) {
   const router = useRouter();
   const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const [inventoryItemId, setInventoryItemId] = useState(items[0]?.id ?? "");
+  const [warehouseId, setWarehouseId] = useState(defaultWarehouseId ?? warehouses[0]?.id ?? "");
   const [quantity, setQuantity] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [unitCost, setUnitCost] = useState("");
@@ -40,6 +49,7 @@ export function SupplierPurchaseModal({ items }: { items: { id: string; displayN
     setError(null);
     startTransition(async () => {
       const res = await recordSupplierPurchase({
+        warehouseId,
         inventoryItemId,
         quantity: Number(quantity),
         supplierName,
@@ -62,7 +72,7 @@ export function SupplierPurchaseModal({ items }: { items: { id: string; displayN
       <button
         type="button"
         onClick={() => setOpen(true)}
-        disabled={items.length === 0}
+        disabled={items.length === 0 || warehouses.length === 0}
         className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg px-4 py-2.5"
       >
         + Supplier Stock Purchase
@@ -79,6 +89,19 @@ export function SupplierPurchaseModal({ items }: { items: { id: string; displayN
                 </svg>
               </button>
             </div>
+
+            <label className="mt-3 block text-xs font-medium text-slate-600">Warehouse</label>
+            <select
+              value={warehouseId}
+              onChange={(e) => setWarehouseId(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            >
+              {warehouses.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
 
             <label className="mt-3 block text-xs font-medium text-slate-600">Item</label>
             <select
@@ -158,7 +181,7 @@ export function SupplierPurchaseModal({ items }: { items: { id: string; displayN
               </button>
               <button
                 type="button"
-                disabled={isPending || !quantity || !unitCost || !supplierName || !inventoryItemId}
+                disabled={isPending || !quantity || !unitCost || !supplierName || !inventoryItemId || !warehouseId}
                 onClick={confirm}
                 className="flex-1 rounded-xl bg-blue-700 disabled:opacity-60 text-white text-sm font-medium py-2.5 flex items-center justify-center gap-2"
               >

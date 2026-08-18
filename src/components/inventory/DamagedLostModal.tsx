@@ -11,12 +11,16 @@ export function DamagedLostModal({
   displayName,
   unit,
   currentQty,
+  employeeId,
 }: {
   location: string;
   inventoryItemId: string;
   displayName: string;
   unit: string;
   currentQty: number;
+  // Passed only when `location` is an Employee.id (not a Warehouse.id) --
+  // lets the server action revalidate that employee's profile page.
+  employeeId?: string;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -41,7 +45,7 @@ export function DamagedLostModal({
     setError(null);
     startTransition(async () => {
       const action = kind === "Damaged" ? recordDamaged : recordLost;
-      const res = await action(location, inventoryItemId, Number(quantity), reason, notes);
+      const res = await action(location, inventoryItemId, Number(quantity), reason, notes, employeeId);
       if (res.ok) {
         close();
         router.refresh();
