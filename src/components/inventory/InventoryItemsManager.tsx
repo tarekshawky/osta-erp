@@ -17,12 +17,14 @@ const emptyFormValue: InventoryItemFormValue = {
   sellingPrice: "",
   minimumMainStock: 0,
   status: "Active",
+  supplierId: "",
 };
 
 export type InventoryItemManagerRow = InventoryItemRow & {
   name: string;
   specification: string | null;
   description: string | null;
+  supplierId: string | null;
 };
 
 function toFormValue(item: InventoryItemManagerRow): InventoryItemFormValue {
@@ -36,10 +38,17 @@ function toFormValue(item: InventoryItemManagerRow): InventoryItemFormValue {
     sellingPrice: item.sellingPrice != null ? String(item.sellingPrice) : "",
     minimumMainStock: item.minimumMainStock,
     status: item.status,
+    supplierId: item.supplierId ?? "",
   };
 }
 
-export function InventoryItemsManager({ items }: { items: InventoryItemManagerRow[] }) {
+export function InventoryItemsManager({
+  items,
+  suppliers,
+}: {
+  items: InventoryItemManagerRow[];
+  suppliers: { id: string; name: string }[];
+}) {
   const router = useRouter();
   const { showToast } = useToast();
   const [mode, setMode] = useState<"closed" | "add" | "edit">("closed");
@@ -84,9 +93,9 @@ export function InventoryItemsManager({ items }: { items: InventoryItemManagerRo
         )}
       </div>
 
-      {mode === "add" && <InventoryItemForm initial={emptyFormValue} onSave={handleSave} onCancel={close} />}
+      {mode === "add" && <InventoryItemForm initial={emptyFormValue} onSave={handleSave} onCancel={close} suppliers={suppliers} />}
       {mode === "edit" && editingItem && (
-        <InventoryItemForm initial={toFormValue(editingItem)} onSave={handleSave} onCancel={close} />
+        <InventoryItemForm initial={toFormValue(editingItem)} onSave={handleSave} onCancel={close} suppliers={suppliers} />
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

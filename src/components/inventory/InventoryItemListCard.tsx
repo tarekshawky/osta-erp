@@ -10,6 +10,7 @@ export type InventoryItemRow = {
   minimumMainStock: number;
   status: string;
   mainQty: number;
+  supplierName: string | null;
 };
 
 export function InventoryItemListCard({ item, onEdit }: { item: InventoryItemRow; onEdit?: () => void }) {
@@ -54,6 +55,10 @@ export function InventoryItemListCard({ item, onEdit }: { item: InventoryItemRow
         <div>
           <div className="text-xs text-slate-400">Selling Price</div>
           <div className="font-semibold text-slate-900">{item.sellingPrice != null ? formatAed(item.sellingPrice) : "—"}</div>
+        </div>
+        <div>
+          <div className="text-xs text-slate-400">Supplier</div>
+          <div className="font-semibold text-slate-900">{item.supplierName ?? "—"}</div>
         </div>
       </div>
     </div>

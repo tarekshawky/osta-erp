@@ -27,6 +27,7 @@ export type InventoryItemFormInput = {
   sellingPrice: string;
   minimumMainStock: number;
   status: string;
+  supplierId: string;
 };
 
 function validateItem(input: InventoryItemFormInput) {
@@ -49,6 +50,7 @@ function buildData(input: InventoryItemFormInput) {
     sellingPrice: input.sellingPrice ? Number(input.sellingPrice) : null,
     minimumMainStock: input.minimumMainStock,
     status: input.status,
+    supplierId: input.supplierId || null,
   };
 }
 

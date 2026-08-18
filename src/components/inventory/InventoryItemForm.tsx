@@ -10,10 +10,12 @@ export function InventoryItemForm({
   initial,
   onSave,
   onCancel,
+  suppliers,
 }: {
   initial: InventoryItemFormValue;
   onSave: (value: InventoryItemFormValue) => Promise<{ ok: boolean; error?: string }>;
   onCancel: () => void;
+  suppliers: { id: string; name: string }[];
 }) {
   const [value, setValue] = useState<InventoryItemFormValue>(initial);
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +124,21 @@ export function InventoryItemForm({
             {INVENTORY_ITEM_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Supplier</span>
+          <select
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            value={value.supplierId}
+            onChange={(e) => setValue({ ...value, supplierId: e.target.value })}
+          >
+            <option value="">— None —</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
               </option>
             ))}
           </select>
