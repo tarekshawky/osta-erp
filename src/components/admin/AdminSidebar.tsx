@@ -140,6 +140,18 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/vehicles",
+    label: "Vehicles",
+    icon: (
+      <>
+        <path d="M4 16v-4l2-5a2 2 0 012-1h8a2 2 0 012 1l2 5v4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 16h18v2a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" strokeLinejoin="round" />
+        <circle cx="7.5" cy="16" r="1.5" />
+        <circle cx="16.5" cy="16" r="1.5" />
+      </>
+    ),
+  },
+  {
     href: "/admin/settings",
     label: "Settings",
     icon: (
