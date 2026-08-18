@@ -162,6 +162,15 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/vehicles/expense-report",
+    label: "Vehicle Expense Report",
+    icon: (
+      <>
+        <path d="M4 20V10M12 20V4M20 20v-7" strokeLinecap="round" strokeLinejoin="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/settings",
     label: "Settings",
     icon: (

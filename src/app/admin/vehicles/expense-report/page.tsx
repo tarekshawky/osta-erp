@@ -42,8 +42,24 @@ export default async function VehicleExpenseReportPage({
         dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin/vehicles/expense-report" }}
       />
       <div className="px-6 py-6">
-        <h2 className="text-2xl font-bold text-slate-900">Vehicle Expense Report</h2>
-        <p className="text-sm text-slate-500 mt-0.5">Vehicle-category expenses across the fleet — {periodLabel}</p>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Vehicle Expense Report</h2>
+            <p className="text-sm text-slate-500 mt-0.5">Vehicle-category expenses across the fleet — {periodLabel}</p>
+          </div>
+          <a
+            href={`/admin/vehicles/expense-report/export?${new URLSearchParams({
+              ...(year ? { year: String(year) } : {}),
+              ...(month ? { month: String(month) } : {}),
+            }).toString()}`}
+            className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2.5 flex items-center gap-1.5"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Export
+          </a>
+        </div>
 
         <div className="mt-5 grid grid-cols-2 lg:grid-cols-3 gap-3">
           <AdminStatCard label="Total Vehicle Expenses" value={formatAed(summary.total)} valueClassName="text-red-500" />
