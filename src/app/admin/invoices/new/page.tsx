@@ -12,7 +12,7 @@ export default async function AdminNewInvoicePage({
   searchParams: Promise<{ orderId?: string; customerId?: string; quotationId?: string }>;
 }) {
   const { orderId, customerId, quotationId } = await searchParams;
-  const [employee, teams, order, customer, quotation, activeEmployees, activeItems] = await Promise.all([
+  const [employee, teams, order, customer, quotation, activeEmployees, activeItems, labourItems] = await Promise.all([
     requireEmployee("ADMIN"),
     prisma.team.findMany({ where: { name: { in: ["Ajman", "Al Ain"] } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     orderId ? prisma.order.findUnique({ where: { id: orderId }, include: { customer: true } }) : null,
@@ -20,6 +20,7 @@ export default async function AdminNewInvoicePage({
     quotationId ? prisma.quotation.findUnique({ where: { id: quotationId }, include: { customer: true, items: true } }) : null,
     prisma.employee.findMany({ where: { status: "active" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
+    prisma.labourItem.findMany({ where: { status: "Active" }, orderBy: { code: "asc" } }),
   ]);
 
   // Bulk-queried (not per-item) since the Spare Parts catalog can hold
@@ -31,6 +32,25 @@ export default async function AdminNewInvoicePage({
     unit: item.unit,
     currentStock: stockByItem[item.id] ?? 0,
   }));
+  // Only real catalog spare parts (sku set) appear in the Spare Part picker --
+  // plain gas/tools items built by the base Inventory system stay in the
+  // generic "Inventory Used" list above. Purchase Cost is never selected here,
+  // matching the "never sent to any employee-facing page" design decision.
+  const sparePartOptions = activeItems
+    .filter((item) => item.sku)
+    .map((item) => ({
+      id: item.id,
+      sku: item.sku!,
+      nameAr: item.nameAr,
+      name: item.name,
+      specification: item.specification,
+      category: item.category,
+      subcategory: item.subcategory,
+      unit: item.unit,
+      sellingPrice: item.sellingPrice,
+      currentStock: stockByItem[item.id] ?? 0,
+    }));
+  const labourOptions = labourItems.map((l) => ({ id: l.id, code: l.code, nameAr: l.nameAr, nameEn: l.nameEn, defaultPrice: l.defaultPrice }));
 
   const sourceCustomer = order?.customer ?? customer ?? quotation?.customer;
   const initialCustomer: CustomerFormData | undefined = sourceCustomer
@@ -64,11 +84,15 @@ export default async function AdminNewInvoicePage({
         serviceType: "Repair",
         category: "AC",
         items: quotation.items.map((item) => ({
+          itemType: "Service" as const,
           service: CUSTOM_SERVICE_VALUE,
           customName: item.serviceName,
           description: item.description ?? "",
           qty: String(item.qty),
           unitPrice: String(item.unitPrice),
+          originalPrice: "",
+          inventoryItemId: "",
+          labourItemId: "",
         })),
         inventoryEmployeeId: employee.id,
         inventoryUsage: [],
@@ -91,6 +115,8 @@ export default async function AdminNewInvoicePage({
         currentEmployeeId={employee.id}
         employeeOptions={activeEmployees}
         inventoryOptions={inventoryOptions}
+        sparePartOptions={sparePartOptions}
+        labourOptions={labourOptions}
       />
     </div>
   );

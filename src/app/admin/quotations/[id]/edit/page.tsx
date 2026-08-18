@@ -5,6 +5,7 @@ import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { QuotationWizard } from "@/components/quotation/QuotationWizard";
 import { CATEGORIES, SERVICE_CATALOG, CUSTOM_SERVICE_VALUE, type Category } from "@/lib/invoiceData";
 import type { CustomerFormData, ServiceFormData } from "@/components/invoice/types";
+import { emptyServiceItem } from "@/components/invoice/types";
 
 function detectCategory(serviceNames: string[]): Category {
   for (const category of CATEGORIES) {
@@ -49,14 +50,18 @@ export default async function AdminQuotationEditPage({
       ? quotation.items.map((item) => {
           const isKnown = catalog.includes(item.serviceName);
           return {
+            itemType: "Service" as const,
             service: isKnown ? item.serviceName : CUSTOM_SERVICE_VALUE,
             customName: isKnown ? "" : item.serviceName,
             description: item.description ?? "",
             qty: String(item.qty),
             unitPrice: String(item.unitPrice),
+            originalPrice: "",
+            inventoryItemId: "",
+            labourItemId: "",
           };
         })
-      : [{ service: "", customName: "", description: "", qty: "1", unitPrice: "" }],
+      : [{ ...emptyServiceItem }],
     inventoryEmployeeId: "",
     inventoryUsage: [],
   };

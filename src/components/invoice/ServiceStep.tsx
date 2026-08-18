@@ -1,9 +1,10 @@
 "use client";
 
-import { CATEGORIES, SERVICE_CATALOG, CUSTOM_SERVICE_VALUE, type Category } from "@/lib/invoiceData";
+import { CATEGORIES, CUSTOM_SERVICE_VALUE, type Category } from "@/lib/invoiceData";
 import { inputClassName } from "@/components/FormField";
 import type { ServiceFormData, ServiceItemFormData, InventoryUsageItemFormData } from "./types";
 import { emptyServiceItem, emptyInventoryUsageItem } from "./types";
+import { InvoiceItemLine, type SparePartOption, type LabourOption } from "./InvoiceItemLine";
 
 export type InventoryOption = { id: string; displayName: string; unit: string; currentStock: number };
 
@@ -46,6 +47,12 @@ export function ServiceStep({
   employeeOptions = [],
   isAdmin = false,
   stockKnownForEmployeeId,
+  sparePartOptions = [],
+  labourOptions = [],
+  sparePartPriceModification = "Allowed",
+  sparePartMaxDiscountPercent = null,
+  labourPriceModification = "Allowed",
+  labourMaxDiscountPercent = null,
 }: {
   value: ServiceFormData;
   onChange: (value: ServiceFormData) => void;
@@ -57,9 +64,17 @@ export function ServiceStep({
   // employee -- switching the "Inventory Used" employee selector away from it
   // makes the hint stale, so it's hidden rather than shown wrong.
   stockKnownForEmployeeId?: string;
+  sparePartOptions?: SparePartOption[];
+  labourOptions?: LabourOption[];
+  sparePartPriceModification?: string;
+  sparePartMaxDiscountPercent?: number | null;
+  labourPriceModification?: string;
+  labourMaxDiscountPercent?: number | null;
 }) {
   const isValid =
     value.items.every((item) => {
+      if (item.itemType === "SparePart") return !!item.inventoryItemId && Number(item.unitPrice) > 0 && Number(item.qty) > 0;
+      if (item.itemType === "Labour") return !!item.labourItemId && Number(item.unitPrice) > 0 && Number(item.qty) > 0;
       const hasService = item.service === CUSTOM_SERVICE_VALUE ? item.customName.trim().length > 0 : item.service.length > 0;
       return hasService && Number(item.unitPrice) > 0;
     }) &&
@@ -126,73 +141,24 @@ export function ServiceStep({
       </div>
 
       <div>
-        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Services</label>
+        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Items</label>
         <div className="flex flex-col gap-3">
           {value.items.map((item, i) => (
-            <div key={i} className="rounded-xl border border-slate-200 p-3 flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-blue-700">Service {i + 1}</span>
-                {value.items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeService(i)}
-                    className="text-xs text-red-500 hover:text-red-600"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-              <select
-                className={inputClassName}
-                value={item.service}
-                onChange={(e) => onChange({ ...value, items: updateItem(value.items, i, { service: e.target.value }) })}
-              >
-                <option value="">-- Select Service --</option>
-                {SERVICE_CATALOG[value.category].map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-              {item.service === CUSTOM_SERVICE_VALUE && (
-                <input
-                  className={inputClassName}
-                  placeholder="Enter service name..."
-                  value={item.customName}
-                  onChange={(e) => onChange({ ...value, items: updateItem(value.items, i, { customName: e.target.value }) })}
-                />
-              )}
-              <input
-                className={inputClassName}
-                placeholder="Description (optional)"
-                value={item.description}
-                onChange={(e) => onChange({ ...value, items: updateItem(value.items, i, { description: e.target.value }) })}
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs text-slate-500">Qty</label>
-                  <input
-                    type="number"
-                    min="1"
-                    className={inputClassName}
-                    value={item.qty}
-                    onChange={(e) => onChange({ ...value, items: updateItem(value.items, i, { qty: e.target.value }) })}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-500">Price (AED)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    className={inputClassName}
-                    value={item.unitPrice}
-                    onChange={(e) => onChange({ ...value, items: updateItem(value.items, i, { unitPrice: e.target.value }) })}
-                  />
-                </div>
-              </div>
-            </div>
+            <InvoiceItemLine
+              key={i}
+              item={item}
+              index={i}
+              total={value.items.length}
+              category={value.category}
+              onUpdate={(patch) => onChange({ ...value, items: updateItem(value.items, i, patch) })}
+              onRemove={() => removeService(i)}
+              sparePartOptions={sparePartOptions}
+              labourOptions={labourOptions}
+              sparePartPriceModification={sparePartPriceModification}
+              sparePartMaxDiscountPercent={sparePartMaxDiscountPercent}
+              labourPriceModification={labourPriceModification}
+              labourMaxDiscountPercent={labourMaxDiscountPercent}
+            />
           ))}
         </div>
         <button
@@ -200,7 +166,7 @@ export function ServiceStep({
           onClick={addService}
           className="mt-3 w-full rounded-xl border border-dashed border-blue-300 text-blue-700 text-sm font-medium py-2.5"
         >
-          + Add Service
+          + Add Item
         </button>
       </div>
 

@@ -12,12 +12,22 @@ export type CustomerFormData = {
   leadSource: LeadSource;
 };
 
+// itemType defaults to "Service" so every existing code path that never sets
+// it keeps working unchanged. For "SparePart"/"Labour" lines, `customName`
+// holds the catalog display name (there's no free-text service name to pick
+// from), `originalPrice` is the catalog/default price at add-time, and
+// `unitPrice` is the final, actually-charged price (editable only if the
+// acting employee's price-modification permission allows it).
 export type ServiceItemFormData = {
+  itemType: "Service" | "SparePart" | "Labour";
   service: string;
   customName: string;
   description: string;
   qty: string;
   unitPrice: string;
+  originalPrice: string;
+  inventoryItemId: string;
+  labourItemId: string;
 };
 
 // Separate from ServiceFormData.items (billable service lines) -- Inventory
@@ -55,11 +65,15 @@ export const emptyCustomer: CustomerFormData = {
 };
 
 export const emptyServiceItem: ServiceItemFormData = {
+  itemType: "Service",
   service: "",
   customName: "",
   description: "",
   qty: "1",
   unitPrice: "",
+  originalPrice: "",
+  inventoryItemId: "",
+  labourItemId: "",
 };
 
 export const emptyInventoryUsageItem: InventoryUsageItemFormData = {

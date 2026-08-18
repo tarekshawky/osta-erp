@@ -6,6 +6,7 @@ import { useToast } from "@/components/Toast";
 import { StepHeader } from "./StepHeader";
 import { CustomerStep } from "./CustomerStep";
 import { ServiceStep, type InventoryOption } from "./ServiceStep";
+import type { SparePartOption, LabourOption } from "./InvoiceItemLine";
 import { PaymentStep } from "./PaymentStep";
 import { InvoicePreviewCard } from "./InvoicePreviewCard";
 import { createInvoiceFromWizard, updateInvoiceFromWizard } from "@/app/actions/invoice";
@@ -36,6 +37,12 @@ export function InvoiceWizard({
   currentEmployeeId,
   employeeOptions = [],
   inventoryOptions = [],
+  sparePartOptions = [],
+  labourOptions = [],
+  sparePartPriceModification = "Allowed",
+  sparePartMaxDiscountPercent = null,
+  labourPriceModification = "Allowed",
+  labourMaxDiscountPercent = null,
 }: {
   basePath: "/admin" | "/employee";
   createdByName: string;
@@ -52,6 +59,12 @@ export function InvoiceWizard({
   currentEmployeeId: string;
   employeeOptions?: { id: string; name: string }[];
   inventoryOptions?: InventoryOption[];
+  sparePartOptions?: SparePartOption[];
+  labourOptions?: LabourOption[];
+  sparePartPriceModification?: string;
+  sparePartMaxDiscountPercent?: number | null;
+  labourPriceModification?: string;
+  labourMaxDiscountPercent?: number | null;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -134,11 +147,13 @@ export function InvoiceWizard({
 
   const previewItems = service.items
     .filter((item) => {
+      if (item.itemType === "SparePart") return !!item.inventoryItemId && Number(item.unitPrice) > 0;
+      if (item.itemType === "Labour") return !!item.labourItemId && Number(item.unitPrice) > 0;
       const hasService = item.service === CUSTOM_SERVICE_VALUE ? item.customName.trim().length > 0 : item.service.length > 0;
       return hasService && Number(item.unitPrice) > 0;
     })
     .map((item) => ({
-      serviceName: item.service === CUSTOM_SERVICE_VALUE ? item.customName : item.service,
+      serviceName: item.itemType === "Service" ? (item.service === CUSTOM_SERVICE_VALUE ? item.customName : item.service) : item.customName,
       description: item.description || null,
       qty: Number(item.qty) || 1,
       unitPrice: Number(item.unitPrice) || 0,
@@ -164,6 +179,12 @@ export function InvoiceWizard({
           employeeOptions={employeeOptions}
           isAdmin={basePath === "/admin"}
           stockKnownForEmployeeId={currentEmployeeId}
+          sparePartOptions={sparePartOptions}
+          labourOptions={labourOptions}
+          sparePartPriceModification={sparePartPriceModification}
+          sparePartMaxDiscountPercent={sparePartMaxDiscountPercent}
+          labourPriceModification={labourPriceModification}
+          labourMaxDiscountPercent={labourMaxDiscountPercent}
         />
       )}
       {step === 2 && (

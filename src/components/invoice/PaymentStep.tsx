@@ -56,8 +56,15 @@ export function PaymentStep({
   teamOptions?: TeamOption[];
 }) {
   const total = service.items.reduce((sum, item) => {
-    const hasService = item.service === CUSTOM_SERVICE_VALUE ? item.customName.trim().length > 0 : item.service.length > 0;
-    if (!hasService) return sum;
+    const hasItem =
+      item.itemType === "SparePart"
+        ? !!item.inventoryItemId
+        : item.itemType === "Labour"
+          ? !!item.labourItemId
+          : item.service === CUSTOM_SERVICE_VALUE
+            ? item.customName.trim().length > 0
+            : item.service.length > 0;
+    if (!hasItem) return sum;
     return sum + (Number(item.qty) || 0) * (Number(item.unitPrice) || 0);
   }, 0);
 
