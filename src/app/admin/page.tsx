@@ -9,6 +9,7 @@ import { getPaymentTotals } from "@/lib/reportData";
 import { buildDateRange } from "@/lib/dateRangeFilter";
 import { getCollectMoneyTotal } from "@/lib/walletData";
 import { getVehicleAlerts } from "@/lib/vehicleData";
+import { getRentalAlerts } from "@/lib/rentalData";
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -30,6 +31,7 @@ export default async function AdminDashboardPage({
     collectMoneyTotal,
     recentInvoices,
     vehicleAlerts,
+    rentalAlerts,
   ] = await Promise.all([
     prisma.invoice.findMany({ select: { date: true } }),
     prisma.invoice.aggregate({
@@ -48,6 +50,7 @@ export default async function AdminDashboardPage({
       include: { team: true, createdBy: true, customer: true },
     }),
     getVehicleAlerts(),
+    getRentalAlerts(),
   ]);
 
   const years = Array.from(new Set(invoiceDates.map((i) => i.date.getFullYear()))).sort((a, b) => b - a);
@@ -100,6 +103,22 @@ export default async function AdminDashboardPage({
                 <div className="text-xs text-amber-100">{vehicleAlerts.length} vehicle alert(s)</div>
                 <div className="text-2xl font-bold mt-1">Needs Attention</div>
                 <div className="text-xs text-amber-100 mt-1">License/insurance expiring soon or service overdue</div>
+              </div>
+            </Link>
+          </>
+        )}
+
+        {rentalAlerts.length > 0 && (
+          <>
+            <h3 className="mt-6 font-semibold text-slate-900">Rental Alerts</h3>
+            <Link
+              href="/admin/rental-expenses"
+              className="mt-3 max-w-sm flex rounded-xl bg-gradient-to-br from-amber-600 to-red-500 text-white p-4 hover:opacity-90"
+            >
+              <div>
+                <div className="text-xs text-amber-100">{rentalAlerts.length} rental alert(s)</div>
+                <div className="text-2xl font-bold mt-1">Needs Attention</div>
+                <div className="text-xs text-amber-100 mt-1">Rent payments due soon or overdue</div>
               </div>
             </Link>
           </>

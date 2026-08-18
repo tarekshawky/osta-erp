@@ -171,6 +171,16 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/rental-expenses",
+    label: "Rental Expenses",
+    icon: (
+      <>
+        <path d="M3 10l9-7 9 7v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9z" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M9 21V12h6v9" strokeLinecap="round" strokeLinejoin="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/settings",
     label: "Settings",
     icon: (
