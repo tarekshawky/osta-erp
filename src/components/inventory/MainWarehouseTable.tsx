@@ -1,5 +1,6 @@
 import { formatAed } from "@/lib/format";
-import type { MainWarehouseRow } from "@/lib/inventoryData";
+import { MAIN_LOCATION, type MainWarehouseRow } from "@/lib/inventoryData";
+import { AdjustStockModal } from "./AdjustStockModal";
 
 const STATUS_STYLES: Record<string, string> = {
   OK: "bg-green-50 text-green-700",
@@ -20,6 +21,7 @@ export function MainWarehouseTable({ rows }: { rows: MainWarehouseRow[] }) {
             <th className="px-4 py-3 font-medium text-right">Total</th>
             <th className="px-4 py-3 font-medium text-right">Value</th>
             <th className="px-4 py-3 font-medium">Status</th>
+            <th className="px-4 py-3 font-medium">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -44,11 +46,20 @@ export function MainWarehouseTable({ rows }: { rows: MainWarehouseRow[] }) {
                   {r.status}
                 </span>
               </td>
+              <td className="px-4 py-3">
+                <AdjustStockModal
+                  location={MAIN_LOCATION}
+                  inventoryItemId={r.itemId}
+                  displayName={r.displayName}
+                  unit={r.unit}
+                  currentQty={r.mainQty}
+                />
+              </td>
             </tr>
           ))}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
+              <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
                 No active inventory items yet.
               </td>
             </tr>

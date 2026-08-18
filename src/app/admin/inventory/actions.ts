@@ -9,6 +9,11 @@ import {
   INVENTORY_ITEM_STATUSES,
   addStock as addStockLib,
   recordSupplierPurchase as recordSupplierPurchaseLib,
+  distributeStock as distributeStockLib,
+  returnToWarehouse as returnToWarehouseLib,
+  recordDamaged as recordDamagedLib,
+  recordLost as recordLostLib,
+  adjustStock as adjustStockLib,
   type InventoryActionResult,
 } from "@/lib/inventoryData";
 
@@ -106,5 +111,71 @@ export async function recordSupplierPurchase(input: SupplierPurchaseFormInput): 
     revalidatePath("/admin/inventory/transactions");
     revalidatePath("/admin/expenses");
   }
+  return result;
+}
+
+function revalidateStockPaths() {
+  revalidatePath("/admin/inventory");
+  revalidatePath("/admin/inventory/warehouse");
+  revalidatePath("/admin/inventory/employees");
+  revalidatePath("/admin/inventory/transactions");
+}
+
+export async function distributeStock(
+  employeeId: string,
+  lines: { inventoryItemId: string; quantity: number }[]
+): Promise<InventoryActionResult> {
+  const admin = await requireEmployee("ADMIN");
+  const result = await distributeStockLib(admin.id, employeeId, lines);
+  if (result.ok) revalidateStockPaths();
+  return result;
+}
+
+export async function returnToWarehouse(
+  employeeId: string,
+  inventoryItemId: string,
+  quantity: number
+): Promise<InventoryActionResult> {
+  const admin = await requireEmployee("ADMIN");
+  const result = await returnToWarehouseLib(admin.id, employeeId, inventoryItemId, quantity);
+  if (result.ok) revalidateStockPaths();
+  return result;
+}
+
+export async function recordDamaged(
+  location: string,
+  inventoryItemId: string,
+  quantity: number,
+  reason: string,
+  notes: string
+): Promise<InventoryActionResult> {
+  const admin = await requireEmployee("ADMIN");
+  const result = await recordDamagedLib(admin.id, location, inventoryItemId, quantity, reason, notes);
+  if (result.ok) revalidateStockPaths();
+  return result;
+}
+
+export async function recordLost(
+  location: string,
+  inventoryItemId: string,
+  quantity: number,
+  reason: string,
+  notes: string
+): Promise<InventoryActionResult> {
+  const admin = await requireEmployee("ADMIN");
+  const result = await recordLostLib(admin.id, location, inventoryItemId, quantity, reason, notes);
+  if (result.ok) revalidateStockPaths();
+  return result;
+}
+
+export async function adjustStock(
+  location: string,
+  inventoryItemId: string,
+  newPhysicalCount: number,
+  reason: string
+): Promise<InventoryActionResult> {
+  const admin = await requireEmployee("ADMIN");
+  const result = await adjustStockLib(admin.id, location, inventoryItemId, newPhysicalCount, reason);
+  if (result.ok) revalidateStockPaths();
   return result;
 }

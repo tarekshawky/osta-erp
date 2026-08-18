@@ -37,6 +37,18 @@ export default async function InventoryDashboardPage() {
             <div className="font-semibold text-slate-900">Main Warehouse</div>
             <div className="text-sm text-slate-500 mt-0.5">Add stock, record supplier purchases, view stock levels.</div>
           </Link>
+          <Link href="/admin/inventory/distribute" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
+            <div className="font-semibold text-slate-900">Distribute Stock</div>
+            <div className="text-sm text-slate-500 mt-0.5">Transfer quantities from Main Warehouse to an employee.</div>
+          </Link>
+          <Link href="/admin/inventory/employees" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
+            <div className="font-semibold text-slate-900">Employee Inventory</div>
+            <div className="text-sm text-slate-500 mt-0.5">See exactly what every employee currently has.</div>
+          </Link>
+          <Link href="/admin/inventory/transactions" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
+            <div className="font-semibold text-slate-900">Transactions</div>
+            <div className="text-sm text-slate-500 mt-0.5">Every stock movement, searchable and filterable.</div>
+          </Link>
         </div>
       </div>
     </div>
