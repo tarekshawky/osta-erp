@@ -50,7 +50,11 @@ export default async function IncomeStatementPage({
         </div>
 
         <div className="mb-4">
-          <ReportActions targetId="income-statement-preview" fileName="statement-of-comprehensive-income" />
+          <ReportActions
+            targetId="income-statement-preview"
+            fileName="statement-of-comprehensive-income"
+            excelHref={`/admin/financial-reports/export?report=income-statement&from=${toDateInputValue(from)}&to=${toDateInputValue(to)}`}
+          />
         </div>
 
         <ReportPreview id="income-statement-preview">

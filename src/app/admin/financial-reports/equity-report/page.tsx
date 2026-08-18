@@ -52,7 +52,11 @@ export default async function EquityReportPage({
         </div>
 
         <div className="mb-4">
-          <ReportActions targetId="equity-report-preview" fileName="equity-report" />
+          <ReportActions
+            targetId="equity-report-preview"
+            fileName="equity-report"
+            excelHref={`/admin/financial-reports/export?report=equity-report&asOf=${toDateInputValue(asOfDate)}`}
+          />
         </div>
 
         <ReportPreview id="equity-report-preview">

@@ -46,7 +46,11 @@ export default async function LiabilityReportPage({
         </div>
 
         <div className="mb-4">
-          <ReportActions targetId="liability-report-preview" fileName="liability-report" />
+          <ReportActions
+            targetId="liability-report-preview"
+            fileName="liability-report"
+            excelHref={`/admin/financial-reports/export?report=liability-report&asOf=${toDateInputValue(asOfDate)}`}
+          />
         </div>
 
         <ReportPreview id="liability-report-preview">

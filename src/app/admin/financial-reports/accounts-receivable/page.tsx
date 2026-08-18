@@ -37,7 +37,11 @@ export default async function AccountsReceivablePage({
         </div>
 
         <div className="mb-4">
-          <ReportActions targetId="ar-preview" fileName="accounts-receivable" />
+          <ReportActions
+            targetId="ar-preview"
+            fileName="accounts-receivable"
+            excelHref={`/admin/financial-reports/export?report=accounts-receivable&asOf=${toDateInputValue(asOfDate)}`}
+          />
         </div>
 
         <ReportPreview id="ar-preview">

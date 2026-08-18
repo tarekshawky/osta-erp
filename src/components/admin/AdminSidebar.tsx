@@ -121,6 +121,16 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/financial-reports",
+    label: "Financial Reports",
+    icon: (
+      <>
+        <rect x="4" y="3" width="16" height="18" rx="2" strokeLinejoin="round" />
+        <path d="M8 8h8M8 12h8M8 16h5" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/marketing",
     label: "Marketing",
     icon: (

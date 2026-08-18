@@ -56,7 +56,11 @@ export default async function TrialBalancePage({
         </div>
 
         <div className="mb-4">
-          <ReportActions targetId="trial-balance-preview" fileName="trial-balance" />
+          <ReportActions
+            targetId="trial-balance-preview"
+            fileName="trial-balance"
+            excelHref={`/admin/financial-reports/export?report=trial-balance&from=${toDateInputValue(from)}&to=${toDateInputValue(to)}`}
+          />
         </div>
 
         <ReportPreview id="trial-balance-preview">

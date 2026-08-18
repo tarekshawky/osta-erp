@@ -72,7 +72,11 @@ export default async function GeneralLedgerPage({
         </div>
 
         <div className="mb-4">
-          <ReportActions targetId="general-ledger-preview" fileName={`general-ledger-${account.toLowerCase().replace(/\s+/g, "-")}`} />
+          <ReportActions
+            targetId="general-ledger-preview"
+            fileName={`general-ledger-${account.toLowerCase().replace(/\s+/g, "-")}`}
+            excelHref={`/admin/financial-reports/export?report=general-ledger&account=${encodeURIComponent(account)}&from=${toDateInputValue(from)}&to=${toDateInputValue(to)}`}
+          />
         </div>
 
         <ReportPreview id="general-ledger-preview">

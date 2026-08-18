@@ -36,7 +36,11 @@ export default async function AccountsPayablePage({
         </div>
 
         <div className="mb-4">
-          <ReportActions targetId="ap-preview" fileName="accounts-payable" />
+          <ReportActions
+            targetId="ap-preview"
+            fileName="accounts-payable"
+            excelHref={`/admin/financial-reports/export?report=accounts-payable&asOf=${toDateInputValue(asOfDate)}`}
+          />
         </div>
 
         <ReportPreview id="ap-preview">

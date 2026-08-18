@@ -50,7 +50,11 @@ export default async function AssetReportPage({
         </div>
 
         <div className="mb-4">
-          <ReportActions targetId="asset-report-preview" fileName="asset-report" />
+          <ReportActions
+            targetId="asset-report-preview"
+            fileName="asset-report"
+            excelHref={`/admin/financial-reports/export?report=asset-report&asOf=${toDateInputValue(asOfDate)}`}
+          />
         </div>
 
         <ReportPreview id="asset-report-preview">

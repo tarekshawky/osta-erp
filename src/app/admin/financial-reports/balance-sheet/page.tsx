@@ -43,7 +43,11 @@ export default async function BalanceSheetPage({
         <BalanceAlert isBalanced={balanceSheet.current.isBalanced} difference={balanceSheet.current.difference} />
 
         <div className="mb-4">
-          <ReportActions targetId="balance-sheet-preview" fileName="statement-of-financial-position" />
+          <ReportActions
+            targetId="balance-sheet-preview"
+            fileName="statement-of-financial-position"
+            excelHref={`/admin/financial-reports/export?report=balance-sheet&asOf=${toDateInputValue(asOfDate)}&comparative=${toDateInputValue(comparativeDate)}`}
+          />
         </div>
 
         <ReportPreview id="balance-sheet-preview">

@@ -55,7 +55,11 @@ export default async function ExpenseReportPage({
         </div>
 
         <div className="mb-4">
-          <ReportActions targetId="expense-report-preview" fileName="expense-report" />
+          <ReportActions
+            targetId="expense-report-preview"
+            fileName="expense-report"
+            excelHref={`/admin/financial-reports/export?report=expense-report&from=${toDateInputValue(from)}&to=${toDateInputValue(to)}`}
+          />
         </div>
 
         <ReportPreview id="expense-report-preview">

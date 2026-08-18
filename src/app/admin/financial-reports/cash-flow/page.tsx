@@ -53,7 +53,11 @@ export default async function CashFlowPage({
         </div>
 
         <div className="mb-4">
-          <ReportActions targetId="cash-flow-preview" fileName="cash-flow-statement" />
+          <ReportActions
+            targetId="cash-flow-preview"
+            fileName="cash-flow-statement"
+            excelHref={`/admin/financial-reports/export?report=cash-flow&from=${toDateInputValue(from)}&to=${toDateInputValue(to)}`}
+          />
         </div>
 
         <ReportPreview id="cash-flow-preview">
