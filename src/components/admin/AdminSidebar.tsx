@@ -181,6 +181,17 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/inventory",
+    label: "Inventory",
+    icon: (
+      <>
+        <path d="M21 8l-9-5-9 5 9 5 9-5z" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 8v8l9 5 9-5V8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 13v8" strokeLinecap="round" strokeLinejoin="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/settings",
     label: "Settings",
     icon: (
