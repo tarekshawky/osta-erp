@@ -1,8 +1,10 @@
 export function formatAed(amount: number) {
+  // Normalizes -0 to 0 so a value that nets to exactly zero never renders "-0.00".
+  const value = amount === 0 ? 0 : amount;
   const formatted = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount);
+  }).format(value);
   return `AED ${formatted}`;
 }
 
