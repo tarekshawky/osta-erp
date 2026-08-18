@@ -26,6 +26,7 @@ export const EXPENSE_CATEGORIES = [
   "Insurance",
   "Visa Expenses",
   "Rent / Accommodation",
+  "Inventory Purchase",
 ] as const;
 
 // Expenses tagged with this category feed the Marketing dashboard's Total Marketing
@@ -86,6 +87,7 @@ export const EXPENSE_CATEGORY_STYLES: Record<string, string> = {
   Insurance: "bg-purple-50 text-purple-700",
   "Visa Expenses": "bg-cyan-50 text-cyan-700",
   "Rent / Accommodation": "bg-orange-50 text-orange-700",
+  "Inventory Purchase": "bg-teal-50 text-teal-700",
 };
 
 // Shared by admin's createExpense action and the employee expense form so both

@@ -110,6 +110,11 @@ model Employee {
   cashPositionUpdates        CashPosition[]       @relation("CashPositionUpdatedBy")
   settingsAsShareholder      Setting[]            @relation("SettingShareholder")
   rentalAgreementsCreated    RentalAgreement[]    @relation("RentalAgreementCreatedBy")
+  inventoryItemsCreated        InventoryItem[]                @relation("InventoryItemCreatedBy")
+  inventoryTransactionsCreated InventoryTransaction[]          @relation("InventoryTransactionCreatedBy")
+  inventoryRequirements        EmployeeInventoryRequirement[]  @relation("InventoryRequirementFor")
+  inventoryRequirementsCreated EmployeeInventoryRequirement[]  @relation("InventoryRequirementCreatedBy")
+  inventoryUsages               InvoiceInventoryUsage[]
   createdAt DateTime   @default(now())
 }
 
@@ -248,6 +253,8 @@ model Invoice {
   statusChanges InvoiceStatusChange[]
   order         Order?
   quotation     Quotation?
+  inventoryTransactions InventoryTransaction[]
+  inventoryUsages       InvoiceInventoryUsage[]
   createdAt     DateTime      @default(now())
 }
 
@@ -657,4 +664,86 @@ model PayrollEntry {
   createdBy   Employee @relation("PayrollCreatedBy", fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
   vehicleFineInstallment VehicleFineInstallment?
+}
+
+model InventoryItem {
+  id               String   @id @default(cuid())
+  name             String
+  specification    String?
+  unit             String
+  category         String
+  description      String?
+  costPrice        Float?
+  sellingPrice     Float?
+  minimumMainStock Float    @default(0)
+  status           String   @default("Active")
+  transactions     InventoryTransaction[]
+  requirements     EmployeeInventoryRequirement[]
+  invoiceUsages    InvoiceInventoryUsage[]
+  createdById      String
+  createdBy        Employee @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
+  createdAt        DateTime @default(now())
+}
+
+// The sole source of truth for every stock movement. Current quantity at any
+// location is ALWAYS derived -- SUM(quantity WHERE toLocation=X) minus
+// SUM(quantity WHERE fromLocation=X) -- never stored on InventoryItem/Employee,
+// mirroring how CreditCard.outstanding and vehicle odometer are computed on the
+// fly elsewhere. fromLocation/toLocation are plain strings (not real FKs)
+// holding "MAIN", an Employee.id, or null (external: a supplier on receipt, or
+// consumed/damaged/lost/reversed on the way out) -- a relation can't
+// conditionally point at a sentinel string or a real row.
+model InventoryTransaction {
+  id              String   @id @default(cuid())
+  number          String?  @unique
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  type            String
+  quantity        Float
+  fromLocation    String?
+  toLocation      String?
+  invoiceId       String?
+  invoice         Invoice? @relation(fields: [invoiceId], references: [id])
+  reason          String?
+  notes           String?
+  createdById     String
+  createdBy       Employee @relation("InventoryTransactionCreatedBy", fields: [createdById], references: [id])
+  createdAt       DateTime @default(now())
+  invoiceUsage    InvoiceInventoryUsage?
+}
+
+model EmployeeInventoryRequirement {
+  id                String   @id @default(cuid())
+  employeeId        String
+  employee          Employee @relation("InventoryRequirementFor", fields: [employeeId], references: [id])
+  inventoryItemId   String
+  inventoryItem     InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  requiredQuantity  Float
+  minimumQuantity   Float
+  createdById       String
+  createdBy         Employee @relation("InventoryRequirementCreatedBy", fields: [createdById], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([employeeId, inventoryItemId])
+}
+
+// Join/traceability row, mirroring VehicleFineInstallment's expenseId-pairing
+// pattern: one row per {invoice, item}, pointing at the one "Stock Used"
+// InventoryTransaction it created. Reversed (a new "Stock Reversed"
+// transaction, never a silent delete) on invoice edit/delete.
+model InvoiceInventoryUsage {
+  id              String   @id @default(cuid())
+  invoiceId       String
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  employeeId      String
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  quantity        Float
+  transactionId   String   @unique
+  transaction     InventoryTransaction @relation(fields: [transactionId], references: [id])
+  createdAt       DateTime @default(now())
+
+  @@unique([invoiceId, inventoryItemId])
 }
