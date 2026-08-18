@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatAed } from "@/lib/format";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
@@ -5,7 +6,6 @@ import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { ReportTeamSelect } from "@/components/admin/ReportTeamSelect";
 import { computeAnnualReport, summarize, MONTH_NAMES, type MonthFigures } from "@/lib/reportData";
 import {
-  computeVehicleExpenseReportSummary,
   computeFineReportSummary,
   computeMileageReportSummary,
   computeFuelReportSummary,
@@ -77,8 +77,7 @@ export default async function AdminReportsPage({
 
   const periodLabel = month ? `${MONTH_NAMES[month - 1]} ${year}` : String(year);
 
-  const [vehicleExpenseSummary, fineSummary, mileageSummary, fuelSummary] = await Promise.all([
-    computeVehicleExpenseReportSummary({ year, month }),
+  const [fineSummary, mileageSummary, fuelSummary] = await Promise.all([
     computeFineReportSummary({ year, month }),
     computeMileageReportSummary(),
     computeFuelReportSummary({ year, month }),
@@ -314,17 +313,16 @@ export default async function AdminReportsPage({
           Salary figures reflect entries recorded on the Payroll page, not an automatic monthly accrual.
         </p>
 
-        {/* Vehicle Expense Report */}
-        <h3 className="mt-8 font-semibold text-slate-900">Vehicle Expense Report — {periodLabel}</h3>
-        <div className="mt-3 grid grid-cols-2 lg:grid-cols-3 gap-3">
-          <AdminStatCard label="Total Vehicle Expenses" value={formatAed(vehicleExpenseSummary.total)} valueClassName="text-red-500" />
-          {Object.entries(vehicleExpenseSummary.bySubcategory).map(([type, amount]) => (
-            <AdminStatCard key={type} label={type} value={formatAed(amount)} />
-          ))}
-          {Object.keys(vehicleExpenseSummary.bySubcategory).length === 0 && (
-            <p className="text-sm text-slate-400 col-span-full">No vehicle expenses in this period.</p>
-          )}
-        </div>
+        <Link
+          href="/admin/vehicles/expense-report"
+          className="mt-8 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50"
+        >
+          <div>
+            <div className="font-semibold text-slate-900">Vehicle Expense Report</div>
+            <div className="text-sm text-slate-500 mt-0.5">Vehicle-category expenses across the fleet, with year/month filters</div>
+          </div>
+          <span className="text-blue-600 font-medium text-sm">View →</span>
+        </Link>
 
         {/* Fine Report */}
         <h3 className="mt-8 font-semibold text-slate-900">Fine Report — {periodLabel}</h3>
