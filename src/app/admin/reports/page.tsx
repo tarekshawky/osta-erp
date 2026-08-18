@@ -314,6 +314,40 @@ export default async function AdminReportsPage({
           </div>
           <span className="text-blue-600 font-medium text-sm">View →</span>
         </Link>
+
+        <h3 className="mt-8 font-semibold text-slate-900">Spare Parts Reports</h3>
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Link
+            href="/admin/reports/spare-parts-sales"
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50"
+          >
+            <div>
+              <div className="font-semibold text-slate-900">Spare Parts Sales</div>
+              <div className="text-sm text-slate-500 mt-0.5">Revenue, cost, and profit per Spare Part line</div>
+            </div>
+            <span className="text-blue-600 font-medium text-sm">View →</span>
+          </Link>
+          <Link
+            href="/admin/reports/labour-sales"
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50"
+          >
+            <div>
+              <div className="font-semibold text-slate-900">Labour Sales</div>
+              <div className="text-sm text-slate-500 mt-0.5">Revenue per Labour line</div>
+            </div>
+            <span className="text-blue-600 font-medium text-sm">View →</span>
+          </Link>
+          <Link
+            href="/admin/reports/price-modifications"
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50"
+          >
+            <div>
+              <div className="font-semibold text-slate-900">Price Modifications</div>
+              <div className="text-sm text-slate-500 mt-0.5">Every Spare Part/Labour line with a changed final price</div>
+            </div>
+            <span className="text-blue-600 font-medium text-sm">View →</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

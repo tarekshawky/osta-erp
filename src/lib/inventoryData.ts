@@ -214,11 +214,17 @@ export type WarehouseStockRow = {
   totalQty: number;
   minimumMainStock: number;
   costPrice: number | null;
+  supplierName: string | null;
+  stockValue: number;
   status: MainStockStatus;
 };
 
 export async function getWarehouseStockSummary(warehouseId: string): Promise<WarehouseStockRow[]> {
-  const items = await prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } });
+  const items = await prisma.inventoryItem.findMany({
+    where: { status: "Active" },
+    orderBy: { name: "asc" },
+    include: { supplier: { select: { name: true } } },
+  });
   const itemIds = items.map((i) => i.id);
   const [warehouseQtyMap, totalQtyMap, allWarehousesQtyMap] = await Promise.all([
     getBulkLocationQuantities(prisma, itemIds, warehouseId),
@@ -243,6 +249,8 @@ export async function getWarehouseStockSummary(warehouseId: string): Promise<War
       totalQty,
       minimumMainStock: item.minimumMainStock,
       costPrice: item.costPrice,
+      supplierName: item.supplier?.name ?? null,
+      stockValue: warehouseQty * (item.costPrice ?? 0),
       status,
     };
   });

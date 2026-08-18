@@ -16,6 +16,7 @@ export function MainWarehouseTable({ rows, warehouseId }: { rows: WarehouseStock
           <tr className="text-left text-slate-500 border-b border-slate-100">
             <th className="px-4 py-3 font-medium">Item</th>
             <th className="px-4 py-3 font-medium">Category</th>
+            <th className="px-4 py-3 font-medium">Supplier</th>
             <th className="px-4 py-3 font-medium text-right">This Warehouse</th>
             <th className="px-4 py-3 font-medium text-right">Employee Stock</th>
             <th className="px-4 py-3 font-medium text-right">Total</th>
@@ -29,6 +30,7 @@ export function MainWarehouseTable({ rows, warehouseId }: { rows: WarehouseStock
             <tr key={r.itemId} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
               <td className="px-4 py-3 text-slate-900 font-medium">{r.displayName}</td>
               <td className="px-4 py-3 text-slate-600">{r.category}</td>
+              <td className="px-4 py-3 text-slate-600">{r.supplierName ?? "—"}</td>
               <td className="px-4 py-3 text-right text-slate-900 font-medium whitespace-nowrap">
                 {r.warehouseQty.toLocaleString()} {r.unit}
               </td>
@@ -39,7 +41,7 @@ export function MainWarehouseTable({ rows, warehouseId }: { rows: WarehouseStock
                 {r.totalQty.toLocaleString()} {r.unit}
               </td>
               <td className="px-4 py-3 text-right text-slate-600 whitespace-nowrap">
-                {r.costPrice != null ? formatAed(r.warehouseQty * r.costPrice) : "—"}
+                {r.costPrice != null ? formatAed(r.stockValue) : "—"}
               </td>
               <td className="px-4 py-3">
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[r.status] ?? "bg-slate-100 text-slate-600"}`}>
@@ -59,7 +61,7 @@ export function MainWarehouseTable({ rows, warehouseId }: { rows: WarehouseStock
           ))}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+              <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
                 No active inventory items yet.
               </td>
             </tr>
