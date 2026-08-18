@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { TopBar } from "@/components/TopBar";
 import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
+import { getInventoryItemDisplayName, getLocationQuantity } from "@/lib/inventoryData";
 import type { CustomerFormData, ServiceFormData } from "@/components/invoice/types";
 
 export default async function NewInvoicePage({
@@ -11,11 +12,21 @@ export default async function NewInvoicePage({
   searchParams: Promise<{ orderId?: string; quotationId?: string }>;
 }) {
   const { orderId, quotationId } = await searchParams;
-  const [employee, order, quotation] = await Promise.all([
+  const [employee, order, quotation, activeItems] = await Promise.all([
     requireEmployee("EMPLOYEE"),
     orderId ? prisma.order.findUnique({ where: { id: orderId }, include: { customer: true } }) : null,
     quotationId ? prisma.quotation.findUnique({ where: { id: quotationId }, include: { customer: true, items: true } }) : null,
+    prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
   ]);
+
+  const inventoryOptions = await Promise.all(
+    activeItems.map(async (item) => ({
+      id: item.id,
+      displayName: getInventoryItemDisplayName(item),
+      unit: item.unit,
+      currentStock: await getLocationQuantity(prisma, item.id, employee.id),
+    }))
+  );
 
   const sourceCustomer = order?.customer ?? quotation?.customer;
   const initialCustomer: CustomerFormData | undefined = sourceCustomer
@@ -55,6 +66,8 @@ export default async function NewInvoicePage({
           qty: String(item.qty),
           unitPrice: String(item.unitPrice),
         })),
+        inventoryEmployeeId: employee.id,
+        inventoryUsage: [],
       }
     : undefined;
 
@@ -70,6 +83,8 @@ export default async function NewInvoicePage({
         initialStep={order || quotation ? 1 : 0}
         orderId={order?.id}
         quotationId={quotation?.id}
+        currentEmployeeId={employee.id}
+        inventoryOptions={inventoryOptions}
       />
     </div>
   );

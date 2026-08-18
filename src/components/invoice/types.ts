@@ -20,10 +20,20 @@ export type ServiceItemFormData = {
   unitPrice: string;
 };
 
+// Separate from ServiceFormData.items (billable service lines) -- Inventory
+// Used only ever deducts stock, it never creates or affects a billable
+// InvoiceItem/revenue row. Kept fully independent by design.
+export type InventoryUsageItemFormData = {
+  inventoryItemId: string;
+  quantity: string;
+};
+
 export type ServiceFormData = {
   serviceType: "Repair" | "Inspection";
   category: Category;
   items: ServiceItemFormData[];
+  inventoryEmployeeId: string;
+  inventoryUsage: InventoryUsageItemFormData[];
 };
 
 export type PaymentFormData = {
@@ -52,10 +62,17 @@ export const emptyServiceItem: ServiceItemFormData = {
   unitPrice: "",
 };
 
+export const emptyInventoryUsageItem: InventoryUsageItemFormData = {
+  inventoryItemId: "",
+  quantity: "",
+};
+
 export const emptyService: ServiceFormData = {
   serviceType: "Repair",
   category: "AC",
   items: [{ ...emptyServiceItem }],
+  inventoryEmployeeId: "",
+  inventoryUsage: [],
 };
 
 export const emptyPayment: PaymentFormData = {

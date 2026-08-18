@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { StepHeader } from "./StepHeader";
 import { CustomerStep } from "./CustomerStep";
-import { ServiceStep } from "./ServiceStep";
+import { ServiceStep, type InventoryOption } from "./ServiceStep";
 import { PaymentStep } from "./PaymentStep";
 import { InvoicePreviewCard } from "./InvoicePreviewCard";
 import { createInvoiceFromWizard, updateInvoiceFromWizard } from "@/app/actions/invoice";
@@ -33,6 +33,9 @@ export function InvoiceWizard({
   orderId,
   quotationId,
   teamOptions = [],
+  currentEmployeeId,
+  employeeOptions = [],
+  inventoryOptions = [],
 }: {
   basePath: "/admin" | "/employee";
   createdByName: string;
@@ -46,12 +49,17 @@ export function InvoiceWizard({
   orderId?: string;
   quotationId?: string;
   teamOptions?: { id: string; name: string }[];
+  currentEmployeeId: string;
+  employeeOptions?: { id: string; name: string }[];
+  inventoryOptions?: InventoryOption[];
 }) {
   const router = useRouter();
   const { showToast } = useToast();
   const [step, setStep] = useState(initialStep);
   const [customer, setCustomer] = useState<CustomerFormData>(initialCustomer ?? emptyCustomer);
-  const [service, setService] = useState<ServiceFormData>(initialService ?? emptyService);
+  const [service, setService] = useState<ServiceFormData>(
+    initialService ?? { ...emptyService, inventoryEmployeeId: currentEmployeeId }
+  );
   const [payment, setPayment] = useState<PaymentFormData>(initialPayment ?? emptyPayment);
   const [result, setResult] = useState<{ number: string; amount: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +69,7 @@ export function InvoiceWizard({
 
   function reset() {
     setCustomer(emptyCustomer);
-    setService(emptyService);
+    setService({ ...emptyService, inventoryEmployeeId: currentEmployeeId });
     setPayment(emptyPayment);
     setResult(null);
     setError(null);
@@ -147,7 +155,17 @@ export function InvoiceWizard({
       />
       {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
       {step === 0 && <CustomerStep value={customer} onChange={setCustomer} onNext={() => setStep(1)} />}
-      {step === 1 && <ServiceStep value={service} onChange={setService} onNext={() => setStep(2)} />}
+      {step === 1 && (
+        <ServiceStep
+          value={service}
+          onChange={setService}
+          onNext={() => setStep(2)}
+          inventoryOptions={inventoryOptions}
+          employeeOptions={employeeOptions}
+          isAdmin={basePath === "/admin"}
+          stockKnownForEmployeeId={currentEmployeeId}
+        />
+      )}
       {step === 2 && (
         <PaymentStep
           value={payment}

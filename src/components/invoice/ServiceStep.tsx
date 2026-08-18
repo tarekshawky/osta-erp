@@ -2,8 +2,10 @@
 
 import { CATEGORIES, SERVICE_CATALOG, CUSTOM_SERVICE_VALUE, type Category } from "@/lib/invoiceData";
 import { inputClassName } from "@/components/FormField";
-import type { ServiceFormData, ServiceItemFormData } from "./types";
-import { emptyServiceItem } from "./types";
+import type { ServiceFormData, ServiceItemFormData, InventoryUsageItemFormData } from "./types";
+import { emptyServiceItem, emptyInventoryUsageItem } from "./types";
+
+export type InventoryOption = { id: string; displayName: string; unit: string; currentStock: number };
 
 const CATEGORY_ICONS: Record<Category, React.ReactNode> = {
   AC: (
@@ -32,19 +34,45 @@ function updateItem(items: ServiceItemFormData[], index: number, patch: Partial<
   return items.map((it, i) => (i === index ? { ...it, ...patch } : it));
 }
 
+function updateUsageLine(lines: InventoryUsageItemFormData[], index: number, patch: Partial<InventoryUsageItemFormData>) {
+  return lines.map((l, i) => (i === index ? { ...l, ...patch } : l));
+}
+
 export function ServiceStep({
   value,
   onChange,
   onNext,
+  inventoryOptions = [],
+  employeeOptions = [],
+  isAdmin = false,
+  stockKnownForEmployeeId,
 }: {
   value: ServiceFormData;
   onChange: (value: ServiceFormData) => void;
   onNext: () => void;
+  inventoryOptions?: InventoryOption[];
+  employeeOptions?: { id: string; name: string }[];
+  isAdmin?: boolean;
+  // inventoryOptions.currentStock was computed server-side for exactly this
+  // employee -- switching the "Inventory Used" employee selector away from it
+  // makes the hint stale, so it's hidden rather than shown wrong.
+  stockKnownForEmployeeId?: string;
 }) {
-  const isValid = value.items.every((item) => {
-    const hasService = item.service === CUSTOM_SERVICE_VALUE ? item.customName.trim().length > 0 : item.service.length > 0;
-    return hasService && Number(item.unitPrice) > 0;
-  });
+  const isValid =
+    value.items.every((item) => {
+      const hasService = item.service === CUSTOM_SERVICE_VALUE ? item.customName.trim().length > 0 : item.service.length > 0;
+      return hasService && Number(item.unitPrice) > 0;
+    }) &&
+    value.inventoryUsage.every((line) => !line.inventoryItemId || Number(line.quantity) > 0);
+
+  const inventoryById = new Map(inventoryOptions.map((i) => [i.id, i]));
+
+  function addUsageLine() {
+    onChange({ ...value, inventoryUsage: [...value.inventoryUsage, { ...emptyInventoryUsageItem }] });
+  }
+  function removeUsageLine(index: number) {
+    onChange({ ...value, inventoryUsage: value.inventoryUsage.filter((_, i) => i !== index) });
+  }
 
   function setCategory(category: Category) {
     onChange({ ...value, category, items: [{ ...emptyServiceItem }] });
@@ -175,6 +203,82 @@ export function ServiceStep({
           + Add Service
         </button>
       </div>
+
+      {inventoryOptions.length > 0 && (
+        <div>
+          <label className="text-xs font-medium text-slate-600 mb-1.5 block">Inventory Used</label>
+          <p className="text-xs text-slate-400 mb-2">Deducts stock only — does not affect the invoice amount.</p>
+
+          {isAdmin && employeeOptions.length > 0 && (
+            <select
+              className={`${inputClassName} mb-3`}
+              value={value.inventoryEmployeeId}
+              onChange={(e) => onChange({ ...value, inventoryEmployeeId: e.target.value })}
+            >
+              {employeeOptions.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {value.inventoryUsage.map((line, i) => {
+              const item = inventoryById.get(line.inventoryItemId);
+              return (
+                <div key={i} className="rounded-xl border border-slate-200 p-3 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-blue-700">Item {i + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeUsageLine(i)}
+                      className="text-xs text-red-500 hover:text-red-600"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <select
+                    className={inputClassName}
+                    value={line.inventoryItemId}
+                    onChange={(e) => onChange({ ...value, inventoryUsage: updateUsageLine(value.inventoryUsage, i, { inventoryItemId: e.target.value }) })}
+                  >
+                    <option value="">-- Select Item --</option>
+                    {inventoryOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.displayName}
+                      </option>
+                    ))}
+                  </select>
+                  <div>
+                    <label className="text-xs text-slate-500">
+                      Quantity Used {item ? `(${item.unit})` : ""}
+                      {item && value.inventoryEmployeeId === stockKnownForEmployeeId && (
+                        <span className="text-slate-400"> — Available: {item.currentStock.toLocaleString()} {item.unit}</span>
+                      )}
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.001"
+                      className={inputClassName}
+                      value={line.quantity}
+                      onChange={(e) => onChange({ ...value, inventoryUsage: updateUsageLine(value.inventoryUsage, i, { quantity: e.target.value }) })}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={addUsageLine}
+            className="mt-3 w-full rounded-xl border border-dashed border-slate-300 text-slate-600 text-sm font-medium py-2.5"
+          >
+            + Add Inventory Item
+          </button>
+        </div>
+      )}
 
       <button
         type="button"

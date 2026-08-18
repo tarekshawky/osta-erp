@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
+import { getInventoryItemDisplayName, getLocationQuantity } from "@/lib/inventoryData";
 import type { CustomerFormData, ServiceFormData } from "@/components/invoice/types";
 
 export default async function AdminNewInvoicePage({
@@ -11,13 +12,24 @@ export default async function AdminNewInvoicePage({
   searchParams: Promise<{ orderId?: string; customerId?: string; quotationId?: string }>;
 }) {
   const { orderId, customerId, quotationId } = await searchParams;
-  const [employee, teams, order, customer, quotation] = await Promise.all([
+  const [employee, teams, order, customer, quotation, activeEmployees, activeItems] = await Promise.all([
     requireEmployee("ADMIN"),
     prisma.team.findMany({ where: { name: { in: ["Ajman", "Al Ain"] } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     orderId ? prisma.order.findUnique({ where: { id: orderId }, include: { customer: true } }) : null,
     !orderId && !quotationId && customerId ? prisma.customer.findUnique({ where: { id: customerId } }) : null,
     quotationId ? prisma.quotation.findUnique({ where: { id: quotationId }, include: { customer: true, items: true } }) : null,
+    prisma.employee.findMany({ where: { status: "active" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
   ]);
+
+  const inventoryOptions = await Promise.all(
+    activeItems.map(async (item) => ({
+      id: item.id,
+      displayName: getInventoryItemDisplayName(item),
+      unit: item.unit,
+      currentStock: await getLocationQuantity(prisma, item.id, employee.id),
+    }))
+  );
 
   const sourceCustomer = order?.customer ?? customer ?? quotation?.customer;
   const initialCustomer: CustomerFormData | undefined = sourceCustomer
@@ -57,6 +69,8 @@ export default async function AdminNewInvoicePage({
           qty: String(item.qty),
           unitPrice: String(item.unitPrice),
         })),
+        inventoryEmployeeId: employee.id,
+        inventoryUsage: [],
       }
     : undefined;
 
@@ -73,6 +87,9 @@ export default async function AdminNewInvoicePage({
         initialStep={order || quotation ? 1 : 0}
         orderId={order?.id}
         quotationId={quotation?.id}
+        currentEmployeeId={employee.id}
+        employeeOptions={activeEmployees}
+        inventoryOptions={inventoryOptions}
       />
     </div>
   );

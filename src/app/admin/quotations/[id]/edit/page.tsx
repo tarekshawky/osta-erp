@@ -57,6 +57,8 @@ export default async function AdminQuotationEditPage({
           };
         })
       : [{ service: "", customName: "", description: "", qty: "1", unitPrice: "" }],
+    inventoryEmployeeId: "",
+    inventoryUsage: [],
   };
 
   return (

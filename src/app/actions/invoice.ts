@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { CUSTOM_SERVICE_VALUE, WARRANTY_DAYS } from "@/lib/invoiceData";
 import { findOrCreateCustomer } from "@/lib/customerMatch";
+import { recordInventoryUsage, reverseInventoryUsage, InsufficientStockError } from "@/lib/inventoryData";
 import type { CustomerFormData, ServiceFormData, PaymentFormData, CreateInvoiceResult } from "@/components/invoice/types";
 
 function resolveItems(service: ServiceFormData) {
@@ -16,6 +17,20 @@ function resolveItems(service: ServiceFormData) {
       unitPrice: Number(item.unitPrice) || 0,
     }))
     .filter((item) => item.serviceName && item.unitPrice > 0);
+}
+
+function resolveInventoryUsage(service: ServiceFormData) {
+  return service.inventoryUsage
+    .filter((line) => line.inventoryItemId && Number(line.quantity) > 0)
+    .map((line) => ({ inventoryItemId: line.inventoryItemId, quantity: Number(line.quantity) }));
+}
+
+function revalidateInventoryPaths() {
+  revalidatePath("/admin/inventory");
+  revalidatePath("/admin/inventory/warehouse");
+  revalidatePath("/admin/inventory/employees");
+  revalidatePath("/admin/inventory/transactions");
+  revalidatePath("/employee/inventory");
 }
 
 function parseInvoiceDate(value: string) {
@@ -74,25 +89,42 @@ export async function createInvoiceFromWizard(
   const lastSeq = lastInvoice ? parseInt(lastInvoice.number.slice(numberPrefix.length), 10) : 0;
   const number = `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
 
-  const invoice = await prisma.invoice.create({
-    data: {
-      number,
-      date,
-      customerId: dbCustomer.id,
-      serviceType: service.serviceType,
-      category: service.category,
-      payment: payment.method,
-      amount,
-      status: "Paid",
-      leadSource: customer.leadSource,
-      warrantyUntil,
-      teamId,
-      createdById: employee.id,
-      items: {
-        create: items,
-      },
-    },
-  });
+  const usageLines = resolveInventoryUsage(service);
+  const inventoryEmployeeId = service.inventoryEmployeeId || employee.id;
+
+  let invoice;
+  try {
+    invoice = await prisma.$transaction(async (tx) => {
+      const created = await tx.invoice.create({
+        data: {
+          number,
+          date,
+          customerId: dbCustomer.id,
+          serviceType: service.serviceType,
+          category: service.category,
+          payment: payment.method,
+          amount,
+          status: "Paid",
+          leadSource: customer.leadSource,
+          warrantyUntil,
+          teamId,
+          createdById: employee.id,
+          items: {
+            create: items,
+          },
+        },
+      });
+      if (usageLines.length > 0) {
+        await recordInventoryUsage(tx, created.id, inventoryEmployeeId, usageLines, employee.id);
+      }
+      return created;
+    });
+  } catch (err) {
+    if (err instanceof InsufficientStockError) return { ok: false, error: err.message };
+    throw err;
+  }
+
+  if (usageLines.length > 0) revalidateInventoryPaths();
 
   if (orderId) {
     await prisma.order.update({
@@ -150,27 +182,46 @@ export async function updateInvoiceFromWizard(
   const warrantyUntil = new Date(date);
   warrantyUntil.setUTCDate(warrantyUntil.getUTCDate() + WARRANTY_DAYS);
 
-  await prisma.invoiceItem.deleteMany({ where: { invoiceId } });
-  await prisma.invoice.update({
-    where: { id: invoiceId },
-    data: {
-      customerId: dbCustomer.id,
-      serviceType: service.serviceType,
-      category: service.category,
-      payment: payment.method,
-      amount,
-      leadSource: customer.leadSource,
-      date,
-      warrantyUntil,
-      teamId,
-      items: { create: items },
-    },
-  });
+  const usageLines = resolveInventoryUsage(service);
+  const inventoryEmployeeId = service.inventoryEmployeeId || existing.createdById;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Reverse-then-reapply: every InvoiceInventoryUsage row for this invoice is
+      // reversed via a new "Stock Reversed" transaction (never a silent delete of
+      // the original "Stock Used" row), then the new usage lines are recorded --
+      // mirrors how InvoiceItem rows are fully replaced on every edit.
+      await reverseInventoryUsage(tx, invoiceId, "Invoice Edited", session.employeeId);
+      await tx.invoiceItem.deleteMany({ where: { invoiceId } });
+      await tx.invoice.update({
+        where: { id: invoiceId },
+        data: {
+          customerId: dbCustomer.id,
+          serviceType: service.serviceType,
+          category: service.category,
+          payment: payment.method,
+          amount,
+          leadSource: customer.leadSource,
+          date,
+          warrantyUntil,
+          teamId,
+          items: { create: items },
+        },
+      });
+      if (usageLines.length > 0) {
+        await recordInventoryUsage(tx, invoiceId, inventoryEmployeeId, usageLines, session.employeeId);
+      }
+    });
+  } catch (err) {
+    if (err instanceof InsufficientStockError) return { ok: false, error: err.message };
+    throw err;
+  }
 
   revalidatePath(`/admin/invoices/${invoiceId}`);
   revalidatePath("/admin/invoices");
   revalidatePath("/admin/wallets");
   revalidatePath("/admin/marketing");
+  revalidateInventoryPaths();
 
   return { ok: true, number: existing.number, amount };
 }

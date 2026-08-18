@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { reverseInventoryUsage } from "@/lib/inventoryData";
 
 async function requireAdmin() {
   const session = await getSession();
@@ -46,9 +47,21 @@ export async function setInvoiceStatus(id: string, status: "Paid" | "Unpaid"): P
 }
 
 export async function deleteInvoice(id: string) {
-  await requireAdmin();
-  await prisma.invoice.delete({ where: { id } });
+  const session = await requireAdmin();
+  await prisma.$transaction(async (tx) => {
+    // A hard delete never strands consumed stock unaccounted for -- reverse
+    // every InvoiceInventoryUsage row for this invoice via a new "Stock
+    // Reversed" transaction before the invoice (and its usage rows, cascaded)
+    // are removed.
+    await reverseInventoryUsage(tx, id, "Invoice Deleted", session.employeeId);
+    await tx.invoice.delete({ where: { id } });
+  });
   revalidatePath("/admin/wallets");
+  revalidatePath("/admin/inventory");
+  revalidatePath("/admin/inventory/warehouse");
+  revalidatePath("/admin/inventory/employees");
+  revalidatePath("/admin/inventory/transactions");
+  revalidatePath("/employee/inventory");
   redirect("/admin/invoices?toast=1");
 }
 

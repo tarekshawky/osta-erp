@@ -222,6 +222,19 @@ export default async function EmployeeHomePage() {
               </svg>
             }
           />
+          <QuickActionTile
+            href="/employee/inventory"
+            label="My Inventory"
+            iconBg="bg-teal-50"
+            iconColor="text-teal-600"
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 8l-9-5-9 5 9 5 9-5z" strokeLinejoin="round" />
+                <path d="M3 8v8l9 5 9-5V8" strokeLinejoin="round" />
+                <path d="M12 13v8" strokeLinecap="round" />
+              </svg>
+            }
+          />
         </div>
       </div>
     </div>

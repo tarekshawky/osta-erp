@@ -4,6 +4,7 @@ import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
 import { SERVICE_CATALOG, CUSTOM_SERVICE_VALUE, type Category } from "@/lib/invoiceData";
+import { getInventoryItemDisplayName, getLocationQuantity } from "@/lib/inventoryData";
 import type { CustomerFormData, ServiceFormData, PaymentFormData } from "@/components/invoice/types";
 
 export default async function AdminInvoiceEditPage({
@@ -12,12 +13,25 @@ export default async function AdminInvoiceEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [admin, invoice, teams] = await Promise.all([
+  const [admin, invoice, teams, activeEmployees, activeItems, existingUsage] = await Promise.all([
     requireEmployee("ADMIN"),
     prisma.invoice.findUnique({ where: { id }, include: { customer: true, items: true } }),
     prisma.team.findMany({ where: { name: { in: ["Ajman", "Al Ain"] } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.employee.findMany({ where: { status: "active" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
+    prisma.invoiceInventoryUsage.findMany({ where: { invoiceId: id } }),
   ]);
   if (!invoice) notFound();
+
+  const inventoryEmployeeId = existingUsage[0]?.employeeId ?? admin.id;
+  const inventoryOptions = await Promise.all(
+    activeItems.map(async (item) => ({
+      id: item.id,
+      displayName: getInventoryItemDisplayName(item),
+      unit: item.unit,
+      currentStock: await getLocationQuantity(prisma, item.id, inventoryEmployeeId),
+    }))
+  );
 
   const category = invoice.category as Category;
   const catalog = SERVICE_CATALOG[category] ?? SERVICE_CATALOG.AC;
@@ -49,6 +63,8 @@ export default async function AdminInvoiceEditPage({
           };
         })
       : [{ service: "", customName: "", description: "", qty: "1", unitPrice: "" }],
+    inventoryEmployeeId,
+    inventoryUsage: existingUsage.map((u) => ({ inventoryItemId: u.inventoryItemId, quantity: String(u.quantity) })),
   };
 
   const initialPayment: PaymentFormData = {
@@ -70,6 +86,9 @@ export default async function AdminInvoiceEditPage({
         initialService={initialService}
         initialPayment={initialPayment}
         teamOptions={teams}
+        currentEmployeeId={inventoryEmployeeId}
+        employeeOptions={activeEmployees}
+        inventoryOptions={inventoryOptions}
       />
     </div>
   );
