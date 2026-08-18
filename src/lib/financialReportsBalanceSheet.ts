@@ -3,8 +3,16 @@ import { canonicalExpensePayment } from "./expenseData";
 import { computeRetainedEarnings } from "./financialReportsIncomeStatement";
 import { SETTING_ID } from "./settings";
 
+// Callers often pass a date-only "as of" value (midnight UTC of a calendar day).
+// Bounding "createdAt" (a precise insert-time timestamp) against that exact
+// midnight would wrongly exclude everything created later that same day, so every
+// upper bound is normalized to the end of its calendar day.
+function endOfDayUtc(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
+}
+
 function boundBy(field: "date" | "createdAt", asOfDate: Date) {
-  return { [field]: { lte: asOfDate } };
+  return { [field]: { lte: endOfDayUtc(asOfDate) } };
 }
 
 // Every formula below is independently date-bounded (asOfDate, and openingDate for
@@ -16,7 +24,7 @@ export async function computeCashAndCashEquivalents(asOfDate: Date): Promise<num
   const position = await prisma.cashPosition.findFirst({ orderBy: { updatedAt: "desc" } });
   const openingBalance = position?.openingBalance ?? 0;
   const openingDate = position?.openingDate ?? new Date(0);
-  const range = { gte: openingDate, lte: asOfDate };
+  const range = { gte: openingDate, lte: endOfDayUtc(asOfDate) };
 
   const [invoiceInflowRows, expenseOutflowAgg, cardPaymentAgg, payrollAgg] = await Promise.all([
     prisma.invoice.groupBy({
@@ -86,14 +94,24 @@ function yearsElapsed(from: Date, to: Date): number {
   return Math.max(0, (to.getTime() - from.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
 }
 
+// Straight-line depreciation, computed at query time (see Asset model comment for
+// why no accumulatedDepreciation column is stored). Shared by computePPE's total
+// and the Asset Register page's per-asset breakdown so the two never drift.
+export function computeAssetDepreciation(
+  asset: { purchaseCost: number; purchaseDate: Date; usefulLifeYears: number },
+  asOfDate: Date
+): { accumulatedDepreciation: number; netBookValue: number } {
+  const elapsed = yearsElapsed(asset.purchaseDate, asOfDate);
+  const accumulatedDepreciation =
+    asset.usefulLifeYears > 0 ? Math.min(asset.purchaseCost, (asset.purchaseCost / asset.usefulLifeYears) * elapsed) : 0;
+  return { accumulatedDepreciation, netBookValue: asset.purchaseCost - accumulatedDepreciation };
+}
+
 export async function computePPE(asOfDate: Date): Promise<number> {
-  const assets = await prisma.asset.findMany({ where: { purchaseDate: { lte: asOfDate } } });
+  const assets = await prisma.asset.findMany({ where: { purchaseDate: { lte: endOfDayUtc(asOfDate) } } });
   let total = 0;
   for (const asset of assets) {
-    const elapsed = yearsElapsed(asset.purchaseDate, asOfDate);
-    const accumulatedDepreciation =
-      asset.usefulLifeYears > 0 ? Math.min(asset.purchaseCost, (asset.purchaseCost / asset.usefulLifeYears) * elapsed) : 0;
-    total += asset.purchaseCost - accumulatedDepreciation;
+    total += computeAssetDepreciation(asset, asOfDate).netBookValue;
   }
   return total;
 }

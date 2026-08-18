@@ -4,6 +4,10 @@ import type { Setting } from "@/generated/prisma";
 
 export type DateRange = { from: Date; to: Date };
 
+export const ASSET_CATEGORIES = ["Vehicle", "Equipment", "Furniture", "Tools", "Property", "Other"] as const;
+export const LIABILITY_TYPES = ["Bank Borrowing", "Other"] as const;
+export const LIABILITY_CATEGORIES = ["Current", "Non-Current"] as const;
+
 export { buildCustomDateRange };
 
 // Quick-filter presets shown on every Financial Report's DateRangeFilter.
