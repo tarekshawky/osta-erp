@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatDate } from "@/lib/format";
 import type { VehicleDocumentRow } from "@/lib/vehicleData";
 
@@ -10,7 +11,9 @@ function DocLink({ label, url }: { label: string; url: string | null }) {
           View
         </a>
       ) : (
-        <span className="text-sm text-slate-400">Not uploaded</span>
+        <Link href="/admin/vehicles" className="text-sm text-slate-400 hover:text-blue-600">
+          Not uploaded — add via Edit Vehicle
+        </Link>
       )}
     </div>
   );
@@ -36,7 +39,9 @@ export function VehicleDocumentsPanel({
       <div className="mt-6 flex flex-col gap-6">
         {typeEntries.map(([type, docs]) => (
           <div key={type}>
-            <h3 className="text-sm font-semibold text-slate-700 mb-2">{type} Documents</h3>
+            <h3 className="text-sm font-semibold text-slate-700 mb-2">
+              {type} Documents <span className="text-slate-400 font-normal">({docs.length})</span>
+            </h3>
             <div className="rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
               {docs.map((doc) => (
                 <div key={doc.id} className="flex items-center justify-between px-4 py-3">

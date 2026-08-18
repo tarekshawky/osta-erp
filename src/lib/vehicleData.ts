@@ -313,11 +313,21 @@ export async function getVehicleDocuments(vehicleId: string): Promise<{
       select: { id: true, date: true, description: true, subcategory: true, attachmentUrl: true },
     }),
   ]);
-  const byType: Record<string, VehicleDocumentRow[]> = {};
+  const grouped: Record<string, VehicleDocumentRow[]> = {};
   for (const exp of expenses) {
     const key = exp.subcategory ?? "Other";
-    if (!byType[key]) byType[key] = [];
-    byType[key].push({ id: exp.id, date: exp.date, description: exp.description, attachmentUrl: exp.attachmentUrl! });
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push({ id: exp.id, date: exp.date, description: exp.description, attachmentUrl: exp.attachmentUrl! });
+  }
+  // Reorder by the canonical Vehicle Expense Type list so sections appear in a
+  // stable, predictable order rather than shuffling based on whichever type most
+  // recently got a new attachment.
+  const byType: Record<string, VehicleDocumentRow[]> = {};
+  for (const type of [...VEHICLE_EXPENSE_TYPES, "Other"]) {
+    if (grouped[type]) byType[type] = grouped[type];
+  }
+  for (const key of Object.keys(grouped)) {
+    if (!(key in byType)) byType[key] = grouped[key];
   }
   return { registrationDocUrl: vehicle?.registrationDocUrl ?? null, insuranceDocUrl: vehicle?.insuranceDocUrl ?? null, byType };
 }
