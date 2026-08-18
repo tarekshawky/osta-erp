@@ -1,29 +1,29 @@
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { InventoryItemsManager } from "@/components/inventory/InventoryItemsManager";
-import { getInventoryItemDisplayName, getAllWarehousesQuantity } from "@/lib/inventoryData";
+import { getInventoryItemDisplayName, getBulkAllWarehousesQuantities } from "@/lib/inventoryData";
 
 export default async function InventoryItemsPage() {
   const items = await prisma.inventoryItem.findMany({ orderBy: { name: "asc" } });
+  // Total across every warehouse (not employee-held) -- see InventoryItemListCard's
+  // "Warehouse Stock" label. Bulk-queried (not per-item) since the Spare Parts
+  // catalog can hold hundreds of rows -- see getBulkAllWarehousesQuantities.
+  const quantities = await getBulkAllWarehousesQuantities(prisma, items.map((i) => i.id));
 
-  const rows = await Promise.all(
-    items.map(async (item) => ({
-      id: item.id,
-      name: item.name,
-      specification: item.specification,
-      displayName: getInventoryItemDisplayName(item),
-      unit: item.unit,
-      category: item.category,
-      description: item.description,
-      costPrice: item.costPrice,
-      sellingPrice: item.sellingPrice,
-      minimumMainStock: item.minimumMainStock,
-      status: item.status,
-      // Total across every warehouse (not employee-held) -- see InventoryItemListCard's
-      // "Warehouse Stock" label.
-      mainQty: await getAllWarehousesQuantity(prisma, item.id),
-    }))
-  );
+  const rows = items.map((item) => ({
+    id: item.id,
+    name: item.name,
+    specification: item.specification,
+    displayName: getInventoryItemDisplayName(item),
+    unit: item.unit,
+    category: item.category,
+    description: item.description,
+    costPrice: item.costPrice,
+    sellingPrice: item.sellingPrice,
+    minimumMainStock: item.minimumMainStock,
+    status: item.status,
+    mainQty: quantities[item.id] ?? 0,
+  }));
 
   return (
     <div className="pb-10">

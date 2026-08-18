@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
-import { getInventoryItemDisplayName, getLocationQuantity } from "@/lib/inventoryData";
+import { getInventoryItemDisplayName, getBulkLocationQuantities } from "@/lib/inventoryData";
 import type { CustomerFormData, ServiceFormData } from "@/components/invoice/types";
 
 export default async function AdminNewInvoicePage({
@@ -22,14 +22,15 @@ export default async function AdminNewInvoicePage({
     prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
   ]);
 
-  const inventoryOptions = await Promise.all(
-    activeItems.map(async (item) => ({
-      id: item.id,
-      displayName: getInventoryItemDisplayName(item),
-      unit: item.unit,
-      currentStock: await getLocationQuantity(prisma, item.id, employee.id),
-    }))
-  );
+  // Bulk-queried (not per-item) since the Spare Parts catalog can hold
+  // hundreds of items -- see getBulkLocationQuantities.
+  const stockByItem = await getBulkLocationQuantities(prisma, activeItems.map((i) => i.id), employee.id);
+  const inventoryOptions = activeItems.map((item) => ({
+    id: item.id,
+    displayName: getInventoryItemDisplayName(item),
+    unit: item.unit,
+    currentStock: stockByItem[item.id] ?? 0,
+  }));
 
   const sourceCustomer = order?.customer ?? customer ?? quotation?.customer;
   const initialCustomer: CustomerFormData | undefined = sourceCustomer

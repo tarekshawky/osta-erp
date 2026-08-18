@@ -135,6 +135,59 @@ export async function getAllWarehousesQuantity(db: Db, inventoryItemId: string):
   return sums.reduce((s, q) => s + q, 0);
 }
 
+// Bulk variants of the three functions above -- each does exactly 2 groupBy
+// queries total, REGARDLESS of how many items are asked about, instead of
+// 2 (or 2×warehouseCount) queries PER item. A page that maps over N items and
+// calls getLocationQuantity/getAllWarehousesQuantity/getItemTotalQuantity once
+// per item inside Promise.all fires N (or N×warehouseCount) concurrent queries
+// -- fine at the ~10-item scale the base Inventory system shipped with, but it
+// floods Neon's connection pool (limit 9) once the Spare Parts catalog's ~226
+// rows are seeded. Every page iterating the full item list must use these.
+function sumGroupedByItem(groups: { inventoryItemId: string; _sum: { quantity: number | null } }[]): Map<string, number> {
+  return new Map(groups.map((g) => [g.inventoryItemId, g._sum.quantity ?? 0]));
+}
+
+export async function getBulkLocationQuantities(db: Db, itemIds: string[], location: string): Promise<Record<string, number>> {
+  if (itemIds.length === 0) return {};
+  const [inSums, outSums] = await Promise.all([
+    db.inventoryTransaction.groupBy({ by: ["inventoryItemId"], where: { inventoryItemId: { in: itemIds }, toLocation: location }, _sum: { quantity: true } }),
+    db.inventoryTransaction.groupBy({ by: ["inventoryItemId"], where: { inventoryItemId: { in: itemIds }, fromLocation: location }, _sum: { quantity: true } }),
+  ]);
+  const inMap = sumGroupedByItem(inSums);
+  const outMap = sumGroupedByItem(outSums);
+  const result: Record<string, number> = {};
+  for (const id of itemIds) result[id] = (inMap.get(id) ?? 0) - (outMap.get(id) ?? 0);
+  return result;
+}
+
+export async function getBulkItemTotalQuantities(db: Db, itemIds: string[]): Promise<Record<string, number>> {
+  if (itemIds.length === 0) return {};
+  const [inSums, outSums] = await Promise.all([
+    db.inventoryTransaction.groupBy({ by: ["inventoryItemId"], where: { inventoryItemId: { in: itemIds }, toLocation: { not: null } }, _sum: { quantity: true } }),
+    db.inventoryTransaction.groupBy({ by: ["inventoryItemId"], where: { inventoryItemId: { in: itemIds }, fromLocation: { not: null } }, _sum: { quantity: true } }),
+  ]);
+  const inMap = sumGroupedByItem(inSums);
+  const outMap = sumGroupedByItem(outSums);
+  const result: Record<string, number> = {};
+  for (const id of itemIds) result[id] = (inMap.get(id) ?? 0) - (outMap.get(id) ?? 0);
+  return result;
+}
+
+export async function getBulkAllWarehousesQuantities(db: Db, itemIds: string[]): Promise<Record<string, number>> {
+  if (itemIds.length === 0) return {};
+  const warehouses = await prisma.warehouse.findMany({ select: { id: true } });
+  const warehouseIds = warehouses.map((w) => w.id);
+  const [inSums, outSums] = await Promise.all([
+    db.inventoryTransaction.groupBy({ by: ["inventoryItemId"], where: { inventoryItemId: { in: itemIds }, toLocation: { in: warehouseIds } }, _sum: { quantity: true } }),
+    db.inventoryTransaction.groupBy({ by: ["inventoryItemId"], where: { inventoryItemId: { in: itemIds }, fromLocation: { in: warehouseIds } }, _sum: { quantity: true } }),
+  ]);
+  const inMap = sumGroupedByItem(inSums);
+  const outMap = sumGroupedByItem(outSums);
+  const result: Record<string, number> = {};
+  for (const id of itemIds) result[id] = (inMap.get(id) ?? 0) - (outMap.get(id) ?? 0);
+  return result;
+}
+
 // Mirrors generateExpenseNumber()/generateOrderNumber(): nullable, not
 // backfilled -- only transactions created after this shipped get one. Accepts
 // an explicit db handle so callers creating several numbered rows inside one
@@ -166,31 +219,33 @@ export type WarehouseStockRow = {
 
 export async function getWarehouseStockSummary(warehouseId: string): Promise<WarehouseStockRow[]> {
   const items = await prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } });
-  return Promise.all(
-    items.map(async (item) => {
-      const [warehouseQty, totalQty, allWarehousesQty] = await Promise.all([
-        getLocationQuantity(prisma, item.id, warehouseId),
-        getItemTotalQuantity(prisma, item.id),
-        getAllWarehousesQuantity(prisma, item.id),
-      ]);
-      const status: MainStockStatus =
-        warehouseQty === 0 ? "Out of Stock" : warehouseQty <= item.minimumMainStock ? "Low Stock" : "OK";
-      return {
-        itemId: item.id,
-        displayName: getInventoryItemDisplayName(item),
-        unit: item.unit,
-        category: item.category,
-        warehouseQty,
-        // System-wide employee-held quantity (not scoped to this warehouse) --
-        // totalQty minus stock sitting in ANY warehouse, not just this one.
-        employeeQty: totalQty - allWarehousesQty,
-        totalQty,
-        minimumMainStock: item.minimumMainStock,
-        costPrice: item.costPrice,
-        status,
-      };
-    })
-  );
+  const itemIds = items.map((i) => i.id);
+  const [warehouseQtyMap, totalQtyMap, allWarehousesQtyMap] = await Promise.all([
+    getBulkLocationQuantities(prisma, itemIds, warehouseId),
+    getBulkItemTotalQuantities(prisma, itemIds),
+    getBulkAllWarehousesQuantities(prisma, itemIds),
+  ]);
+  return items.map((item) => {
+    const warehouseQty = warehouseQtyMap[item.id] ?? 0;
+    const totalQty = totalQtyMap[item.id] ?? 0;
+    const allWarehousesQty = allWarehousesQtyMap[item.id] ?? 0;
+    const status: MainStockStatus =
+      warehouseQty === 0 ? "Out of Stock" : warehouseQty <= item.minimumMainStock ? "Low Stock" : "OK";
+    return {
+      itemId: item.id,
+      displayName: getInventoryItemDisplayName(item),
+      unit: item.unit,
+      category: item.category,
+      warehouseQty,
+      // System-wide employee-held quantity (not scoped to this warehouse) --
+      // totalQty minus stock sitting in ANY warehouse, not just this one.
+      employeeQty: totalQty - allWarehousesQty,
+      totalQty,
+      minimumMainStock: item.minimumMainStock,
+      costPrice: item.costPrice,
+      status,
+    };
+  });
 }
 
 export type AllWarehousesSummaryRow = { warehouseId: string; warehouseName: string; rows: WarehouseStockRow[] };
@@ -832,17 +887,21 @@ export type InventoryDashboardSummary = {
 // view, getWarehouseStockSummary, for a single warehouse's own status).
 export async function computeInventoryDashboardSummary(): Promise<InventoryDashboardSummary> {
   const items = await prisma.inventoryItem.findMany({ where: { status: "Active" } });
+  const itemIds = items.map((i) => i.id);
   let warehouseStock = 0;
   let employeeStock = 0;
   let lowStock = 0;
   let outOfStock = 0;
   let totalInventoryValue = 0;
 
+  const [allWarehousesQtyMap, totalQtyMap] = await Promise.all([
+    getBulkAllWarehousesQuantities(prisma, itemIds),
+    getBulkItemTotalQuantities(prisma, itemIds),
+  ]);
+
   for (const item of items) {
-    const [allWarehousesQty, totalQty] = await Promise.all([
-      getAllWarehousesQuantity(prisma, item.id),
-      getItemTotalQuantity(prisma, item.id),
-    ]);
+    const allWarehousesQty = allWarehousesQtyMap[item.id] ?? 0;
+    const totalQty = totalQtyMap[item.id] ?? 0;
     warehouseStock += allWarehousesQty;
     employeeStock += totalQty - allWarehousesQty;
     if (allWarehousesQty === 0) outOfStock++;

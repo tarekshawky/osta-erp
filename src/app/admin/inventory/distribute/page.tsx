@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { DistributeStockForm } from "@/components/inventory/DistributeStockForm";
-import { getInventoryItemDisplayName, getLocationQuantity, getWarehouses } from "@/lib/inventoryData";
+import { getInventoryItemDisplayName, getBulkLocationQuantities, getWarehouses } from "@/lib/inventoryData";
 
 export default async function DistributeStockPage() {
   const [employees, activeItems, warehouses] = await Promise.all([
@@ -10,22 +10,23 @@ export default async function DistributeStockPage() {
     getWarehouses("Active"),
   ]);
 
-  const itemOptions = await Promise.all(
-    activeItems.map(async (i) => {
-      const quantitiesByWarehouse: Record<string, number> = {};
-      await Promise.all(
-        warehouses.map(async (w) => {
-          quantitiesByWarehouse[w.id] = await getLocationQuantity(prisma, i.id, w.id);
-        })
-      );
-      return {
-        id: i.id,
-        displayName: getInventoryItemDisplayName(i),
-        unit: i.unit,
-        quantitiesByWarehouse,
-      };
-    })
-  );
+  // One bulk query per warehouse (not per item×warehouse) -- see
+  // getBulkLocationQuantities; the catalog can hold hundreds of items.
+  const itemIds = activeItems.map((i) => i.id);
+  const quantitiesByWarehouseId = Object.fromEntries(
+    await Promise.all(warehouses.map(async (w) => [w.id, await getBulkLocationQuantities(prisma, itemIds, w.id)] as const))
+  ) as Record<string, Record<string, number>>;
+
+  const itemOptions = activeItems.map((i) => {
+    const quantitiesByWarehouse: Record<string, number> = {};
+    for (const w of warehouses) quantitiesByWarehouse[w.id] = quantitiesByWarehouseId[w.id]?.[i.id] ?? 0;
+    return {
+      id: i.id,
+      displayName: getInventoryItemDisplayName(i),
+      unit: i.unit,
+      quantitiesByWarehouse,
+    };
+  });
 
   return (
     <div className="pb-10">

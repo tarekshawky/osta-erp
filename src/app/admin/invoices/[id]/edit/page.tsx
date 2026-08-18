@@ -4,7 +4,7 @@ import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
 import { SERVICE_CATALOG, CUSTOM_SERVICE_VALUE, type Category } from "@/lib/invoiceData";
-import { getInventoryItemDisplayName, getLocationQuantity } from "@/lib/inventoryData";
+import { getInventoryItemDisplayName, getBulkLocationQuantities } from "@/lib/inventoryData";
 import type { CustomerFormData, ServiceFormData, PaymentFormData } from "@/components/invoice/types";
 
 export default async function AdminInvoiceEditPage({
@@ -24,14 +24,15 @@ export default async function AdminInvoiceEditPage({
   if (!invoice) notFound();
 
   const inventoryEmployeeId = existingUsage[0]?.employeeId ?? admin.id;
-  const inventoryOptions = await Promise.all(
-    activeItems.map(async (item) => ({
-      id: item.id,
-      displayName: getInventoryItemDisplayName(item),
-      unit: item.unit,
-      currentStock: await getLocationQuantity(prisma, item.id, inventoryEmployeeId),
-    }))
-  );
+  // Bulk-queried (not per-item) since the Spare Parts catalog can hold
+  // hundreds of items -- see getBulkLocationQuantities.
+  const stockByItem = await getBulkLocationQuantities(prisma, activeItems.map((i) => i.id), inventoryEmployeeId);
+  const inventoryOptions = activeItems.map((item) => ({
+    id: item.id,
+    displayName: getInventoryItemDisplayName(item),
+    unit: item.unit,
+    currentStock: stockByItem[item.id] ?? 0,
+  }));
 
   const category = invoice.category as Category;
   const catalog = SERVICE_CATALOG[category] ?? SERVICE_CATALOG.AC;
