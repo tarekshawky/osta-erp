@@ -19,6 +19,21 @@ const FREQUENCY_MONTHS: Record<PaymentFrequency, number> = {
 export const RENTAL_AGREEMENT_STATUSES = ["Active", "Suspended", "Expired", "Cancelled"] as const;
 export const RENTAL_PAYMENT_STATUSES = ["Pending", "Due", "Overdue", "Paid", "Cancelled"] as const;
 
+export const RENTAL_PAYMENT_STATUS_STYLES: Record<string, string> = {
+  Pending: "bg-slate-100 text-slate-600",
+  Due: "bg-amber-50 text-amber-600",
+  Overdue: "bg-red-50 text-red-600",
+  Paid: "bg-green-50 text-green-700",
+  Cancelled: "bg-slate-100 text-slate-400",
+};
+
+export const RENTAL_AGREEMENT_STATUS_STYLES: Record<string, string> = {
+  Active: "bg-green-50 text-green-700",
+  Suspended: "bg-amber-50 text-amber-600",
+  Expired: "bg-slate-100 text-slate-500",
+  Cancelled: "bg-red-50 text-red-600",
+};
+
 // Reuse the app-wide payment method set (Cash/Bank Transfer/Credit Card) rather than
 // the spec's literal "Card"/"Other" wording -- keeps canonicalExpensePayment()-based
 // Cash Flow classification accurate with zero extra mapping code.

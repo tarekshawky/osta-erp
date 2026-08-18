@@ -6,6 +6,8 @@ import { formatAed, formatDateSlash } from "@/lib/format";
 import { ORDER_STATUS_STYLES } from "@/lib/orderData";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AddCustomerNoteForm } from "./AddCustomerNoteForm";
+import { CustomerRentalSection } from "@/components/rental/CustomerRentalSection";
+import type { RentalAgreementRow, RentalTransactionRow, RentalAlert, CustomerRentalSummary } from "@/lib/rentalData";
 
 type OrderRow = {
   id: string;
@@ -55,7 +57,7 @@ type ActivityEvent = { date: Date; title: string; detail?: string };
 
 type NoteRow = { id: string; note: string; createdAt: Date; createdByName: string };
 
-const TABS = ["Overview", "Orders", "Invoices", "Quotations", "Payments", "Activity", "Notes"] as const;
+const TABS = ["Overview", "Orders", "Invoices", "Quotations", "Payments", "Rental", "Activity", "Notes"] as const;
 type Tab = (typeof TABS)[number];
 
 export function CustomerProfileTabs({
@@ -66,6 +68,7 @@ export function CustomerProfileTabs({
   activity,
   notes,
   customerId,
+  rental,
 }: {
   orders: OrderRow[];
   invoices: InvoiceRow[];
@@ -74,6 +77,14 @@ export function CustomerProfileTabs({
   activity: ActivityEvent[];
   notes: NoteRow[];
   customerId: string;
+  rental: {
+    relationshipLabel: string;
+    financials: { totalRevenue: number; paidAmount: number; outstandingAmount: number };
+    summary: CustomerRentalSummary;
+    agreements: RentalAgreementRow[];
+    transactions: RentalTransactionRow[];
+    alerts: RentalAlert[];
+  };
 }) {
   const [tab, setTab] = useState<Tab>("Overview");
 
@@ -94,6 +105,7 @@ export function CustomerProfileTabs({
             {t === "Invoices" && invoices.length > 0 && ` (${invoices.length})`}
             {t === "Quotations" && quotations.length > 0 && ` (${quotations.length})`}
             {t === "Notes" && notes.length > 0 && ` (${notes.length})`}
+            {t === "Rental" && rental.agreements.length > 0 && ` (${rental.agreements.length})`}
           </button>
         ))}
       </div>
@@ -104,6 +116,17 @@ export function CustomerProfileTabs({
         {tab === "Invoices" && <InvoicesPanel invoices={invoices} />}
         {tab === "Quotations" && <QuotationsPanel quotations={quotations} />}
         {tab === "Payments" && <PaymentsPanel payments={payments} />}
+        {tab === "Rental" && (
+          <CustomerRentalSection
+            customerId={customerId}
+            relationshipLabel={rental.relationshipLabel}
+            financials={rental.financials}
+            rentalSummary={rental.summary}
+            agreements={rental.agreements}
+            transactions={rental.transactions}
+            alerts={rental.alerts}
+          />
+        )}
         {tab === "Activity" && <ActivityPanel activity={activity} />}
         {tab === "Notes" && <NotesPanel notes={notes} customerId={customerId} />}
       </div>

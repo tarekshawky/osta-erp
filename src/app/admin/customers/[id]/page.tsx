@@ -11,6 +11,15 @@ import {
   buildCustomerActivity,
   buildCustomerWhatsAppUrl,
 } from "@/lib/customerData";
+import {
+  getCustomerRelationshipLabel,
+  getRentalAgreementsForCustomer,
+  getCustomerRentalSummary,
+  getRentalTransactions,
+  getRentalAlerts,
+  ensureRentalTransactionsGenerated,
+  refreshOverdueStatuses,
+} from "@/lib/rentalData";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { CustomerProfileTabs } from "@/components/customer/CustomerProfileTabs";
 import { CustomerStatusControl } from "@/components/customer/CustomerStatusControl";
@@ -48,6 +57,27 @@ export default async function AdminCustomerProfilePage({ params }: { params: Pro
   const financialsMap = await getCustomersFinancialMap([customer.id]);
   const financials = getFinancialsFor(financialsMap, customer.id);
   const activity = buildCustomerActivity(customer);
+
+  // Top up this customer's rolling rental-transaction window on every profile view
+  // -- this app has no cron, so a page-load call is the only trigger. Scoped to
+  // just this customer's active agreements rather than the company-wide sweep
+  // (that one belongs to the Finance -> Rental Expenses page instead).
+  const activeAgreementIds = await prisma.rentalAgreement.findMany({
+    where: { customerId: customer.id, status: "Active" },
+    select: { id: true },
+  });
+  for (const a of activeAgreementIds) {
+    await ensureRentalTransactionsGenerated(a.id);
+  }
+  await refreshOverdueStatuses();
+
+  const [relationshipLabel, rentalAgreements, rentalSummary, rentalTransactions, rentalAlerts] = await Promise.all([
+    getCustomerRelationshipLabel(customer.id),
+    getRentalAgreementsForCustomer(customer.id),
+    getCustomerRentalSummary(customer.id),
+    getRentalTransactions({ customerId: customer.id }),
+    getRentalAlerts(customer.id),
+  ]);
   const displayName = customer.type === "COMPANY" ? customer.companyName || customer.name : customer.name;
   const whatsappUrl = buildCustomerWhatsAppUrl(customer);
   const canPermanentlyDelete = customer.orders.length === 0 && customer.invoices.length === 0 && customer.quotations.length === 0;
@@ -82,6 +112,7 @@ export default async function AdminCustomerProfilePage({ params }: { params: Pro
               >
                 {customer.status}
               </span>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{relationshipLabel}</span>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -231,6 +262,18 @@ export default async function AdminCustomerProfilePage({ params }: { params: Pro
             createdByName: n.createdBy.name,
           }))}
           customerId={customer.id}
+          rental={{
+            relationshipLabel,
+            financials: {
+              totalRevenue: financials.totalRevenue,
+              paidAmount: financials.paidAmount,
+              outstandingAmount: financials.outstandingAmount,
+            },
+            summary: rentalSummary,
+            agreements: rentalAgreements,
+            transactions: rentalTransactions,
+            alerts: rentalAlerts,
+          }}
         />
       </div>
     </div>
