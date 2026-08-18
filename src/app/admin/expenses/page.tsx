@@ -12,14 +12,34 @@ import type { Prisma } from "@/generated/prisma";
 export default async function AdminExpensesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; year?: string; month?: string; team?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    year?: string;
+    month?: string;
+    team?: string;
+    vehicleId?: string;
+    expenseType?: string;
+    responsibleEmployeeId?: string;
+    odometerMin?: string;
+    odometerMax?: string;
+  }>;
 }) {
-  const { page: pageParam, year: yearParam, month: monthParam, team = "all" } = await searchParams;
+  const {
+    page: pageParam,
+    year: yearParam,
+    month: monthParam,
+    team = "all",
+    vehicleId,
+    expenseType,
+    responsibleEmployeeId,
+    odometerMin,
+    odometerMax,
+  } = await searchParams;
   const page = parsePage(pageParam);
   const year = yearParam ? Number(yearParam) : null;
   const month = monthParam ? Number(monthParam) : null;
 
-  const [expenseDates, teams, activeCards, activeVehicles] = await Promise.all([
+  const [expenseDates, teams, activeCards, activeVehicles, employees] = await Promise.all([
     prisma.expense.findMany({ select: { date: true } }),
     prisma.team.findMany({ orderBy: { name: "asc" } }),
     prisma.creditCard.findMany({
@@ -28,6 +48,7 @@ export default async function AdminExpensesPage({
       select: { id: true, name: true, cardHolder: true, lastFour: true },
     }),
     prisma.vehicle.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
+    prisma.employee.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   const vehicleOptions = await Promise.all(
     activeVehicles.map(async (v) => ({
@@ -42,6 +63,15 @@ export default async function AdminExpensesPage({
   const dateRange = buildDateRange(year, month);
   if (dateRange) where.date = dateRange;
   if (team !== "all") where.team = { name: team };
+  if (vehicleId) where.vehicleId = vehicleId;
+  if (expenseType) where.subcategory = expenseType;
+  if (responsibleEmployeeId) where.responsibleEmployeeId = responsibleEmployeeId;
+  if (odometerMin || odometerMax) {
+    where.odometer = {
+      ...(odometerMin ? { gte: Number(odometerMin) } : {}),
+      ...(odometerMax ? { lte: Number(odometerMax) } : {}),
+    };
+  }
 
   const [totalAgg, byCategory, byPayment] = await Promise.all([
     prisma.expense.aggregate({ _sum: { amount: true, refundedAmount: true }, _count: true, where }),
@@ -139,6 +169,12 @@ export default async function AdminExpensesPage({
           selectedTeam={team}
           activeCards={activeCards}
           vehicleOptions={vehicleOptions}
+          employeeOptions={employees}
+          vehicleFilterId={vehicleId}
+          expenseTypeFilter={expenseType}
+          responsibleEmployeeFilterId={responsibleEmployeeId}
+          odometerMin={odometerMin}
+          odometerMax={odometerMax}
         />
       </div>
     </div>

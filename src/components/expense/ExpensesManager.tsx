@@ -14,6 +14,7 @@ import { ExpensePdfButton } from "./ExpensePdfButton";
 import { Pagination } from "@/components/admin/Pagination";
 import { ImportModal } from "@/components/admin/ImportModal";
 import { canonicalExpensePayment } from "@/lib/expenseData";
+import { VEHICLE_EXPENSE_TYPES } from "@/lib/vehicleData";
 import { maskCardNumber } from "@/lib/creditCardData";
 import { createExpense, updateExpense, importExpensesFromExcel } from "@/app/admin/expenses/actions";
 
@@ -86,6 +87,8 @@ const emptyFormValue: ExpenseFormValue = {
   creditCardId: null,
 };
 
+export type EmployeeOption = { id: string; name: string };
+
 export function ExpensesManager({
   expenses,
   totalCount,
@@ -97,6 +100,12 @@ export function ExpensesManager({
   selectedTeam,
   activeCards,
   vehicleOptions,
+  employeeOptions,
+  vehicleFilterId,
+  expenseTypeFilter,
+  responsibleEmployeeFilterId,
+  odometerMin,
+  odometerMax,
 }: {
   expenses: ExpenseRow[];
   totalCount: number;
@@ -108,12 +117,21 @@ export function ExpensesManager({
   selectedTeam: string;
   activeCards: ActiveCreditCardOption[];
   vehicleOptions: VehicleOption[];
+  employeeOptions: EmployeeOption[];
+  vehicleFilterId?: string;
+  expenseTypeFilter?: string;
+  responsibleEmployeeFilterId?: string;
+  odometerMin?: string;
+  odometerMax?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [mode, setMode] = useState<"closed" | "add" | "edit">("closed");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showVehicleFilters, setShowVehicleFilters] = useState(
+    !!(vehicleFilterId || expenseTypeFilter || responsibleEmployeeFilterId || odometerMin || odometerMax)
+  );
 
   function updateTeam(value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -121,6 +139,28 @@ export function ExpensesManager({
       params.delete("team");
     } else {
       params.set("team", value);
+    }
+    params.delete("page");
+    const qs = params.toString();
+    router.push(qs ? `/admin/expenses?${qs}` : "/admin/expenses");
+  }
+
+  function updateFilter(key: string, value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (!value) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+    params.delete("page");
+    const qs = params.toString();
+    router.push(qs ? `/admin/expenses?${qs}` : "/admin/expenses");
+  }
+
+  function clearVehicleFilters() {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const key of ["vehicleId", "expenseType", "responsibleEmployeeId", "odometerMin", "odometerMax"]) {
+      params.delete(key);
     }
     params.delete("page");
     const qs = params.toString();
@@ -152,6 +192,15 @@ export function ExpensesManager({
           <p className="text-sm text-slate-500 mt-0.5">{totalCount} records</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowVehicleFilters((v) => !v)}
+            className={`text-sm font-medium rounded-lg px-4 py-2 border ${
+              showVehicleFilters ? "bg-blue-700 text-white border-blue-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+            }`}
+          >
+            Vehicle Filters
+          </button>
           <select
             value={selectedTeam}
             onChange={(e) => updateTeam(e.target.value)}
@@ -202,6 +251,85 @@ export function ExpensesManager({
           </button>
         </div>
       </div>
+
+      {showVehicleFilters && (
+        <div className="rounded-xl border border-slate-200 bg-white p-4 mb-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-slate-600">Vehicle</span>
+            <select
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
+              value={vehicleFilterId ?? ""}
+              onChange={(e) => updateFilter("vehicleId", e.target.value)}
+            >
+              <option value="">All Vehicles</option>
+              {vehicleOptions.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-slate-600">Expense Type</span>
+            <select
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
+              value={expenseTypeFilter ?? ""}
+              onChange={(e) => updateFilter("expenseType", e.target.value)}
+            >
+              <option value="">All Types</option>
+              {VEHICLE_EXPENSE_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-slate-600">Employee</span>
+            <select
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
+              value={responsibleEmployeeFilterId ?? ""}
+              onChange={(e) => updateFilter("responsibleEmployeeId", e.target.value)}
+            >
+              <option value="">All Employees</option>
+              {employeeOptions.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-slate-600">Odometer Min</span>
+            <input
+              type="number"
+              min="0"
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
+              defaultValue={odometerMin ?? ""}
+              onBlur={(e) => updateFilter("odometerMin", e.target.value)}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-slate-600">Odometer Max</span>
+            <input
+              type="number"
+              min="0"
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
+              defaultValue={odometerMax ?? ""}
+              onBlur={(e) => updateFilter("odometerMax", e.target.value)}
+            />
+          </label>
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={clearVehicleFilters}
+              className="text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg px-3 py-1.5"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
 
       {mode === "add" && (
         <ExpenseForm

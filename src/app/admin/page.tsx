@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { getPaymentTotals } from "@/lib/reportData";
 import { buildDateRange } from "@/lib/dateRangeFilter";
 import { getCollectMoneyTotal } from "@/lib/walletData";
+import { getVehicleAlerts } from "@/lib/vehicleData";
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -19,25 +20,35 @@ export default async function AdminDashboardPage({
   const month = monthParam ? Number(monthParam) : null;
   const dateRange = buildDateRange(year, month);
 
-  const [invoiceDates, revenueAgg, expenseAgg, invoiceCount, employeeCount, paymentTotals, collectMoneyTotal, recentInvoices] =
-    await Promise.all([
-      prisma.invoice.findMany({ select: { date: true } }),
-      prisma.invoice.aggregate({
-        _sum: { amount: true },
-        where: { status: "Paid", ...(dateRange ? { date: dateRange } : {}) },
-      }),
-      prisma.expense.aggregate({ _sum: { amount: true, refundedAmount: true }, where: dateRange ? { date: dateRange } : {} }),
-      prisma.invoice.count({ where: dateRange ? { date: dateRange } : {} }),
-      prisma.employee.count(),
-      getPaymentTotals(dateRange ? { date: dateRange } : {}),
-      getCollectMoneyTotal(),
-      prisma.invoice.findMany({
-        where: dateRange ? { date: dateRange } : {},
-        orderBy: { date: "desc" },
-        take: 8,
-        include: { team: true, createdBy: true, customer: true },
-      }),
-    ]);
+  const [
+    invoiceDates,
+    revenueAgg,
+    expenseAgg,
+    invoiceCount,
+    employeeCount,
+    paymentTotals,
+    collectMoneyTotal,
+    recentInvoices,
+    vehicleAlerts,
+  ] = await Promise.all([
+    prisma.invoice.findMany({ select: { date: true } }),
+    prisma.invoice.aggregate({
+      _sum: { amount: true },
+      where: { status: "Paid", ...(dateRange ? { date: dateRange } : {}) },
+    }),
+    prisma.expense.aggregate({ _sum: { amount: true, refundedAmount: true }, where: dateRange ? { date: dateRange } : {} }),
+    prisma.invoice.count({ where: dateRange ? { date: dateRange } : {} }),
+    prisma.employee.count(),
+    getPaymentTotals(dateRange ? { date: dateRange } : {}),
+    getCollectMoneyTotal(),
+    prisma.invoice.findMany({
+      where: dateRange ? { date: dateRange } : {},
+      orderBy: { date: "desc" },
+      take: 8,
+      include: { team: true, createdBy: true, customer: true },
+    }),
+    getVehicleAlerts(),
+  ]);
 
   const years = Array.from(new Set(invoiceDates.map((i) => i.date.getFullYear()))).sort((a, b) => b - a);
   const revenue = revenueAgg._sum.amount ?? 0;
@@ -77,6 +88,22 @@ export default async function AdminDashboardPage({
           <div className="text-2xl font-bold mt-1">{formatAed(collectMoneyTotal)}</div>
           <div className="text-xs text-teal-100 mt-1">Lifetime total collected via Collect Money</div>
         </div>
+
+        {vehicleAlerts.length > 0 && (
+          <>
+            <h3 className="mt-6 font-semibold text-slate-900">Vehicle Alerts</h3>
+            <Link
+              href="/admin/vehicles"
+              className="mt-3 max-w-sm flex rounded-xl bg-gradient-to-br from-amber-600 to-red-500 text-white p-4 hover:opacity-90"
+            >
+              <div>
+                <div className="text-xs text-amber-100">{vehicleAlerts.length} vehicle alert(s)</div>
+                <div className="text-2xl font-bold mt-1">Needs Attention</div>
+                <div className="text-xs text-amber-100 mt-1">License/insurance expiring soon or service overdue</div>
+              </div>
+            </Link>
+          </>
+        )}
 
         <div className="mt-8 flex items-center justify-between">
           <h3 className="font-bold text-slate-900">Recent Invoices</h3>
