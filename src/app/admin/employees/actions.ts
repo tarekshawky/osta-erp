@@ -22,7 +22,15 @@ export type EmployeeFormInput = {
   custody: number;
   monthlySalary: number;
   hasWallet: boolean;
+  joinDate: string;
+  endOfServiceDate: string;
 };
+
+function parseDate(value: string): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 function validate(input: EmployeeFormInput, isCreate: boolean) {
   if (!input.code.trim() || !input.name.trim()) {
@@ -60,6 +68,8 @@ export async function createEmployee(input: EmployeeFormInput): Promise<{ ok: bo
       custody: Number.isFinite(input.custody) ? input.custody : 0,
       monthlySalary: Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0,
       hasWallet: input.hasWallet,
+      joinDate: parseDate(input.joinDate),
+      endOfServiceDate: parseDate(input.endOfServiceDate),
     },
   });
 
@@ -94,6 +104,8 @@ export async function updateEmployee(
       custody: Number.isFinite(input.custody) ? input.custody : 0,
       monthlySalary: Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0,
       hasWallet: input.hasWallet,
+      joinDate: parseDate(input.joinDate),
+      endOfServiceDate: parseDate(input.endOfServiceDate),
       ...(input.pin ? { pinHash: hashPin(input.pin) } : {}),
     },
   });

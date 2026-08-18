@@ -54,6 +54,8 @@ model Employee {
   monthlySalary Float  @default(0)
   hasWallet Boolean    @default(true)
   canViewCreditCardWallets Boolean @default(false)
+  joinDate         DateTime?
+  endOfServiceDate DateTime?
   teamId    String?
   team      Team?      @relation(fields: [teamId], references: [id])
   invoices  Invoice[]

@@ -149,6 +149,24 @@ export function EmployeeForm({
           />
         </label>
         <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Join Date</span>
+          <input
+            type="date"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            value={value.joinDate}
+            onChange={(e) => setValue({ ...value, joinDate: e.target.value })}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">End of Service Date (if left)</span>
+          <input
+            type="date"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            value={value.endOfServiceDate}
+            onChange={(e) => setValue({ ...value, endOfServiceDate: e.target.value })}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Wallet</span>
           <select
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"

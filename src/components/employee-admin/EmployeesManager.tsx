@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
-import { formatAed } from "@/lib/format";
+import { formatAed, formatDate } from "@/lib/format";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { Pagination } from "@/components/admin/Pagination";
 import { EmployeeForm, type EmployeeFormValue } from "./EmployeeForm";
@@ -23,6 +23,8 @@ export type EmployeeRow = {
   revenue: number;
   monthlySalary: number;
   hasWallet: boolean;
+  joinDate: string | null;
+  endOfServiceDate: string | null;
 };
 
 function toFormValue(emp: EmployeeRow): EmployeeFormValue {
@@ -38,6 +40,8 @@ function toFormValue(emp: EmployeeRow): EmployeeFormValue {
     custody: emp.custody,
     monthlySalary: emp.monthlySalary,
     hasWallet: emp.hasWallet,
+    joinDate: emp.joinDate ?? "",
+    endOfServiceDate: emp.endOfServiceDate ?? "",
   };
 }
 
@@ -53,6 +57,8 @@ const emptyFormValue: EmployeeFormValue = {
   custody: 0,
   monthlySalary: 0,
   hasWallet: true,
+  joinDate: "",
+  endOfServiceDate: "",
 };
 
 export function EmployeesManager({
@@ -176,7 +182,13 @@ export function EmployeesManager({
               <tr key={emp.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
                 <td className="px-4 py-3">
                   <div className="font-medium text-slate-900">{emp.name}</div>
-                  <div className="text-xs text-slate-400">{emp.role === "ADMIN" ? "admin" : "employee"}</div>
+                  <div className="text-xs text-slate-400">
+                    {emp.role === "ADMIN" ? "admin" : "employee"}
+                    {emp.joinDate && ` · Joined ${formatDate(new Date(emp.joinDate))}`}
+                  </div>
+                  {emp.endOfServiceDate && (
+                    <div className="text-xs text-red-500 mt-0.5">Left {formatDate(new Date(emp.endOfServiceDate))}</div>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{emp.code}</td>
                 <td className="px-4 py-3 text-slate-600">{emp.jobTitle}</td>

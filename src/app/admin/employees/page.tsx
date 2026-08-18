@@ -40,6 +40,8 @@ export default async function AdminEmployeesPage({
     revenue: financialsList[i].revenue,
     monthlySalary: emp.monthlySalary,
     hasWallet: emp.hasWallet,
+    joinDate: emp.joinDate ? emp.joinDate.toISOString().slice(0, 10) : null,
+    endOfServiceDate: emp.endOfServiceDate ? emp.endOfServiceDate.toISOString().slice(0, 10) : null,
   }));
 
   return (
