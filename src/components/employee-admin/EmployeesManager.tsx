@@ -26,6 +26,10 @@ export type EmployeeRow = {
   hasWallet: boolean;
   joinDate: string | null;
   endOfServiceDate: string | null;
+  sparePartPriceModification: string;
+  sparePartMaxDiscountPercent: number | null;
+  labourPriceModification: string;
+  labourMaxDiscountPercent: number | null;
 };
 
 function toFormValue(emp: EmployeeRow): EmployeeFormValue {
@@ -43,6 +47,10 @@ function toFormValue(emp: EmployeeRow): EmployeeFormValue {
     hasWallet: emp.hasWallet,
     joinDate: emp.joinDate ?? "",
     endOfServiceDate: emp.endOfServiceDate ?? "",
+    sparePartPriceModification: emp.sparePartPriceModification,
+    sparePartMaxDiscountPercent: emp.sparePartMaxDiscountPercent != null ? String(emp.sparePartMaxDiscountPercent) : "",
+    labourPriceModification: emp.labourPriceModification,
+    labourMaxDiscountPercent: emp.labourMaxDiscountPercent != null ? String(emp.labourMaxDiscountPercent) : "",
   };
 }
 
@@ -60,6 +68,10 @@ const emptyFormValue: EmployeeFormValue = {
   hasWallet: true,
   joinDate: "",
   endOfServiceDate: "",
+  sparePartPriceModification: "Not Allowed",
+  sparePartMaxDiscountPercent: "",
+  labourPriceModification: "Not Allowed",
+  labourMaxDiscountPercent: "",
 };
 
 export function EmployeesManager({

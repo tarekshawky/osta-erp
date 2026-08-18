@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { EmployeeFormInput } from "@/app/admin/employees/actions";
+import { PRICE_MODIFICATION_LEVELS } from "@/lib/pricePermissions";
 
 export type EmployeeFormValue = EmployeeFormInput;
 
@@ -177,6 +178,62 @@ export function EmployeeForm({
             <option value="none">No wallet needed</option>
           </select>
         </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Allow Spare Part Price Modification</span>
+          <select
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            value={value.sparePartPriceModification}
+            onChange={(e) => setValue({ ...value, sparePartPriceModification: e.target.value })}
+          >
+            {PRICE_MODIFICATION_LEVELS.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
+        {value.sparePartPriceModification === "Allowed with Maximum Discount" && (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-slate-600">Spare Part Maximum Discount (%)</span>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+              value={value.sparePartMaxDiscountPercent}
+              onChange={(e) => setValue({ ...value, sparePartMaxDiscountPercent: e.target.value })}
+            />
+          </label>
+        )}
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Allow Labour Price Modification</span>
+          <select
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            value={value.labourPriceModification}
+            onChange={(e) => setValue({ ...value, labourPriceModification: e.target.value })}
+          >
+            {PRICE_MODIFICATION_LEVELS.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
+        {value.labourPriceModification === "Allowed with Maximum Discount" && (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-slate-600">Labour Maximum Discount (%)</span>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+              value={value.labourMaxDiscountPercent}
+              onChange={(e) => setValue({ ...value, labourMaxDiscountPercent: e.target.value })}
+            />
+          </label>
+        )}
       </div>
 
       {error && <p className="text-sm text-red-500 mt-3">{error}</p>}

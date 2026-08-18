@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession, hashPin } from "@/lib/session";
+import { PRICE_MODIFICATION_LEVELS } from "@/lib/pricePermissions";
 
 async function requireAdmin() {
   const session = await getSession();
@@ -24,6 +25,10 @@ export type EmployeeFormInput = {
   hasWallet: boolean;
   joinDate: string;
   endOfServiceDate: string;
+  sparePartPriceModification: string;
+  sparePartMaxDiscountPercent: string;
+  labourPriceModification: string;
+  labourMaxDiscountPercent: string;
 };
 
 function parseDate(value: string): Date | null {
@@ -42,7 +47,32 @@ function validate(input: EmployeeFormInput, isCreate: boolean) {
   if (input.pin && !/^\d{4}$/.test(input.pin)) {
     return "PIN code must be exactly 4 digits.";
   }
+  if (!(PRICE_MODIFICATION_LEVELS as readonly string[]).includes(input.sparePartPriceModification)) {
+    return "Invalid Spare Part Price Modification level.";
+  }
+  if (!(PRICE_MODIFICATION_LEVELS as readonly string[]).includes(input.labourPriceModification)) {
+    return "Invalid Labour Price Modification level.";
+  }
+  if (input.sparePartPriceModification === "Allowed with Maximum Discount") {
+    const pct = Number(input.sparePartMaxDiscountPercent);
+    if (!(pct >= 0 && pct <= 100)) return "Enter a valid Spare Part Maximum Discount percentage (0-100).";
+  }
+  if (input.labourPriceModification === "Allowed with Maximum Discount") {
+    const pct = Number(input.labourMaxDiscountPercent);
+    if (!(pct >= 0 && pct <= 100)) return "Enter a valid Labour Maximum Discount percentage (0-100).";
+  }
   return null;
+}
+
+function buildPricePermissionData(input: EmployeeFormInput) {
+  return {
+    sparePartPriceModification: input.sparePartPriceModification,
+    sparePartMaxDiscountPercent:
+      input.sparePartPriceModification === "Allowed with Maximum Discount" ? Number(input.sparePartMaxDiscountPercent) : null,
+    labourPriceModification: input.labourPriceModification,
+    labourMaxDiscountPercent:
+      input.labourPriceModification === "Allowed with Maximum Discount" ? Number(input.labourMaxDiscountPercent) : null,
+  };
 }
 
 export async function createEmployee(input: EmployeeFormInput): Promise<{ ok: boolean; error?: string }> {
@@ -70,6 +100,7 @@ export async function createEmployee(input: EmployeeFormInput): Promise<{ ok: bo
       hasWallet: input.hasWallet,
       joinDate: parseDate(input.joinDate),
       endOfServiceDate: parseDate(input.endOfServiceDate),
+      ...buildPricePermissionData(input),
     },
   });
 
@@ -106,6 +137,7 @@ export async function updateEmployee(
       hasWallet: input.hasWallet,
       joinDate: parseDate(input.joinDate),
       endOfServiceDate: parseDate(input.endOfServiceDate),
+      ...buildPricePermissionData(input),
       ...(input.pin ? { pinHash: hashPin(input.pin) } : {}),
     },
   });
