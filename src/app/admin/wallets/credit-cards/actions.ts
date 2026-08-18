@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
-import { CREDIT_CARD_STATUSES, maskCardNumber } from "@/lib/creditCardData";
+import { CREDIT_CARD_STATUSES, CREDIT_CARD_PAYMENT_METHODS, maskCardNumber } from "@/lib/creditCardData";
+import { formatAed } from "@/lib/format";
 
 export type CreditCardFormInput = {
   name: string;
@@ -102,4 +103,61 @@ export async function updateCreditCard(cardId: string, input: CreditCardFormInpu
   revalidatePath("/admin/wallets");
   revalidatePath(`/admin/wallets/credit-cards/${cardId}`);
   return { ok: true, id: cardId };
+}
+
+export type RecordCreditCardPaymentInput = {
+  date: string;
+  amount: number;
+  paymentMethod: string;
+  bankAccount: string;
+  referenceNumber: string;
+  notes: string;
+};
+
+export type RecordCreditCardPaymentResult = { ok: boolean; error?: string };
+
+// Deliberately only ever writes CreditCardPayment + an audit log row -- never
+// touches prisma.expense. This is what structurally guarantees a settlement
+// payment can never be recorded as a second Expense (no double counting).
+export async function recordCreditCardPayment(
+  cardId: string,
+  input: RecordCreditCardPaymentInput
+): Promise<RecordCreditCardPaymentResult> {
+  const admin = await requireEmployee("ADMIN");
+
+  if (!(input.amount > 0)) return { ok: false, error: "Enter a valid payment amount." };
+  if (!(CREDIT_CARD_PAYMENT_METHODS as readonly string[]).includes(input.paymentMethod)) {
+    return { ok: false, error: "Select a valid payment method." };
+  }
+
+  const card = await prisma.creditCard.findUnique({ where: { id: cardId } });
+  if (!card) return { ok: false, error: "Credit card not found." };
+
+  await prisma.$transaction([
+    prisma.creditCardPayment.create({
+      data: {
+        creditCardId: cardId,
+        date: new Date(input.date),
+        amount: input.amount,
+        paymentMethod: input.paymentMethod,
+        bankAccount: input.bankAccount.trim() || null,
+        referenceNumber: input.referenceNumber.trim() || null,
+        notes: input.notes.trim() || null,
+        recordedById: admin.id,
+      },
+    }),
+    prisma.creditCardAuditLog.create({
+      data: {
+        creditCardId: cardId,
+        action: "Payment Recorded",
+        description: `Payment of ${formatAed(input.amount)} recorded via ${input.paymentMethod}`,
+        newValue: input.amount.toFixed(2),
+        performedById: admin.id,
+      },
+    }),
+  ]);
+
+  revalidatePath("/admin/wallets");
+  revalidatePath(`/admin/wallets/credit-cards/${cardId}`);
+  return { ok: true };
 }
