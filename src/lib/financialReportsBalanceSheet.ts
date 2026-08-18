@@ -81,6 +81,24 @@ export async function computeAccountsReceivable(asOfDate: Date): Promise<number>
   return agg._sum.amount ?? 0;
 }
 
+export type AccountsReceivableRow = { id: string; number: string; date: Date; customerName: string; amount: number };
+
+export async function getAccountsReceivableDetail(asOfDate: Date): Promise<{ rows: AccountsReceivableRow[]; total: number }> {
+  const invoices = await prisma.invoice.findMany({
+    where: { status: "Unpaid", ...boundBy("date", asOfDate) },
+    orderBy: { date: "desc" },
+    include: { customer: { select: { name: true, companyName: true, type: true } } },
+  });
+  const rows = invoices.map((inv) => ({
+    id: inv.id,
+    number: inv.number,
+    date: inv.date,
+    customerName: inv.customer.type === "COMPANY" ? inv.customer.companyName ?? inv.customer.name : inv.customer.name,
+    amount: inv.amount,
+  }));
+  return { rows, total: rows.reduce((sum, r) => sum + r.amount, 0) };
+}
+
 // Best-available proxy: employee custody floats represent money advanced to
 // employees for operational spending not yet reconciled as expenses. Not truly
 // date-bounded, since Employee.custody has no history table -- documented
