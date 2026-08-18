@@ -1,16 +1,20 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { MainWarehouseTable } from "@/components/inventory/MainWarehouseTable";
 import { AddStockModal } from "@/components/inventory/AddStockModal";
 import { SupplierPurchaseModal } from "@/components/inventory/SupplierPurchaseModal";
 import { getWarehouseStockSummary, getInventoryItemDisplayName, getWarehouses } from "@/lib/inventoryData";
+import { parsePage } from "@/lib/pagination";
+
+const WAREHOUSE_STOCK_PAGE_SIZE = 20;
 
 export default async function MainWarehousePage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; warehouseId?: string }>;
+  searchParams: Promise<{ status?: string; warehouseId?: string; page?: string }>;
 }) {
-  const { status, warehouseId: warehouseIdParam } = await searchParams;
+  const { status, warehouseId: warehouseIdParam, page: pageParam } = await searchParams;
 
   const [warehouses, activeItems] = await Promise.all([
     getWarehouses("Active"),
@@ -23,6 +27,10 @@ export default async function MainWarehousePage({
   const rows = status === "low" ? summary.filter((r) => r.status === "Low Stock")
     : status === "out" ? summary.filter((r) => r.status === "Out of Stock")
     : summary;
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / WAREHOUSE_STOCK_PAGE_SIZE));
+  const page = Math.min(parsePage(pageParam), totalPages);
+  const pagedRows = rows.slice((page - 1) * WAREHOUSE_STOCK_PAGE_SIZE, page * WAREHOUSE_STOCK_PAGE_SIZE);
 
   const itemOptions = activeItems.map((i) => ({ id: i.id, displayName: getInventoryItemDisplayName(i), unit: i.unit }));
 
@@ -53,7 +61,7 @@ export default async function MainWarehousePage({
           <>
             <div className="flex items-center gap-2 mb-4 flex-wrap">
               {warehouses.map((w) => (
-                <a
+                <Link
                   key={w.id}
                   href={`/admin/inventory/warehouse?warehouseId=${w.id}${status ? `&status=${status}` : ""}`}
                   className={`text-sm font-medium px-3 py-1.5 rounded-full ${
@@ -61,7 +69,7 @@ export default async function MainWarehousePage({
                   }`}
                 >
                   {w.name}
-                </a>
+                </Link>
               ))}
             </div>
 
@@ -71,7 +79,7 @@ export default async function MainWarehousePage({
                 { key: "low", label: "Low Stock" },
                 { key: "out", label: "Out of Stock" },
               ].map((f) => (
-                <a
+                <Link
                   key={f.label}
                   href={
                     f.key
@@ -83,11 +91,18 @@ export default async function MainWarehousePage({
                   }`}
                 >
                   {f.label}
-                </a>
+                </Link>
               ))}
             </div>
 
-            <MainWarehouseTable rows={rows} warehouseId={warehouseId!} />
+            <MainWarehouseTable
+              rows={pagedRows}
+              warehouseId={warehouseId!}
+              page={page}
+              totalPages={totalPages}
+              basePath="/admin/inventory/warehouse"
+              searchParams={{ warehouseId, status }}
+            />
           </>
         )}
       </div>

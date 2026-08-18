@@ -1,6 +1,7 @@
 import { formatAed } from "@/lib/format";
 import type { WarehouseStockRow } from "@/lib/inventoryData";
 import { AdjustStockModal } from "./AdjustStockModal";
+import { Pagination } from "@/components/admin/Pagination";
 
 const STATUS_STYLES: Record<string, string> = {
   OK: "bg-green-50 text-green-700",
@@ -8,7 +9,21 @@ const STATUS_STYLES: Record<string, string> = {
   "Out of Stock": "bg-red-50 text-red-700",
 };
 
-export function MainWarehouseTable({ rows, warehouseId }: { rows: WarehouseStockRow[]; warehouseId: string }) {
+export function MainWarehouseTable({
+  rows,
+  warehouseId,
+  page,
+  totalPages,
+  basePath,
+  searchParams,
+}: {
+  rows: WarehouseStockRow[];
+  warehouseId: string;
+  page: number;
+  totalPages: number;
+  basePath: string;
+  searchParams?: Record<string, string | undefined>;
+}) {
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
       <table className="w-full text-sm">
@@ -68,6 +83,7 @@ export function MainWarehouseTable({ rows, warehouseId }: { rows: WarehouseStock
           )}
         </tbody>
       </table>
+      <Pagination page={page} totalPages={totalPages} basePath={basePath} searchParams={searchParams} />
     </div>
   );
 }
