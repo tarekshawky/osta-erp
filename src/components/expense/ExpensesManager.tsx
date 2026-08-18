@@ -7,7 +7,7 @@ import { formatAed, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { CategoryBadge } from "./CategoryBadge";
-import { ExpenseForm, type ExpenseFormValue, type ActiveCreditCardOption } from "./ExpenseForm";
+import { ExpenseForm, type ExpenseFormValue, type ActiveCreditCardOption, type VehicleOption } from "./ExpenseForm";
 import { ExpenseRefundModal } from "./ExpenseRefundModal";
 import { DeleteExpenseButton } from "./DeleteExpenseButton";
 import { ExpensePdfButton } from "./ExpensePdfButton";
@@ -24,7 +24,13 @@ export type ExpenseRow = {
   notes: string | null;
   category: string | null;
   vehicle: string | null;
+  vehicleId: string | null;
+  vehicleName: string | null;
+  odometer: number | null;
   subcategory: string | null;
+  detailType: string | null;
+  liters: number | null;
+  nextServiceInterval: number | null;
   payment: string;
   amount: number;
   status: string;
@@ -42,7 +48,12 @@ function toFormValue(expense: ExpenseRow): ExpenseFormValue {
   return {
     category: expense.category ?? "Other",
     vehicle: expense.vehicle ?? "",
+    vehicleId: expense.vehicleId,
+    odometer: expense.odometer,
     subcategory: expense.subcategory ?? "",
+    detailType: expense.detailType ?? "",
+    liters: expense.liters,
+    nextServiceInterval: expense.nextServiceInterval,
     payment: expense.payment,
     amount: expense.amount,
     date: expense.date.slice(0, 10),
@@ -58,7 +69,12 @@ function toFormValue(expense: ExpenseRow): ExpenseFormValue {
 const emptyFormValue: ExpenseFormValue = {
   category: "Vehicle",
   vehicle: "",
+  vehicleId: null,
+  odometer: null,
   subcategory: "",
+  detailType: "",
+  liters: null,
+  nextServiceInterval: null,
   payment: "Cash",
   amount: 0,
   date: new Date().toISOString().slice(0, 10),
@@ -80,6 +96,7 @@ export function ExpensesManager({
   teams,
   selectedTeam,
   activeCards,
+  vehicleOptions,
 }: {
   expenses: ExpenseRow[];
   totalCount: number;
@@ -90,6 +107,7 @@ export function ExpensesManager({
   teams: string[];
   selectedTeam: string;
   activeCards: ActiveCreditCardOption[];
+  vehicleOptions: VehicleOption[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -189,6 +207,7 @@ export function ExpensesManager({
         <ExpenseForm
           initial={emptyFormValue}
           activeCards={activeCards}
+          vehicleOptions={vehicleOptions}
           onSave={async (value) => {
             const res = await createExpense(value);
             if (res.ok) {
@@ -205,6 +224,7 @@ export function ExpensesManager({
         <ExpenseForm
           initial={toFormValue(editingExpense)}
           activeCards={activeCards}
+          vehicleOptions={vehicleOptions}
           onSave={async (value) => {
             const res = await updateExpense(editingExpense.id, value);
             if (res.ok) {
@@ -240,9 +260,10 @@ export function ExpensesManager({
                 <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{formatDate(new Date(exp.date))}</td>
                 <td className="px-4 py-3">
                   <CategoryBadge category={exp.category} />
-                  {(exp.vehicle || exp.subcategory) && (
+                  {(exp.vehicleName || exp.vehicle || exp.subcategory) && (
                     <div className="text-xs text-slate-400 mt-0.5">
-                      {[exp.vehicle, exp.subcategory].filter(Boolean).join(" · ")}
+                      {[exp.vehicleName ?? exp.vehicle, exp.subcategory].filter(Boolean).join(" · ")}
+                      {exp.odometer != null && ` · ${exp.odometer.toLocaleString()} KM`}
                     </div>
                   )}
                 </td>
@@ -281,7 +302,7 @@ export function ExpensesManager({
                         id: exp.id,
                         date: new Date(exp.date),
                         category: exp.category,
-                        vehicle: exp.vehicle,
+                        vehicle: exp.vehicleName ?? exp.vehicle,
                         subcategory: exp.subcategory,
                         description: exp.description,
                         notes: exp.notes,

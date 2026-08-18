@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { TopBar } from "@/components/TopBar";
 import { NewExpenseForm } from "./NewExpenseForm";
+import { getVehicleCurrentOdometer } from "@/lib/vehicleData";
 
 export default async function NewExpensePage({
   searchParams,
@@ -8,11 +9,21 @@ export default async function NewExpensePage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const activeCards = await prisma.creditCard.findMany({
-    where: { status: "Active" },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, cardHolder: true, lastFour: true },
-  });
+  const [activeCards, vehicles] = await Promise.all([
+    prisma.creditCard.findMany({
+      where: { status: "Active" },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, cardHolder: true, lastFour: true },
+    }),
+    prisma.vehicle.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
+  ]);
+  const vehicleOptions = await Promise.all(
+    vehicles.map(async (v) => ({
+      id: v.id,
+      name: v.name,
+      currentOdometer: await getVehicleCurrentOdometer(v.id, v.initialOdometer),
+    }))
+  );
 
   return (
     <div className="pb-8">
@@ -21,10 +32,12 @@ export default async function NewExpensePage({
         <p className="text-sm text-red-500 px-5 pt-4">
           {error === "duplicate"
             ? "This identical expense has already been recorded for this date."
-            : "Please fill in all fields with a valid amount."}
+            : error === "mileage"
+              ? "The odometer reading is lower than the vehicle's last recorded mileage. Ask an admin to correct it."
+              : "Please fill in all fields with a valid amount."}
         </p>
       )}
-      <NewExpenseForm activeCards={activeCards} />
+      <NewExpenseForm activeCards={activeCards} vehicleOptions={vehicleOptions} />
     </div>
   );
 }

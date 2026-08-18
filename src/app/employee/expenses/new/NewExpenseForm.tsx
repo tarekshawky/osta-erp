@@ -5,20 +5,32 @@ import { Field, inputClassName } from "@/components/FormField";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_PAYMENT_METHODS,
-  VEHICLES,
   ADVERTISING_PLATFORMS,
 } from "@/lib/expenseData";
-import { VEHICLE_EXPENSE_TYPES } from "@/lib/vehicleData";
+import { VEHICLE_EXPENSE_TYPES, SERVICE_TYPES, FUEL_TYPES } from "@/lib/vehicleData";
 import { maskCardNumber } from "@/lib/creditCardData";
 import { createExpense } from "./actions";
 
 export type ActiveCreditCardOption = { id: string; name: string; cardHolder: string | null; lastFour: string };
+export type VehicleOption = { id: string; name: string; currentOdometer: number };
 
-export function NewExpenseForm({ activeCards }: { activeCards: ActiveCreditCardOption[] }) {
+const EMPLOYEE_VEHICLE_EXPENSE_TYPES = VEHICLE_EXPENSE_TYPES.filter((t) => t !== "Fine");
+
+export function NewExpenseForm({
+  activeCards,
+  vehicleOptions,
+}: {
+  activeCards: ActiveCreditCardOption[];
+  vehicleOptions: VehicleOption[];
+}) {
   const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
   const [payment, setPayment] = useState<string>(EXPENSE_PAYMENT_METHODS[0]);
+  const [vehicleId, setVehicleId] = useState<string>("");
+  const [subcategory, setSubcategory] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
+
+  const selectedVehicle = vehicleOptions.find((v) => v.id === vehicleId);
 
   return (
     <form
@@ -58,26 +70,68 @@ export function NewExpenseForm({ activeCards }: { activeCards: ActiveCreditCardO
       </Field>
       {category === "Vehicle" && (
         <>
-          <Field label="Vehicle">
-            <select name="vehicle" className={inputClassName} defaultValue="">
+          <Field label="Select Vehicle">
+            <select
+              name="vehicleId"
+              className={inputClassName}
+              value={vehicleId}
+              onChange={(e) => setVehicleId(e.target.value)}
+            >
               <option value="">Select vehicle...</option>
-              {VEHICLES.map((v) => (
-                <option key={v} value={v}>
-                  {v}
+              {vehicleOptions.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name} — Current: {v.currentOdometer.toLocaleString()} KM
                 </option>
               ))}
             </select>
           </Field>
           <Field label="Expense Type">
-            <select name="subcategory" className={inputClassName} defaultValue="">
+            <select
+              name="subcategory"
+              className={inputClassName}
+              value={subcategory}
+              onChange={(e) => setSubcategory(e.target.value)}
+            >
               <option value="">Select type...</option>
-              {VEHICLE_EXPENSE_TYPES.map((t) => (
+              {EMPLOYEE_VEHICLE_EXPENSE_TYPES.map((t) => (
                 <option key={t} value={t}>
                   {t}
                 </option>
               ))}
             </select>
           </Field>
+          <Field label={`Odometer Reading (KM)${selectedVehicle ? ` — current: ${selectedVehicle.currentOdometer.toLocaleString()} KM` : ""}`}>
+            <input name="odometer" type="number" min="0" required className={inputClassName} />
+          </Field>
+          {subcategory === "Service" && (
+            <Field label="Service Type">
+              <select name="detailType" className={inputClassName} defaultValue="">
+                <option value="">Select type...</option>
+                {SERVICE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {subcategory === "Petrol / Fuel" && (
+            <>
+              <Field label="Fuel Type">
+                <select name="detailType" className={inputClassName} defaultValue="">
+                  <option value="">Select type...</option>
+                  {FUEL_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Liters">
+                <input name="liters" type="number" step="0.01" min="0" className={inputClassName} />
+              </Field>
+            </>
+          )}
         </>
       )}
       {category === "Advertising" && (

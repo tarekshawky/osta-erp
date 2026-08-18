@@ -13,7 +13,7 @@ import {
   canonicalExpensePayment,
   generateExpenseNumber,
 } from "@/lib/expenseData";
-import { VEHICLE_EXPENSE_TYPES } from "@/lib/vehicleData";
+import { VEHICLE_EXPENSE_TYPES, getVehicleCurrentOdometer, checkOdometerReading } from "@/lib/vehicleData";
 
 export type ExpenseFormInput = {
   category: string;
@@ -28,12 +28,18 @@ export type ExpenseFormInput = {
   vendor?: string | null;
   referenceNumber?: string | null;
   creditCardId?: string | null;
+  vehicleId?: string | null;
+  odometer?: number | null;
+  detailType?: string | null;
+  liters?: number | null;
+  nextServiceInterval?: number | null;
+  overrideMileage?: boolean;
 };
 
 // Returns the card id to persist (or an error) for a payment method that resolves
 // to "Credit Card" -- a card must be selected and Active, otherwise wallet totals
 // would drift from what the admin sees on screen.
-async function resolveCreditCard(
+export async function resolveCreditCard(
   payment: string,
   creditCardId: string | null | undefined
 ): Promise<{ ok: true; creditCardId: string | null } | { ok: false; error: string }> {
@@ -44,17 +50,51 @@ async function resolveCreditCard(
   return { ok: true, creditCardId: card.id };
 }
 
-function resolveVehicleAndSubcategory(input: Pick<ExpenseFormInput, "category" | "vehicle" | "subcategory">) {
+function resolveVehicleTypeFields(
+  input: Pick<ExpenseFormInput, "category" | "subcategory" | "vehicleId" | "odometer" | "detailType" | "liters" | "nextServiceInterval">
+) {
   if (input.category === "Vehicle") {
-    return { vehicle: input.vehicle || null, subcategory: input.subcategory || null };
+    return {
+      vehicleId: input.vehicleId || null,
+      subcategory: input.subcategory || null,
+      odometer: input.odometer ?? null,
+      detailType: input.detailType?.trim() || null,
+      liters: input.subcategory === "Petrol / Fuel" ? (input.liters ?? null) : null,
+      nextServiceInterval: input.subcategory === "Service" ? (input.nextServiceInterval ?? null) : null,
+    };
   }
   if (input.category === "Advertising") {
-    return { vehicle: null, subcategory: input.subcategory || null };
+    return { vehicleId: null, subcategory: input.subcategory || null, odometer: null, detailType: null, liters: null, nextServiceInterval: null };
   }
-  return { vehicle: null, subcategory: null };
+  return { vehicleId: null, subcategory: null, odometer: null, detailType: null, liters: null, nextServiceInterval: null };
 }
 
-export async function createExpense(input: ExpenseFormInput): Promise<{ ok: boolean; error?: string }> {
+// Admin can override a too-low odometer reading (this action is already
+// Admin-only, so the override is trusted); Employees never get this path (see
+// src/app/employee/expenses/new/actions.ts, which redirects unconditionally).
+async function checkMileage(
+  vehicleId: string | null,
+  odometer: number | null,
+  excludeExpenseId: string | undefined,
+  overrideMileage: boolean | undefined
+): Promise<{ ok: true } | { ok: false; error: string; requiresOverride: boolean }> {
+  if (!vehicleId || odometer == null) return { ok: true };
+  const vehicle = await prisma.vehicle.findUnique({ where: { id: vehicleId } });
+  if (!vehicle) return { ok: false, error: "Vehicle not found.", requiresOverride: false };
+  const current = await getVehicleCurrentOdometer(vehicleId, vehicle.initialOdometer, excludeExpenseId);
+  if (checkOdometerReading(odometer, current) === "below-current" && !overrideMileage) {
+    return {
+      ok: false,
+      error: `Odometer reading is lower than the last recorded ${current.toLocaleString()} KM.`,
+      requiresOverride: true,
+    };
+  }
+  return { ok: true };
+}
+
+export async function createExpense(
+  input: ExpenseFormInput
+): Promise<{ ok: boolean; error?: string; requiresOverride?: boolean }> {
   const employee = await requireEmployee("ADMIN");
 
   if (!input.description.trim() || !Number.isFinite(input.amount) || input.amount <= 0) {
@@ -65,13 +105,17 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
   if (!cardResult.ok) return { ok: false, error: cardResult.error };
   const { creditCardId } = cardResult;
 
+  const details = resolveVehicleTypeFields(input);
+  const mileageResult = await checkMileage(details.vehicleId, details.odometer, undefined, input.overrideMileage);
+  if (!mileageResult.ok) return { ok: false, error: mileageResult.error, requiresOverride: mileageResult.requiresOverride };
+
   const date = new Date(input.date);
-  const details = resolveVehicleAndSubcategory(input);
   const duplicate = await findDuplicateExpense({
     date,
     description: input.description,
     category: input.category,
-    ...details,
+    vehicleId: details.vehicleId,
+    subcategory: details.subcategory,
     payment: input.payment,
     amount: input.amount,
     createdById: employee.id,
@@ -119,13 +163,14 @@ export async function createExpense(input: ExpenseFormInput): Promise<{ ok: bool
   revalidatePath("/admin/wallets");
   revalidatePath("/admin/marketing");
   if (creditCardId) revalidatePath(`/admin/wallets/credit-cards/${creditCardId}`);
+  if (details.vehicleId) revalidatePath(`/admin/vehicles/${details.vehicleId}`);
   return { ok: true };
 }
 
 export async function updateExpense(
   id: string,
   input: ExpenseFormInput
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; requiresOverride?: boolean }> {
   const employee = await requireEmployee("ADMIN");
 
   if (!input.description.trim() || !Number.isFinite(input.amount) || input.amount <= 0) {
@@ -139,6 +184,10 @@ export async function updateExpense(
   const existing = await prisma.expense.findUnique({ where: { id } });
   if (!existing) return { ok: false, error: "Expense not found." };
 
+  const details = resolveVehicleTypeFields(input);
+  const mileageResult = await checkMileage(details.vehicleId, details.odometer, id, input.overrideMileage);
+  if (!mileageResult.ok) return { ok: false, error: mileageResult.error, requiresOverride: mileageResult.requiresOverride };
+
   await prisma.$transaction(async (tx) => {
     const expense = await tx.expense.update({
       where: { id },
@@ -147,7 +196,7 @@ export async function updateExpense(
         description: input.description.trim(),
         notes: input.notes?.trim() || null,
         category: input.category,
-        ...resolveVehicleAndSubcategory(input),
+        ...details,
         payment: input.payment,
         amount: input.amount,
         attachmentUrl: input.attachmentUrl || null,
@@ -175,6 +224,8 @@ export async function updateExpense(
   revalidatePath("/admin/marketing");
   if (existing.creditCardId) revalidatePath(`/admin/wallets/credit-cards/${existing.creditCardId}`);
   if (creditCardId && creditCardId !== existing.creditCardId) revalidatePath(`/admin/wallets/credit-cards/${creditCardId}`);
+  if (existing.vehicleId) revalidatePath(`/admin/vehicles/${existing.vehicleId}`);
+  if (details.vehicleId && details.vehicleId !== existing.vehicleId) revalidatePath(`/admin/vehicles/${details.vehicleId}`);
   return { ok: true };
 }
 
@@ -185,6 +236,7 @@ export async function deleteExpense(id: string) {
   revalidatePath("/admin/wallets");
   revalidatePath("/admin/marketing");
   if (expense.creditCardId) revalidatePath(`/admin/wallets/credit-cards/${expense.creditCardId}`);
+  if (expense.vehicleId) revalidatePath(`/admin/vehicles/${expense.vehicleId}`);
 }
 
 export async function refundExpense(

@@ -6,13 +6,12 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { findDuplicateExpense } from "@/lib/expenseDuplicate";
 import {
-  VEHICLES,
   ADVERTISING_PLATFORMS,
   EXPENSE_PAYMENT_METHODS,
   canonicalExpensePayment,
   generateExpenseNumber,
 } from "@/lib/expenseData";
-import { VEHICLE_EXPENSE_TYPES } from "@/lib/vehicleData";
+import { VEHICLE_EXPENSE_TYPES, getVehicleCurrentOdometer, checkOdometerReading } from "@/lib/vehicleData";
 
 export async function createExpense(formData: FormData) {
   const employee = await requireEmployee("EMPLOYEE");
@@ -20,8 +19,11 @@ export async function createExpense(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
   const category = String(formData.get("category") ?? "").trim();
-  const vehicleInput = String(formData.get("vehicle") ?? "").trim();
+  const vehicleIdInput = String(formData.get("vehicleId") ?? "").trim();
   const subcategoryInput = String(formData.get("subcategory") ?? "").trim();
+  const odometerInput = String(formData.get("odometer") ?? "").trim();
+  const detailTypeInput = String(formData.get("detailType") ?? "").trim();
+  const litersInput = String(formData.get("liters") ?? "").trim();
   const amount = Number(formData.get("amount"));
   const dateStr = String(formData.get("date") ?? "");
   const vendor = String(formData.get("vendor") ?? "").trim();
@@ -45,11 +47,9 @@ export async function createExpense(formData: FormData) {
     creditCardId = creditCardIdInput;
   }
 
-  const vehicle =
-    category === "Vehicle" && VEHICLES.includes(vehicleInput as (typeof VEHICLES)[number]) ? vehicleInput : null;
   const subcategory =
     category === "Vehicle"
-      ? VEHICLE_EXPENSE_TYPES.includes(subcategoryInput as (typeof VEHICLE_EXPENSE_TYPES)[number])
+      ? VEHICLE_EXPENSE_TYPES.includes(subcategoryInput as (typeof VEHICLE_EXPENSE_TYPES)[number]) && subcategoryInput !== "Fine"
         ? subcategoryInput
         : null
       : category === "Advertising"
@@ -58,12 +58,34 @@ export async function createExpense(formData: FormData) {
           : null
         : null;
 
+  let vehicleId: string | null = null;
+  let odometer: number | null = null;
+  let detailType: string | null = null;
+  let liters: number | null = null;
+  if (category === "Vehicle") {
+    if (!vehicleIdInput) redirect("/employee/expenses/new?error=1");
+    const vehicle = await prisma.vehicle.findUnique({ where: { id: vehicleIdInput } });
+    if (!vehicle || vehicle.status !== "Active") redirect("/employee/expenses/new?error=1");
+    vehicleId = vehicle.id;
+
+    odometer = odometerInput ? Number(odometerInput) : null;
+    if (!odometer || odometer <= 0) redirect("/employee/expenses/new?error=1");
+
+    const current = await getVehicleCurrentOdometer(vehicleId, vehicle.initialOdometer);
+    if (checkOdometerReading(odometer, current) === "below-current") {
+      redirect("/employee/expenses/new?error=mileage");
+    }
+
+    detailType = detailTypeInput || null;
+    liters = subcategory === "Petrol / Fuel" && litersInput ? Number(litersInput) : null;
+  }
+
   const date = dateStr ? new Date(dateStr) : new Date();
   const duplicate = await findDuplicateExpense({
     date,
     description,
     category: category || null,
-    vehicle,
+    vehicleId,
     subcategory,
     payment,
     amount,
@@ -84,8 +106,11 @@ export async function createExpense(formData: FormData) {
         description,
         notes: notes || null,
         category: category || null,
-        vehicle,
+        vehicleId,
         subcategory,
+        odometer,
+        detailType,
+        liters,
         payment,
         amount,
         vendor: vendor || null,
@@ -114,5 +139,6 @@ export async function createExpense(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/employee");
   if (creditCardId) revalidatePath(`/admin/wallets/credit-cards/${creditCardId}`);
+  if (vehicleId) revalidatePath(`/admin/vehicles/${vehicleId}`);
   redirect("/employee/expenses?toast=1");
 }

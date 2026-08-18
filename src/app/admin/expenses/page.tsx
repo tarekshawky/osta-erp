@@ -6,6 +6,7 @@ import { ExpensesManager } from "@/components/expense/ExpensesManager";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { buildDateRange } from "@/lib/dateRangeFilter";
 import { EXPENSE_PAYMENT_METHODS, canonicalExpensePayment } from "@/lib/expenseData";
+import { getVehicleCurrentOdometer } from "@/lib/vehicleData";
 import type { Prisma } from "@/generated/prisma";
 
 export default async function AdminExpensesPage({
@@ -18,7 +19,7 @@ export default async function AdminExpensesPage({
   const year = yearParam ? Number(yearParam) : null;
   const month = monthParam ? Number(monthParam) : null;
 
-  const [expenseDates, teams, activeCards] = await Promise.all([
+  const [expenseDates, teams, activeCards, activeVehicles] = await Promise.all([
     prisma.expense.findMany({ select: { date: true } }),
     prisma.team.findMany({ orderBy: { name: "asc" } }),
     prisma.creditCard.findMany({
@@ -26,7 +27,15 @@ export default async function AdminExpensesPage({
       orderBy: { name: "asc" },
       select: { id: true, name: true, cardHolder: true, lastFour: true },
     }),
+    prisma.vehicle.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
   ]);
+  const vehicleOptions = await Promise.all(
+    activeVehicles.map(async (v) => ({
+      id: v.id,
+      name: v.name,
+      currentOdometer: await getVehicleCurrentOdometer(v.id, v.initialOdometer),
+    }))
+  );
   const years = Array.from(new Set(expenseDates.map((e) => e.date.getFullYear()))).sort((a, b) => b - a);
 
   const where: Prisma.ExpenseWhereInput = {};
@@ -62,7 +71,7 @@ export default async function AdminExpensesPage({
   const expenses = await prisma.expense.findMany({
     where,
     orderBy: { date: "desc" },
-    include: { createdBy: true, team: true, creditCard: { select: { lastFour: true } } },
+    include: { createdBy: true, team: true, creditCard: { select: { lastFour: true } }, vehicleRef: { select: { name: true } } },
     skip: (safePage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
   });
@@ -74,7 +83,13 @@ export default async function AdminExpensesPage({
     notes: exp.notes,
     category: exp.category,
     vehicle: exp.vehicle,
+    vehicleId: exp.vehicleId,
+    vehicleName: exp.vehicleRef?.name ?? null,
+    odometer: exp.odometer,
     subcategory: exp.subcategory,
+    detailType: exp.detailType,
+    liters: exp.liters,
+    nextServiceInterval: exp.nextServiceInterval,
     payment: exp.payment,
     amount: exp.amount,
     status: exp.status,
@@ -123,6 +138,7 @@ export default async function AdminExpensesPage({
           teams={teams.map((t) => t.name)}
           selectedTeam={team}
           activeCards={activeCards}
+          vehicleOptions={vehicleOptions}
         />
       </div>
     </div>
