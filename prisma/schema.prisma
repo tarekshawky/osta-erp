@@ -23,6 +23,31 @@ model Setting {
   logoData            String?
   certificateLogoData String?
   collectMoneyTotal   Float    @default(0)
+
+  // Tax Information. taxRegistrationEffectiveDate (NOT taxCertificateIssueDate, NOT
+  // "today") is what defines the start of every dynamic Financial Report period --
+  // kept as a separate field so the two dates can never be confused in code or UI.
+  taxRegistrationNumber        String?
+  taxRegistrationEffectiveDate DateTime?
+  taxCertificateIssueDate      DateTime?
+  firstTaxPeriodStart          DateTime?
+  firstTaxPeriodEnd            DateTime?
+  firstTaxReturnFilingDueDate  DateTime?
+
+  // Equity inputs with no other source anywhere in the system.
+  shareCapital      Float?
+  statutoryReserves Float?
+
+  // Authorized Signatory block, shown on every Financial Report export.
+  signatoryName        String?
+  signatoryDesignation String?
+
+  // Which Employee's wallet position (custody + cash - expenses) represents the
+  // Shareholder's Current Account line on the Balance Sheet. Defaults to the sole
+  // current Admin until changed.
+  shareholderEmployeeId String?
+  shareholderEmployee   Employee? @relation("SettingShareholder", fields: [shareholderEmployeeId], references: [id])
+
   updatedAt           DateTime @updatedAt
 }
 
@@ -80,6 +105,10 @@ model Employee {
   creditCardAuditLogs        CreditCardAuditLog[] @relation("CreditCardAuditLogPerformedBy")
   vehiclesCreated            Vehicle[]            @relation("VehicleCreatedBy")
   vehicleExpensesResponsible Expense[]            @relation("ExpenseResponsibleEmployee")
+  assetsCreated              Asset[]              @relation("AssetCreatedBy")
+  liabilitiesCreated         Liability[]          @relation("LiabilityCreatedBy")
+  cashPositionUpdates        CashPosition[]       @relation("CashPositionUpdatedBy")
+  settingsAsShareholder      Setting[]            @relation("SettingShareholder")
   createdAt DateTime   @default(now())
 }
 
@@ -425,6 +454,55 @@ model VehicleFineInstallment {
   payrollEntryId String       @unique
   payrollEntry   PayrollEntry @relation(fields: [payrollEntryId], references: [id], onDelete: Cascade)
   createdAt      DateTime     @default(now())
+}
+
+// Property, Plant & Equipment register for the Balance Sheet's Non-Current Assets
+// line. No accumulatedDepreciation column -- depreciation is computed at query
+// time in financialReportsBalanceSheet.ts (straight-line), mirroring the
+// established "never denormalize a computed running value" convention already
+// used by CreditCard.outstanding and the Vehicle odometer.
+model Asset {
+  id                 String   @id @default(cuid())
+  name               String
+  category           String   // "Vehicle" | "Equipment" | "Furniture" | "Tools" | "Property" | "Other"
+  purchaseCost       Float
+  purchaseDate       DateTime
+  usefulLifeYears    Int
+  depreciationMethod String   @default("Straight-Line")
+  notes              String?
+  createdById        String
+  createdBy          Employee @relation("AssetCreatedBy", fields: [createdById], references: [id])
+  createdAt          DateTime @default(now())
+}
+
+// Register of liabilities with no other derivable source (bank loans, other
+// longer-term obligations). Deliberately excludes: credit-card balances (live
+// from CreditCard/CreditCardPayment) and Accounts Payable (structurally always 0
+// -- no vendor-bill workflow exists in this business).
+model Liability {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // "Bank Borrowing" | "Other"
+  category    String   // "Current" | "Non-Current"
+  amount      Float
+  notes       String?
+  createdById String
+  createdBy   Employee @relation("LiabilityCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+// Admin-entered opening cash balance as of a chosen date -- the ERP has never
+// tracked a running cash balance before now, so there's no way to derive this
+// from existing data. Every subsequent cash-like transaction is netted forward
+// from here at query time (financialReportsBalanceSheet.ts); this row is never
+// itself rewritten by report computation, only by an explicit admin edit.
+model CashPosition {
+  id             String    @id @default(cuid())
+  openingBalance Float     @default(0)
+  openingDate    DateTime?
+  updatedById    String?
+  updatedBy      Employee? @relation("CashPositionUpdatedBy", fields: [updatedById], references: [id])
+  updatedAt      DateTime  @updatedAt
 }
 
 model WorkReport {

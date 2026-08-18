@@ -17,3 +17,9 @@ export function buildDateRange(
     lt: new Date(Date.UTC(effectiveYear + 1, 0, 1)),
   };
 }
+
+// Arbitrary From/To range, for callers (Financial Reports) that need quarters,
+// custom ranges, or a tax period rather than a single year/month.
+export function buildCustomDateRange(from: Date, to: Date): { gte: Date; lte: Date } {
+  return { gte: from, lte: to };
+}

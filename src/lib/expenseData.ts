@@ -16,6 +16,15 @@ export const EXPENSE_CATEGORIES = [
   "Utilities",
   "Equipment",
   "Other",
+  "Air Ticket",
+  "Gratuity Expenses",
+  "Leave Salary",
+  "Legal and Professional Fees",
+  "Rent",
+  "Telephone Expenses",
+  "Trade License Renewal Fee",
+  "Insurance",
+  "Visa Expenses",
 ] as const;
 
 // Expenses tagged with this category feed the Marketing dashboard's Total Marketing
@@ -66,6 +75,15 @@ export const EXPENSE_CATEGORY_STYLES: Record<string, string> = {
   Utilities: "bg-yellow-50 text-yellow-700",
   Equipment: "bg-lime-50 text-lime-700",
   Other: "bg-rose-50 text-rose-600",
+  "Air Ticket": "bg-blue-50 text-blue-600",
+  "Gratuity Expenses": "bg-emerald-50 text-emerald-700",
+  "Leave Salary": "bg-teal-50 text-teal-700",
+  "Legal and Professional Fees": "bg-slate-100 text-slate-700",
+  Rent: "bg-amber-50 text-amber-700",
+  "Telephone Expenses": "bg-sky-50 text-sky-700",
+  "Trade License Renewal Fee": "bg-indigo-50 text-indigo-700",
+  Insurance: "bg-purple-50 text-purple-700",
+  "Visa Expenses": "bg-cyan-50 text-cyan-700",
 };
 
 // Shared by admin's createExpense action and the employee expense form so both
