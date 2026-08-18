@@ -2,10 +2,13 @@ import Link from "next/link";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { formatAed } from "@/lib/format";
-import { computeInventoryDashboardSummary } from "@/lib/inventoryData";
+import { computeInventoryDashboardSummary, getMostUsedItems } from "@/lib/inventoryData";
 
 export default async function InventoryDashboardPage() {
-  const summary = await computeInventoryDashboardSummary();
+  const [summary, mostUsedItems] = await Promise.all([
+    computeInventoryDashboardSummary(),
+    getMostUsedItems(),
+  ]);
 
   return (
     <div className="pb-10">
@@ -26,6 +29,24 @@ export default async function InventoryDashboardPage() {
           <AdminStatCard label="Employees With Shortages" value={String(summary.employeesWithShortages)} valueClassName={summary.employeesWithShortages > 0 ? "text-red-500" : "text-slate-900"} />
           <AdminStatCard label="Total Inventory Value" value={formatAed(summary.totalInventoryValue)} />
         </div>
+
+        {mostUsedItems.length > 0 && (
+          <>
+            <h3 className="mt-8 font-semibold text-slate-900">Most Used Items</h3>
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-4">
+              <div className="flex flex-col gap-2.5">
+                {mostUsedItems.map((i) => (
+                  <div key={i.itemId} className="flex items-center justify-between text-sm">
+                    <span className="text-slate-900 font-medium">{i.displayName}</span>
+                    <span className="text-slate-500">
+                      {i.qtyUsed.toLocaleString()} {i.unit} used
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         <h3 className="mt-8 font-semibold text-slate-900">Quick Links</h3>
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

@@ -3,6 +3,7 @@ import { buildCustomDateRange } from "./dateRangeFilter";
 import { COST_OF_SERVICES_CATEGORIES } from "./expenseData";
 import { CORPORATE_TAX_RATE, CORPORATE_TAX_EXEMPT_THRESHOLD } from "./reportData";
 import { ADMIN_EXPENSE_LINES, type DateRange } from "./financialReportsCore";
+import { computeInventoryCogs } from "./inventoryData";
 
 export type IncomeStatement = {
   revenue: { serviceRevenue: number; otherRevenue: number; total: number };
@@ -28,7 +29,10 @@ async function computeServiceRevenue(range: DateRange): Promise<number> {
   return (agg._sum.amount ?? 0) - (agg._sum.refundedAmount ?? 0);
 }
 
-async function computeCostOfSales(range: DateRange): Promise<number> {
+// "Expense-based" Cost of Sales -- category-tagged Expense rows. Still 0 today
+// since COST_OF_SERVICES_CATEGORIES is empty (see expenseData.ts), kept ready
+// for a future category-based Cost of Sales without a schema change.
+async function computeExpenseCostOfSales(range: DateRange): Promise<number> {
   if (COST_OF_SERVICES_CATEGORIES.length === 0) return 0;
   const agg = await prisma.expense.aggregate({
     _sum: { amount: true, refundedAmount: true },
@@ -41,11 +45,18 @@ async function computeCostOfSales(range: DateRange): Promise<number> {
 }
 
 export async function computeIncomeStatement(range: DateRange): Promise<IncomeStatement> {
-  const [serviceRevenue, costOfSales, adminExpenseAmounts] = await Promise.all([
+  const [serviceRevenue, costOfSalesFromExpenses, inventoryCogs, adminExpenseAmounts] = await Promise.all([
     computeServiceRevenue(range),
-    computeCostOfSales(range),
+    computeExpenseCostOfSales(range),
+    computeInventoryCogs(range),
     Promise.all(ADMIN_EXPENSE_LINES.map((line) => line.compute(range))),
   ]);
+  // Inventory Cost of Goods Sold -- Cost Price x quantity for every inventory
+  // item consumed on an Invoice dated within range (src/lib/inventoryData.ts).
+  // Recognized when USED, not when purchased -- a Supplier Stock Purchase
+  // records its own "Inventory Purchase" Expense (an operating-expense-shaped
+  // cash outflow), so folding it in here too would double count.
+  const costOfSales = costOfSalesFromExpenses + inventoryCogs;
 
   const otherRevenue = 0; // no second revenue source exists today; kept as a structured line for future use
   const totalRevenue = serviceRevenue + otherRevenue;
