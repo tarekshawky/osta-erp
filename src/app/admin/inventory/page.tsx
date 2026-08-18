@@ -66,6 +66,10 @@ export default async function InventoryDashboardPage() {
             <div className="font-semibold text-slate-900">Suppliers</div>
             <div className="text-sm text-slate-500 mt-0.5">Manage the vendors inventory items can be linked to.</div>
           </Link>
+          <Link href="/admin/inventory/labour" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
+            <div className="font-semibold text-slate-900">Labour Catalog</div>
+            <div className="text-sm text-slate-500 mt-0.5">Maintenance work types with a default price. No stock.</div>
+          </Link>
           <Link href="/admin/inventory/distribute" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
             <div className="font-semibold text-slate-900">Distribute Stock</div>
             <div className="text-sm text-slate-500 mt-0.5">Transfer quantities from a warehouse to an employee.</div>
