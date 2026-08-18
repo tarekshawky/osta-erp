@@ -237,3 +237,60 @@ export async function recordRentalPayment(
   revalidatePath("/admin/rental-expenses");
   return { ok: true, id: transactionId };
 }
+
+export type EditRentalTransactionInput = {
+  amount: number;
+  dueDate: string;
+  referenceNumber: string;
+  notes: string;
+};
+
+// Corrects a transaction's own values (e.g. a data-entry typo) without touching
+// paymentStatus -- keeps the linked Expense's amount/date/notes in sync so
+// Financial Reports never drift from what's shown here. Allowed regardless of
+// status (Pending through Paid) since this edits recorded values, not deletion.
+export async function editRentalTransaction(
+  transactionId: string,
+  input: EditRentalTransactionInput
+): Promise<RentalAgreementActionResult> {
+  await requireEmployee("ADMIN");
+  if (!(input.amount > 0)) return { ok: false, error: "Enter a valid amount." };
+  if (!input.dueDate) return { ok: false, error: "Due Date is required." };
+
+  const transaction = await prisma.rentalTransaction.findUnique({
+    where: { id: transactionId },
+    include: { rentalAgreement: true },
+  });
+  if (!transaction) return { ok: false, error: "Rental transaction not found." };
+
+  const dueDate = new Date(input.dueDate);
+
+  await prisma.$transaction([
+    prisma.rentalTransaction.update({
+      where: { id: transactionId },
+      data: {
+        amount: input.amount,
+        dueDate,
+        referenceNumber: input.referenceNumber.trim() || null,
+        notes: input.notes.trim() || null,
+      },
+    }),
+    ...(transaction.expenseId
+      ? [
+          prisma.expense.update({
+            where: { id: transaction.expenseId },
+            data: {
+              amount: input.amount,
+              date: dueDate,
+              referenceNumber: input.referenceNumber.trim() || null,
+              notes: input.notes.trim() || null,
+            },
+          }),
+        ]
+      : []),
+  ]);
+
+  revalidatePath(`/admin/customers/${transaction.rentalAgreement.customerId}`);
+  revalidatePath("/admin/rental-expenses");
+  return { ok: true, id: transactionId };
+}

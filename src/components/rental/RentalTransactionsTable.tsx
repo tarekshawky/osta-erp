@@ -1,6 +1,7 @@
 import { formatAed, formatDate } from "@/lib/format";
 import { RENTAL_PAYMENT_STATUS_STYLES, RENT_EXPENSE_CATEGORY, type RentalTransactionRow } from "@/lib/rentalData";
 import { RecordRentalPaymentModal } from "./RecordRentalPaymentModal";
+import { EditRentalTransactionModal } from "./EditRentalTransactionModal";
 
 export function RentalTransactionsTable({ transactions, showCompany = true }: { transactions: RentalTransactionRow[]; showCompany?: boolean }) {
   return (
@@ -33,17 +34,30 @@ export function RentalTransactionsTable({ transactions, showCompany = true }: { 
               </td>
               <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{t.paymentMethod ?? "—"}</td>
               <td className="px-4 py-3 whitespace-nowrap">
-                {["Pending", "Due", "Overdue"].includes(t.paymentStatus) ? (
-                  <RecordRentalPaymentModal
+                <div className="flex items-center gap-2">
+                  {["Pending", "Due", "Overdue"].includes(t.paymentStatus) && (
+                    <RecordRentalPaymentModal
+                      transactionId={t.id}
+                      agreementName={t.agreementName}
+                      amount={t.amount}
+                      defaultPaymentMethod={t.paymentMethod ?? "Bank Transfer"}
+                      trigger={<span className="text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer">Record Payment</span>}
+                    />
+                  )}
+                  <EditRentalTransactionModal
                     transactionId={t.id}
                     agreementName={t.agreementName}
                     amount={t.amount}
-                    defaultPaymentMethod={t.paymentMethod ?? "Bank Transfer"}
-                    trigger={<span className="text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer">Record Payment</span>}
+                    dueDate={t.dueDate}
+                    referenceNumber={t.referenceNumber}
+                    notes={t.notes}
+                    trigger={
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinejoin="round" />
+                      </svg>
+                    }
                   />
-                ) : (
-                  <span className="text-slate-300">—</span>
-                )}
+                </div>
               </td>
             </tr>
           ))}
