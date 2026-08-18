@@ -29,6 +29,21 @@ export const INVENTORY_CATEGORIES = [
   "Tools",
   "Spare Parts",
   "Other",
+  // Spare Parts Catalog additions -- 12 AC-parts categories from the Master
+  // Spare Parts Catalog spec. Finer breakdown within each lives in
+  // InventoryItem.subcategory, populated by the seed script.
+  "Electrical & Control Parts",
+  "Sensors & PCB",
+  "Motors & Fans",
+  "Compressors",
+  "Copper Pipes & Insulation",
+  "Refrigeration Components",
+  "Refrigerants",
+  "Drainage Parts",
+  "Split AC Installation Parts",
+  "Central AC/FCU/AHU Parts",
+  "Duct AC Parts",
+  "General Electrical Parts",
 ] as const;
 
 export const INVENTORY_ITEM_STATUSES = ["Active", "Inactive"] as const;

@@ -19,10 +19,10 @@ enum CustomerType {
 }
 
 model Setting {
-  id                  String   @id @default(cuid())
+  id                  String  @id @default(cuid())
   logoData            String?
   certificateLogoData String?
-  collectMoneyTotal   Float    @default(0)
+  collectMoneyTotal   Float   @default(0)
 
   // Tax Information. taxRegistrationEffectiveDate (NOT taxCertificateIssueDate, NOT
   // "today") is what defines the start of every dynamic Financial Report period --
@@ -48,7 +48,7 @@ model Setting {
   shareholderEmployeeId String?
   shareholderEmployee   Employee? @relation("SettingShareholder", fields: [shareholderEmployeeId], references: [id])
 
-  updatedAt           DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 }
 
 model Team {
@@ -64,98 +64,104 @@ model Team {
 }
 
 model Employee {
-  id        String     @id @default(cuid())
-  code      String     @unique
-  name      String
-  jobTitle  String
-  role      Role       @default(EMPLOYEE)
-  pinHash   String
-  status    String     @default("active")
-  phone     String?
-  photoData String?
-  custody   Float      @default(0)
-  revenueWithdrawn Float @default(0)
-  walletResetAt DateTime?
-  monthlySalary Float  @default(0)
-  hasWallet Boolean    @default(true)
-  canViewCreditCardWallets Boolean @default(false)
-  joinDate         DateTime?
-  endOfServiceDate DateTime?
-  teamId    String?
-  team      Team?      @relation(fields: [teamId], references: [id])
-  invoices  Invoice[]
-  expenses  Expense[]
-  payrollEntries        PayrollEntry[] @relation("PayrollFor")
-  payrollEntriesCreated PayrollEntry[] @relation("PayrollCreatedBy")
-  workReports           WorkReport[]
-  quotations            Quotation[]
-  warrantyCertificates  WarrantyCertificate[]
-  ordersAssigned        Order[]                @relation("OrderAssignedTo")
-  ordersCreated         Order[]                @relation("OrderCreatedBy")
-  ordersDone            Order[]                @relation("OrderDoneBy")
-  ordersCancelled       Order[]                @relation("OrderCancelledBy")
-  ordersRescheduled     Order[]                @relation("OrderRescheduledBy")
-  orderStatusChanges    OrderStatusChange[]
-  invoiceStatusChanges  InvoiceStatusChange[]
-  customersCreated      Customer[]             @relation("CustomerCreatedBy")
-  customersUpdated      Customer[]             @relation("CustomerUpdatedBy")
-  customerNotesCreated  CustomerNote[]
-  creditCardsCreated         CreditCard[]         @relation("CreditCardCreatedBy")
-  creditCardPaymentsRecorded CreditCardPayment[]  @relation("CreditCardPaymentRecordedBy")
-  creditCardAuditLogs        CreditCardAuditLog[] @relation("CreditCardAuditLogPerformedBy")
-  vehiclesCreated            Vehicle[]            @relation("VehicleCreatedBy")
-  vehicleExpensesResponsible Expense[]            @relation("ExpenseResponsibleEmployee")
-  assetsCreated              Asset[]              @relation("AssetCreatedBy")
-  liabilitiesCreated         Liability[]          @relation("LiabilityCreatedBy")
-  cashPositionUpdates        CashPosition[]       @relation("CashPositionUpdatedBy")
-  settingsAsShareholder      Setting[]            @relation("SettingShareholder")
-  rentalAgreementsCreated    RentalAgreement[]    @relation("RentalAgreementCreatedBy")
+  id                           String                         @id @default(cuid())
+  code                         String                         @unique
+  name                         String
+  jobTitle                     String
+  role                         Role                           @default(EMPLOYEE)
+  pinHash                      String
+  status                       String                         @default("active")
+  phone                        String?
+  photoData                    String?
+  custody                      Float                          @default(0)
+  revenueWithdrawn             Float                          @default(0)
+  walletResetAt                DateTime?
+  monthlySalary                Float                          @default(0)
+  hasWallet                    Boolean                        @default(true)
+  canViewCreditCardWallets     Boolean                        @default(false)
+  joinDate                     DateTime?
+  endOfServiceDate             DateTime?
+  teamId                       String?
+  team                         Team?                          @relation(fields: [teamId], references: [id])
+  invoices                     Invoice[]
+  expenses                     Expense[]
+  payrollEntries               PayrollEntry[]                 @relation("PayrollFor")
+  payrollEntriesCreated        PayrollEntry[]                 @relation("PayrollCreatedBy")
+  workReports                  WorkReport[]
+  quotations                   Quotation[]
+  warrantyCertificates         WarrantyCertificate[]
+  ordersAssigned               Order[]                        @relation("OrderAssignedTo")
+  ordersCreated                Order[]                        @relation("OrderCreatedBy")
+  ordersDone                   Order[]                        @relation("OrderDoneBy")
+  ordersCancelled              Order[]                        @relation("OrderCancelledBy")
+  ordersRescheduled            Order[]                        @relation("OrderRescheduledBy")
+  orderStatusChanges           OrderStatusChange[]
+  invoiceStatusChanges         InvoiceStatusChange[]
+  customersCreated             Customer[]                     @relation("CustomerCreatedBy")
+  customersUpdated             Customer[]                     @relation("CustomerUpdatedBy")
+  customerNotesCreated         CustomerNote[]
+  creditCardsCreated           CreditCard[]                   @relation("CreditCardCreatedBy")
+  creditCardPaymentsRecorded   CreditCardPayment[]            @relation("CreditCardPaymentRecordedBy")
+  creditCardAuditLogs          CreditCardAuditLog[]           @relation("CreditCardAuditLogPerformedBy")
+  vehiclesCreated              Vehicle[]                      @relation("VehicleCreatedBy")
+  vehicleExpensesResponsible   Expense[]                      @relation("ExpenseResponsibleEmployee")
+  assetsCreated                Asset[]                        @relation("AssetCreatedBy")
+  liabilitiesCreated           Liability[]                    @relation("LiabilityCreatedBy")
+  cashPositionUpdates          CashPosition[]                 @relation("CashPositionUpdatedBy")
+  settingsAsShareholder        Setting[]                      @relation("SettingShareholder")
+  rentalAgreementsCreated      RentalAgreement[]              @relation("RentalAgreementCreatedBy")
   inventoryItemsCreated        InventoryItem[]                @relation("InventoryItemCreatedBy")
-  inventoryTransactionsCreated InventoryTransaction[]          @relation("InventoryTransactionCreatedBy")
-  inventoryRequirements        EmployeeInventoryRequirement[]  @relation("InventoryRequirementFor")
-  inventoryRequirementsCreated EmployeeInventoryRequirement[]  @relation("InventoryRequirementCreatedBy")
-  inventoryUsages               InvoiceInventoryUsage[]
-  createdAt DateTime   @default(now())
+  inventoryTransactionsCreated InventoryTransaction[]         @relation("InventoryTransactionCreatedBy")
+  inventoryRequirements        EmployeeInventoryRequirement[] @relation("InventoryRequirementFor")
+  inventoryRequirementsCreated EmployeeInventoryRequirement[] @relation("InventoryRequirementCreatedBy")
+  inventoryUsages              InvoiceInventoryUsage[]
+  suppliersCreated             Supplier[]                     @relation("SupplierCreatedBy")
+  labourItemsCreated           LabourItem[]                   @relation("LabourItemCreatedBy")
+  sparePartPriceModification   String                         @default("Not Allowed")
+  sparePartMaxDiscountPercent  Float?
+  labourPriceModification      String                         @default("Not Allowed")
+  labourMaxDiscountPercent     Float?
+  createdAt                    DateTime                       @default(now())
 }
 
 model Customer {
-  id           String       @id @default(cuid())
-  code         String       @unique
-  type         CustomerType @default(INDIVIDUAL)
-  name         String
-  companyName  String?
-  trn          String?
-  phone        String       @unique
-  whatsapp     String?
-  email        String?
-  language     String       @default("Arabic")
-  emirate      String
-  city         String?
-  area         String?
-  buildingType String?
-  buildingName String?
-  flatNo       String?
-  address      String?
-  locationUrl  String?
-  notes        String?
-  status       String       @default("Active")
+  id               String            @id @default(cuid())
+  code             String            @unique
+  type             CustomerType      @default(INDIVIDUAL)
+  name             String
+  companyName      String?
+  trn              String?
+  phone            String            @unique
+  whatsapp         String?
+  email            String?
+  language         String            @default("Arabic")
+  emirate          String
+  city             String?
+  area             String?
+  buildingType     String?
+  buildingName     String?
+  flatNo           String?
+  address          String?
+  locationUrl      String?
+  notes            String?
+  status           String            @default("Active")
   // First-touch attribution: how this customer originally found OSTA. Set once at
   // creation (by whichever flow -- Add Customer, New Order, or New Invoice -- created
   // the record) and not overwritten afterward, unlike Invoice.leadSource which is
   // chosen per-invoice and drives the Marketing dashboard's revenue attribution.
-  leadSource   String       @default("Organic")
-  createdById  String?
-  createdBy    Employee?    @relation("CustomerCreatedBy", fields: [createdById], references: [id])
-  updatedById  String?
-  updatedBy    Employee?    @relation("CustomerUpdatedBy", fields: [updatedById], references: [id])
-  updatedAt    DateTime     @default(now()) @updatedAt
-  invoices     Invoice[]
-  orders       Order[]
-  quotations   Quotation[]
-  customerNotes CustomerNote[]
-  otps         CustomerOtp[]
+  leadSource       String            @default("Organic")
+  createdById      String?
+  createdBy        Employee?         @relation("CustomerCreatedBy", fields: [createdById], references: [id])
+  updatedById      String?
+  updatedBy        Employee?         @relation("CustomerUpdatedBy", fields: [updatedById], references: [id])
+  updatedAt        DateTime          @default(now()) @updatedAt
+  invoices         Invoice[]
+  orders           Order[]
+  quotations       Quotation[]
+  customerNotes    CustomerNote[]
+  otps             CustomerOtp[]
   rentalAgreements RentalAgreement[]
-  createdAt    DateTime     @default(now())
+  createdAt        DateTime          @default(now())
 }
 
 // One-time codes for the customer-facing phone-login API (src/app/api/v1/auth/otp/*).
@@ -189,22 +195,22 @@ model CustomerNote {
 // RentalTransaction below) so the two flows -- Customer -> OSTA revenue, and
 // OSTA -> Customer rent expense -- never net against each other.
 model RentalAgreement {
-  id               String    @id @default(cuid())
+  id               String              @id @default(cuid())
   customerId       String
-  customer         Customer  @relation(fields: [customerId], references: [id])
+  customer         Customer            @relation(fields: [customerId], references: [id])
   agreementName    String
-  rentalType       String    // Accommodation | Office | Warehouse | Shop | Staff Accommodation | Other
+  rentalType       String // Accommodation | Office | Warehouse | Shop | Staff Accommodation | Other
   monthlyRent      Float
-  paymentFrequency String    @default("Monthly") // Monthly | Quarterly | Semi-Annual | Annual | Custom
+  paymentFrequency String              @default("Monthly") // Monthly | Quarterly | Semi-Annual | Annual | Custom
   startDate        DateTime
   endDate          DateTime?
-  paymentDueDay    Int       @default(1) // 1-31
-  paymentMethod    String    @default("Bank Transfer")
+  paymentDueDay    Int                 @default(1) // 1-31
+  paymentMethod    String              @default("Bank Transfer")
   notes            String?
-  status           String    @default("Active") // Active | Suspended | Expired | Cancelled
+  status           String              @default("Active") // Active | Suspended | Expired | Cancelled
   createdById      String
-  createdBy        Employee  @relation("RentalAgreementCreatedBy", fields: [createdById], references: [id])
-  createdAt        DateTime  @default(now())
+  createdBy        Employee            @relation("RentalAgreementCreatedBy", fields: [createdById], references: [id])
+  createdAt        DateTime            @default(now())
   transactions     RentalTransaction[]
 }
 
@@ -216,7 +222,7 @@ model RentalTransaction {
   id                String          @id @default(cuid())
   rentalAgreementId String
   rentalAgreement   RentalAgreement @relation(fields: [rentalAgreementId], references: [id], onDelete: Cascade)
-  billingPeriod     DateTime        // first-of-month marker for the period this covers
+  billingPeriod     DateTime // first-of-month marker for the period this covers
   dueDate           DateTime
   amount            Float
   paymentStatus     String          @default("Pending") // Pending | Due | Overdue | Paid | Cancelled
@@ -232,30 +238,30 @@ model RentalTransaction {
 }
 
 model Invoice {
-  id            String        @id @default(cuid())
-  number        String        @unique
-  date          DateTime
-  customerId    String
-  customer      Customer      @relation(fields: [customerId], references: [id])
-  serviceType   String        @default("Repair")
-  category      String        @default("AC")
-  payment       String
-  amount        Float
-  status        String        @default("Paid")
-  refundedAmount Float        @default(0)
-  leadSource    String        @default("Organic")
-  warrantyUntil DateTime?
-  teamId        String?
-  team          Team?         @relation(fields: [teamId], references: [id])
-  createdById   String
-  createdBy     Employee      @relation(fields: [createdById], references: [id])
-  items         InvoiceItem[]
-  statusChanges InvoiceStatusChange[]
-  order         Order?
-  quotation     Quotation?
+  id                    String                  @id @default(cuid())
+  number                String                  @unique
+  date                  DateTime
+  customerId            String
+  customer              Customer                @relation(fields: [customerId], references: [id])
+  serviceType           String                  @default("Repair")
+  category              String                  @default("AC")
+  payment               String
+  amount                Float
+  status                String                  @default("Paid")
+  refundedAmount        Float                   @default(0)
+  leadSource            String                  @default("Organic")
+  warrantyUntil         DateTime?
+  teamId                String?
+  team                  Team?                   @relation(fields: [teamId], references: [id])
+  createdById           String
+  createdBy             Employee                @relation(fields: [createdById], references: [id])
+  items                 InvoiceItem[]
+  statusChanges         InvoiceStatusChange[]
+  order                 Order?
+  quotation             Quotation?
   inventoryTransactions InventoryTransaction[]
   inventoryUsages       InvoiceInventoryUsage[]
-  createdAt     DateTime      @default(now())
+  createdAt             DateTime                @default(now())
 }
 
 model InvoiceStatusChange {
@@ -270,13 +276,23 @@ model InvoiceStatusChange {
 }
 
 model InvoiceItem {
-  id          String  @id @default(cuid())
-  invoiceId   String
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  serviceName String
-  description String?
-  qty         Int     @default(1)
-  unitPrice   Float
+  id              String         @id @default(cuid())
+  invoiceId       String
+  invoice         Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  serviceName     String
+  description     String?
+  qty             Int            @default(1)
+  unitPrice       Float
+  // Spare Parts Catalog additions -- all additive/nullable. itemType defaults
+  // to "Service" so every existing row and code path keeps working unchanged.
+  // unitPrice keeps meaning "final, actually-charged price"; originalPrice is
+  // only set for SparePart/Labour lines (the catalog price at add-time).
+  itemType        String         @default("Service") // "Service" | "SparePart" | "Labour"
+  originalPrice   Float?
+  inventoryItemId String?
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+  labourItemId    String?
+  labourItem      LabourItem?    @relation(fields: [labourItemId], references: [id])
 }
 
 model Order {
@@ -320,14 +336,14 @@ model Order {
   // for the full audit trail, including the before/after appointment on each reschedule.
   doneAt             DateTime?
   doneById           String?
-  doneBy             Employee? @relation("OrderDoneBy", fields: [doneById], references: [id])
+  doneBy             Employee?           @relation("OrderDoneBy", fields: [doneById], references: [id])
   cancelledAt        DateTime?
   cancelledById      String?
-  cancelledBy        Employee? @relation("OrderCancelledBy", fields: [cancelledById], references: [id])
+  cancelledBy        Employee?           @relation("OrderCancelledBy", fields: [cancelledById], references: [id])
   cancellationReason String?
   rescheduledAt      DateTime?
   rescheduledById    String?
-  rescheduledBy      Employee? @relation("OrderRescheduledBy", fields: [rescheduledById], references: [id])
+  rescheduledBy      Employee?           @relation("OrderRescheduledBy", fields: [rescheduledById], references: [id])
   rescheduleReason   String?
   statusChanges      OrderStatusChange[]
 
@@ -335,9 +351,9 @@ model Order {
 }
 
 model OrderStatusChange {
-  id                  String   @id @default(cuid())
+  id                  String    @id @default(cuid())
   orderId             String
-  order               Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order               Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   previousStatus      String
   newStatus           String
   reason              String?
@@ -346,8 +362,8 @@ model OrderStatusChange {
   previousScheduledAt DateTime?
   newScheduledAt      DateTime?
   changedById         String
-  changedBy           Employee @relation(fields: [changedById], references: [id])
-  createdAt           DateTime @default(now())
+  changedBy           Employee  @relation(fields: [changedById], references: [id])
+  createdAt           DateTime  @default(now())
 }
 
 model OrderPhoto {
@@ -360,47 +376,47 @@ model OrderPhoto {
 }
 
 model Expense {
-  id             String   @id @default(cuid())
-  number         String?  @unique
-  date           DateTime
-  description    String
-  vendor         String?
-  referenceNumber String?
-  notes          String?
-  category       String?
-  vehicle        String?
-  subcategory    String?
-  payment        String   @default("Cash")
-  amount         Float
-  status         String   @default("Recorded")
-  refundedAmount Float    @default(0)
-  attachmentUrl  String?
-  teamId         String?
-  team           Team?    @relation(fields: [teamId], references: [id])
-  creditCardId   String?
-  creditCard     CreditCard? @relation(fields: [creditCardId], references: [id])
+  id                    String                   @id @default(cuid())
+  number                String?                  @unique
+  date                  DateTime
+  description           String
+  vendor                String?
+  referenceNumber       String?
+  notes                 String?
+  category              String?
+  vehicle               String?
+  subcategory           String?
+  payment               String                   @default("Cash")
+  amount                Float
+  status                String                   @default("Recorded")
+  refundedAmount        Float                    @default(0)
+  attachmentUrl         String?
+  teamId                String?
+  team                  Team?                    @relation(fields: [teamId], references: [id])
+  creditCardId          String?
+  creditCard            CreditCard?              @relation(fields: [creditCardId], references: [id])
   // Vehicle Management System fields -- vehicle is left as the legacy free-text
   // label (only ever read for the one-time historical backfill / display fallback);
   // new Vehicle-category expenses only ever set vehicleId going forward.
-  vehicleId              String?
-  vehicleRef             Vehicle?  @relation("ExpenseVehicle", fields: [vehicleId], references: [id])
-  odometer               Int?
+  vehicleId             String?
+  vehicleRef            Vehicle?                 @relation("ExpenseVehicle", fields: [vehicleId], references: [id])
+  odometer              Int?
   // Second-level type within a Vehicle expense's subcategory: Service Type when
   // subcategory=Service, Fuel Type when subcategory="Petrol / Fuel", Fine Type
   // when subcategory=Fine -- reuses one column the same way `subcategory` already
   // serves both Vehicle and Advertising categories.
-  detailType             String?
-  liters                 Float?
-  responsibleEmployeeId  String?
-  responsibleEmployee    Employee? @relation("ExpenseResponsibleEmployee", fields: [responsibleEmployeeId], references: [id])
-  companyAmount          Float?    // Fine only
-  employeeAmount         Float?    // Fine only
-  nextServiceInterval    Int?      // Service only, in KM
-  fineInstallments       VehicleFineInstallment[]
-  rentalTransaction      RentalTransaction?
-  createdById    String
-  createdBy      Employee @relation(fields: [createdById], references: [id])
-  createdAt      DateTime @default(now())
+  detailType            String?
+  liters                Float?
+  responsibleEmployeeId String?
+  responsibleEmployee   Employee?                @relation("ExpenseResponsibleEmployee", fields: [responsibleEmployeeId], references: [id])
+  companyAmount         Float? // Fine only
+  employeeAmount        Float? // Fine only
+  nextServiceInterval   Int? // Service only, in KM
+  fineInstallments      VehicleFineInstallment[]
+  rentalTransaction     RentalTransaction?
+  createdById           String
+  createdBy             Employee                 @relation(fields: [createdById], references: [id])
+  createdAt             DateTime                 @default(now())
 }
 
 // One card = one independent wallet: its own limit, expenses, payments, statement.
@@ -505,10 +521,10 @@ model VehicleFineInstallment {
   id             String       @id @default(cuid())
   expenseId      String
   expense        Expense      @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  installmentNo  Int          // 1-based, 1..totalCount
-  totalCount     Int          // N -- 1 for "One Time"
+  installmentNo  Int // 1-based, 1..totalCount
+  totalCount     Int // N -- 1 for "One Time"
   amount         Float
-  month          DateTime     // first-of-month marker, mirrors the linked PayrollEntry's date
+  month          DateTime // first-of-month marker, mirrors the linked PayrollEntry's date
   payrollEntryId String       @unique
   payrollEntry   PayrollEntry @relation(fields: [payrollEntryId], references: [id], onDelete: Cascade)
   createdAt      DateTime     @default(now())
@@ -522,7 +538,7 @@ model VehicleFineInstallment {
 model Asset {
   id                 String   @id @default(cuid())
   name               String
-  category           String   // "Vehicle" | "Equipment" | "Furniture" | "Tools" | "Property" | "Other"
+  category           String // "Vehicle" | "Equipment" | "Furniture" | "Tools" | "Property" | "Other"
   purchaseCost       Float
   purchaseDate       DateTime
   usefulLifeYears    Int
@@ -540,8 +556,8 @@ model Asset {
 model Liability {
   id          String   @id @default(cuid())
   name        String
-  type        String   // "Bank Borrowing" | "Other"
-  category    String   // "Current" | "Non-Current"
+  type        String // "Bank Borrowing" | "Other"
+  category    String // "Current" | "Non-Current"
   amount      Float
   notes       String?
   createdById String
@@ -564,7 +580,7 @@ model CashPosition {
 }
 
 model WorkReport {
-  id            String            @id @default(cuid())
+  id            String           @id @default(cuid())
   date          DateTime
   customerName  String?
   customerPhone String?
@@ -572,10 +588,10 @@ model WorkReport {
   buildingName  String?
   flatNo        String?
   teamId        String?
-  team          Team?             @relation(fields: [teamId], references: [id])
+  team          Team?            @relation(fields: [teamId], references: [id])
   createdById   String
-  createdBy     Employee          @relation(fields: [createdById], references: [id])
-  createdAt     DateTime          @default(now())
+  createdBy     Employee         @relation(fields: [createdById], references: [id])
+  createdAt     DateTime         @default(now())
   items         WorkReportItem[]
 }
 
@@ -653,21 +669,21 @@ model WarrantyCertificate {
 }
 
 model PayrollEntry {
-  id          String   @id @default(cuid())
-  employeeId  String
-  employee    Employee @relation("PayrollFor", fields: [employeeId], references: [id])
-  type        String
-  amount      Float
-  date        DateTime
-  note        String?
-  createdById String
-  createdBy   Employee @relation("PayrollCreatedBy", fields: [createdById], references: [id])
-  createdAt   DateTime @default(now())
+  id                     String                  @id @default(cuid())
+  employeeId             String
+  employee               Employee                @relation("PayrollFor", fields: [employeeId], references: [id])
+  type                   String
+  amount                 Float
+  date                   DateTime
+  note                   String?
+  createdById            String
+  createdBy              Employee                @relation("PayrollCreatedBy", fields: [createdById], references: [id])
+  createdAt              DateTime                @default(now())
   vehicleFineInstallment VehicleFineInstallment?
 }
 
 model InventoryItem {
-  id               String   @id @default(cuid())
+  id               String                         @id @default(cuid())
   name             String
   specification    String?
   unit             String
@@ -675,14 +691,63 @@ model InventoryItem {
   description      String?
   costPrice        Float?
   sellingPrice     Float?
-  minimumMainStock Float    @default(0)
-  status           String   @default("Active")
+  minimumMainStock Float                          @default(0)
+  status           String                         @default("Active")
+  // Spare Parts Catalog additions -- all nullable, not backfilled. Existing
+  // rows (gas items, base Inventory test items) simply show blank for these.
+  sku              String?                        @unique
+  nameAr           String?
+  subcategory      String?
+  brand            String?
+  model            String?
+  compatibleType   String?
+  maximumStock     Float?
+  supplierId       String?
+  supplier         Supplier?                      @relation(fields: [supplierId], references: [id])
+  location         String? // shelf/bin text
   transactions     InventoryTransaction[]
   requirements     EmployeeInventoryRequirement[]
   invoiceUsages    InvoiceInventoryUsage[]
+  invoiceItems     InvoiceItem[]
   createdById      String
-  createdBy        Employee @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
-  createdAt        DateTime @default(now())
+  createdBy        Employee                       @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
+  createdAt        DateTime                       @default(now())
+}
+
+model Warehouse {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  status    String   @default("Active")
+  createdAt DateTime @default(now())
+}
+
+model Supplier {
+  id            String          @id @default(cuid())
+  name          String
+  contactPerson String?
+  phone         String?
+  email         String?
+  notes         String?
+  status        String          @default("Active")
+  items         InventoryItem[]
+  createdById   String
+  createdBy     Employee        @relation("SupplierCreatedBy", fields: [createdById], references: [id])
+  createdAt     DateTime        @default(now())
+}
+
+// Deliberately NOT an InventoryItem -- no stock, no InventoryTransaction, per
+// spec Rule "these are NOT Inventory Items".
+model LabourItem {
+  id           String        @id @default(cuid())
+  code         String        @unique
+  nameAr       String
+  nameEn       String
+  defaultPrice Float
+  status       String        @default("Active")
+  invoiceItems InvoiceItem[]
+  createdById  String
+  createdBy    Employee      @relation("LabourItemCreatedBy", fields: [createdById], references: [id])
+  createdAt    DateTime      @default(now())
 }
 
 // The sole source of truth for every stock movement. Current quantity at any
@@ -694,36 +759,36 @@ model InventoryItem {
 // consumed/damaged/lost/reversed on the way out) -- a relation can't
 // conditionally point at a sentinel string or a real row.
 model InventoryTransaction {
-  id              String   @id @default(cuid())
-  number          String?  @unique
+  id              String                 @id @default(cuid())
+  number          String?                @unique
   inventoryItemId String
-  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  inventoryItem   InventoryItem          @relation(fields: [inventoryItemId], references: [id])
   type            String
   quantity        Float
   fromLocation    String?
   toLocation      String?
   invoiceId       String?
-  invoice         Invoice? @relation(fields: [invoiceId], references: [id])
+  invoice         Invoice?               @relation(fields: [invoiceId], references: [id])
   reason          String?
   notes           String?
   createdById     String
-  createdBy       Employee @relation("InventoryTransactionCreatedBy", fields: [createdById], references: [id])
-  createdAt       DateTime @default(now())
+  createdBy       Employee               @relation("InventoryTransactionCreatedBy", fields: [createdById], references: [id])
+  createdAt       DateTime               @default(now())
   invoiceUsage    InvoiceInventoryUsage?
 }
 
 model EmployeeInventoryRequirement {
-  id                String   @id @default(cuid())
-  employeeId        String
-  employee          Employee @relation("InventoryRequirementFor", fields: [employeeId], references: [id])
-  inventoryItemId   String
-  inventoryItem     InventoryItem @relation(fields: [inventoryItemId], references: [id])
-  requiredQuantity  Float
-  minimumQuantity   Float
-  createdById       String
-  createdBy         Employee @relation("InventoryRequirementCreatedBy", fields: [createdById], references: [id])
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String        @id @default(cuid())
+  employeeId       String
+  employee         Employee      @relation("InventoryRequirementFor", fields: [employeeId], references: [id])
+  inventoryItemId  String
+  inventoryItem    InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  requiredQuantity Float
+  minimumQuantity  Float
+  createdById      String
+  createdBy        Employee      @relation("InventoryRequirementCreatedBy", fields: [createdById], references: [id])
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   @@unique([employeeId, inventoryItemId])
 }
@@ -733,17 +798,17 @@ model EmployeeInventoryRequirement {
 // InventoryTransaction it created. Reversed (a new "Stock Reversed"
 // transaction, never a silent delete) on invoice edit/delete.
 model InvoiceInventoryUsage {
-  id              String   @id @default(cuid())
+  id              String               @id @default(cuid())
   invoiceId       String
-  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice         Invoice              @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   inventoryItemId String
-  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  inventoryItem   InventoryItem        @relation(fields: [inventoryItemId], references: [id])
   employeeId      String
-  employee        Employee @relation(fields: [employeeId], references: [id])
+  employee        Employee             @relation(fields: [employeeId], references: [id])
   quantity        Float
-  transactionId   String   @unique
+  transactionId   String               @unique
   transaction     InventoryTransaction @relation(fields: [transactionId], references: [id])
-  createdAt       DateTime @default(now())
+  createdAt       DateTime             @default(now())
 
   @@unique([invoiceId, inventoryItemId])
 }
