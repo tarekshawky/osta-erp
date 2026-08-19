@@ -28,20 +28,36 @@ export function NewExpenseForm({
   const [vehicleId, setVehicleId] = useState<string>("");
   const [subcategory, setSubcategory] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmOverride, setConfirmOverride] = useState<string | null>(null);
   const isSubmittingRef = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const selectedVehicle = vehicleOptions.find((v) => v.id === vehicleId);
 
+  async function submit(overrideMileage = false) {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+    setConfirmOverride(null);
+    const formData = new FormData(formRef.current!);
+    if (overrideMileage) formData.set("overrideMileage", "1");
+    const res = await createExpense(formData);
+    // A successful save (or any non-mileage error) navigates away via
+    // redirect() inside the action itself -- only the mileage-override case
+    // returns a value for this form to react to without losing field values.
+    if (res && !res.ok && res.requiresOverride) {
+      setConfirmOverride(res.error ?? "Odometer reading is lower than the last recorded value.");
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <form
-      action={createExpense}
+      ref={formRef}
       onSubmit={(event) => {
-        if (isSubmittingRef.current) {
-          event.preventDefault();
-          return;
-        }
-        isSubmittingRef.current = true;
-        setIsSubmitting(true);
+        event.preventDefault();
+        submit(false);
       }}
       className="px-5 py-5 flex flex-col gap-4"
     >
@@ -186,6 +202,27 @@ export function NewExpenseForm({
           className={inputClassName}
         />
       </Field>
+      {confirmOverride && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="text-sm text-amber-800">⚠️ {confirmOverride}</p>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => submit(true)}
+              className="text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white rounded-lg px-3 py-1.5"
+            >
+              Save Anyway
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmOverride(null)}
+              className="text-xs font-medium border border-amber-300 text-amber-700 rounded-lg px-3 py-1.5"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       <button
         type="submit"
         disabled={isSubmitting}

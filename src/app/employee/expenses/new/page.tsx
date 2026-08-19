@@ -32,9 +32,7 @@ export default async function NewExpensePage({
         <p className="text-sm text-red-500 px-5 pt-4">
           {error === "duplicate"
             ? "This identical expense has already been recorded for this date."
-            : error === "mileage"
-              ? "The odometer reading is lower than the vehicle's last recorded mileage. Ask an admin to correct it."
-              : "Please fill in all fields with a valid amount."}
+            : "Please fill in all fields with a valid amount."}
         </p>
       )}
       <NewExpenseForm activeCards={activeCards} vehicleOptions={vehicleOptions} />

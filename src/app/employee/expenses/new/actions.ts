@@ -13,7 +13,9 @@ import {
 } from "@/lib/expenseData";
 import { VEHICLE_EXPENSE_TYPES, getVehicleCurrentOdometer, checkOdometerReading } from "@/lib/vehicleData";
 
-export async function createExpense(formData: FormData) {
+export async function createExpense(
+  formData: FormData
+): Promise<{ ok: boolean; error?: string; requiresOverride?: boolean } | void> {
   const employee = await requireEmployee("EMPLOYEE");
 
   const description = String(formData.get("description") ?? "").trim();
@@ -72,8 +74,13 @@ export async function createExpense(formData: FormData) {
     if (!odometer || odometer <= 0) redirect("/employee/expenses/new?error=1");
 
     const current = await getVehicleCurrentOdometer(vehicleId, vehicle.initialOdometer);
-    if (checkOdometerReading(odometer, current) === "below-current") {
-      redirect("/employee/expenses/new?error=mileage");
+    const overrideMileage = formData.get("overrideMileage") === "1";
+    if (checkOdometerReading(odometer, current) === "below-current" && !overrideMileage) {
+      return {
+        ok: false,
+        error: `Odometer reading is lower than the last recorded ${current.toLocaleString()} KM.`,
+        requiresOverride: true,
+      };
     }
 
     detailType = detailTypeInput || null;

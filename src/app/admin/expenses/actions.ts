@@ -69,9 +69,8 @@ function resolveVehicleTypeFields(
   return { vehicleId: null, subcategory: null, odometer: null, detailType: null, liters: null, nextServiceInterval: null };
 }
 
-// Admin can override a too-low odometer reading (this action is already
-// Admin-only, so the override is trusted); Employees never get this path (see
-// src/app/employee/expenses/new/actions.ts, which redirects unconditionally).
+// Employees get the same confirm-and-override flow via
+// src/app/employee/expenses/new/actions.ts's own mirrored check.
 async function checkMileage(
   vehicleId: string | null,
   odometer: number | null,
