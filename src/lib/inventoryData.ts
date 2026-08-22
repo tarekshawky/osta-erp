@@ -382,6 +382,62 @@ export async function distributeStock(
   return { ok: true };
 }
 
+// Admin-initiated employee<->employee move, a genuinely new leg with no prior
+// equivalent -- gets its own transaction type ("Employee Transfer") since
+// there's no naming-collision risk. Same maximumQuantity + override pattern
+// as distributeStock, checked against the DESTINATION employee.
+export async function transferBetweenEmployees(
+  adminId: string,
+  fromEmployeeId: string,
+  toEmployeeId: string,
+  inventoryItemId: string,
+  quantity: number,
+  overrideLimit = false
+): Promise<InventoryActionResult & { requiresOverride?: boolean }> {
+  if (!(quantity > 0)) return { ok: false, error: "Enter a valid quantity." };
+  if (fromEmployeeId === toEmployeeId) return { ok: false, error: "Source and destination employees must be different." };
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const available = await getLocationQuantity(tx, inventoryItemId, fromEmployeeId);
+      if (quantity > available) {
+        const item = await tx.inventoryItem.findUnique({ where: { id: inventoryItemId } });
+        throw new InsufficientStockError(
+          `Insufficient Stock for ${item ? getInventoryItemDisplayName(item) : "item"} — Available: ${available.toLocaleString()}, Requested: ${quantity.toLocaleString()}.`
+        );
+      }
+      if (!overrideLimit) {
+        const requirement = await tx.employeeInventoryRequirement.findUnique({
+          where: { employeeId_inventoryItemId: { employeeId: toEmployeeId, inventoryItemId } },
+        });
+        if (requirement?.maximumQuantity != null) {
+          const current = await getLocationQuantity(tx, inventoryItemId, toEmployeeId);
+          if (current + quantity > requirement.maximumQuantity) {
+            throw new MaximumQuantityExceededError(`Maximum allowed quantity: ${requirement.maximumQuantity.toLocaleString()}`);
+          }
+        }
+      }
+      const number = await generateInventoryTransactionNumber(tx);
+      await tx.inventoryTransaction.create({
+        data: {
+          number,
+          inventoryItemId,
+          type: "Employee Transfer",
+          quantity,
+          fromLocation: fromEmployeeId,
+          toLocation: toEmployeeId,
+          createdById: adminId,
+        },
+      });
+    });
+  } catch (err) {
+    if (err instanceof InsufficientStockError) return { ok: false, error: err.message };
+    if (err instanceof MaximumQuantityExceededError) return { ok: false, error: err.message, requiresOverride: true };
+    throw err;
+  }
+  return { ok: true };
+}
+
 // The Main -> Branch leg of the 3-tier chain. A real Purchase/Stock Received
 // event only ever lands at the Main Warehouse (see addStock/
 // recordSupplierPurchase's type==="Main" check); this is the only way stock

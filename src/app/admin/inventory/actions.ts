@@ -10,6 +10,7 @@ import {
   recordSupplierPurchase as recordSupplierPurchaseLib,
   transferToBranch as transferToBranchLib,
   distributeStock as distributeStockLib,
+  transferBetweenEmployees as transferBetweenEmployeesLib,
   returnToWarehouse as returnToWarehouseLib,
   recordDamaged as recordDamagedLib,
   recordLost as recordLostLib,
@@ -171,6 +172,22 @@ export async function distributeStock(
   const admin = await requireEmployee("ADMIN");
   const result = await distributeStockLib(admin.id, fromWarehouseId, employeeId, lines, overrideLimit);
   if (result.ok) revalidateStockPaths(employeeId);
+  return result;
+}
+
+export async function transferBetweenEmployees(
+  fromEmployeeId: string,
+  toEmployeeId: string,
+  inventoryItemId: string,
+  quantity: number,
+  overrideLimit?: boolean
+): Promise<InventoryActionResult & { requiresOverride?: boolean }> {
+  const admin = await requireEmployee("ADMIN");
+  const result = await transferBetweenEmployeesLib(admin.id, fromEmployeeId, toEmployeeId, inventoryItemId, quantity, overrideLimit);
+  if (result.ok) {
+    revalidateStockPaths(fromEmployeeId);
+    revalidateStockPaths(toEmployeeId);
+  }
   return result;
 }
 
