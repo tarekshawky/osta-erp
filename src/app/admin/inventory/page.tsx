@@ -2,12 +2,15 @@ import Link from "next/link";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { formatAed } from "@/lib/format";
-import { computeInventoryDashboardSummary, getMostUsedItems } from "@/lib/inventoryData";
+import { computeInventoryDashboardSummary, computeInventoryCostBreakdown, getMostUsedItems } from "@/lib/inventoryData";
+import { prisma } from "@/lib/prisma";
 
 export default async function InventoryDashboardPage() {
-  const [summary, mostUsedItems] = await Promise.all([
+  const [summary, costBreakdown, mostUsedItems, pendingRequestsCount] = await Promise.all([
     computeInventoryDashboardSummary(),
+    computeInventoryCostBreakdown(),
     getMostUsedItems(),
+    prisma.stockRequest.count({ where: { status: "Pending" } }),
   ]);
 
   return (
@@ -28,6 +31,15 @@ export default async function InventoryDashboardPage() {
           <AdminStatCard label="Out of Stock" value={String(summary.outOfStock)} valueClassName={summary.outOfStock > 0 ? "text-red-500" : "text-slate-900"} />
           <AdminStatCard label="Employees With Shortages" value={String(summary.employeesWithShortages)} valueClassName={summary.employeesWithShortages > 0 ? "text-red-500" : "text-slate-900"} />
           <AdminStatCard label="Total Inventory Value" value={formatAed(summary.totalInventoryValue)} />
+          <AdminStatCard label="Pending Stock Requests" value={String(pendingRequestsCount)} valueClassName={pendingRequestsCount > 0 ? "text-amber-600" : "text-slate-900"} />
+        </div>
+
+        <h3 className="mt-8 font-semibold text-slate-900">Inventory Cost</h3>
+        <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <AdminStatCard label="Main Warehouse Cost" value={formatAed(costBreakdown.mainCost)} />
+          <AdminStatCard label="Branch Warehouses Cost" value={formatAed(costBreakdown.branchCost)} />
+          <AdminStatCard label="Employee-Held Cost" value={formatAed(costBreakdown.employeeCost)} />
+          <AdminStatCard label="Total Company Stock Cost" value={formatAed(costBreakdown.totalCost)} valueClassName="text-blue-700" />
         </div>
 
         {mostUsedItems.length > 0 && (
@@ -109,6 +121,10 @@ export default async function InventoryDashboardPage() {
           <Link href="/admin/inventory/employee-transfer" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
             <div className="font-semibold text-slate-900">Employee Transfer</div>
             <div className="text-sm text-slate-500 mt-0.5">Move stock directly between two employees.</div>
+          </Link>
+          <Link href="/admin/inventory/reports" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
+            <div className="font-semibold text-slate-900">Stock Reports</div>
+            <div className="text-sm text-slate-500 mt-0.5">Every inventory report in one place.</div>
           </Link>
         </div>
       </div>

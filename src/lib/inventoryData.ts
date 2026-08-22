@@ -115,10 +115,15 @@ export function deriveEmployeeStockStatus(
   return "Available";
 }
 
-export async function getLocationQuantity(db: Db, inventoryItemId: string, location: string): Promise<number> {
+// asOfDate is optional and additive -- when given, mirrors the "as-of-date"
+// convention already used in financialReportsBalanceSheet.ts, bounding the
+// sum to createdAt <= asOfDate so a historical closing balance can be
+// computed without touching the (far more common) as-of-now call sites.
+export async function getLocationQuantity(db: Db, inventoryItemId: string, location: string, asOfDate?: Date): Promise<number> {
+  const dateFilter = asOfDate ? { createdAt: { lte: asOfDate } } : {};
   const [inSum, outSum] = await Promise.all([
-    db.inventoryTransaction.aggregate({ where: { inventoryItemId, toLocation: location }, _sum: { quantity: true } }),
-    db.inventoryTransaction.aggregate({ where: { inventoryItemId, fromLocation: location }, _sum: { quantity: true } }),
+    db.inventoryTransaction.aggregate({ where: { inventoryItemId, toLocation: location, ...dateFilter }, _sum: { quantity: true } }),
+    db.inventoryTransaction.aggregate({ where: { inventoryItemId, fromLocation: location, ...dateFilter }, _sum: { quantity: true } }),
   ]);
   return (inSum._sum.quantity ?? 0) - (outSum._sum.quantity ?? 0);
 }
@@ -843,6 +848,12 @@ export type EmployeeInventoryReportRow = {
   needed: number;
   status: EmployeeStockStatus;
   costPrice: number | null;
+  // Only set when a range is passed -- the spec's Opening/Closing usage-report
+  // columns. closing = balance as-of range.to (a real historical snapshot, not
+  // "now"); opening is derived arithmetically from closing and the four
+  // period-scoped sums above, no extra query needed.
+  opening: number | null;
+  closing: number | null;
 };
 
 export type EmployeeInventoryReport = {
@@ -909,20 +920,33 @@ export async function getEmployeeInventoryReport(
     const req = reqByItem.get(item.id);
     const status = deriveEmployeeStockStatus(current, req?.requiredQuantity ?? null, req?.minimumQuantity ?? null);
     const needed = req ? Math.max(0, req.requiredQuantity - current) : 0;
+    const received = receivedSum._sum.quantity ?? 0;
+    const used = usedSum._sum.quantity ?? 0;
+    const returned = returnedSum._sum.quantity ?? 0;
+    const damaged = damagedSum._sum.quantity ?? 0;
+    const lost = lostSum._sum.quantity ?? 0;
+    let opening: number | null = null;
+    let closing: number | null = null;
+    if (range) {
+      closing = await getLocationQuantity(prisma, item.id, employeeId, range.to);
+      opening = closing - received + used + returned + damaged + lost;
+    }
     rows.push({
       itemId: item.id,
       displayName: getInventoryItemDisplayName(item),
       unit: item.unit,
-      received: receivedSum._sum.quantity ?? 0,
-      used: usedSum._sum.quantity ?? 0,
-      returned: returnedSum._sum.quantity ?? 0,
-      damaged: damagedSum._sum.quantity ?? 0,
-      lost: lostSum._sum.quantity ?? 0,
+      received,
+      used,
+      returned,
+      damaged,
+      lost,
       current,
       required: req?.requiredQuantity ?? null,
       needed,
       status,
       costPrice: item.costPrice,
+      opening,
+      closing,
     });
   }
 
@@ -1088,4 +1112,84 @@ export async function computeInventoryCogs(range: DateRange): Promise<number> {
     include: { inventoryItem: { select: { costPrice: true } } },
   });
   return usages.reduce((sum, u) => sum + u.quantity * (u.inventoryItem.costPrice ?? 0), 0);
+}
+
+export type InventoryCostBreakdown = { mainCost: number; branchCost: number; employeeCost: number; totalCost: number };
+
+// The Main/Branch/Employee three-way split. computeInventoryDashboardSummary's
+// totalInventoryValue stays the warehouse-only grand total it always was;
+// this is purely additive, breaking that same warehouse figure down further
+// plus adding the employee-held portion.
+export async function computeInventoryCostBreakdown(): Promise<InventoryCostBreakdown> {
+  const items = await prisma.inventoryItem.findMany({ where: { status: "Active" } });
+  const itemIds = items.map((i) => i.id);
+  const mainWarehouse = await prisma.warehouse.findFirst({ where: { type: "Main" } });
+
+  const [mainQtyMap, allWarehousesQtyMap, totalQtyMap] = await Promise.all([
+    mainWarehouse ? getBulkLocationQuantities(prisma, itemIds, mainWarehouse.id) : Promise.resolve({} as Record<string, number>),
+    getBulkAllWarehousesQuantities(prisma, itemIds),
+    getBulkItemTotalQuantities(prisma, itemIds),
+  ]);
+
+  let mainCost = 0;
+  let branchCost = 0;
+  let employeeCost = 0;
+  for (const item of items) {
+    const cost = item.costPrice ?? 0;
+    const mainQty = mainQtyMap[item.id] ?? 0;
+    const allWarehousesQty = allWarehousesQtyMap[item.id] ?? 0;
+    const totalQty = totalQtyMap[item.id] ?? 0;
+    mainCost += mainQty * cost;
+    branchCost += (allWarehousesQty - mainQty) * cost;
+    employeeCost += (totalQty - allWarehousesQty) * cost;
+  }
+  return { mainCost, branchCost, employeeCost, totalCost: mainCost + branchCost + employeeCost };
+}
+
+export type ItemStockBreakdown = {
+  mainQty: number;
+  branches: { warehouseId: string; name: string; qty: number }[];
+  employees: { employeeId: string; name: string; teamName: string | null; qty: number }[];
+  totalStock: number;
+};
+
+// Mirrors getWarehouseStockSummary's aggregation, pivoted to one item across
+// every location instead of every item at one location -- feeds the Item
+// Details drill-down page's Stock Overview + Employee Distribution.
+export async function getItemStockBreakdown(inventoryItemId: string): Promise<ItemStockBreakdown> {
+  const warehouses = await prisma.warehouse.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } });
+  const mainWarehouse = warehouses.find((w) => w.type === "Main");
+  const branchWarehouses = warehouses.filter((w) => w.type === "Branch");
+
+  const mainQty = mainWarehouse ? await getLocationQuantity(prisma, inventoryItemId, mainWarehouse.id) : 0;
+  const branches = await Promise.all(
+    branchWarehouses.map(async (w) => ({ warehouseId: w.id, name: w.name, qty: await getLocationQuantity(prisma, inventoryItemId, w.id) }))
+  );
+
+  const warehouseIds = new Set(warehouses.map((w) => w.id));
+  const txRows = await prisma.inventoryTransaction.findMany({
+    where: { inventoryItemId },
+    select: { fromLocation: true, toLocation: true },
+  });
+  const employeeIds = new Set<string>();
+  for (const t of txRows) {
+    if (t.fromLocation && !warehouseIds.has(t.fromLocation)) employeeIds.add(t.fromLocation);
+    if (t.toLocation && !warehouseIds.has(t.toLocation)) employeeIds.add(t.toLocation);
+  }
+  const employeeRecords = await prisma.employee.findMany({
+    where: { id: { in: [...employeeIds] } },
+    select: { id: true, name: true, team: { select: { name: true } } },
+  });
+  const employeesRaw = await Promise.all(
+    employeeRecords.map(async (e) => ({
+      employeeId: e.id,
+      name: e.name,
+      teamName: e.team?.name ?? null,
+      qty: await getLocationQuantity(prisma, inventoryItemId, e.id),
+    }))
+  );
+  const employees = employeesRaw.filter((e) => e.qty > 0);
+
+  const totalStock = mainQty + branches.reduce((s, b) => s + b.qty, 0) + employees.reduce((s, e) => s + e.qty, 0);
+  return { mainQty, branches, employees, totalStock };
 }
