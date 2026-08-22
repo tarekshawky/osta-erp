@@ -23,6 +23,7 @@ export function DistributeStockForm({
   const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id ?? "");
   const [lines, setLines] = useState<Line[]>([{ inventoryItemId: items[0]?.id ?? "", quantity: "" }]);
   const [error, setError] = useState<string | null>(null);
+  const [confirmOverride, setConfirmOverride] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const itemById = new Map(items.map((i) => [i.id, i]));
@@ -38,8 +39,9 @@ export function DistributeStockForm({
     setLines((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function submit() {
+  function submit(overrideLimit = false) {
     setError(null);
+    setConfirmOverride(null);
     const parsedLines = lines
       .filter((l) => l.inventoryItemId && l.quantity)
       .map((l) => ({ inventoryItemId: l.inventoryItemId, quantity: Number(l.quantity) }));
@@ -48,23 +50,27 @@ export function DistributeStockForm({
       setError("Add at least one item with a quantity.");
       return;
     }
-    for (const line of parsedLines) {
-      const item = itemById.get(line.inventoryItemId);
-      const available = availableFor(line.inventoryItemId);
-      if (item && line.quantity > available) {
-        setError(
-          `Insufficient Stock for ${item.displayName} — Available: ${available.toLocaleString()}, Requested: ${line.quantity.toLocaleString()}.`
-        );
-        return;
+    if (!overrideLimit) {
+      for (const line of parsedLines) {
+        const item = itemById.get(line.inventoryItemId);
+        const available = availableFor(line.inventoryItemId);
+        if (item && line.quantity > available) {
+          setError(
+            `Insufficient Stock for ${item.displayName} — Available: ${available.toLocaleString()}, Requested: ${line.quantity.toLocaleString()}.`
+          );
+          return;
+        }
       }
     }
 
     startTransition(async () => {
-      const res = await distributeStock(warehouseId, employeeId, parsedLines);
+      const res = await distributeStock(warehouseId, employeeId, parsedLines, overrideLimit);
       if (res.ok) {
         setLines([{ inventoryItemId: items[0]?.id ?? "", quantity: "" }]);
         router.refresh();
         showToast("Stock distributed.");
+      } else if (res.requiresOverride) {
+        setConfirmOverride(res.error ?? "This exceeds the employee's maximum allowed quantity for this item.");
       } else {
         setError(res.error ?? "Something went wrong.");
       }
@@ -160,11 +166,33 @@ export function DistributeStockForm({
 
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
 
+      {confirmOverride && (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="text-sm text-amber-800">⚠️ {confirmOverride}</p>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => submit(true)}
+              className="text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white rounded-lg px-3 py-1.5"
+            >
+              Override & Distribute Anyway
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmOverride(null)}
+              className="text-xs font-medium border border-amber-300 text-amber-700 rounded-lg px-3 py-1.5"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-5">
         <button
           type="button"
           disabled={isPending || !employeeId || !warehouseId || items.length === 0}
-          onClick={submit}
+          onClick={() => submit(false)}
           className="rounded-xl bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-6 py-2.5 flex items-center gap-2"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

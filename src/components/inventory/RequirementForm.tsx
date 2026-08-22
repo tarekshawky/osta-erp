@@ -18,6 +18,7 @@ export function RequirementForm({
   const [inventoryItemId, setInventoryItemId] = useState(items[0]?.id ?? "");
   const [requiredQuantity, setRequiredQuantity] = useState("");
   const [minimumQuantity, setMinimumQuantity] = useState("");
+  const [maximumQuantity, setMaximumQuantity] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -30,11 +31,13 @@ export function RequirementForm({
         employeeId,
         inventoryItemId,
         Number(requiredQuantity),
-        Number(minimumQuantity)
+        Number(minimumQuantity),
+        maximumQuantity ? Number(maximumQuantity) : null
       );
       if (res.ok) {
         setRequiredQuantity("");
         setMinimumQuantity("");
+        setMaximumQuantity("");
         router.refresh();
         showToast("Requirement saved.");
       } else {
@@ -75,7 +78,7 @@ export function RequirementForm({
         </select>
       </label>
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Required Quantity {selected ? `(${selected.unit})` : ""}</span>
           <input
@@ -95,6 +98,17 @@ export function RequirementForm({
             step="0.001"
             value={minimumQuantity}
             onChange={(e) => setMinimumQuantity(e.target.value)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Maximum Quantity (optional) {selected ? `(${selected.unit})` : ""}</span>
+          <input
+            type="number"
+            min="0"
+            step="0.001"
+            value={maximumQuantity}
+            onChange={(e) => setMaximumQuantity(e.target.value)}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
           />
         </label>

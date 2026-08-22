@@ -42,6 +42,7 @@ export default async function InventoryRequirementsPage() {
                 <th className="px-4 py-3 font-medium">Item</th>
                 <th className="px-4 py-3 font-medium text-right">Required</th>
                 <th className="px-4 py-3 font-medium text-right">Minimum</th>
+                <th className="px-4 py-3 font-medium text-right">Maximum</th>
               </tr>
             </thead>
             <tbody>
@@ -59,11 +60,14 @@ export default async function InventoryRequirementsPage() {
                   <td className="px-4 py-3 text-right text-slate-600 whitespace-nowrap">
                     {r.minimumQuantity.toLocaleString()} {r.inventoryItem.unit}
                   </td>
+                  <td className="px-4 py-3 text-right text-slate-600 whitespace-nowrap">
+                    {r.maximumQuantity != null ? `${r.maximumQuantity.toLocaleString()} ${r.inventoryItem.unit}` : "—"}
+                  </td>
                 </tr>
               ))}
               {requirements.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
                     No requirements set yet.
                   </td>
                 </tr>

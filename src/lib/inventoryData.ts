@@ -92,6 +92,11 @@ export type InventoryActionResult = { ok: boolean; error?: string };
 // how CreditCard.outstanding and vehicle odometer are computed on the fly
 // elsewhere in this codebase.
 export class InsufficientStockError extends Error {}
+// Thrown when assigning stock would push an employee's holding of an item
+// past EmployeeInventoryRequirement.maximumQuantity -- caught by
+// distributeStock and turned into a requiresOverride response, mirroring
+// src/app/admin/expenses/actions.ts's checkMileage/requiresOverride pattern.
+export class MaximumQuantityExceededError extends Error {}
 
 type Db = typeof prisma | Prisma.TransactionClient;
 
@@ -322,8 +327,9 @@ export async function distributeStock(
   adminId: string,
   fromWarehouseId: string,
   employeeId: string,
-  lines: { inventoryItemId: string; quantity: number }[]
-): Promise<InventoryActionResult> {
+  lines: { inventoryItemId: string; quantity: number }[],
+  overrideLimit = false
+): Promise<InventoryActionResult & { requiresOverride?: boolean }> {
   if (lines.length === 0) return { ok: false, error: "Add at least one item to distribute." };
   if (lines.some((l) => !(l.quantity > 0))) return { ok: false, error: "Enter a valid quantity for every item." };
 
@@ -343,6 +349,17 @@ export async function distributeStock(
             `Insufficient Stock for ${item ? getInventoryItemDisplayName(item) : "item"} — Available: ${available.toLocaleString()}, Requested: ${line.quantity.toLocaleString()}.`
           );
         }
+        if (!overrideLimit) {
+          const requirement = await tx.employeeInventoryRequirement.findUnique({
+            where: { employeeId_inventoryItemId: { employeeId, inventoryItemId: line.inventoryItemId } },
+          });
+          if (requirement?.maximumQuantity != null) {
+            const current = await getLocationQuantity(tx, line.inventoryItemId, employeeId);
+            if (current + line.quantity > requirement.maximumQuantity) {
+              throw new MaximumQuantityExceededError(`Maximum allowed quantity: ${requirement.maximumQuantity.toLocaleString()}`);
+            }
+          }
+        }
         const number = await generateInventoryTransactionNumber(tx);
         await tx.inventoryTransaction.create({
           data: {
@@ -359,6 +376,7 @@ export async function distributeStock(
     });
   } catch (err) {
     if (err instanceof InsufficientStockError) return { ok: false, error: err.message };
+    if (err instanceof MaximumQuantityExceededError) return { ok: false, error: err.message, requiresOverride: true };
     throw err;
   }
   return { ok: true };

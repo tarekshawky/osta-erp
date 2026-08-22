@@ -165,10 +165,11 @@ function revalidateStockPaths(employeeId?: string) {
 export async function distributeStock(
   fromWarehouseId: string,
   employeeId: string,
-  lines: { inventoryItemId: string; quantity: number }[]
-): Promise<InventoryActionResult> {
+  lines: { inventoryItemId: string; quantity: number }[],
+  overrideLimit?: boolean
+): Promise<InventoryActionResult & { requiresOverride?: boolean }> {
   const admin = await requireEmployee("ADMIN");
-  const result = await distributeStockLib(admin.id, fromWarehouseId, employeeId, lines);
+  const result = await distributeStockLib(admin.id, fromWarehouseId, employeeId, lines, overrideLimit);
   if (result.ok) revalidateStockPaths(employeeId);
   return result;
 }
@@ -233,16 +234,18 @@ export async function setEmployeeInventoryRequirement(
   employeeId: string,
   inventoryItemId: string,
   requiredQuantity: number,
-  minimumQuantity: number
+  minimumQuantity: number,
+  maximumQuantity: number | null
 ): Promise<InventoryActionResult> {
   const admin = await requireEmployee("ADMIN");
   if (!(requiredQuantity >= 0)) return { ok: false, error: "Enter a valid required quantity." };
   if (!(minimumQuantity >= 0)) return { ok: false, error: "Enter a valid minimum quantity." };
+  if (maximumQuantity != null && !(maximumQuantity > 0)) return { ok: false, error: "Enter a valid maximum quantity." };
 
   await prisma.employeeInventoryRequirement.upsert({
     where: { employeeId_inventoryItemId: { employeeId, inventoryItemId } },
-    create: { employeeId, inventoryItemId, requiredQuantity, minimumQuantity, createdById: admin.id },
-    update: { requiredQuantity, minimumQuantity },
+    create: { employeeId, inventoryItemId, requiredQuantity, minimumQuantity, maximumQuantity, createdById: admin.id },
+    update: { requiredQuantity, minimumQuantity, maximumQuantity },
   });
 
   revalidateStockPaths(employeeId);

@@ -94,6 +94,10 @@ export default async function InventoryDashboardPage() {
             <div className="font-semibold text-slate-900">Requirements</div>
             <div className="text-sm text-slate-500 mt-0.5">Define how much stock each employee should have.</div>
           </Link>
+          <Link href="/admin/inventory/requests" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
+            <div className="font-semibold text-slate-900">Stock Requests</div>
+            <div className="text-sm text-slate-500 mt-0.5">Approve (fully or partially) or reject employee stock requests.</div>
+          </Link>
         </div>
       </div>
     </div>
