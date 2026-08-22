@@ -98,6 +98,14 @@ export default async function InventoryDashboardPage() {
             <div className="font-semibold text-slate-900">Stock Requests</div>
             <div className="text-sm text-slate-500 mt-0.5">Approve (fully or partially) or reject employee stock requests.</div>
           </Link>
+          <Link href="/admin/inventory/returns" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
+            <div className="font-semibold text-slate-900">Returns</div>
+            <div className="text-sm text-slate-500 mt-0.5">Approve or reject employee return requests.</div>
+          </Link>
+          <Link href="/admin/inventory/damaged" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
+            <div className="font-semibold text-slate-900">Damaged Items</div>
+            <div className="text-sm text-slate-500 mt-0.5">Every reported damage across all employees.</div>
+          </Link>
         </div>
       </div>
     </div>
