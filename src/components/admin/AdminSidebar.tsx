@@ -2,11 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, type ReactNode } from "react";
 import { initials } from "@/lib/format";
 import { logout } from "@/app/actions/logout";
 import { LogoImage } from "@/components/LogoImage";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: ReactNode;
+  children?: { href: string; label: string }[];
+};
+
+const NAV: NavItem[] = [
   {
     href: "/admin",
     label: "Dashboard",
@@ -190,6 +198,23 @@ const NAV = [
         <path d="M12 13v8" strokeLinecap="round" strokeLinejoin="round" />
       </>
     ),
+    children: [
+      { href: "/admin/inventory", label: "Dashboard" },
+      { href: "/admin/inventory/categories", label: "Categories" },
+      { href: "/admin/inventory/items", label: "Items" },
+      { href: "/admin/inventory/main-warehouse", label: "Main Warehouse" },
+      { href: "/admin/inventory/warehouse", label: "Branch Warehouses" },
+      { href: "/admin/inventory/employees", label: "Employee Stock" },
+      { href: "/admin/inventory/requests", label: "Stock Requests" },
+      { href: "/admin/inventory/employee-transfer", label: "Transfers" },
+      { href: "/admin/inventory/returns", label: "Returns" },
+      { href: "/admin/inventory/damaged", label: "Damaged Items" },
+      { href: "/admin/inventory/transactions?type=Stock+Adjustment", label: "Stock Adjustments" },
+      { href: "/admin/inventory/main-warehouse?status=low", label: "Low Stock" },
+      { href: "/admin/inventory/suppliers", label: "Suppliers" },
+      { href: "/admin/inventory/reports", label: "Stock Reports" },
+      { href: "/admin/inventory/transactions", label: "Movement History" },
+    ],
   },
   {
     href: "/admin/settings",
@@ -217,6 +242,7 @@ export function AdminSidebar({
   onClose: () => void;
 }) {
   const pathname = usePathname();
+  const [manualExpanded, setManualExpanded] = useState<Record<string, boolean>>({});
 
   return (
     <aside
@@ -241,20 +267,87 @@ export function AdminSidebar({
       <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
         {NAV.map((item) => {
           const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+
+          if (!item.children) {
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                  active ? "bg-white text-blue-700" : "text-blue-100 hover:bg-white/10"
+                }`}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  {item.icon}
+                </svg>
+                {item.label}
+              </Link>
+            );
+          }
+
+          const autoExpanded = pathname.startsWith(item.href);
+          const expanded = manualExpanded[item.href] ?? autoExpanded;
+
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
-                active ? "bg-white text-blue-700" : "text-blue-100 hover:bg-white/10"
-              }`}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                {item.icon}
-              </svg>
-              {item.label}
-            </Link>
+            <div key={item.href}>
+              <div className={`flex items-center rounded-xl transition-colors ${active ? "bg-white text-blue-700" : "text-blue-100"}`}>
+                <Link
+                  href={item.href}
+                  onClick={onClose}
+                  className={`flex-1 flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl ${
+                    active ? "" : "hover:bg-white/10"
+                  }`}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    {item.icon}
+                  </svg>
+                  {item.label}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setManualExpanded((m) => ({ ...m, [item.href]: !expanded }))}
+                  aria-label={expanded ? "Collapse" : "Expand"}
+                  className={`px-2.5 py-2.5 rounded-xl ${active ? "" : "hover:bg-white/10"}`}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className={`transition-transform ${expanded ? "rotate-90" : ""}`}
+                  >
+                    <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+
+              {expanded && (
+                <div className="ml-8 mt-1 mb-1 flex flex-col gap-0.5">
+                  {item.children.map((child) => {
+                    const childPath = child.href.split("?")[0];
+                    const isDashboardChild = child.href === item.href;
+                    const childActive = isDashboardChild
+                      ? pathname === childPath
+                      : pathname === childPath || pathname.startsWith(`${childPath}/`);
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        onClick={onClose}
+                        className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                          childActive ? "bg-white/15 text-white" : "text-blue-200 hover:bg-white/10"
+                        }`}
+                      >
+                        {child.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
