@@ -4,9 +4,14 @@ import { InventoryItemsManager } from "@/components/inventory/InventoryItemsMana
 import { getInventoryItemDisplayName, getBulkAllWarehousesQuantities } from "@/lib/inventoryData";
 
 export default async function InventoryItemsPage() {
-  const [items, suppliers] = await Promise.all([
+  const [items, suppliers, categories] = await Promise.all([
     prisma.inventoryItem.findMany({ orderBy: { name: "asc" }, include: { supplier: { select: { name: true } } } }),
     prisma.supplier.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
+    prisma.inventoryCategory.findMany({
+      where: { status: "Active" },
+      include: { subcategories: { where: { status: "Active" }, orderBy: { name: "asc" } } },
+      orderBy: { name: "asc" },
+    }),
   ]);
   // Total across every warehouse (not employee-held) -- see InventoryItemListCard's
   // "Warehouse Stock" label. Bulk-queried (not per-item) since the Spare Parts
@@ -20,6 +25,7 @@ export default async function InventoryItemsPage() {
     displayName: getInventoryItemDisplayName(item),
     unit: item.unit,
     category: item.category,
+    subcategory: item.subcategory,
     description: item.description,
     costPrice: item.costPrice,
     sellingPrice: item.sellingPrice,
@@ -40,7 +46,11 @@ export default async function InventoryItemsPage() {
             <p className="text-sm text-slate-500 mt-0.5">Create and manage the items your teams can stock and use.</p>
           </div>
         </div>
-        <InventoryItemsManager items={rows} suppliers={suppliers.map((s) => ({ id: s.id, name: s.name }))} />
+        <InventoryItemsManager
+          items={rows}
+          suppliers={suppliers.map((s) => ({ id: s.id, name: s.name }))}
+          categories={categories.map((c) => ({ id: c.id, name: c.name, subcategories: c.subcategories.map((s) => ({ id: s.id, name: s.name })) }))}
+        />
       </div>
     </div>
   );

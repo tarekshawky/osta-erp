@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import {
   INVENTORY_UNITS,
-  INVENTORY_CATEGORIES,
   INVENTORY_ITEM_STATUSES,
   addStock as addStockLib,
   recordSupplierPurchase as recordSupplierPurchaseLib,
@@ -23,6 +22,7 @@ export type InventoryItemFormInput = {
   specification: string;
   unit: string;
   category: string;
+  subcategory: string;
   description: string;
   costPrice: string;
   sellingPrice: string;
@@ -31,12 +31,23 @@ export type InventoryItemFormInput = {
   supplierId: string;
 };
 
-function validateItem(input: InventoryItemFormInput) {
+// Category/Subcategory are validated against the real DB registry (Chunk 3),
+// not the old hardcoded INVENTORY_CATEGORIES array -- Admin can Add/Edit/
+// Deactivate them, so validity can change at runtime.
+async function validateItem(input: InventoryItemFormInput): Promise<string | null> {
   if (!input.name.trim()) return "Item Name is required.";
   if (!(INVENTORY_UNITS as readonly string[]).includes(input.unit)) return "Invalid unit.";
-  if (!(INVENTORY_CATEGORIES as readonly string[]).includes(input.category)) return "Invalid category.";
   if (!(INVENTORY_ITEM_STATUSES as readonly string[]).includes(input.status)) return "Invalid status.";
   if (input.minimumMainStock < 0) return "Minimum Main Stock cannot be negative.";
+
+  const category = await prisma.inventoryCategory.findFirst({ where: { name: input.category, status: "Active" } });
+  if (!category) return "Invalid category.";
+  if (input.subcategory) {
+    const subcategory = await prisma.inventorySubcategory.findFirst({
+      where: { categoryId: category.id, name: input.subcategory, status: "Active" },
+    });
+    if (!subcategory) return "Invalid subcategory for the selected category.";
+  }
   return null;
 }
 
@@ -46,6 +57,7 @@ function buildData(input: InventoryItemFormInput) {
     specification: input.specification.trim() || null,
     unit: input.unit,
     category: input.category,
+    subcategory: input.subcategory || null,
     description: input.description.trim() || null,
     costPrice: input.costPrice ? Number(input.costPrice) : null,
     sellingPrice: input.sellingPrice ? Number(input.sellingPrice) : null,
@@ -57,7 +69,7 @@ function buildData(input: InventoryItemFormInput) {
 
 export async function createInventoryItem(input: InventoryItemFormInput): Promise<InventoryActionResult & { id?: string }> {
   const admin = await requireEmployee("ADMIN");
-  const error = validateItem(input);
+  const error = await validateItem(input);
   if (error) return { ok: false, error };
 
   const item = await prisma.inventoryItem.create({ data: { ...buildData(input), createdById: admin.id } });
@@ -70,7 +82,7 @@ export async function createInventoryItem(input: InventoryItemFormInput): Promis
 
 export async function updateInventoryItem(itemId: string, input: InventoryItemFormInput): Promise<InventoryActionResult> {
   await requireEmployee("ADMIN");
-  const error = validateItem(input);
+  const error = await validateItem(input);
   if (error) return { ok: false, error };
 
   const existing = await prisma.inventoryItem.findUnique({ where: { id: itemId } });

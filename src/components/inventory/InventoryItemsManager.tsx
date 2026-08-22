@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
-import { InventoryItemForm, type InventoryItemFormValue } from "./InventoryItemForm";
+import { InventoryItemForm, type InventoryItemFormValue, type CategoryOption } from "./InventoryItemForm";
 import { InventoryItemListCard, type InventoryItemRow } from "./InventoryItemListCard";
 import { createInventoryItem, updateInventoryItem } from "@/app/admin/inventory/actions";
 
@@ -11,7 +11,8 @@ const emptyFormValue: InventoryItemFormValue = {
   name: "",
   specification: "",
   unit: "Piece",
-  category: "AC",
+  category: "",
+  subcategory: "",
   description: "",
   costPrice: "",
   sellingPrice: "",
@@ -33,6 +34,7 @@ function toFormValue(item: InventoryItemManagerRow): InventoryItemFormValue {
     specification: item.specification ?? "",
     unit: item.unit,
     category: item.category,
+    subcategory: item.subcategory ?? "",
     description: item.description ?? "",
     costPrice: item.costPrice != null ? String(item.costPrice) : "",
     sellingPrice: item.sellingPrice != null ? String(item.sellingPrice) : "",
@@ -45,9 +47,11 @@ function toFormValue(item: InventoryItemManagerRow): InventoryItemFormValue {
 export function InventoryItemsManager({
   items,
   suppliers,
+  categories,
 }: {
   items: InventoryItemManagerRow[];
   suppliers: { id: string; name: string }[];
+  categories: CategoryOption[];
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -93,9 +97,11 @@ export function InventoryItemsManager({
         )}
       </div>
 
-      {mode === "add" && <InventoryItemForm initial={emptyFormValue} onSave={handleSave} onCancel={close} suppliers={suppliers} />}
+      {mode === "add" && (
+        <InventoryItemForm initial={emptyFormValue} onSave={handleSave} onCancel={close} suppliers={suppliers} categories={categories} />
+      )}
       {mode === "edit" && editingItem && (
-        <InventoryItemForm initial={toFormValue(editingItem)} onSave={handleSave} onCancel={close} suppliers={suppliers} />
+        <InventoryItemForm initial={toFormValue(editingItem)} onSave={handleSave} onCancel={close} suppliers={suppliers} categories={categories} />
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

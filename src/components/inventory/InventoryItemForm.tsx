@@ -1,25 +1,30 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { INVENTORY_UNITS, INVENTORY_CATEGORIES, INVENTORY_ITEM_STATUSES } from "@/lib/inventoryData";
+import { INVENTORY_UNITS, INVENTORY_ITEM_STATUSES } from "@/lib/inventoryData";
 import type { InventoryItemFormInput } from "@/app/admin/inventory/actions";
 
 export type InventoryItemFormValue = InventoryItemFormInput;
+export type CategoryOption = { id: string; name: string; subcategories: { id: string; name: string }[] };
 
 export function InventoryItemForm({
   initial,
   onSave,
   onCancel,
   suppliers,
+  categories,
 }: {
   initial: InventoryItemFormValue;
   onSave: (value: InventoryItemFormValue) => Promise<{ ok: boolean; error?: string }>;
   onCancel: () => void;
   suppliers: { id: string; name: string }[];
+  categories: CategoryOption[];
 }) {
   const [value, setValue] = useState<InventoryItemFormValue>(initial);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const selectedCategory = categories.find((c) => c.name === value.category);
 
   function handleSave() {
     setError(null);
@@ -71,11 +76,28 @@ export function InventoryItemForm({
           <select
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.category}
-            onChange={(e) => setValue({ ...value, category: e.target.value })}
+            onChange={(e) => setValue({ ...value, category: e.target.value, subcategory: "" })}
           >
-            {INVENTORY_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            <option value="">-- Select Category --</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Subcategory</span>
+          <select
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            value={value.subcategory}
+            onChange={(e) => setValue({ ...value, subcategory: e.target.value })}
+            disabled={!selectedCategory || selectedCategory.subcategories.length === 0}
+          >
+            <option value="">-- None --</option>
+            {selectedCategory?.subcategories.map((s) => (
+              <option key={s.id} value={s.name}>
+                {s.name}
               </option>
             ))}
           </select>

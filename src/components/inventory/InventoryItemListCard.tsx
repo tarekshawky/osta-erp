@@ -5,6 +5,7 @@ export type InventoryItemRow = {
   displayName: string;
   unit: string;
   category: string;
+  subcategory: string | null;
   costPrice: number | null;
   sellingPrice: number | null;
   minimumMainStock: number;
@@ -20,7 +21,8 @@ export function InventoryItemListCard({ item, onEdit }: { item: InventoryItemRow
         <div>
           <div className="font-bold text-slate-900">{item.displayName}</div>
           <div className="text-sm text-slate-500 mt-0.5">
-            {item.category} · {item.unit}
+            {item.category}
+            {item.subcategory ? ` / ${item.subcategory}` : ""} · {item.unit}
           </div>
         </div>
         <div className="flex items-center gap-2">
