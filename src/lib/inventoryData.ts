@@ -57,6 +57,12 @@ export const INVENTORY_TRANSACTION_TYPES = [
   "Stock Lost",
   "Stock Adjustment",
   "Stock Reversed",
+  // Warehouse Hierarchy additions. "Warehouse Transfer" is Main -> Branch
+  // only; Branch -> Employee keeps using the existing "Stock Transfer" type
+  // (already load-bearing across every report -- not renamed to avoid a
+  // historical-data migration for a label-only difference from the spec).
+  "Warehouse Transfer",
+  "Employee Transfer",
 ] as const;
 
 // InventoryTransaction.fromLocation/toLocation hold either a real Warehouse.id,
@@ -65,9 +71,16 @@ export const INVENTORY_TRANSACTION_TYPES = [
 // real Prisma relations, since a relation can't conditionally point at either
 // kind of row -- resolved to warehouse/employee names in application code.
 export const WAREHOUSE_SEED_NAMES = ["Ajman", "Al Ain", "Dubai", "Sharjah", "Other"] as const;
+export const MAIN_WAREHOUSE_NAME = "Main Warehouse";
 
-export async function getWarehouses(status?: string): Promise<{ id: string; name: string; status: string }[]> {
-  return prisma.warehouse.findMany({ where: status ? { status } : undefined, orderBy: { name: "asc" } });
+export async function getWarehouses(
+  status?: string,
+  type?: "Main" | "Branch"
+): Promise<{ id: string; name: string; type: string; status: string }[]> {
+  return prisma.warehouse.findMany({
+    where: { ...(status ? { status } : {}), ...(type ? { type } : {}) },
+    orderBy: { name: "asc" },
+  });
 }
 
 export type EmployeeStockStatus = "Available" | "Low Stock" | "Shortage" | "Out of Stock";

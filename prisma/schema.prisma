@@ -117,6 +117,11 @@ model Employee {
   inventoryUsages              InvoiceInventoryUsage[]
   suppliersCreated             Supplier[]                     @relation("SupplierCreatedBy")
   labourItemsCreated           LabourItem[]                   @relation("LabourItemCreatedBy")
+  inventoryCategoriesCreated   InventoryCategory[]            @relation("InventoryCategoryCreatedBy")
+  stockRequestsSubmitted       StockRequest[]                 @relation("StockRequestBy")
+  stockRequestsDecided         StockRequest[]                 @relation("StockRequestDecidedBy")
+  stockReturnRequestsSubmitted StockReturnRequest[]           @relation("StockReturnRequestBy")
+  stockReturnRequestsDecided   StockReturnRequest[]           @relation("StockReturnRequestDecidedBy")
   sparePartPriceModification   String                         @default("Not Allowed")
   sparePartMaxDiscountPercent  Float?
   labourPriceModification      String                         @default("Not Allowed")
@@ -705,20 +710,94 @@ model InventoryItem {
   supplierId       String?
   supplier         Supplier?                      @relation(fields: [supplierId], references: [id])
   location         String? // shelf/bin text
+  // Warehouse Hierarchy & Governance additions -- nullable, not backfilled.
+  barcode          String?                        @unique
   transactions     InventoryTransaction[]
   requirements     EmployeeInventoryRequirement[]
   invoiceUsages    InvoiceInventoryUsage[]
   invoiceItems     InvoiceItem[]
+  stockRequests    StockRequest[]
+  returnRequests   StockReturnRequest[]
   createdById      String
   createdBy        Employee                       @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
   createdAt        DateTime                       @default(now())
 }
 
+// type distinguishes the one company-wide Main Warehouse (where real
+// Purchase/Stock-Received events land) from every Branch Warehouse (which
+// only ever receives via a Warehouse Transfer from Main). Existing rows
+// default to "Branch" -- see scripts/seedWarehouseHierarchyAndCategories.ts
+// for the one-time Main Warehouse seed.
 model Warehouse {
   id        String   @id @default(cuid())
   name      String   @unique
+  type      String   @default("Branch") // "Main" | "Branch"
   status    String   @default("Active")
   createdAt DateTime @default(now())
+}
+
+// Admin-editable registry (Add/Edit/Deactivate) replacing the old hardcoded
+// INVENTORY_CATEGORIES array. InventoryItem.category/.subcategory stay plain
+// strings (unchanged) -- renaming a category cascades that string across
+// every InventoryItem row in one transaction rather than via a foreign key.
+model InventoryCategory {
+  id            String                 @id @default(cuid())
+  name          String                 @unique
+  nameAr        String?
+  status        String                 @default("Active")
+  subcategories InventorySubcategory[]
+  createdById   String
+  createdBy     Employee               @relation("InventoryCategoryCreatedBy", fields: [createdById], references: [id])
+  createdAt     DateTime               @default(now())
+}
+
+model InventorySubcategory {
+  id         String            @id @default(cuid())
+  categoryId String
+  category   InventoryCategory @relation(fields: [categoryId], references: [id])
+  name       String
+  status     String            @default("Active")
+  createdAt  DateTime          @default(now())
+
+  @@unique([categoryId, name])
+}
+
+// Employee-initiated; Admin decides. Never a second balance source -- only
+// Approved/PartiallyApproved rows trigger a real distributeStock() call in
+// src/lib/inventoryData.ts. Pending/Rejected rows are pure workflow state.
+model StockRequest {
+  id                String        @id @default(cuid())
+  employeeId        String
+  employee          Employee      @relation("StockRequestBy", fields: [employeeId], references: [id])
+  inventoryItemId   String
+  inventoryItem     InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  requestedQuantity Float
+  approvedQuantity  Float?
+  reason            String?
+  status            String        @default("Pending") // Pending | Approved | PartiallyApproved | Rejected
+  sourceWarehouseId String? // set at decision time
+  decidedById       String?
+  decidedBy         Employee?     @relation("StockRequestDecidedBy", fields: [decidedById], references: [id])
+  decidedAt         DateTime?
+  createdAt         DateTime      @default(now())
+}
+
+// Employee-initiated return; Admin decides. Only an Approved row triggers a
+// real returnToWarehouse() call.
+model StockReturnRequest {
+  id                      String        @id @default(cuid())
+  employeeId              String
+  employee                Employee      @relation("StockReturnRequestBy", fields: [employeeId], references: [id])
+  inventoryItemId         String
+  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity                Float
+  reason                  String // "Not Used" | "Wrong Part" | "Extra Stock" | "Other"
+  status                  String        @default("Pending") // Pending | Approved | Rejected
+  destinationWarehouseId  String?
+  decidedById             String?
+  decidedBy               Employee?     @relation("StockReturnRequestDecidedBy", fields: [decidedById], references: [id])
+  decidedAt               DateTime?
+  createdAt               DateTime      @default(now())
 }
 
 model Supplier {
@@ -785,6 +864,7 @@ model EmployeeInventoryRequirement {
   inventoryItem    InventoryItem @relation(fields: [inventoryItemId], references: [id])
   requiredQuantity Float
   minimumQuantity  Float
+  maximumQuantity  Float?
   createdById      String
   createdBy        Employee      @relation("InventoryRequirementCreatedBy", fields: [createdById], references: [id])
   createdAt        DateTime      @default(now())
