@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { createWarehouse, updateWarehouse } from "@/app/admin/inventory/warehouses/actions";
 
-export type WarehouseRow = { id: string; name: string; status: string };
+export type WarehouseRow = { id: string; name: string; type: string; status: string };
 
 export function WarehousesManager({ warehouses }: { warehouses: WarehouseRow[] }) {
   const router = useRouter();
@@ -13,6 +13,7 @@ export function WarehousesManager({ warehouses }: { warehouses: WarehouseRow[] }
   const [mode, setMode] = useState<"closed" | "add" | "edit">("closed");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [type, setType] = useState("Branch");
   const [status, setStatus] = useState("Active");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -20,6 +21,7 @@ export function WarehousesManager({ warehouses }: { warehouses: WarehouseRow[] }
   function openAdd() {
     setEditingId(null);
     setName("");
+    setType("Branch");
     setStatus("Active");
     setError(null);
     setMode("add");
@@ -27,6 +29,7 @@ export function WarehousesManager({ warehouses }: { warehouses: WarehouseRow[] }
   function openEdit(w: WarehouseRow) {
     setEditingId(w.id);
     setName(w.name);
+    setType(w.type);
     setStatus(w.status);
     setError(null);
     setMode("edit");
@@ -40,7 +43,10 @@ export function WarehousesManager({ warehouses }: { warehouses: WarehouseRow[] }
   function save() {
     setError(null);
     startTransition(async () => {
-      const res = mode === "edit" && editingId ? await updateWarehouse(editingId, { name, status }) : await createWarehouse({ name, status });
+      const res =
+        mode === "edit" && editingId
+          ? await updateWarehouse(editingId, { name, type, status })
+          : await createWarehouse({ name, type, status });
       if (res.ok) {
         showToast(mode === "edit" ? "Warehouse updated." : "Warehouse added.");
         close();
@@ -71,6 +77,16 @@ export function WarehousesManager({ warehouses }: { warehouses: WarehouseRow[] }
             onChange={(e) => setName(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
           />
+
+          <label className="mt-3 block text-xs font-medium text-slate-600">Type</label>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+          >
+            <option value="Branch">Branch</option>
+            <option value="Main">Main</option>
+          </select>
 
           <label className="mt-3 block text-xs font-medium text-slate-600">Status</label>
           <select
@@ -105,6 +121,7 @@ export function WarehousesManager({ warehouses }: { warehouses: WarehouseRow[] }
           <thead>
             <tr className="text-left text-slate-500 border-b border-slate-100">
               <th className="px-4 py-3 font-medium">Name</th>
+              <th className="px-4 py-3 font-medium">Type</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
@@ -113,6 +130,15 @@ export function WarehousesManager({ warehouses }: { warehouses: WarehouseRow[] }
             {warehouses.map((w) => (
               <tr key={w.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
                 <td className="px-4 py-3 text-slate-900 font-medium">{w.name}</td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      w.type === "Main" ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {w.type}
+                  </span>
+                </td>
                 <td className="px-4 py-3">
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -133,7 +159,7 @@ export function WarehousesManager({ warehouses }: { warehouses: WarehouseRow[] }
             ))}
             {warehouses.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={4} className="px-4 py-10 text-center text-slate-400">
                   No warehouses yet.
                 </td>
               </tr>

@@ -9,6 +9,7 @@ import {
   INVENTORY_ITEM_STATUSES,
   addStock as addStockLib,
   recordSupplierPurchase as recordSupplierPurchaseLib,
+  transferToBranch as transferToBranchLib,
   distributeStock as distributeStockLib,
   returnToWarehouse as returnToWarehouseLib,
   recordDamaged as recordDamagedLib,
@@ -93,6 +94,24 @@ export async function addStock(
   const result = await addStockLib(admin.id, warehouseId, inventoryItemId, quantity, notes);
   if (result.ok) {
     revalidatePath("/admin/inventory");
+    revalidatePath("/admin/inventory/main-warehouse");
+    revalidatePath("/admin/inventory/transactions");
+  }
+  return result;
+}
+
+export async function transferToBranch(
+  mainWarehouseId: string,
+  branchWarehouseId: string,
+  inventoryItemId: string,
+  quantity: number,
+  notes: string
+): Promise<InventoryActionResult> {
+  const admin = await requireEmployee("ADMIN");
+  const result = await transferToBranchLib(admin.id, mainWarehouseId, branchWarehouseId, inventoryItemId, quantity, notes);
+  if (result.ok) {
+    revalidatePath("/admin/inventory");
+    revalidatePath("/admin/inventory/main-warehouse");
     revalidatePath("/admin/inventory/warehouse");
     revalidatePath("/admin/inventory/transactions");
   }
@@ -115,7 +134,7 @@ export async function recordSupplierPurchase(input: SupplierPurchaseFormInput): 
   const result = await recordSupplierPurchaseLib(admin.id, { ...input, date: new Date(input.date) });
   if (result.ok) {
     revalidatePath("/admin/inventory");
-    revalidatePath("/admin/inventory/warehouse");
+    revalidatePath("/admin/inventory/main-warehouse");
     revalidatePath("/admin/inventory/transactions");
     revalidatePath("/admin/expenses");
   }

@@ -1,25 +1,19 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { MainWarehouseTable } from "@/components/inventory/MainWarehouseTable";
-import { AddStockModal } from "@/components/inventory/AddStockModal";
-import { SupplierPurchaseModal } from "@/components/inventory/SupplierPurchaseModal";
-import { getWarehouseStockSummary, getInventoryItemDisplayName, getWarehouses } from "@/lib/inventoryData";
+import { getWarehouseStockSummary, getWarehouses } from "@/lib/inventoryData";
 import { parsePage } from "@/lib/pagination";
 
 const WAREHOUSE_STOCK_PAGE_SIZE = 20;
 
-export default async function MainWarehousePage({
+export default async function BranchWarehousesPage({
   searchParams,
 }: {
   searchParams: Promise<{ status?: string; warehouseId?: string; page?: string }>;
 }) {
   const { status, warehouseId: warehouseIdParam, page: pageParam } = await searchParams;
 
-  const [warehouses, activeItems] = await Promise.all([
-    getWarehouses("Active"),
-    prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
-  ]);
+  const warehouses = await getWarehouses("Active", "Branch");
 
   const warehouseId = warehouseIdParam && warehouses.some((w) => w.id === warehouseIdParam) ? warehouseIdParam : warehouses[0]?.id;
   const summary = warehouseId ? await getWarehouseStockSummary(warehouseId) : [];
@@ -32,20 +26,16 @@ export default async function MainWarehousePage({
   const page = Math.min(parsePage(pageParam), totalPages);
   const pagedRows = rows.slice((page - 1) * WAREHOUSE_STOCK_PAGE_SIZE, page * WAREHOUSE_STOCK_PAGE_SIZE);
 
-  const itemOptions = activeItems.map((i) => ({ id: i.id, displayName: getInventoryItemDisplayName(i), unit: i.unit }));
-
   return (
     <div className="pb-10">
-      <AdminTopBar title="Warehouse Stock" />
+      <AdminTopBar title="Branch Warehouses" />
       <div className="px-6 py-6">
         <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Warehouse Stock</h2>
-            <p className="text-sm text-slate-500 mt-0.5">The warehouse-controlled inventory Admin distributes from.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <AddStockModal items={itemOptions} warehouses={warehouses} defaultWarehouseId={warehouseId} />
-            <SupplierPurchaseModal items={itemOptions} warehouses={warehouses} defaultWarehouseId={warehouseId} />
+            <h2 className="text-2xl font-bold text-slate-900">Branch Warehouses</h2>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Stock received via Warehouse Transfer from the Main Warehouse — the source Admin distributes to employees from.
+            </p>
           </div>
         </div>
 

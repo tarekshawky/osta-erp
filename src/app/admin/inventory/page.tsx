@@ -54,13 +54,17 @@ export default async function InventoryDashboardPage() {
             <div className="font-semibold text-slate-900">Inventory Items</div>
             <div className="text-sm text-slate-500 mt-0.5">Create and manage stock items.</div>
           </Link>
+          <Link href="/admin/inventory/main-warehouse" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
+            <div className="font-semibold text-slate-900">Main Warehouse</div>
+            <div className="text-sm text-slate-500 mt-0.5">Add stock, record supplier purchases, transfer to a branch.</div>
+          </Link>
           <Link href="/admin/inventory/warehouse" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
-            <div className="font-semibold text-slate-900">Warehouse Stock</div>
-            <div className="text-sm text-slate-500 mt-0.5">Add stock, record supplier purchases, view stock levels.</div>
+            <div className="font-semibold text-slate-900">Branch Warehouses</div>
+            <div className="text-sm text-slate-500 mt-0.5">View stock at Ajman, Al Ain, Dubai, Sharjah, and other branches.</div>
           </Link>
           <Link href="/admin/inventory/warehouses" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
             <div className="font-semibold text-slate-900">Warehouses</div>
-            <div className="text-sm text-slate-500 mt-0.5">Manage Ajman, Al Ain, Dubai, Sharjah, and other locations.</div>
+            <div className="text-sm text-slate-500 mt-0.5">Manage the Main Warehouse and every Branch location.</div>
           </Link>
           <Link href="/admin/inventory/suppliers" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
             <div className="font-semibold text-slate-900">Suppliers</div>

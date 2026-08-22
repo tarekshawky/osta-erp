@@ -18,7 +18,7 @@ export default async function EmployeeProfilePage({
   const [report, movementHistory, warehouses] = await Promise.all([
     getEmployeeInventoryReport(id),
     getInventoryTransactions({ employeeId: id }),
-    getWarehouses("Active"),
+    getWarehouses("Active", "Branch"),
   ]);
 
   return (

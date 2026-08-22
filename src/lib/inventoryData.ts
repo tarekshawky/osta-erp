@@ -327,6 +327,12 @@ export async function distributeStock(
   if (lines.length === 0) return { ok: false, error: "Add at least one item to distribute." };
   if (lines.some((l) => !(l.quantity > 0))) return { ok: false, error: "Enter a valid quantity for every item." };
 
+  const fromWarehouse = await prisma.warehouse.findUnique({ where: { id: fromWarehouseId } });
+  if (!fromWarehouse) return { ok: false, error: "Warehouse not found." };
+  if (fromWarehouse.type !== "Branch") {
+    return { ok: false, error: "Stock can only be assigned to an employee from a Branch Warehouse — transfer it from Main to a Branch first." };
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       for (const line of lines) {
@@ -358,6 +364,50 @@ export async function distributeStock(
   return { ok: true };
 }
 
+// The Main -> Branch leg of the 3-tier chain. A real Purchase/Stock Received
+// event only ever lands at the Main Warehouse (see addStock/
+// recordSupplierPurchase's type==="Main" check); this is the only way stock
+// ever reaches a Branch Warehouse from there.
+export async function transferToBranch(
+  adminId: string,
+  mainWarehouseId: string,
+  branchWarehouseId: string,
+  inventoryItemId: string,
+  quantity: number,
+  notes?: string
+): Promise<InventoryActionResult> {
+  if (!(quantity > 0)) return { ok: false, error: "Enter a valid quantity." };
+  const [mainWarehouse, branchWarehouse] = await Promise.all([
+    prisma.warehouse.findUnique({ where: { id: mainWarehouseId } }),
+    prisma.warehouse.findUnique({ where: { id: branchWarehouseId } }),
+  ]);
+  if (!mainWarehouse || mainWarehouse.type !== "Main") return { ok: false, error: "Main Warehouse not found." };
+  if (!branchWarehouse || branchWarehouse.type !== "Branch") return { ok: false, error: "Branch Warehouse not found." };
+
+  const available = await getLocationQuantity(prisma, inventoryItemId, mainWarehouseId);
+  if (quantity > available) {
+    return {
+      ok: false,
+      error: `Insufficient Stock — Available: ${available.toLocaleString()}, Requested: ${quantity.toLocaleString()}.`,
+    };
+  }
+
+  const number = await generateInventoryTransactionNumber();
+  await prisma.inventoryTransaction.create({
+    data: {
+      number,
+      inventoryItemId,
+      type: "Warehouse Transfer",
+      quantity,
+      fromLocation: mainWarehouseId,
+      toLocation: branchWarehouseId,
+      notes: notes?.trim() || null,
+      createdById: adminId,
+    },
+  });
+  return { ok: true };
+}
+
 export async function addStock(
   adminId: string,
   warehouseId: string,
@@ -372,6 +422,9 @@ export async function addStock(
   ]);
   if (!item) return { ok: false, error: "Inventory item not found." };
   if (!warehouse) return { ok: false, error: "Warehouse not found." };
+  if (warehouse.type !== "Main") {
+    return { ok: false, error: "Stock can only be received directly into the Main Warehouse — use Warehouse Transfer to move it to a Branch." };
+  }
 
   const number = await generateInventoryTransactionNumber();
   await prisma.inventoryTransaction.create({
@@ -421,6 +474,9 @@ export async function recordSupplierPurchase(
   ]);
   if (!item) return { ok: false, error: "Inventory item not found." };
   if (!warehouse) return { ok: false, error: "Warehouse not found." };
+  if (warehouse.type !== "Main") {
+    return { ok: false, error: "Supplier purchases can only be received directly into the Main Warehouse — use Warehouse Transfer to move it to a Branch." };
+  }
 
   const total = input.quantity * input.unitCost;
   const [stkNumber, expNumber] = await Promise.all([generateInventoryTransactionNumber(), generateExpenseNumber()]);
@@ -462,6 +518,11 @@ export async function returnToWarehouse(
   quantity: number
 ): Promise<InventoryActionResult> {
   if (!(quantity > 0)) return { ok: false, error: "Enter a valid quantity." };
+  const toWarehouse = await prisma.warehouse.findUnique({ where: { id: toWarehouseId } });
+  if (!toWarehouse) return { ok: false, error: "Warehouse not found." };
+  if (toWarehouse.type !== "Branch") {
+    return { ok: false, error: "Stock returned by an employee must go back to a Branch Warehouse." };
+  }
   const available = await getLocationQuantity(prisma, inventoryItemId, employeeId);
   if (quantity > available) {
     return {

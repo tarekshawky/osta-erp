@@ -7,7 +7,7 @@ export default async function DistributeStockPage() {
   const [employees, activeItems, warehouses] = await Promise.all([
     prisma.employee.findMany({ where: { status: "active" }, orderBy: { name: "asc" } }),
     prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
-    getWarehouses("Active"),
+    getWarehouses("Active", "Branch"),
   ]);
 
   // One bulk query per warehouse (not per item×warehouse) -- see
@@ -34,7 +34,7 @@ export default async function DistributeStockPage() {
       <div className="px-6 py-6">
         <div className="mb-5">
           <h2 className="text-2xl font-bold text-slate-900">Distribute Stock</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Transfer specific quantities from a warehouse to an employee.</p>
+          <p className="text-sm text-slate-500 mt-0.5">Transfer specific quantities from a Branch Warehouse to an employee.</p>
         </div>
 
         {employees.length === 0 || itemOptions.length === 0 || warehouses.length === 0 ? (

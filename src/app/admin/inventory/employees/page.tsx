@@ -6,7 +6,7 @@ import { getEmployeeInventory, getWarehouses } from "@/lib/inventoryData";
 export default async function EmployeeInventoryPage() {
   const [employees, warehouses] = await Promise.all([
     prisma.employee.findMany({ where: { status: "active" }, orderBy: { name: "asc" } }),
-    getWarehouses("Active"),
+    getWarehouses("Active", "Branch"),
   ]);
 
   const rowsByEmployee = await Promise.all(employees.map((e) => getEmployeeInventory(e.id)));
