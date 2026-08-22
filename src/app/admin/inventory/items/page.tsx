@@ -34,6 +34,7 @@ export default async function InventoryItemsPage() {
     mainQty: quantities[item.id] ?? 0,
     supplierId: item.supplierId,
     supplierName: item.supplier?.name ?? null,
+    barcode: item.barcode,
   }));
 
   return (

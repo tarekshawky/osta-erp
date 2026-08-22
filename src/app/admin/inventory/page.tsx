@@ -126,6 +126,10 @@ export default async function InventoryDashboardPage() {
             <div className="font-semibold text-slate-900">Stock Reports</div>
             <div className="text-sm text-slate-500 mt-0.5">Every inventory report in one place.</div>
           </Link>
+          <Link href="/admin/inventory/scan" className="rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50">
+            <div className="font-semibold text-slate-900">Scan Item</div>
+            <div className="text-sm text-slate-500 mt-0.5">Scan a barcode/QR code to quickly look up an item.</div>
+          </Link>
         </div>
       </div>
     </div>

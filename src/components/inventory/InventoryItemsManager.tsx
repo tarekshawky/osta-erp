@@ -19,6 +19,7 @@ const emptyFormValue: InventoryItemFormValue = {
   minimumMainStock: 0,
   status: "Active",
   supplierId: "",
+  barcode: "",
 };
 
 export type InventoryItemManagerRow = InventoryItemRow & {
@@ -26,6 +27,7 @@ export type InventoryItemManagerRow = InventoryItemRow & {
   specification: string | null;
   description: string | null;
   supplierId: string | null;
+  barcode: string | null;
 };
 
 function toFormValue(item: InventoryItemManagerRow): InventoryItemFormValue {
@@ -41,6 +43,7 @@ function toFormValue(item: InventoryItemManagerRow): InventoryItemFormValue {
     minimumMainStock: item.minimumMainStock,
     status: item.status,
     supplierId: item.supplierId ?? "",
+    barcode: item.barcode ?? "",
   };
 }
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { TopBar } from "@/components/TopBar";
@@ -41,6 +42,15 @@ export default async function MyInventoryPage() {
       <TopBar title="My Inventory" />
       <div className="px-5 py-4">
         <p className="text-sm text-slate-500 mb-4">What you currently have. Only Admin can change these quantities.</p>
+        <Link
+          href="/employee/inventory/scan"
+          className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50"
+        >
+          <div>
+            <div className="font-semibold text-slate-900">Scan Item</div>
+            <div className="text-sm text-slate-500 mt-0.5">Scan a barcode/QR code to quickly look up an item.</div>
+          </div>
+        </Link>
         <MyInventoryList rows={rows} />
 
         <h3 className="mt-6 mb-3 font-semibold text-slate-900">Request Stock</h3>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { INVENTORY_UNITS, INVENTORY_ITEM_STATUSES } from "@/lib/inventoryData";
 import type { InventoryItemFormInput } from "@/app/admin/inventory/actions";
+import { BarcodeScannerModal } from "./BarcodeScannerModal";
 
 export type InventoryItemFormValue = InventoryItemFormInput;
 export type CategoryOption = { id: string; name: string; subcategories: { id: string; name: string }[] };
@@ -22,6 +23,7 @@ export function InventoryItemForm({
 }) {
   const [value, setValue] = useState<InventoryItemFormValue>(initial);
   const [error, setError] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const selectedCategory = categories.find((c) => c.name === value.category);
@@ -151,6 +153,25 @@ export function InventoryItemForm({
           </select>
         </label>
         <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Barcode / QR Code</span>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+              value={value.barcode}
+              onChange={(e) => setValue({ ...value, barcode: e.target.value })}
+              placeholder="Scan or type..."
+            />
+            <button
+              type="button"
+              onClick={() => setScanning(true)}
+              className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700"
+            >
+              Scan
+            </button>
+          </div>
+        </label>
+        <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Supplier</span>
           <select
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
@@ -200,6 +221,16 @@ export function InventoryItemForm({
           </svg>
         </button>
       </div>
+
+      {scanning && (
+        <BarcodeScannerModal
+          onDetected={(code) => {
+            setValue((v) => ({ ...v, barcode: code }));
+            setScanning(false);
+          }}
+          onClose={() => setScanning(false)}
+        />
+      )}
     </div>
   );
 }

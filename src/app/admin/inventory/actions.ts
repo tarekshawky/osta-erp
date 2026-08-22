@@ -30,12 +30,13 @@ export type InventoryItemFormInput = {
   minimumMainStock: number;
   status: string;
   supplierId: string;
+  barcode: string;
 };
 
 // Category/Subcategory are validated against the real DB registry (Chunk 3),
 // not the old hardcoded INVENTORY_CATEGORIES array -- Admin can Add/Edit/
 // Deactivate them, so validity can change at runtime.
-async function validateItem(input: InventoryItemFormInput): Promise<string | null> {
+async function validateItem(input: InventoryItemFormInput, itemId?: string): Promise<string | null> {
   if (!input.name.trim()) return "Item Name is required.";
   if (!(INVENTORY_UNITS as readonly string[]).includes(input.unit)) return "Invalid unit.";
   if (!(INVENTORY_ITEM_STATUSES as readonly string[]).includes(input.status)) return "Invalid status.";
@@ -48,6 +49,12 @@ async function validateItem(input: InventoryItemFormInput): Promise<string | nul
       where: { categoryId: category.id, name: input.subcategory, status: "Active" },
     });
     if (!subcategory) return "Invalid subcategory for the selected category.";
+  }
+  if (input.barcode.trim()) {
+    const duplicate = await prisma.inventoryItem.findFirst({
+      where: { barcode: input.barcode.trim(), ...(itemId ? { id: { not: itemId } } : {}) },
+    });
+    if (duplicate) return "Another item already uses this barcode.";
   }
   return null;
 }
@@ -65,6 +72,7 @@ function buildData(input: InventoryItemFormInput) {
     minimumMainStock: input.minimumMainStock,
     status: input.status,
     supplierId: input.supplierId || null,
+    barcode: input.barcode.trim() || null,
   };
 }
 
@@ -83,7 +91,7 @@ export async function createInventoryItem(input: InventoryItemFormInput): Promis
 
 export async function updateInventoryItem(itemId: string, input: InventoryItemFormInput): Promise<InventoryActionResult> {
   await requireEmployee("ADMIN");
-  const error = await validateItem(input);
+  const error = await validateItem(input, itemId);
   if (error) return { ok: false, error };
 
   const existing = await prisma.inventoryItem.findUnique({ where: { id: itemId } });
