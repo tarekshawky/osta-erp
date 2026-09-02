@@ -4,9 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/format";
 import { TopBar } from "@/components/TopBar";
 import { WarrantyCertificateForm } from "./WarrantyCertificateForm";
+import { getEmployeeLang, pickLang } from "@/lib/employeeLang";
+import { tajawal } from "@/lib/fonts";
+
+const T = {
+  ar: { yourCertificates: "شهاداتك", empty: "لا توجد شهادات بعد." },
+  en: { yourCertificates: "Your Certificates", empty: "No certificates created yet." },
+} as const;
 
 export default async function WarrantyCertificatePage() {
   const employee = await requireEmployee("EMPLOYEE");
+  const lang = await getEmployeeLang();
+  const s = pickLang(lang, T);
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+
   const certificates = await prisma.warrantyCertificate.findMany({
     where: { createdById: employee.id },
     orderBy: { date: "desc" },
@@ -14,10 +26,12 @@ export default async function WarrantyCertificatePage() {
 
   return (
     <div className="pb-8">
-      <TopBar title="Warranty Certificate" />
+      <TopBar title={{ ar: "شهادة الضمان", en: "Warranty Certificate" }} />
       <WarrantyCertificateForm detailPathPrefix="/employee/warranty-certificate" />
       <div className="px-5 mt-2">
-        <h2 className="text-sm font-semibold text-slate-700 mb-2">Your Certificates</h2>
+        <h2 className={`text-sm font-semibold text-slate-700 mb-2 ${font}`} dir={dir}>
+          {s.yourCertificates}
+        </h2>
         <div className="flex flex-col gap-3">
           {certificates.map((c) => (
             <Link
@@ -33,7 +47,9 @@ export default async function WarrantyCertificatePage() {
             </Link>
           ))}
           {certificates.length === 0 && (
-            <p className="text-center text-sm text-slate-400 py-8">No certificates created yet.</p>
+            <p className={`text-center text-sm text-slate-400 py-8 ${font}`} dir={dir}>
+              {s.empty}
+            </p>
           )}
         </div>
       </div>

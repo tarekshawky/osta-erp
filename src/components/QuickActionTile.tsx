@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { tajawal } from "@/lib/fonts";
+import type { EmployeeLang } from "@/lib/employeeLang";
 
 export function QuickActionTile({
   href,
@@ -6,12 +8,14 @@ export function QuickActionTile({
   iconBg,
   iconColor,
   label,
+  lang,
 }: {
   href: string;
   icon: React.ReactNode;
   iconBg: string;
   iconColor: string;
   label: string;
+  lang?: EmployeeLang;
 }) {
   return (
     <Link
@@ -21,7 +25,12 @@ export function QuickActionTile({
       <span className={`h-10 w-10 rounded-lg flex items-center justify-center ${iconBg} ${iconColor}`}>
         {icon}
       </span>
-      <span className="text-xs font-medium text-slate-700">{label}</span>
+      <span
+        className={`text-xs font-medium text-slate-700 ${lang === "ar" ? tajawal.className : ""}`}
+        dir={lang === "ar" ? "rtl" : "ltr"}
+      >
+        {label}
+      </span>
     </Link>
   );
 }

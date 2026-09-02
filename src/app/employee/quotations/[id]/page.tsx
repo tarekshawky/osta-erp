@@ -5,6 +5,13 @@ import { formatUaePhone } from "@/lib/format";
 import { TopBar } from "@/components/TopBar";
 import { QuotationPreviewCard } from "@/components/quotation/QuotationPreviewCard";
 import { DownloadPdfButton } from "@/components/invoice/DownloadPdfButton";
+import { getEmployeeLang, pickLang } from "@/lib/employeeLang";
+import { tajawal } from "@/lib/fonts";
+
+const T = {
+  ar: { downloadPdf: "تحميل PDF", viewInvoice: "عرض الفاتورة", convertToInvoice: "تحويل إلى فاتورة" },
+  en: { downloadPdf: "Download PDF", viewInvoice: "View Invoice", convertToInvoice: "Convert to Invoice" },
+} as const;
 
 export default async function EmployeeQuotationDetailPage({
   params,
@@ -13,6 +20,11 @@ export default async function EmployeeQuotationDetailPage({
 }) {
   const { id } = await params;
   const session = await getSession();
+  const lang = await getEmployeeLang();
+  const s = pickLang(lang, T);
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+
   const quotation = await prisma.quotation.findUnique({
     where: { id },
     include: { items: true, createdBy: true },
@@ -21,7 +33,7 @@ export default async function EmployeeQuotationDetailPage({
 
   return (
     <div className="pb-10">
-      <TopBar title="Quotation" />
+      <TopBar title={{ ar: "عرض السعر", en: "Quotation" }} />
       <div className="px-5 py-5 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div>
@@ -34,7 +46,7 @@ export default async function EmployeeQuotationDetailPage({
             targetId="quotation-preview"
             fileName={quotation.number}
             className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2"
-            label="Download PDF"
+            label={s.downloadPdf}
           />
         </div>
 
@@ -44,9 +56,10 @@ export default async function EmployeeQuotationDetailPage({
             the query param) picked up from the dashboard's "Create Invoice" tile. */}
         <a
           href={quotation.invoiceId ? `/employee/invoices/${quotation.invoiceId}` : `/employee/invoices/new?quotationId=${quotation.id}`}
-          className="w-full rounded-xl bg-green-600 text-white font-medium text-sm py-3 text-center block"
+          className={`w-full rounded-xl bg-green-600 text-white font-medium text-sm py-3 text-center block ${font}`}
+          dir={dir}
         >
-          {quotation.invoiceId ? "View Invoice" : "Convert to Invoice"}
+          {quotation.invoiceId ? s.viewInvoice : s.convertToInvoice}
         </a>
       </div>
 

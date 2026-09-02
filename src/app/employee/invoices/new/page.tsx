@@ -94,7 +94,7 @@ export default async function NewInvoicePage({
 
   return (
     <div className="pb-8">
-      <TopBar title="Invoices" />
+      <TopBar title={{ ar: "الفواتير", en: "Invoices" }} />
       <InvoiceWizard
         basePath="/employee"
         createdByName={employee.name}

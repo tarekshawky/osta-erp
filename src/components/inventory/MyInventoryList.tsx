@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { EmployeeInventoryRow } from "@/lib/inventoryData";
+import { tajawal } from "@/lib/fonts";
+import type { EmployeeLang } from "@/lib/employeeLang";
 
 const STATUS_STYLES: Record<string, string> = {
   Available: "bg-green-50 text-green-700",
@@ -10,9 +12,42 @@ const STATUS_STYLES: Record<string, string> = {
   "Out of Stock": "bg-slate-100 text-slate-600",
 };
 
-export function MyInventoryList({ rows }: { rows: EmployeeInventoryRow[] }) {
+const T = {
+  ar: {
+    search: "ابحث عن صنف...",
+    allStatuses: "كل الحالات",
+    available: "متوفر",
+    lowStock: "كمية محدودة",
+    shortage: "نقص",
+    outOfStock: "غير متوفر",
+    emptyNoItems: "لم تستلم أي مخزون بعد.",
+    emptyNoMatch: "لا توجد أصناف مطابقة لبحثك.",
+  },
+  en: {
+    search: "Search items...",
+    allStatuses: "All Statuses",
+    available: "Available",
+    lowStock: "Low Stock",
+    shortage: "Shortage",
+    outOfStock: "Out of Stock",
+    emptyNoItems: "You haven't received any inventory yet.",
+    emptyNoMatch: "No items match your search.",
+  },
+} as const;
+
+export function MyInventoryList({ rows, lang = "en" }: { rows: EmployeeInventoryRow[]; lang?: EmployeeLang }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+
+  const s = T[lang];
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+  const STATUS_LABEL: Record<string, string> = {
+    Available: s.available,
+    "Low Stock": s.lowStock,
+    Shortage: s.shortage,
+    "Out of Stock": s.outOfStock,
+  };
 
   const filtered = rows.filter((r) => {
     const matchesSearch = !search || r.displayName.toLowerCase().includes(search.toLowerCase());
@@ -25,21 +60,23 @@ export function MyInventoryList({ rows }: { rows: EmployeeInventoryRow[] }) {
       <div className="flex gap-2 mb-4">
         <input
           type="text"
-          placeholder="Search items..."
+          placeholder={s.search}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400"
+          dir={dir}
+          className={`flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 ${font}`}
         />
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+          dir={dir}
+          className={`rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 ${font}`}
         >
-          <option value="">All Statuses</option>
-          <option value="Available">Available</option>
-          <option value="Low Stock">Low Stock</option>
-          <option value="Shortage">Shortage</option>
-          <option value="Out of Stock">Out of Stock</option>
+          <option value="">{s.allStatuses}</option>
+          <option value="Available">{s.available}</option>
+          <option value="Low Stock">{s.lowStock}</option>
+          <option value="Shortage">{s.shortage}</option>
+          <option value="Out of Stock">{s.outOfStock}</option>
         </select>
       </div>
 
@@ -52,14 +89,17 @@ export function MyInventoryList({ rows }: { rows: EmployeeInventoryRow[] }) {
                 {r.current.toLocaleString()} {r.unit}
               </div>
             </div>
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_STYLES[r.status] ?? "bg-slate-100 text-slate-600"}`}>
-              {r.status}
+            <span
+              className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_STYLES[r.status] ?? "bg-slate-100 text-slate-600"} ${font}`}
+              dir={dir}
+            >
+              {STATUS_LABEL[r.status] ?? r.status}
             </span>
           </div>
         ))}
         {filtered.length === 0 && (
-          <p className="text-sm text-slate-400 text-center py-10">
-            {rows.length === 0 ? "You haven't received any inventory yet." : "No items match your search."}
+          <p className={`text-sm text-slate-400 text-center py-10 ${font}`} dir={dir}>
+            {rows.length === 0 ? s.emptyNoItems : s.emptyNoMatch}
           </p>
         )}
       </div>

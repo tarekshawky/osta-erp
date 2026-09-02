@@ -8,6 +8,7 @@ import { ReturnStockForm } from "@/components/inventory/ReturnStockForm";
 import { ReportDamagedForm } from "@/components/inventory/ReportDamagedForm";
 import { InventoryTransactionsTable } from "@/components/inventory/InventoryTransactionsTable";
 import { getEmployeeInventory, getInventoryItemDisplayName, getInventoryTransactions } from "@/lib/inventoryData";
+import { getEmployeeLang, pickLang } from "@/lib/employeeLang";
 import { tajawal } from "@/lib/fonts";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -26,13 +27,36 @@ const STATUS_LABELS_AR: Record<string, string> = {
 
 type InventoryTab = "stock" | "request" | "return" | "damaged" | "history";
 
-const TABS: { id: InventoryTab; label: string }[] = [
-  { id: "stock", label: "My Stock" },
-  { id: "request", label: "Request Stock" },
-  { id: "return", label: "Return Stock" },
-  { id: "damaged", label: "Damaged Items" },
-  { id: "history", label: "Stock History" },
+const TABS: { id: InventoryTab; label: { ar: string; en: string } }[] = [
+  { id: "stock", label: { ar: "مخزوني", en: "My Stock" } },
+  { id: "request", label: { ar: "طلب مخزون", en: "Request Stock" } },
+  { id: "return", label: { ar: "إرجاع مخزون", en: "Return Stock" } },
+  { id: "damaged", label: { ar: "أصناف تالفة", en: "Damaged Items" } },
+  { id: "history", label: { ar: "سجل الحركات", en: "Stock History" } },
 ];
+
+const T = {
+  ar: {
+    scanItem: "مسح صنف",
+    scanHint: "امسح الرمز الشريطي أو رمز QR للبحث السريع عن صنف.",
+    stockHint: "ما تملكه حالياً. الأدمن فقط يستطيع تغيير هذه الكميات.",
+    myRequests: "طلباتي",
+    requested: "طلبت",
+    approved: "تمت الموافقة على",
+    myReturns: "إرجاعاتي",
+    noStockHistory: "لا توجد حركات مخزون بعد.",
+  },
+  en: {
+    scanItem: "Scan Item",
+    scanHint: "Scan a barcode/QR code to quickly look up an item.",
+    stockHint: "What you currently have. Only Admin can change these quantities.",
+    myRequests: "My Requests",
+    requested: "Requested",
+    approved: "Approved",
+    myReturns: "My Returns",
+    noStockHistory: "No stock movements yet.",
+  },
+} as const;
 
 export default async function MyInventoryPage({
   searchParams,
@@ -43,6 +67,11 @@ export default async function MyInventoryPage({
   const tab: InventoryTab = TABS.some((t) => t.id === tabParam) ? (tabParam as InventoryTab) : "stock";
 
   const employee = await requireEmployee("EMPLOYEE");
+  const lang = await getEmployeeLang();
+  const s = pickLang(lang, T);
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+
   const [rows, activeItems, myRequests, myReturns, history] = await Promise.all([
     getEmployeeInventory(employee.id),
     prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
@@ -66,15 +95,15 @@ export default async function MyInventoryPage({
 
   return (
     <div className="pb-8">
-      <TopBar title="My Inventory" />
+      <TopBar title={{ ar: "مخزوني", en: "My Inventory" }} />
       <div className="px-5 py-4">
         <Link
           href="/employee/inventory/scan"
           className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:bg-slate-50"
         >
-          <div>
-            <div className="font-semibold text-slate-900">Scan Item</div>
-            <div className="text-sm text-slate-500 mt-0.5">Scan a barcode/QR code to quickly look up an item.</div>
+          <div dir={dir}>
+            <div className={`font-semibold text-slate-900 ${font}`}>{s.scanItem}</div>
+            <div className={`text-sm text-slate-500 mt-0.5 ${font}`}>{s.scanHint}</div>
           </div>
         </Link>
 
@@ -85,17 +114,20 @@ export default async function MyInventoryPage({
               href={`/employee/inventory?tab=${t.id}`}
               className={`rounded-md px-3 py-1.5 text-xs font-medium ${
                 tab === t.id ? "bg-blue-700 text-white" : "text-slate-600"
-              }`}
+              } ${font}`}
+              dir={dir}
             >
-              {t.label}
+              {pickLang(lang, t.label)}
             </Link>
           ))}
         </div>
 
         {tab === "stock" && (
           <>
-            <p className="text-sm text-slate-500 mb-4">What you currently have. Only Admin can change these quantities.</p>
-            <MyInventoryList rows={rows} />
+            <p className={`text-sm text-slate-500 mb-4 ${font}`} dir={dir}>
+              {s.stockHint}
+            </p>
+            <MyInventoryList rows={rows} lang={lang} />
           </>
         )}
 
@@ -105,37 +137,33 @@ export default async function MyInventoryPage({
               className="mb-4 rounded-2xl px-4 py-3.5 shadow-sm"
               style={{ background: "linear-gradient(135deg, #0E3A7A, #081f42)" }}
             >
-              <div className={`${tajawal.className} text-[15px] font-bold text-white`} dir="rtl">
-                طلب مخزون
+              <div className={`text-[15px] font-bold text-white ${font}`} dir={dir}>
+                {pickLang(lang, TABS[1].label)}
               </div>
-              <div className="text-[11px] text-white/70 mt-0.5">Request Stock</div>
             </div>
 
-            <RequestStockForm items={itemOptions} />
+            <RequestStockForm items={itemOptions} lang={lang} />
 
             {myRequests.length > 0 && (
               <>
-                <div className="mt-6 mb-3 flex flex-row items-baseline gap-1.5">
-                  <span className={`${tajawal.className} font-bold text-slate-900 text-[14px]`} dir="rtl">
-                    طلباتي
-                  </span>
-                  <span className="text-[11px] text-slate-400">My Requests</span>
+                <div className="mt-6 mb-3" dir={dir}>
+                  <span className={`font-bold text-slate-900 text-[14px] ${font}`}>{s.myRequests}</span>
                 </div>
                 <div className="flex flex-col gap-2">
                   {myRequests.map((r) => (
                     <div key={r.id} className="rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm flex items-center justify-between">
-                      <div>
+                      <div dir={dir}>
                         <div className="text-sm font-medium text-slate-900">{getInventoryItemDisplayName(r.inventoryItem)}</div>
-                        <div className="text-xs text-slate-500">
-                          Requested {r.requestedQuantity.toLocaleString()} {r.inventoryItem.unit}
-                          {r.approvedQuantity != null && r.status !== "Rejected" && ` · Approved ${r.approvedQuantity.toLocaleString()}`}
+                        <div className={`text-xs text-slate-500 ${font}`}>
+                          {s.requested} {r.requestedQuantity.toLocaleString()} {r.inventoryItem.unit}
+                          {r.approvedQuantity != null && r.status !== "Rejected" && ` · ${s.approved} ${r.approvedQuantity.toLocaleString()}`}
                         </div>
                       </div>
-                      <span className={`flex flex-col items-center text-center px-2.5 py-1 rounded-full ${STATUS_STYLES[r.status] ?? "bg-slate-100 text-slate-600"}`}>
-                        <span className={`${tajawal.className} text-[11px] font-bold leading-tight`} dir="rtl">
-                          {STATUS_LABELS_AR[r.status] ?? r.status}
-                        </span>
-                        <span className="text-[8.5px] opacity-75 leading-tight">{r.status}</span>
+                      <span
+                        className={`text-xs font-bold px-2.5 py-1 rounded-full ${STATUS_STYLES[r.status] ?? "bg-slate-100 text-slate-600"} ${font}`}
+                        dir={dir}
+                      >
+                        {lang === "ar" ? STATUS_LABELS_AR[r.status] ?? r.status : r.status}
                       </span>
                     </div>
                   ))}
@@ -147,23 +175,30 @@ export default async function MyInventoryPage({
 
         {tab === "return" && (
           <>
-            <h3 className="mb-3 font-semibold text-slate-900">Return Stock</h3>
-            <ReturnStockForm items={myStockOptions} />
+            <h3 className={`mb-3 font-semibold text-slate-900 ${font}`} dir={dir}>
+              {pickLang(lang, TABS[2].label)}
+            </h3>
+            <ReturnStockForm items={myStockOptions} lang={lang} />
 
             {myReturns.length > 0 && (
               <>
-                <h3 className="mt-6 mb-3 font-semibold text-slate-900">My Returns</h3>
+                <h3 className={`mt-6 mb-3 font-semibold text-slate-900 ${font}`} dir={dir}>
+                  {s.myReturns}
+                </h3>
                 <div className="flex flex-col gap-2">
                   {myReturns.map((r) => (
                     <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-3 flex items-center justify-between">
-                      <div>
+                      <div dir={dir}>
                         <div className="text-sm font-medium text-slate-900">{getInventoryItemDisplayName(r.inventoryItem)}</div>
                         <div className="text-xs text-slate-500">
                           {r.quantity.toLocaleString()} {r.inventoryItem.unit} · {r.reason}
                         </div>
                       </div>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[r.status] ?? "bg-slate-100 text-slate-600"}`}>
-                        {r.status}
+                      <span
+                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_STYLES[r.status] ?? "bg-slate-100 text-slate-600"} ${font}`}
+                        dir={dir}
+                      >
+                        {lang === "ar" ? STATUS_LABELS_AR[r.status] ?? r.status : r.status}
                       </span>
                     </div>
                   ))}
@@ -175,18 +210,24 @@ export default async function MyInventoryPage({
 
         {tab === "damaged" && (
           <>
-            <h3 className="mb-3 font-semibold text-slate-900">Damaged Items</h3>
-            <ReportDamagedForm items={myStockOptions} />
+            <h3 className={`mb-3 font-semibold text-slate-900 ${font}`} dir={dir}>
+              {pickLang(lang, TABS[3].label)}
+            </h3>
+            <ReportDamagedForm items={myStockOptions} lang={lang} />
           </>
         )}
 
         {tab === "history" && (
           <>
-            <h3 className="mb-3 font-semibold text-slate-900">Stock History</h3>
+            <h3 className={`mb-3 font-semibold text-slate-900 ${font}`} dir={dir}>
+              {pickLang(lang, TABS[4].label)}
+            </h3>
             {history.length === 0 ? (
-              <p className="text-sm text-slate-400">No stock movements yet.</p>
+              <p className={`text-sm text-slate-400 ${font}`} dir={dir}>
+                {s.noStockHistory}
+              </p>
             ) : (
-              <InventoryTransactionsTable rows={history} />
+              <InventoryTransactionsTable rows={history} lang={lang} />
             )}
           </>
         )}

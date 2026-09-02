@@ -7,7 +7,7 @@ export default async function QuotationPage() {
 
   return (
     <div className="pb-8">
-      <TopBar title="Quotation" />
+      <TopBar title={{ ar: "عرض سعر", en: "Quotation" }} />
       <QuotationWizard basePath="/employee" createdByName={employee.name} />
     </div>
   );

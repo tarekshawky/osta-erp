@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { tajawal } from "@/lib/fonts";
+import type { EmployeeLang } from "@/lib/employeeLang";
 
 const items = [
   {
     href: "/employee",
-    label: "Home",
+    label: { ar: "الرئيسية", en: "Home" },
     icon: (
       <path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1v-8z" strokeLinejoin="round" />
     ),
   },
   {
     href: "/employee/invoices",
-    label: "Invoices",
+    label: { ar: "الفواتير", en: "Invoices" },
     icon: (
       <>
         <path d="M7 3h10a1 1 0 011 1v16l-3-2-2 2-2-2-2 2-3-2V4a1 1 0 011-1z" strokeLinejoin="round" />
@@ -23,7 +25,7 @@ const items = [
   },
   {
     href: "/employee/expenses",
-    label: "Expenses",
+    label: { ar: "المصاريف", en: "Expenses" },
     icon: (
       <>
         <rect x="3" y="6" width="18" height="13" rx="2" />
@@ -33,7 +35,7 @@ const items = [
   },
   {
     href: "/employee/profile",
-    label: "Profile",
+    label: { ar: "حسابي", en: "Profile" },
     icon: (
       <>
         <circle cx="12" cy="8" r="3.5" />
@@ -43,7 +45,7 @@ const items = [
   },
 ];
 
-export function EmployeeBottomNav() {
+export function EmployeeBottomNav({ lang }: { lang: EmployeeLang }) {
   const pathname = usePathname();
 
   return (
@@ -57,12 +59,12 @@ export function EmployeeBottomNav() {
             href={item.href}
             className={`flex flex-col items-center gap-1 py-3 text-xs font-medium ${
               active ? "text-blue-600" : "text-slate-400"
-            }`}
+            } ${lang === "ar" ? tajawal.className : ""}`}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               {item.icon}
             </svg>
-            {item.label}
+            {item.label[lang]}
           </Link>
         );
       })}

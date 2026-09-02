@@ -4,22 +4,41 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { tajawal } from "@/lib/fonts";
+import type { EmployeeLang } from "@/lib/employeeLang";
 import { submitStockRequest } from "@/app/employee/inventory/request/actions";
 
 const ACCENT = "#1A56DB";
 
-function BilingualLabel({ ar, en }: { ar: string; en: string }) {
-  return (
-    <div className="flex flex-row items-baseline justify-end gap-1.5">
-      <span className={`${tajawal.className} text-[13px] font-bold text-slate-800`} dir="rtl">
-        {ar}
-      </span>
-      <span className="text-[11px] text-slate-400">{en}</span>
-    </div>
-  );
-}
+const T = {
+  ar: {
+    item: "الصنف",
+    requestedQuantity: "الكمية المطلوبة",
+    reason: "السبب (اختياري)",
+    reasonPlaceholder: "مثال: مطلوب لأعمال تصليح مكيفات قادمة",
+    submitting: "جارٍ الإرسال...",
+    submit: "إرسال الطلب",
+    submitted: "تم إرسال طلب المخزون.",
+    error: "حدث خطأ ما.",
+  },
+  en: {
+    item: "Item",
+    requestedQuantity: "Requested Quantity",
+    reason: "Reason (optional)",
+    reasonPlaceholder: "e.g. Required for upcoming AC repairs",
+    submitting: "Submitting...",
+    submit: "Submit Request",
+    submitted: "Stock request submitted.",
+    error: "Something went wrong.",
+  },
+} as const;
 
-export function RequestStockForm({ items }: { items: { id: string; displayName: string; unit: string }[] }) {
+export function RequestStockForm({
+  items,
+  lang = "en",
+}: {
+  items: { id: string; displayName: string; unit: string }[];
+  lang?: EmployeeLang;
+}) {
   const router = useRouter();
   const { showToast } = useToast();
   const [inventoryItemId, setInventoryItemId] = useState(items[0]?.id ?? "");
@@ -28,6 +47,9 @@ export function RequestStockForm({ items }: { items: { id: string; displayName: 
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const s = T[lang];
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
   const selected = items.find((i) => i.id === inventoryItemId);
 
   function submit() {
@@ -37,10 +59,10 @@ export function RequestStockForm({ items }: { items: { id: string; displayName: 
       if (res.ok) {
         setQuantity("");
         setReason("");
-        showToast("Stock request submitted.");
+        showToast(s.submitted);
         router.refresh();
       } else {
-        setError(res.error ?? "Something went wrong.");
+        setError(res.error ?? s.error);
       }
     });
   }
@@ -48,7 +70,9 @@ export function RequestStockForm({ items }: { items: { id: string; displayName: 
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
       <label className="flex flex-col gap-1.5">
-        <BilingualLabel ar="الصنف" en="Item" />
+        <span className={`text-xs font-medium text-slate-600 ${font}`} dir={dir}>
+          {s.item}
+        </span>
         <select
           value={inventoryItemId}
           onChange={(e) => setInventoryItemId(e.target.value)}
@@ -62,7 +86,9 @@ export function RequestStockForm({ items }: { items: { id: string; displayName: 
         </select>
       </label>
       <label className="mt-3 flex flex-col gap-1.5">
-        <BilingualLabel ar="الكمية المطلوبة" en={`Requested Quantity${selected ? ` (${selected.unit})` : ""}`} />
+        <span className={`text-xs font-medium text-slate-600 ${font}`} dir={dir}>
+          {s.requestedQuantity} {selected ? `(${selected.unit})` : ""}
+        </span>
         <input
           type="number"
           min="0"
@@ -73,13 +99,16 @@ export function RequestStockForm({ items }: { items: { id: string; displayName: 
         />
       </label>
       <label className="mt-3 flex flex-col gap-1.5">
-        <BilingualLabel ar="السبب (اختياري)" en="Reason (optional)" />
+        <span className={`text-xs font-medium text-slate-600 ${font}`} dir={dir}>
+          {s.reason}
+        </span>
         <textarea
           rows={2}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="e.g. Required for upcoming AC repairs"
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+          placeholder={s.reasonPlaceholder}
+          dir={dir}
+          className={`rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 ${font}`}
         />
       </label>
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
@@ -88,12 +117,10 @@ export function RequestStockForm({ items }: { items: { id: string; displayName: 
         disabled={isPending || !inventoryItemId || !quantity}
         onClick={submit}
         style={{ background: ACCENT }}
-        className="mt-4 w-full rounded-xl disabled:opacity-60 text-white text-sm font-medium py-3 flex flex-col items-center leading-tight"
+        className={`mt-4 w-full rounded-xl disabled:opacity-60 text-white text-sm font-medium py-3 ${font}`}
+        dir={dir}
       >
-        <span className={tajawal.className} dir="rtl">
-          {isPending ? "جارٍ الإرسال..." : "إرسال الطلب"}
-        </span>
-        <span className="text-[10px] text-white/75">{isPending ? "Submitting..." : "Submit Request"}</span>
+        {isPending ? s.submitting : s.submit}
       </button>
     </div>
   );

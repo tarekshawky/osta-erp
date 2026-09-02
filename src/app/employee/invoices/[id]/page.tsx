@@ -5,6 +5,12 @@ import { formatUaePhone } from "@/lib/format";
 import { TopBar } from "@/components/TopBar";
 import { InvoicePreviewCard } from "@/components/invoice/InvoicePreviewCard";
 import { DownloadPdfButton } from "@/components/invoice/DownloadPdfButton";
+import { getEmployeeLang, pickLang } from "@/lib/employeeLang";
+
+const T = {
+  ar: { downloadPdf: "تحميل PDF" },
+  en: { downloadPdf: "Download PDF" },
+} as const;
 
 export default async function EmployeeInvoiceDetailPage({
   params,
@@ -13,6 +19,9 @@ export default async function EmployeeInvoiceDetailPage({
 }) {
   const { id } = await params;
   const session = await getSession();
+  const lang = await getEmployeeLang();
+  const s = pickLang(lang, T);
+
   const invoice = await prisma.invoice.findUnique({
     where: { id },
     include: { customer: true, items: true, createdBy: true },
@@ -21,7 +30,7 @@ export default async function EmployeeInvoiceDetailPage({
 
   return (
     <div className="pb-10">
-      <TopBar title="Invoice" />
+      <TopBar title={{ ar: "الفاتورة", en: "Invoice" }} />
       <div className="px-5 py-5">
         <div className="flex items-center justify-between">
           <div>
@@ -34,7 +43,7 @@ export default async function EmployeeInvoiceDetailPage({
             targetId="invoice-preview"
             fileName={invoice.number}
             className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2"
-            label="Download PDF"
+            label={s.downloadPdf}
           />
         </div>
       </div>

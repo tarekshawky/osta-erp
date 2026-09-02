@@ -1,14 +1,31 @@
-function currentMonthLabel() {
-  return new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(new Date());
+import { getEmployeeLang, pickLang, type EmployeeLang } from "@/lib/employeeLang";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { tajawal } from "@/lib/fonts";
+
+function currentMonthLabel(lang: EmployeeLang) {
+  return new Intl.DateTimeFormat(lang === "ar" ? "ar-AE" : "en-US", { month: "short", year: "numeric" }).format(
+    new Date()
+  );
 }
 
-export function TopBar({ title = "OSTA Services" }: { title?: string }) {
+type Title = string | { ar: string; en: string };
+
+export async function TopBar({ title = { ar: "أوستا سيرفيسز", en: "OSTA Services" } }: { title?: Title }) {
+  const lang = await getEmployeeLang();
+  const titleText = typeof title === "string" ? title : pickLang(lang, title);
+
   return (
     <header className="flex items-center justify-between px-5 py-4 bg-white border-b border-slate-100">
-      <h1 className="text-lg font-bold text-slate-900">{title}</h1>
-      <div className="flex items-center gap-3">
+      <h1
+        className={`text-lg font-bold text-slate-900 ${lang === "ar" ? tajawal.className : ""}`}
+        dir={lang === "ar" ? "rtl" : "ltr"}
+      >
+        {titleText}
+      </h1>
+      <div className="flex items-center gap-2">
+        <LanguageToggle lang={lang} />
         <span className="px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-600">
-          {currentMonthLabel()}
+          {currentMonthLabel(lang)}
         </span>
         <span className="relative text-slate-500">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

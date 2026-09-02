@@ -4,9 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { formatAed, formatDate } from "@/lib/format";
 import { TopBar } from "@/components/TopBar";
 import { StatusBadge } from "@/components/StatusBadge";
+import { getEmployeeLang, pickLang } from "@/lib/employeeLang";
+import { tajawal } from "@/lib/fonts";
+
+const T = {
+  ar: { records: "سجل", newInvoice: "+ فاتورة جديدة", empty: "لا توجد فواتير بعد." },
+  en: { records: "records", newInvoice: "+ New Invoice", empty: "No invoices yet." },
+} as const;
 
 export default async function EmployeeInvoicesPage() {
   const session = await getSession();
+  const lang = await getEmployeeLang();
+  const s = pickLang(lang, T);
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+
   const invoices = await prisma.invoice.findMany({
     where: { createdById: session!.employeeId },
     orderBy: { date: "desc" },
@@ -15,14 +27,16 @@ export default async function EmployeeInvoicesPage() {
 
   return (
     <div className="pb-8">
-      <TopBar title="Invoices" />
-      <div className="px-5 py-4 flex items-center justify-between">
-        <p className="text-sm text-slate-500">{invoices.length} records</p>
+      <TopBar title={{ ar: "الفواتير", en: "Invoices" }} />
+      <div className="px-5 py-4 flex items-center justify-between" dir={dir}>
+        <p className={`text-sm text-slate-500 ${font}`}>
+          {invoices.length} {s.records}
+        </p>
         <Link
           href="/employee/invoices/new"
-          className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5"
+          className={`text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5 ${font}`}
         >
-          + New Invoice
+          {s.newInvoice}
         </Link>
       </div>
 
@@ -51,7 +65,9 @@ export default async function EmployeeInvoicesPage() {
           </Link>
         ))}
         {invoices.length === 0 && (
-          <p className="text-center text-sm text-slate-400 py-12">No invoices yet.</p>
+          <p className={`text-center text-sm text-slate-400 py-12 ${font}`} dir={dir}>
+            {s.empty}
+          </p>
         )}
       </div>
     </div>

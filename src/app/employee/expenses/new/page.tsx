@@ -27,7 +27,7 @@ export default async function NewExpensePage({
 
   return (
     <div className="pb-8">
-      <TopBar title="Add Expense" />
+      <TopBar title={{ ar: "إضافة مصروف", en: "Add Expense" }} />
       {error && (
         <p className="text-sm text-red-500 px-5 pt-4">
           {error === "duplicate"

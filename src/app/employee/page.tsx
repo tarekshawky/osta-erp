@@ -6,9 +6,59 @@ import { TopBar } from "@/components/TopBar";
 import { StatCard } from "@/components/StatCard";
 import { QuickActionTile } from "@/components/QuickActionTile";
 import { getEmployeeFinancials } from "@/lib/walletData";
+import { getEmployeeLang, pickLang } from "@/lib/employeeLang";
+import { tajawal } from "@/lib/fonts";
+
+const T = {
+  ar: {
+    logout: "تسجيل الخروج",
+    team: "فريق",
+    wallet: "محفظة الموظف",
+    currentCash: "الرصيد الحالي",
+    revenue: "الإيرادات",
+    expenses: "المصاريف",
+    orders: "الطلبات",
+    custody: "العهدة",
+    quickActions: "إجراءات سريعة",
+    createInvoice: "إنشاء فاتورة",
+    createQuotation: "إنشاء عرض سعر",
+    quotations: "عروض الأسعار",
+    reports: "التقارير",
+    addExpense: "إضافة مصروف",
+    invoices: "الفواتير",
+    requestStock: "طلب مخزون",
+    warrantyCertificate: "شهادة الضمان",
+    myInventory: "مخزوني",
+  },
+  en: {
+    logout: "Logout",
+    team: "Team",
+    wallet: "Employee Wallet",
+    currentCash: "Current Cash",
+    revenue: "Revenue",
+    expenses: "Expenses",
+    orders: "Orders",
+    custody: "Custody",
+    quickActions: "Quick Actions",
+    createInvoice: "Create Invoice",
+    createQuotation: "Create Quotation",
+    quotations: "Quotations",
+    reports: "Reports",
+    addExpense: "Add Expense",
+    invoices: "Invoices",
+    requestStock: "Request Stock",
+    warrantyCertificate: "Warranty Certificate",
+    myInventory: "My Inventory",
+  },
+} as const;
 
 export default async function EmployeeHomePage() {
   const session = await requireEmployee("EMPLOYEE");
+  const lang = await getEmployeeLang();
+  const s = pickLang(lang, T);
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+
   const employee = await prisma.employee.findUniqueOrThrow({
     where: { id: session.id },
     include: { team: true },
@@ -37,36 +87,40 @@ export default async function EmployeeHomePage() {
           )}
           <div>
             <div className="font-bold text-slate-900">{employee.name}</div>
-            <div className="text-sm text-slate-500">
-              {employee.jobTitle} · {employee.team?.name ?? "—"} Team
+            <div className="text-sm text-slate-500" dir={dir}>
+              <span className={font}>{employee.jobTitle}</span> · <span className={font}>{s.team}</span> {employee.team?.name ?? "—"}
             </div>
           </div>
         </div>
         <form action={logout}>
-          <button className="text-sm text-slate-500 hover:text-slate-800">Logout</button>
+          <button className={`text-sm text-slate-500 hover:text-slate-800 ${font}`} dir={dir}>
+            {s.logout}
+          </button>
         </form>
       </div>
 
       <div className="px-5">
         <div className="rounded-2xl bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 text-white p-5 relative overflow-hidden">
           <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/5" />
-          <div className="flex items-center justify-between text-xs text-blue-200 uppercase tracking-wide relative">
-            <span>Employee Wallet</span>
-            <span>{employee.code}</span>
+          <div className={`flex items-center justify-between text-xs text-blue-200 uppercase tracking-wide relative ${font}`} dir={dir}>
+            <span>{s.wallet}</span>
+            <span className="normal-case">{employee.code}</span>
           </div>
-          <div className="text-sm text-blue-200 mt-4 relative">Current Cash</div>
+          <div className={`text-sm text-blue-200 mt-4 relative ${font}`} dir={dir}>
+            {s.currentCash}
+          </div>
           <div className="text-3xl font-bold mt-1 relative">{formatAed(currentCash)}</div>
-          <div className="flex gap-6 mt-4 relative">
+          <div className="flex gap-6 mt-4 relative" dir={dir}>
             <div>
-              <div className="text-blue-300 text-xs">Revenue</div>
+              <div className={`text-blue-300 text-xs ${font}`}>{s.revenue}</div>
               <div className="font-semibold text-sm">{number(revenue)}</div>
             </div>
             <div>
-              <div className="text-blue-300 text-xs">Expenses</div>
+              <div className={`text-blue-300 text-xs ${font}`}>{s.expenses}</div>
               <div className="font-semibold text-sm">{number(expenses)}</div>
             </div>
             <div>
-              <div className="text-blue-300 text-xs">Orders</div>
+              <div className={`text-blue-300 text-xs ${font}`}>{s.orders}</div>
               <div className="font-semibold text-sm">{openOrdersCount}</div>
             </div>
           </div>
@@ -78,7 +132,7 @@ export default async function EmployeeHomePage() {
           iconBg="bg-blue-50"
           iconColor="text-blue-600"
           value={number(employee.custody)}
-          label="Custody"
+          label={s.custody}
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="7" width="18" height="12" rx="2" />
@@ -90,7 +144,7 @@ export default async function EmployeeHomePage() {
           iconBg="bg-green-50"
           iconColor="text-green-600"
           value={number(revenue)}
-          label="Revenue"
+          label={s.revenue}
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 16l6-6 4 4 6-8" strokeLinecap="round" strokeLinejoin="round" />
@@ -102,7 +156,7 @@ export default async function EmployeeHomePage() {
           iconBg="bg-red-50"
           iconColor="text-red-500"
           value={number(expenses)}
-          label="Expenses"
+          label={s.expenses}
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 8l6 6 4-4 6 8" strokeLinecap="round" strokeLinejoin="round" />
@@ -114,7 +168,7 @@ export default async function EmployeeHomePage() {
           iconBg="bg-orange-50"
           iconColor="text-orange-500"
           value={String(openOrdersCount)}
-          label="Orders"
+          label={s.orders}
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="9" />
@@ -125,11 +179,14 @@ export default async function EmployeeHomePage() {
       </div>
 
       <div className="px-5 mt-6">
-        <h2 className="font-bold text-slate-900 mb-3">Quick Actions</h2>
+        <h2 className={`font-bold text-slate-900 mb-3 ${font}`} dir={dir}>
+          {s.quickActions}
+        </h2>
         <div className="grid grid-cols-3 gap-3">
           <QuickActionTile
             href="/employee/invoices/new"
-            label="Create Invoice"
+            label={s.createInvoice}
+            lang={lang}
             iconBg="bg-blue-50"
             iconColor="text-blue-600"
             icon={
@@ -141,7 +198,8 @@ export default async function EmployeeHomePage() {
           />
           <QuickActionTile
             href="/employee/quotation"
-            label="Create Quotation"
+            label={s.createQuotation}
+            lang={lang}
             iconBg="bg-sky-50"
             iconColor="text-sky-600"
             icon={
@@ -153,7 +211,8 @@ export default async function EmployeeHomePage() {
           />
           <QuickActionTile
             href="/employee/quotations"
-            label="Quotations"
+            label={s.quotations}
+            lang={lang}
             iconBg="bg-sky-50"
             iconColor="text-sky-600"
             icon={
@@ -165,7 +224,8 @@ export default async function EmployeeHomePage() {
           />
           <QuickActionTile
             href="/employee/report"
-            label="Reports"
+            label={s.reports}
+            lang={lang}
             iconBg="bg-orange-50"
             iconColor="text-orange-500"
             icon={
@@ -176,7 +236,8 @@ export default async function EmployeeHomePage() {
           />
           <QuickActionTile
             href="/employee/orders"
-            label="Orders"
+            label={s.orders}
+            lang={lang}
             iconBg="bg-orange-50"
             iconColor="text-orange-500"
             icon={
@@ -188,7 +249,8 @@ export default async function EmployeeHomePage() {
           />
           <QuickActionTile
             href="/employee/expenses/new"
-            label="Add Expense"
+            label={s.addExpense}
+            lang={lang}
             iconBg="bg-red-50"
             iconColor="text-red-500"
             icon={
@@ -200,7 +262,8 @@ export default async function EmployeeHomePage() {
           />
           <QuickActionTile
             href="/employee/invoices"
-            label="Invoices"
+            label={s.invoices}
+            lang={lang}
             iconBg="bg-green-50"
             iconColor="text-green-600"
             icon={
@@ -211,8 +274,22 @@ export default async function EmployeeHomePage() {
             }
           />
           <QuickActionTile
+            href="/employee/inventory?tab=request"
+            label={s.requestStock}
+            lang={lang}
+            iconBg="bg-indigo-50"
+            iconColor="text-indigo-600"
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 8l8-4 8 4v8l-8 4-8-4V8z" strokeLinejoin="round" />
+                <path d="M4 8l8 4 8-4M12 12v8" strokeLinejoin="round" />
+              </svg>
+            }
+          />
+          <QuickActionTile
             href="/employee/warranty-certificate"
-            label="Warranty Certificate"
+            label={s.warrantyCertificate}
+            lang={lang}
             iconBg="bg-purple-50"
             iconColor="text-purple-600"
             icon={
@@ -224,7 +301,8 @@ export default async function EmployeeHomePage() {
           />
           <QuickActionTile
             href="/employee/inventory"
-            label="My Inventory"
+            label={s.myInventory}
+            lang={lang}
             iconBg="bg-teal-50"
             iconColor="text-teal-600"
             icon={

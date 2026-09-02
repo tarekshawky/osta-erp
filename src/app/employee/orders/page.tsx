@@ -4,9 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { formatDateTimeSlash } from "@/lib/format";
 import { TopBar } from "@/components/TopBar";
 import { ORDER_STATUS_STYLES } from "@/lib/orderData";
+import { getEmployeeLang, pickLang } from "@/lib/employeeLang";
+import { tajawal } from "@/lib/fonts";
+
+const T = {
+  ar: { records: "سجل", empty: "لا توجد طلبات مسندة إليك بعد." },
+  en: { records: "records", empty: "No orders assigned to you yet." },
+} as const;
 
 export default async function EmployeeOrdersPage() {
   const session = await getSession();
+  const lang = await getEmployeeLang();
+  const s = pickLang(lang, T);
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+
   const orders = await prisma.order.findMany({
     where: { assignedToId: session!.employeeId, status: { not: "Cancelled" } },
     orderBy: { createdAt: "desc" },
@@ -15,9 +27,11 @@ export default async function EmployeeOrdersPage() {
 
   return (
     <div className="pb-8">
-      <TopBar title="Orders" />
-      <div className="px-5 py-4">
-        <p className="text-sm text-slate-500">{orders.length} records</p>
+      <TopBar title={{ ar: "الطلبات", en: "Orders" }} />
+      <div className="px-5 py-4" dir={dir}>
+        <p className={`text-sm text-slate-500 ${font}`}>
+          {orders.length} {s.records}
+        </p>
       </div>
 
       <div className="px-5 flex flex-col gap-3">
@@ -44,7 +58,9 @@ export default async function EmployeeOrdersPage() {
           </Link>
         ))}
         {orders.length === 0 && (
-          <p className="text-center text-sm text-slate-400 py-12">No orders assigned to you yet.</p>
+          <p className={`text-center text-sm text-slate-400 py-12 ${font}`} dir={dir}>
+            {s.empty}
+          </p>
         )}
       </div>
     </div>

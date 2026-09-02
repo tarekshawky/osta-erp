@@ -27,7 +27,7 @@ export default async function EmployeeOrderDetailPage({ params }: { params: Prom
 
   return (
     <div className="pb-8">
-      <TopBar title="Order Details" />
+      <TopBar title={{ ar: "تفاصيل الطلب", en: "Order Details" }} />
       <div className="px-5 py-4">
         <OrderDetail order={order} basePath="/employee" />
       </div>

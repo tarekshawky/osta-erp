@@ -4,9 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/format";
 import { TopBar } from "@/components/TopBar";
 import { CONDITION_STYLES } from "@/lib/workReportData";
+import { getEmployeeLang, pickLang } from "@/lib/employeeLang";
+import { tajawal } from "@/lib/fonts";
+
+const T = {
+  ar: { records: "سجل", newReport: "+ تقرير جديد", noCustomer: "لا توجد بيانات عميل", empty: "لا توجد تقارير بعد." },
+  en: { records: "records", newReport: "+ New Report", noCustomer: "No customer info", empty: "No reports submitted yet." },
+} as const;
 
 export default async function ReportPage() {
   const employee = await requireEmployee("EMPLOYEE");
+  const lang = await getEmployeeLang();
+  const s = pickLang(lang, T);
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+
   const reports = await prisma.workReport.findMany({
     where: { createdById: employee.id },
     orderBy: { date: "desc" },
@@ -15,14 +27,16 @@ export default async function ReportPage() {
 
   return (
     <div className="pb-8">
-      <TopBar title="Reports" />
-      <div className="px-5 py-4 flex items-center justify-between">
-        <p className="text-sm text-slate-500">{reports.length} records</p>
+      <TopBar title={{ ar: "التقارير", en: "Reports" }} />
+      <div className="px-5 py-4 flex items-center justify-between" dir={dir}>
+        <p className={`text-sm text-slate-500 ${font}`}>
+          {reports.length} {s.records}
+        </p>
         <Link
           href="/employee/report/new"
-          className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5"
+          className={`text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5 ${font}`}
         >
-          + New Report
+          {s.newReport}
         </Link>
       </div>
 
@@ -34,7 +48,7 @@ export default async function ReportPage() {
           return (
             <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-4">
               <div className="flex items-center justify-between gap-2">
-                <div className="font-medium text-slate-900 text-sm">{customerLine || "No customer info"}</div>
+                <div className="font-medium text-slate-900 text-sm">{customerLine || s.noCustomer}</div>
                 <div className="text-xs text-slate-400 whitespace-nowrap">{formatDate(r.date)}</div>
               </div>
               <div className="mt-2 flex flex-col gap-2">
@@ -77,7 +91,9 @@ export default async function ReportPage() {
           );
         })}
         {reports.length === 0 && (
-          <p className="text-center text-sm text-slate-400 py-12">No reports submitted yet.</p>
+          <p className={`text-center text-sm text-slate-400 py-12 ${font}`} dir={dir}>
+            {s.empty}
+          </p>
         )}
       </div>
     </div>

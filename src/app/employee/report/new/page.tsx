@@ -7,7 +7,7 @@ export default async function NewWorkReportPage() {
 
   return (
     <div className="pb-8">
-      <TopBar title="New Report" />
+      <TopBar title={{ ar: "تقرير جديد", en: "New Report" }} />
       <WorkReportForm redirectTo="/employee/report" />
     </div>
   );

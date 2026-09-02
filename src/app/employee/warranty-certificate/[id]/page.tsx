@@ -20,7 +20,7 @@ export default async function WarrantyCertificateDetailPage({
 
   return (
     <div className="pb-8">
-      <TopBar title="Warranty Certificate" />
+      <TopBar title={{ ar: "شهادة الضمان", en: "Warranty Certificate" }} />
       <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-2 sm:px-4 lg:px-10">
         <div className="max-w-3xl mx-auto flex flex-col gap-4">
           <div id="warranty-certificate-preview">
