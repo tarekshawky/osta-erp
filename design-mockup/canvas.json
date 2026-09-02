@@ -1,0 +1,17 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 844 },
+    { "file": "ProductDetail.dc.html", "x": 470, "y": 0, "w": 390, "h": 844 },
+    { "file": "Cart.dc.html", "x": 940, "y": 0, "w": 390, "h": 844 },
+    { "file": "Request.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844 },
+    { "file": "RequestStatus.dc.html", "x": 1880, "y": 0, "w": 390, "h": 844 }
+  ],
+  "annotations": [
+    { "id": "note-catalog", "x": 0, "y": -50, "w": 200, "text": "1. Spare Parts Catalog" },
+    { "id": "note-detail", "x": 470, "y": -50, "w": 200, "text": "2. Product Details" },
+    { "id": "note-cart", "x": 940, "y": -50, "w": 200, "text": "3. Spare Parts Cart" },
+    { "id": "note-request", "x": 1410, "y": -50, "w": 200, "text": "4. Technician Request" },
+    { "id": "note-status", "x": 1880, "y": -50, "w": 200, "text": "5. Request Status Tracking" }
+  ],
+  "launch": { "view": "canvas" }
+}

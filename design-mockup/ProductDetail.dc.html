@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #ffffff; }
+    a { color: {{accent}}; }
+    a:hover { color: {{accent}}; opacity: 0.8; }
+    .ar { font-family: 'Tajawal', 'Segoe UI', sans-serif; direction: rtl; unicode-bidi: isolate; }
+    .en { font-family: 'Inter', system-ui, sans-serif; }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+</helmet>
+
+<div style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:#ffffff; padding:20px;">
+  <div style="width:390px; height:844px; flex-shrink:0; background:#ffffff; border-radius:32px; border:1px solid #d8dade; box-shadow:0 20px 60px rgba(15,23,42,0.18); overflow:hidden; display:flex; flex-direction:column; position:relative;">
+
+    <!-- HEADER -->
+    <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; padding:16px; flex-shrink:0;">
+      <button style="background:#f4f5f7; border:none; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; padding:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div style="display:flex; flex-direction:column; align-items:center;">
+        <span class="ar" style="font-weight:700; font-size:14.5px; color:#1e293b;">تفاصيل القطعة</span>
+        <span class="en" style="font-size:9px; color:#9aa1ac;">Product Details</span>
+      </div>
+      <button style="background:#f4f5f7; border:none; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; padding:0;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="1.9"><path d="M4 5h2l2.2 11.2a2 2 0 002 1.8h7.6a2 2 0 002-1.7L21 8H6.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20.5" r="1.3" fill="#374151" stroke="none"/><circle cx="17" cy="20.5" r="1.3" fill="#374151" stroke="none"/></svg>
+      </button>
+    </div>
+
+    <!-- SCROLLABLE CONTENT -->
+    <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column;">
+
+      <!-- IMAGE -->
+      <div style="margin:0 16px; height:190px; background:#f2f3f5; border-radius:18px; display:flex; align-items:center; justify-content:center;">
+        <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#a7adb6" stroke-width="1.3"><rect x="6" y="7" width="12" height="10" rx="4"/><path d="M9 4v3M15 4v3M9 20v-3M15 20v-3" stroke-linecap="round"/></svg>
+      </div>
+
+      <!-- TITLE + PRICE -->
+      <div style="padding:16px 16px 0; display:flex; flex-direction:row; align-items:flex-start; justify-content:space-between;">
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          <div class="ar" style="font-weight:700; font-size:17px; color:#1e293b;">مكثف تشغيل المكيف</div>
+          <div class="en" style="font-size:12px; color:#9aa1ac;">AC Run Capacitor</div>
+        </div>
+        <div class="en" style="font-weight:700; font-size:19px; color:{{accent}}; white-space:nowrap;">AED 45</div>
+      </div>
+
+      <!-- STOCK BADGE -->
+      <div style="padding:8px 16px 0;">
+        <div style="display:inline-flex; flex-direction:row; align-items:center; gap:6px; background:#ecfdf3; border-radius:8px; padding:5px 10px;">
+          <span style="width:6px; height:6px; border-radius:50%; background:#22c55e;"></span>
+          <span class="ar" style="font-size:11.5px; color:#16a34a; font-weight:600;">متوفر</span>
+          <span class="en" style="font-size:10px; color:#16a34a;">In Stock</span>
+        </div>
+      </div>
+
+      <!-- INFO ROWS -->
+      <div style="margin:14px 16px 0; background:#f9fafb; border-radius:14px; padding:4px 14px;">
+        <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eef0f2;">
+          <span class="en" style="font-size:11.5px; color:#9aa1ac;">SKU</span>
+          <span class="en" style="font-size:12px; color:#1e293b; font-weight:600;">CAP-45UF-440V</span>
+        </div>
+        <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eef0f2;">
+          <div style="display:flex; flex-direction:column; align-items:flex-end;">
+            <span class="ar" style="font-size:11.5px; color:#9aa1ac;">الشركة المصنعة</span>
+            <span class="en" style="font-size:8.5px; color:#c3c8cf;">Manufacturer</span>
+          </div>
+          <span class="en" style="font-size:12px; color:#1e293b; font-weight:600;">OSTA Compatible</span>
+        </div>
+        <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eef0f2;">
+          <div style="display:flex; flex-direction:column; align-items:flex-end;">
+            <span class="ar" style="font-size:11.5px; color:#9aa1ac;">الأجهزة المتوافقة</span>
+            <span class="en" style="font-size:8.5px; color:#c3c8cf;">Compatible Models</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end;">
+            <span class="ar" style="font-size:12px; color:#1e293b; font-weight:600;">مكيفات سبليت</span>
+            <span class="en" style="font-size:8.5px; color:#9aa1ac;">Split AC Units</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eef0f2;">
+          <div style="display:flex; flex-direction:column; align-items:flex-end;">
+            <span class="ar" style="font-size:11.5px; color:#9aa1ac;">الكمية المتوفرة</span>
+            <span class="en" style="font-size:8.5px; color:#c3c8cf;">Stock Quantity</span>
+          </div>
+          <span class="en" style="font-size:12px; color:#1e293b; font-weight:600;">12 PCS</span>
+        </div>
+        <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; padding:10px 0;">
+          <div style="display:flex; flex-direction:column; align-items:flex-end;">
+            <span class="ar" style="font-size:11.5px; color:#9aa1ac;">موقع المخزن</span>
+            <span class="en" style="font-size:8.5px; color:#c3c8cf;">Warehouse Location</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end;">
+            <span class="ar" style="font-size:12px; color:#1e293b; font-weight:600;">المخزن الرئيسي — رف A3</span>
+            <span class="en" style="font-size:8.5px; color:#9aa1ac;">Main Warehouse — Shelf A3</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TECHNICAL SPECS -->
+      <div style="padding:14px 16px 0;">
+        <div style="display:flex; flex-direction:row; align-items:baseline; gap:6px; margin-bottom:8px;">
+          <span class="ar" style="font-weight:700; font-size:13px; color:#1e293b;">المواصفات الفنية</span>
+          <span class="en" style="font-size:10px; color:#aab0b8;">Technical Specifications</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px;">
+          <div style="background:#f9fafb; border-radius:12px; padding:10px 8px; text-align:center;">
+            <div class="en" style="font-size:13px; font-weight:700; color:#1e293b;">440V</div>
+            <div class="ar" style="font-size:9.5px; color:#9aa1ac; margin-top:2px;">الفولتية</div>
+            <div class="en" style="font-size:7.5px; color:#c3c8cf;">Voltage</div>
+          </div>
+          <div style="background:#f9fafb; border-radius:12px; padding:10px 8px; text-align:center;">
+            <div class="en" style="font-size:13px; font-weight:700; color:#1e293b;">45 µF</div>
+            <div class="ar" style="font-size:9.5px; color:#9aa1ac; margin-top:2px;">السعة</div>
+            <div class="en" style="font-size:7.5px; color:#c3c8cf;">Capacity</div>
+          </div>
+          <div style="background:#f9fafb; border-radius:12px; padding:10px 8px; text-align:center;">
+            <div class="en" style="font-size:13px; font-weight:700; color:#1e293b;">Ø50×90</div>
+            <div class="ar" style="font-size:9.5px; color:#9aa1ac; margin-top:2px;">الأبعاد (مم)</div>
+            <div class="en" style="font-size:7.5px; color:#c3c8cf;">Dimensions (mm)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPATIBILITY LINK -->
+      <div style="padding:14px 16px 0;">
+        <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; background:#eef2ff; border-radius:12px; padding:11px 14px;">
+          <div style="display:flex; flex-direction:column;">
+            <span class="ar" style="font-size:12px; font-weight:700; color:{{accent}};">عرض الأجهزة المتوافقة</span>
+            <span class="en" style="font-size:9.5px; color:#8a92c9;">View Compatibility</span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.4"><path d="M9 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div style="padding:14px 16px 20px;">
+        <div style="display:flex; flex-direction:row; align-items:baseline; gap:6px; margin-bottom:6px;">
+          <span class="ar" style="font-weight:700; font-size:13px; color:#1e293b;">ملاحظات</span>
+          <span class="en" style="font-size:10px; color:#aab0b8;">Notes</span>
+        </div>
+        <div class="ar" style="font-size:11.5px; color:#6b7280; line-height:1.6; text-align:right;">يفضل التأكد من قطبية الأسلاك عند التركيب. متوافق مع أغلب موديلات المكيفات السبليت 1.5 و2 طن.</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ACTION BAR -->
+    <div style="flex-shrink:0; display:flex; flex-direction:row; align-items:center; gap:10px; padding:12px 16px 18px; border-top:1px solid #eef0f2; background:#ffffff;">
+      <div style="display:flex; flex-direction:row; align-items:center; background:#f1f2f4; border-radius:12px; overflow:hidden;">
+        <div style="width:36px; height:40px; display:flex; align-items:center; justify-content:center; font-size:16px; color:#4b5563; font-weight:600;">−</div>
+        <div class="en" style="width:34px; text-align:center; font-size:14px; font-weight:700; color:#1e293b;">1</div>
+        <div style="width:36px; height:40px; display:flex; align-items:center; justify-content:center; font-size:16px; color:#4b5563; font-weight:600;">+</div>
+      </div>
+      <div style="flex:1; background:{{accent}}; border-radius:12px; padding:11px 0; text-align:center;">
+        <span class="ar" style="color:#ffffff; font-size:13px; font-weight:700;">إضافة للسلة</span>
+        <span class="en" style="color:rgba(255,255,255,0.75); font-size:9.5px; margin-right:6px;">Add to Cart</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#1A56DB","section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#1A56DB'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #ffffff; }
+    a { color: {{accent}}; }
+    a:hover { color: {{accent}}; opacity: 0.8; }
+    .ar { font-family: 'Tajawal', 'Segoe UI', sans-serif; direction: rtl; unicode-bidi: isolate; }
+    .en { font-family: 'Inter', system-ui, sans-serif; }
+    ::-webkit-scrollbar { display: none; }
+    .field-input { border:1px solid #e5e7eb; border-radius:11px; padding:10px 12px; font-size:12.5px; color:#1e293b; background:#fff; }
+  </style>
+</helmet>
+
+<div style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:#ffffff; padding:20px;">
+  <div style="width:390px; height:844px; flex-shrink:0; background:#f4f5f7; border-radius:32px; border:1px solid #d8dade; box-shadow:0 20px 60px rgba(15,23,42,0.18); overflow:hidden; display:flex; flex-direction:column; position:relative;">
+
+    <!-- HEADER -->
+    <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; padding:16px; flex-shrink:0; background:#ffffff;">
+      <button style="background:#f4f5f7; border:none; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; padding:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div style="display:flex; flex-direction:column; align-items:center;">
+        <span class="ar" style="font-weight:700; font-size:15px; color:#1e293b;">طلب قطع غيار</span>
+        <span class="en" style="font-size:10px; color:#9aa1ac;">Spare Parts Request</span>
+      </div>
+      <div style="width:34px;"></div>
+    </div>
+
+    <!-- FORM -->
+    <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding:6px 16px 16px;">
+
+      <div style="background:#ffffff; border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:11px;">
+        <div style="display:flex; flex-direction:row; gap:10px;">
+          <label style="flex:1; display:flex; flex-direction:column; gap:5px;">
+            <div style="display:flex; flex-direction:row; align-items:baseline; justify-content:flex-end; gap:4px;">
+              <span class="ar" style="font-size:10.5px; color:#8a929e;">اسم الفني</span>
+              <span class="en" style="font-size:8px; color:#c3c8cf;">Technician Name</span>
+            </div>
+            <div class="field-input en">Mostafa Yasser Ahmed</div>
+          </label>
+          <label style="width:110px; display:flex; flex-direction:column; gap:5px;">
+            <div style="display:flex; flex-direction:row; align-items:baseline; justify-content:flex-end; gap:4px;">
+              <span class="ar" style="font-size:10.5px; color:#8a929e;">الرقم الوظيفي</span>
+              <span class="en" style="font-size:8px; color:#c3c8cf;">Employee ID</span>
+            </div>
+            <div class="field-input en">TL-AJM-001</div>
+          </label>
+        </div>
+
+        <label style="display:flex; flex-direction:column; gap:5px;">
+          <div style="display:flex; flex-direction:row; align-items:baseline; justify-content:flex-end; gap:4px;">
+            <span class="ar" style="font-size:10.5px; color:#8a929e;">رقم أمر العمل / الخدمة</span>
+            <span class="en" style="font-size:8px; color:#c3c8cf;">Service / Job Number</span>
+          </div>
+          <div class="field-input en">JOB-2026-3381</div>
+        </label>
+
+        <label style="display:flex; flex-direction:column; gap:5px;">
+          <div style="display:flex; flex-direction:row; align-items:baseline; justify-content:flex-end; gap:4px;">
+            <span class="ar" style="font-size:10.5px; color:#8a929e;">اسم العميل</span>
+            <span class="en" style="font-size:8px; color:#c3c8cf;">Customer Name</span>
+          </div>
+          <div class="field-input ar" style="text-align:right;">أحمد سالم — فيلا الخليج، عجمان</div>
+        </label>
+
+        <label style="display:flex; flex-direction:column; gap:5px;">
+          <div style="display:flex; flex-direction:row; align-items:baseline; justify-content:flex-end; gap:4px;">
+            <span class="ar" style="font-size:10.5px; color:#8a929e;">موديل المكيف</span>
+            <span class="en" style="font-size:8px; color:#c3c8cf;">AC Model</span>
+          </div>
+          <div class="field-input en">Split AC — 2 Ton</div>
+        </label>
+      </div>
+
+      <div style="background:#ffffff; border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; flex-direction:row; align-items:baseline; gap:5px;">
+          <span class="ar" style="font-size:11.5px; font-weight:700; color:#1e293b;">القطع المطلوبة</span>
+          <span class="en" style="font-size:9px; color:#aab0b8;">Required Parts</span>
+        </div>
+
+        <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; background:#f9fafb; border-radius:10px; padding:8px 10px;">
+          <span class="en" style="font-size:12px; font-weight:600; color:#1e293b;">× 2</span>
+          <div style="display:flex; flex-direction:column; align-items:flex-end;">
+            <span class="ar" style="font-size:11.5px; color:#1e293b; font-weight:500;">مكثف تشغيل المكيف</span>
+            <span class="en" style="font-size:9px; color:#9aa1ac;">CAP-45UF-440V</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; background:#f9fafb; border-radius:10px; padding:8px 10px;">
+          <span class="en" style="font-size:12px; font-weight:600; color:#1e293b;">× 1</span>
+          <div style="display:flex; flex-direction:column; align-items:flex-end;">
+            <span class="ar" style="font-size:11.5px; color:#1e293b; font-weight:500;">كونتاكتور</span>
+            <span class="en" style="font-size:9px; color:#9aa1ac;">CT-25A-220V</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; background:#f9fafb; border-radius:10px; padding:8px 10px;">
+          <span class="en" style="font-size:12px; font-weight:600; color:#1e293b;">× 1</span>
+          <div style="display:flex; flex-direction:column; align-items:flex-end;">
+            <span class="ar" style="font-size:11.5px; color:#1e293b; font-weight:500;">أوفرلود كمبروسر</span>
+            <span class="en" style="font-size:9px; color:#9aa1ac;">OVL-AMP-02</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#ffffff; border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:9px;">
+        <div style="display:flex; flex-direction:row; align-items:baseline; gap:5px;">
+          <span class="ar" style="font-size:11.5px; font-weight:700; color:#1e293b;">الأولوية</span>
+          <span class="en" style="font-size:9px; color:#aab0b8;">Priority</span>
+        </div>
+        <div style="display:flex; flex-direction:row; gap:8px;">
+          <div style="flex:1; border:1.5px solid #e5e7eb; border-radius:10px; padding:7px 0; text-align:center;">
+            <div class="ar" style="font-size:11px; color:#6b7280; font-weight:600;">عادي</div>
+            <div class="en" style="font-size:7.5px; color:#c3c8cf;">Normal</div>
+          </div>
+          <div style="flex:1; border:1.5px solid {{accent}}; background:#eef2ff; border-radius:10px; padding:7px 0; text-align:center;">
+            <div class="ar" style="font-size:11px; color:{{accent}}; font-weight:700;">عاجل</div>
+            <div class="en" style="font-size:7.5px; color:{{accent}}; opacity:0.75;">Urgent</div>
+          </div>
+          <div style="flex:1; border:1.5px solid #e5e7eb; border-radius:10px; padding:7px 0; text-align:center;">
+            <div class="ar" style="font-size:11px; color:#6b7280; font-weight:600;">طارئ</div>
+            <div class="en" style="font-size:7.5px; color:#c3c8cf;">Emergency</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#ffffff; border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; flex-direction:row; align-items:baseline; gap:5px;">
+          <span class="ar" style="font-size:11.5px; font-weight:700; color:#1e293b;">ملاحظات</span>
+          <span class="en" style="font-size:9px; color:#aab0b8;">Notes</span>
+        </div>
+        <div class="ar field-input" style="text-align:right; min-height:56px; color:#9aa1ac;">اكتب أي تفاصيل إضافية هنا...</div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div style="flex-shrink:0; background:#ffffff; border-top:1px solid #eef0f2; padding:12px 16px 18px;">
+      <div style="background:{{accent}}; border-radius:14px; padding:13px 0; text-align:center;">
+        <span class="ar" style="color:#ffffff; font-size:13.5px; font-weight:700;">إرسال طلب قطع الغيار</span>
+        <span class="en" style="color:rgba(255,255,255,0.78); font-size:9.5px; margin-right:6px;">Submit Request</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#1A56DB","section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#1A56DB'
+    };
+  }
+}
+</script>
+</body>
+</html>
