@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
-import { submitReturnRequest, RETURN_REASONS } from "@/app/employee/inventory/return/actions";
+import { submitReturnRequest } from "@/app/employee/inventory/return/actions";
+import { RETURN_REASONS } from "@/lib/inventoryData";
 
 export function ReturnStockForm({ items }: { items: { id: string; displayName: string; unit: string; current: number }[] }) {
   const router = useRouter();

@@ -3,9 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
-import { getLocationQuantity, type InventoryActionResult } from "@/lib/inventoryData";
-
-export const RETURN_REASONS = ["Not Used", "Wrong Part", "Extra Stock", "Other"] as const;
+import { getLocationQuantity, RETURN_REASONS, type InventoryActionResult } from "@/lib/inventoryData";
 
 export async function submitReturnRequest(
   inventoryItemId: string,

@@ -48,6 +48,12 @@ export const INVENTORY_CATEGORIES = [
 
 export const INVENTORY_ITEM_STATUSES = ["Active", "Inactive"] as const;
 
+// Lives here (not in the "use server" return/actions.ts) because a "use server"
+// module may only export async Server Actions -- a plain const array exported
+// from one breaks at runtime when a Client Component imports it (the bundler
+// can't cross the boundary with a non-function value).
+export const RETURN_REASONS = ["Not Used", "Wrong Part", "Extra Stock", "Other"] as const;
+
 export const INVENTORY_TRANSACTION_TYPES = [
   "Stock Received",
   "Stock Transfer",
