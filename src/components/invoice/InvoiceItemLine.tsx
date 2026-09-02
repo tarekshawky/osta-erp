@@ -5,6 +5,8 @@ import { SERVICE_CATALOG, CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
 import { inputClassName } from "@/components/FormField";
 import { formatAed } from "@/lib/format";
 import type { ServiceFormData, ServiceItemFormData } from "./types";
+import { tajawal } from "@/lib/fonts";
+import type { EmployeeLang } from "@/lib/employeeLang";
 
 export type SparePartOption = {
   id: string;
@@ -26,6 +28,53 @@ export type LabourOption = {
   nameEn: string;
   defaultPrice: number;
 };
+
+const T = {
+  ar: {
+    item: "عنصر",
+    remove: "إزالة",
+    service: "خدمة",
+    sparePart: "قطعة غيار",
+    labour: "عمالة",
+    selectService: "-- اختر خدمة --",
+    enterServiceName: "أدخل اسم الخدمة...",
+    descriptionOptional: "الوصف (اختياري)",
+    qty: "الكمية",
+    price: "السعر (درهم)",
+    selectCategory: "-- اختر الفئة --",
+    searchSpareParts: "ابحث بالاسم أو الرمز أو المواصفات...",
+    selectSparePart: "-- اختر قطعة غيار --",
+    stock: "المخزون",
+    catalogPrice: "السعر بالكتالوج",
+    finalPrice: "السعر النهائي (درهم)",
+    locked: "— مقفل",
+    originalPrice: "السعر الأصلي",
+    selectLabourType: "-- اختر نوع العمالة --",
+    defaultPrice: "السعر الافتراضي",
+  },
+  en: {
+    item: "Item",
+    remove: "Remove",
+    service: "Service",
+    sparePart: "Spare Part",
+    labour: "Labour",
+    selectService: "-- Select Service --",
+    enterServiceName: "Enter service name...",
+    descriptionOptional: "Description (optional)",
+    qty: "Qty",
+    price: "Price (AED)",
+    selectCategory: "-- Select Category --",
+    searchSpareParts: "Search by name, SKU, or specification...",
+    selectSparePart: "-- Select Spare Part --",
+    stock: "Stock",
+    catalogPrice: "Catalog Price",
+    finalPrice: "Final Price (AED)",
+    locked: "— locked",
+    originalPrice: "Original Price",
+    selectLabourType: "-- Select Labour Type --",
+    defaultPrice: "Default Price",
+  },
+} as const;
 
 function sparePartDisplayName(opt: SparePartOption): string {
   return opt.specification ? `${opt.name} — ${opt.specification}` : opt.name;
@@ -57,6 +106,7 @@ export function InvoiceItemLine({
   sparePartMaxDiscountPercent,
   labourPriceModification,
   labourMaxDiscountPercent,
+  lang = "en",
 }: {
   item: ServiceItemFormData;
   index: number;
@@ -70,9 +120,14 @@ export function InvoiceItemLine({
   sparePartMaxDiscountPercent: number | null;
   labourPriceModification: string;
   labourMaxDiscountPercent: number | null;
+  lang?: EmployeeLang;
 }) {
   const [sparePartCategory, setSparePartCategory] = useState("");
   const [search, setSearch] = useState("");
+
+  const s = T[lang];
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
 
   const sparePartCategories = [...new Set(sparePartOptions.map((o) => o.category))].sort();
   const filteredSpareParts = sparePartOptions.filter((o) => {
@@ -112,11 +167,13 @@ export function InvoiceItemLine({
 
   return (
     <div className="rounded-xl border border-slate-200 p-3 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-blue-700">Item {index + 1}</span>
+      <div className="flex items-center justify-between" dir={dir}>
+        <span className={`text-xs font-semibold text-blue-700 ${font}`}>
+          {s.item} {index + 1}
+        </span>
         {total > 1 && (
-          <button type="button" onClick={onRemove} className="text-xs text-red-500 hover:text-red-600">
-            Remove
+          <button type="button" onClick={onRemove} className={`text-xs text-red-500 hover:text-red-600 ${font}`}>
+            {s.remove}
           </button>
         )}
       </div>
@@ -144,9 +201,9 @@ export function InvoiceItemLine({
               }
               className={`rounded-lg border py-2 text-xs font-medium ${
                 item.itemType === t ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"
-              }`}
+              } ${font}`}
             >
-              {t === "SparePart" ? "Spare Part" : t}
+              {t === "SparePart" ? s.sparePart : t === "Labour" ? s.labour : s.service}
             </button>
           ))}
         </div>
@@ -159,30 +216,34 @@ export function InvoiceItemLine({
             value={item.service}
             onChange={(e) => onUpdate({ service: e.target.value })}
           >
-            <option value="">-- Select Service --</option>
-            {SERVICE_CATALOG[category].map((s) => (
-              <option key={s} value={s}>
-                {s}
+            <option value="">{s.selectService}</option>
+            {SERVICE_CATALOG[category].map((svc) => (
+              <option key={svc} value={svc}>
+                {svc}
               </option>
             ))}
           </select>
           {item.service === CUSTOM_SERVICE_VALUE && (
             <input
               className={inputClassName}
-              placeholder="Enter service name..."
+              placeholder={s.enterServiceName}
               value={item.customName}
               onChange={(e) => onUpdate({ customName: e.target.value })}
+              dir={dir}
             />
           )}
           <input
             className={inputClassName}
-            placeholder="Description (optional)"
+            placeholder={s.descriptionOptional}
             value={item.description}
             onChange={(e) => onUpdate({ description: e.target.value })}
+            dir={dir}
           />
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-slate-500">Qty</label>
+              <label className={`text-xs text-slate-500 ${font}`} dir={dir}>
+                {s.qty}
+              </label>
               <input
                 type="number"
                 min="1"
@@ -192,7 +253,9 @@ export function InvoiceItemLine({
               />
             </div>
             <div>
-              <label className="text-xs text-slate-500">Price (AED)</label>
+              <label className={`text-xs text-slate-500 ${font}`} dir={dir}>
+                {s.price}
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -217,7 +280,7 @@ export function InvoiceItemLine({
               selectSparePart("");
             }}
           >
-            <option value="">-- Select Category --</option>
+            <option value="">{s.selectCategory}</option>
             {sparePartCategories.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -226,12 +289,13 @@ export function InvoiceItemLine({
           </select>
           <input
             className={inputClassName}
-            placeholder="Search by name, SKU, or specification..."
+            placeholder={s.searchSpareParts}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            dir={dir}
           />
           <select className={inputClassName} value={item.inventoryItemId} onChange={(e) => selectSparePart(e.target.value)}>
-            <option value="">-- Select Spare Part --</option>
+            <option value="">{s.selectSparePart}</option>
             {filteredSpareParts.map((o) => (
               <option key={o.id} value={o.id}>
                 {sparePartDisplayName(o)} ({o.sku})
@@ -241,14 +305,16 @@ export function InvoiceItemLine({
 
           {selectedSparePart && (
             <>
-              <p className="text-xs text-slate-500">
-                Stock: <span className="font-semibold text-slate-900">{selectedSparePart.currentStock.toLocaleString()} {selectedSparePart.unit}</span>
+              <p className={`text-xs text-slate-500 ${font}`} dir={dir}>
+                {s.stock}: <span className="font-semibold text-slate-900">{selectedSparePart.currentStock.toLocaleString()} {selectedSparePart.unit}</span>
                 {" · "}
-                Catalog Price: <span className="font-semibold text-slate-900">{formatAed(selectedSparePart.sellingPrice ?? 0)}</span>
+                {s.catalogPrice}: <span className="font-semibold text-slate-900">{formatAed(selectedSparePart.sellingPrice ?? 0)}</span>
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs text-slate-500">Qty</label>
+                  <label className={`text-xs text-slate-500 ${font}`} dir={dir}>
+                    {s.qty}
+                  </label>
                   <input
                     type="number"
                     min="1"
@@ -258,8 +324,8 @@ export function InvoiceItemLine({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500">
-                    Final Price (AED) {!canEditPrice(sparePartPriceModification) && <span className="text-slate-400">— locked</span>}
+                  <label className={`text-xs text-slate-500 ${font}`} dir={dir}>
+                    {s.finalPrice} {!canEditPrice(sparePartPriceModification) && <span className="text-slate-400">{s.locked}</span>}
                   </label>
                   <input
                     type="number"
@@ -273,7 +339,9 @@ export function InvoiceItemLine({
                 </div>
               </div>
               {Number(item.unitPrice) !== Number(item.originalPrice) && (
-                <p className="text-xs text-slate-400">Original Price: {formatAed(Number(item.originalPrice) || 0)}</p>
+                <p className={`text-xs text-slate-400 ${font}`} dir={dir}>
+                  {s.originalPrice}: {formatAed(Number(item.originalPrice) || 0)}
+                </p>
               )}
             </>
           )}
@@ -283,7 +351,7 @@ export function InvoiceItemLine({
       {item.itemType === "Labour" && (
         <>
           <select className={inputClassName} value={item.labourItemId} onChange={(e) => selectLabour(e.target.value)}>
-            <option value="">-- Select Labour Type --</option>
+            <option value="">{s.selectLabourType}</option>
             {labourOptions.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.nameEn} ({o.code})
@@ -293,12 +361,14 @@ export function InvoiceItemLine({
 
           {selectedLabour && (
             <>
-              <p className="text-xs text-slate-500">
-                Default Price: <span className="font-semibold text-slate-900">{formatAed(selectedLabour.defaultPrice)}</span>
+              <p className={`text-xs text-slate-500 ${font}`} dir={dir}>
+                {s.defaultPrice}: <span className="font-semibold text-slate-900">{formatAed(selectedLabour.defaultPrice)}</span>
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs text-slate-500">Qty</label>
+                  <label className={`text-xs text-slate-500 ${font}`} dir={dir}>
+                    {s.qty}
+                  </label>
                   <input
                     type="number"
                     min="1"
@@ -308,8 +378,8 @@ export function InvoiceItemLine({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500">
-                    Final Price (AED) {!canEditPrice(labourPriceModification) && <span className="text-slate-400">— locked</span>}
+                  <label className={`text-xs text-slate-500 ${font}`} dir={dir}>
+                    {s.finalPrice} {!canEditPrice(labourPriceModification) && <span className="text-slate-400">{s.locked}</span>}
                   </label>
                   <input
                     type="number"
@@ -323,7 +393,9 @@ export function InvoiceItemLine({
                 </div>
               </div>
               {Number(item.unitPrice) !== Number(item.originalPrice) && (
-                <p className="text-xs text-slate-400">Original Price: {formatAed(Number(item.originalPrice) || 0)}</p>
+                <p className={`text-xs text-slate-400 ${font}`} dir={dir}>
+                  {s.originalPrice}: {formatAed(Number(item.originalPrice) || 0)}
+                </p>
               )}
             </>
           )}

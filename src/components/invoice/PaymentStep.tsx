@@ -4,13 +4,15 @@ import { formatAed } from "@/lib/format";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
 import { Field, inputClassName } from "@/components/FormField";
 import type { PaymentFormData, ServiceFormData } from "./types";
+import { tajawal } from "@/lib/fonts";
+import type { EmployeeLang } from "@/lib/employeeLang";
 
 type TeamOption = { id: string; name: string };
 
 const METHODS = [
   {
     id: "Cash" as const,
-    label: "Cash",
+    label: { ar: "نقداً", en: "Cash" },
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="2" y="6" width="20" height="12" rx="2" />
@@ -20,7 +22,7 @@ const METHODS = [
   },
   {
     id: "Bank Transfer" as const,
-    label: "Bank Transfer",
+    label: { ar: "حوالة بنكية", en: "Bank Transfer" },
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <path d="M3 10l9-6 9 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -30,7 +32,7 @@ const METHODS = [
   },
   {
     id: "Ziina" as const,
-    label: "Ziina",
+    label: { ar: "Ziina", en: "Ziina" },
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="6" y="2" width="12" height="20" rx="2" />
@@ -40,6 +42,29 @@ const METHODS = [
   },
 ];
 
+const T = {
+  ar: {
+    selectMethod: "اختر طريقة الدفع",
+    invoiceDate: "تاريخ الفاتورة",
+    team: "الفريق",
+    selectTeam: "اختر فريقاً",
+    teamSuffix: "فريق",
+    subtotal: "المجموع الفرعي",
+    total: "الإجمالي",
+    next: "التالي",
+  },
+  en: {
+    selectMethod: "Select Payment Method",
+    invoiceDate: "Invoice Date",
+    team: "Team",
+    selectTeam: "Select a team",
+    teamSuffix: "Team",
+    subtotal: "Subtotal",
+    total: "Total",
+    next: "Next",
+  },
+} as const;
+
 export function PaymentStep({
   value,
   service,
@@ -47,6 +72,7 @@ export function PaymentStep({
   onNext,
   showInvoiceControls = false,
   teamOptions = [],
+  lang = "en",
 }: {
   value: PaymentFormData;
   service: ServiceFormData;
@@ -54,7 +80,12 @@ export function PaymentStep({
   onNext: () => void;
   showInvoiceControls?: boolean;
   teamOptions?: TeamOption[];
+  lang?: EmployeeLang;
 }) {
+  const s = T[lang];
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+
   const total = service.items.reduce((sum, item) => {
     const hasItem =
       item.itemType === "SparePart"
@@ -71,7 +102,9 @@ export function PaymentStep({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Select Payment Method</label>
+        <label className={`text-xs font-medium text-slate-600 mb-1.5 block ${font}`} dir={dir}>
+          {s.selectMethod}
+        </label>
         <div className="grid grid-cols-3 gap-3">
           {METHODS.map((m) => (
             <button
@@ -80,10 +113,10 @@ export function PaymentStep({
               onClick={() => onChange({ ...value, method: m.id })}
               className={`flex flex-col items-center gap-1 rounded-xl border py-4 text-xs font-medium ${
                 value.method === m.id ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"
-              }`}
+              } ${font}`}
             >
               {m.icon}
-              {m.label}
+              {m.label[lang]}
             </button>
           ))}
         </div>
@@ -91,7 +124,7 @@ export function PaymentStep({
 
       {showInvoiceControls && (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Invoice Date">
+          <Field label={s.invoiceDate} dir={dir} labelClassName={font}>
             <input
               type="date"
               className={inputClassName}
@@ -99,16 +132,16 @@ export function PaymentStep({
               onChange={(event) => onChange({ ...value, date: event.target.value })}
             />
           </Field>
-          <Field label="Team">
+          <Field label={s.team} dir={dir} labelClassName={font}>
             <select
               className={inputClassName}
               value={value.teamId}
               onChange={(event) => onChange({ ...value, teamId: event.target.value })}
             >
-              <option value="">Select a team</option>
+              <option value="">{s.selectTeam}</option>
               {teamOptions.map((team) => (
                 <option key={team.id} value={team.id}>
-                  {team.name} Team
+                  {team.name} {s.teamSuffix}
                 </option>
               ))}
             </select>
@@ -117,12 +150,12 @@ export function PaymentStep({
       )}
 
       <div className="rounded-xl bg-slate-50 p-4 text-sm">
-        <div className="flex justify-between text-slate-500">
-          <span>Subtotal</span>
+        <div className={`flex justify-between text-slate-500 ${font}`} dir={dir}>
+          <span>{s.subtotal}</span>
           <span>{formatAed(total)}</span>
         </div>
-        <div className="flex justify-between font-bold text-slate-900 mt-1">
-          <span>Total</span>
+        <div className={`flex justify-between font-bold text-slate-900 mt-1 ${font}`} dir={dir}>
+          <span>{s.total}</span>
           <span className="text-blue-700">{formatAed(total)}</span>
         </div>
       </div>
@@ -131,9 +164,9 @@ export function PaymentStep({
         type="button"
         disabled={showInvoiceControls && (!value.date || !value.teamId)}
         onClick={onNext}
-        className="mt-2 w-full rounded-xl bg-blue-700 disabled:bg-blue-300 text-white font-medium text-sm py-3.5 flex items-center justify-center gap-2"
+        className={`mt-2 w-full rounded-xl bg-blue-700 disabled:bg-blue-300 text-white font-medium text-sm py-3.5 flex items-center justify-center gap-2 ${font}`}
       >
-        Next
+        {s.next}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

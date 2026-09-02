@@ -13,13 +13,49 @@ import { createInvoiceFromWizard, updateInvoiceFromWizard } from "@/app/actions/
 import { emptyCustomer, emptyService, emptyPayment, type CustomerFormData, type ServiceFormData, type PaymentFormData } from "./types";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
 import { formatAed, formatUaePhone } from "@/lib/format";
+import { tajawal } from "@/lib/fonts";
+import type { EmployeeLang } from "@/lib/employeeLang";
 
-const STEP_META = [
-  { subtitle: "Customer" },
-  { subtitle: "Service" },
-  { subtitle: "Payment" },
-  { subtitle: "Preview" },
-];
+const T = {
+  ar: {
+    createInvoice: "إنشاء فاتورة",
+    editInvoice: "تعديل فاتورة",
+    customer: "العميل",
+    service: "الخدمة",
+    payment: "الدفع",
+    preview: "المعاينة",
+    invoiceUpdated: "تم تحديث الفاتورة!",
+    invoiceCreated: "تم إنشاء الفاتورة!",
+    invoiceUpdatedToast: "تم تحديث الفاتورة.",
+    invoiceCreatedToast: "تم إنشاء الفاتورة.",
+    error: "حدث خطأ ما.",
+    viewInvoice: "عرض الفاتورة",
+    viewInvoices: "عرض الفواتير",
+    createAnother: "إنشاء فاتورة أخرى",
+    saving: "جارٍ الحفظ...",
+    saveChanges: "حفظ التغييرات",
+    saveAndCreate: "حفظ وإنشاء الفاتورة",
+  },
+  en: {
+    createInvoice: "Create Invoice",
+    editInvoice: "Edit Invoice",
+    customer: "Customer",
+    service: "Service",
+    payment: "Payment",
+    preview: "Preview",
+    invoiceUpdated: "Invoice Updated!",
+    invoiceCreated: "Invoice Created!",
+    invoiceUpdatedToast: "Invoice updated.",
+    invoiceCreatedToast: "Invoice created.",
+    error: "Something went wrong.",
+    viewInvoice: "View Invoice",
+    viewInvoices: "View Invoices",
+    createAnother: "Create Another",
+    saving: "Saving...",
+    saveChanges: "Save Changes",
+    saveAndCreate: "Save & Create Invoice",
+  },
+} as const;
 
 export function InvoiceWizard({
   basePath,
@@ -43,6 +79,7 @@ export function InvoiceWizard({
   sparePartMaxDiscountPercent = null,
   labourPriceModification = "Allowed",
   labourMaxDiscountPercent = null,
+  lang = "en",
 }: {
   basePath: "/admin" | "/employee";
   createdByName: string;
@@ -65,6 +102,7 @@ export function InvoiceWizard({
   sparePartMaxDiscountPercent?: number | null;
   labourPriceModification?: string;
   labourMaxDiscountPercent?: number | null;
+  lang?: EmployeeLang;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -77,6 +115,12 @@ export function InvoiceWizard({
   const [result, setResult] = useState<{ number: string; amount: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const s = T[lang];
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+
+  const STEP_META = [{ subtitle: s.customer }, { subtitle: s.service }, { subtitle: s.payment }, { subtitle: s.preview }];
 
   const exitHref = mode === "edit" ? `${basePath}/invoices/${editInvoiceId}` : `${basePath}/invoices`;
 
@@ -106,9 +150,9 @@ export function InvoiceWizard({
           : await createInvoiceFromWizard(customer, service, payment, orderId, quotationId);
       if (res.ok && res.number) {
         setResult({ number: res.number, amount: res.amount ?? 0 });
-        showToast(mode === "edit" ? "Invoice updated." : "Invoice created.");
+        showToast(mode === "edit" ? s.invoiceUpdatedToast : s.invoiceCreatedToast);
       } else {
-        setError(res.error ?? "Something went wrong.");
+        setError(res.error ?? s.error);
       }
     });
   }
@@ -116,28 +160,28 @@ export function InvoiceWizard({
   if (result) {
     const isEdit = mode === "edit";
     return (
-      <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
+      <div className="flex flex-col items-center justify-center px-6 py-24 text-center" dir={dir}>
         <div className="h-16 w-16 rounded-full bg-green-50 text-green-600 flex items-center justify-center mb-4">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <h2 className="text-lg font-bold text-slate-900">{isEdit ? "Invoice Updated!" : "Invoice Created!"}</h2>
+        <h2 className={`text-lg font-bold text-slate-900 ${font}`}>{isEdit ? s.invoiceUpdated : s.invoiceCreated}</h2>
         <p className="text-sm text-slate-400 mt-1">{result.number}</p>
         <p className="text-2xl font-bold text-blue-700 mt-1">{formatAed(result.amount)}</p>
         <div className="mt-6 flex gap-3">
           <button
             onClick={() => router.push(isEdit ? `${basePath}/invoices/${editInvoiceId}` : `${basePath}/invoices`)}
-            className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700"
+            className={`rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 ${font}`}
           >
-            {isEdit ? "View Invoice" : "View Invoices"}
+            {isEdit ? s.viewInvoice : s.viewInvoices}
           </button>
           {!isEdit && (
             <button
               onClick={reset}
-              className="rounded-xl bg-blue-700 text-white px-5 py-2.5 text-sm font-medium"
+              className={`rounded-xl bg-blue-700 text-white px-5 py-2.5 text-sm font-medium ${font}`}
             >
-              Create Another
+              {s.createAnother}
             </button>
           )}
         </div>
@@ -162,14 +206,19 @@ export function InvoiceWizard({
   return (
     <div className="px-5 py-4 pb-10">
       <StepHeader
-        title={mode === "edit" ? "Edit Invoice" : "Create Invoice"}
+        title={mode === "edit" ? s.editInvoice : s.createInvoice}
         subtitle={STEP_META[step].subtitle}
         step={step + 1}
         totalSteps={4}
         onBack={handleBack}
+        lang={lang}
       />
-      {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
-      {step === 0 && <CustomerStep value={customer} onChange={setCustomer} onNext={() => setStep(1)} />}
+      {error && (
+        <p className={`text-sm text-red-500 mb-3 ${font}`} dir={dir}>
+          {error}
+        </p>
+      )}
+      {step === 0 && <CustomerStep value={customer} onChange={setCustomer} onNext={() => setStep(1)} lang={lang} />}
       {step === 1 && (
         <ServiceStep
           value={service}
@@ -185,6 +234,7 @@ export function InvoiceWizard({
           sparePartMaxDiscountPercent={sparePartMaxDiscountPercent}
           labourPriceModification={labourPriceModification}
           labourMaxDiscountPercent={labourMaxDiscountPercent}
+          lang={lang}
         />
       )}
       {step === 2 && (
@@ -195,6 +245,7 @@ export function InvoiceWizard({
           onNext={() => setStep(3)}
           showInvoiceControls={basePath === "/admin"}
           teamOptions={teamOptions}
+          lang={lang}
         />
       )}
       {step === 3 && (
@@ -223,9 +274,9 @@ export function InvoiceWizard({
               type="button"
               disabled={isPending || previewItems.length === 0}
               onClick={handleSave}
-              className="w-full rounded-xl bg-blue-700 disabled:opacity-60 text-white font-medium text-sm py-3.5"
+              className={`w-full rounded-xl bg-blue-700 disabled:opacity-60 text-white font-medium text-sm py-3.5 ${font}`}
             >
-              {isPending ? "Saving..." : mode === "edit" ? "Save Changes" : "Save & Create Invoice"}
+              {isPending ? s.saving : mode === "edit" ? s.saveChanges : s.saveAndCreate}
             </button>
           </div>
         </div>

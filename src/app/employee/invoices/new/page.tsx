@@ -5,6 +5,7 @@ import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
 import { getInventoryItemDisplayName, getBulkLocationQuantities } from "@/lib/inventoryData";
 import type { CustomerFormData, ServiceFormData } from "@/components/invoice/types";
+import { getEmployeeLang } from "@/lib/employeeLang";
 
 export default async function NewInvoicePage({
   searchParams,
@@ -12,8 +13,9 @@ export default async function NewInvoicePage({
   searchParams: Promise<{ orderId?: string; quotationId?: string }>;
 }) {
   const { orderId, quotationId } = await searchParams;
-  const [employee, order, quotation, activeItems, labourItems] = await Promise.all([
+  const [employee, lang, order, quotation, activeItems, labourItems] = await Promise.all([
     requireEmployee("EMPLOYEE"),
+    getEmployeeLang(),
     orderId ? prisma.order.findUnique({ where: { id: orderId }, include: { customer: true } }) : null,
     quotationId ? prisma.quotation.findUnique({ where: { id: quotationId }, include: { customer: true, items: true } }) : null,
     prisma.inventoryItem.findMany({ where: { status: "Active" }, orderBy: { name: "asc" } }),
@@ -112,6 +114,7 @@ export default async function NewInvoicePage({
         sparePartMaxDiscountPercent={employee.sparePartMaxDiscountPercent}
         labourPriceModification={employee.labourPriceModification}
         labourMaxDiscountPercent={employee.labourMaxDiscountPercent}
+        lang={lang}
       />
     </div>
   );

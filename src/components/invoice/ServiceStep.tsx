@@ -5,6 +5,8 @@ import { inputClassName } from "@/components/FormField";
 import type { ServiceFormData, ServiceItemFormData, InventoryUsageItemFormData } from "./types";
 import { emptyServiceItem, emptyInventoryUsageItem } from "./types";
 import { InvoiceItemLine, type SparePartOption, type LabourOption } from "./InvoiceItemLine";
+import { tajawal } from "@/lib/fonts";
+import type { EmployeeLang } from "@/lib/employeeLang";
 
 export type InventoryOption = { id: string; displayName: string; unit: string; currentStock: number };
 
@@ -31,6 +33,43 @@ const CATEGORY_ICONS: Record<Category, React.ReactNode> = {
   ),
 };
 
+const T = {
+  ar: {
+    serviceType: "نوع الخدمة",
+    repair: "تصليح",
+    inspection: "فحص",
+    category: "الفئة",
+    items: "العناصر",
+    addItem: "+ إضافة عنصر",
+    inventoryUsed: "المخزون المستخدم",
+    inventoryUsedHint: "يخصم من المخزون فقط — لا يؤثر على مبلغ الفاتورة.",
+    item: "عنصر",
+    remove: "إزالة",
+    selectItem: "-- اختر صنف --",
+    quantityUsed: "الكمية المستخدمة",
+    available: "المتاح",
+    addInventoryItem: "+ إضافة صنف من المخزون",
+    next: "التالي",
+  },
+  en: {
+    serviceType: "Service Type",
+    repair: "Repair",
+    inspection: "Inspection",
+    category: "Category",
+    items: "Items",
+    addItem: "+ Add Item",
+    inventoryUsed: "Inventory Used",
+    inventoryUsedHint: "Deducts stock only — does not affect the invoice amount.",
+    item: "Item",
+    remove: "Remove",
+    selectItem: "-- Select Item --",
+    quantityUsed: "Quantity Used",
+    available: "Available",
+    addInventoryItem: "+ Add Inventory Item",
+    next: "Next",
+  },
+} as const;
+
 function updateItem(items: ServiceItemFormData[], index: number, patch: Partial<ServiceItemFormData>) {
   return items.map((it, i) => (i === index ? { ...it, ...patch } : it));
 }
@@ -53,6 +92,7 @@ export function ServiceStep({
   sparePartMaxDiscountPercent = null,
   labourPriceModification = "Allowed",
   labourMaxDiscountPercent = null,
+  lang = "en",
 }: {
   value: ServiceFormData;
   onChange: (value: ServiceFormData) => void;
@@ -70,7 +110,12 @@ export function ServiceStep({
   sparePartMaxDiscountPercent?: number | null;
   labourPriceModification?: string;
   labourMaxDiscountPercent?: number | null;
+  lang?: EmployeeLang;
 }) {
+  const s = T[lang];
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const font = lang === "ar" ? tajawal.className : "";
+
   const isValid =
     value.items.every((item) => {
       if (item.itemType === "SparePart") return !!item.inventoryItemId && Number(item.unitPrice) > 0 && Number(item.qty) > 0;
@@ -104,7 +149,9 @@ export function ServiceStep({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Service Type</label>
+        <label className={`text-xs font-medium text-slate-600 mb-1.5 block ${font}`} dir={dir}>
+          {s.serviceType}
+        </label>
         <div className="grid grid-cols-2 gap-3">
           {(["Repair", "Inspection"] as const).map((t) => (
             <button
@@ -113,16 +160,18 @@ export function ServiceStep({
               onClick={() => onChange({ ...value, serviceType: t })}
               className={`rounded-xl border py-3 text-sm font-medium ${
                 value.serviceType === t ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"
-              }`}
+              } ${font}`}
             >
-              {t}
+              {t === "Repair" ? s.repair : s.inspection}
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Category</label>
+        <label className={`text-xs font-medium text-slate-600 mb-1.5 block ${font}`} dir={dir}>
+          {s.category}
+        </label>
         <div className="grid grid-cols-4 gap-2">
           {CATEGORIES.map((c) => (
             <button
@@ -141,7 +190,9 @@ export function ServiceStep({
       </div>
 
       <div>
-        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Items</label>
+        <label className={`text-xs font-medium text-slate-600 mb-1.5 block ${font}`} dir={dir}>
+          {s.items}
+        </label>
         <div className="flex flex-col gap-3">
           {value.items.map((item, i) => (
             <InvoiceItemLine
@@ -158,22 +209,27 @@ export function ServiceStep({
               sparePartMaxDiscountPercent={sparePartMaxDiscountPercent}
               labourPriceModification={labourPriceModification}
               labourMaxDiscountPercent={labourMaxDiscountPercent}
+              lang={lang}
             />
           ))}
         </div>
         <button
           type="button"
           onClick={addService}
-          className="mt-3 w-full rounded-xl border border-dashed border-blue-300 text-blue-700 text-sm font-medium py-2.5"
+          className={`mt-3 w-full rounded-xl border border-dashed border-blue-300 text-blue-700 text-sm font-medium py-2.5 ${font}`}
         >
-          + Add Item
+          {s.addItem}
         </button>
       </div>
 
       {inventoryOptions.length > 0 && (
         <div>
-          <label className="text-xs font-medium text-slate-600 mb-1.5 block">Inventory Used</label>
-          <p className="text-xs text-slate-400 mb-2">Deducts stock only — does not affect the invoice amount.</p>
+          <label className={`text-xs font-medium text-slate-600 mb-1.5 block ${font}`} dir={dir}>
+            {s.inventoryUsed}
+          </label>
+          <p className={`text-xs text-slate-400 mb-2 ${font}`} dir={dir}>
+            {s.inventoryUsedHint}
+          </p>
 
           {isAdmin && employeeOptions.length > 0 && (
             <select
@@ -194,14 +250,16 @@ export function ServiceStep({
               const item = inventoryById.get(line.inventoryItemId);
               return (
                 <div key={i} className="rounded-xl border border-slate-200 p-3 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-blue-700">Item {i + 1}</span>
+                  <div className="flex items-center justify-between" dir={dir}>
+                    <span className={`text-xs font-semibold text-blue-700 ${font}`}>
+                      {s.item} {i + 1}
+                    </span>
                     <button
                       type="button"
                       onClick={() => removeUsageLine(i)}
-                      className="text-xs text-red-500 hover:text-red-600"
+                      className={`text-xs text-red-500 hover:text-red-600 ${font}`}
                     >
-                      Remove
+                      {s.remove}
                     </button>
                   </div>
                   <select
@@ -209,7 +267,7 @@ export function ServiceStep({
                     value={line.inventoryItemId}
                     onChange={(e) => onChange({ ...value, inventoryUsage: updateUsageLine(value.inventoryUsage, i, { inventoryItemId: e.target.value }) })}
                   >
-                    <option value="">-- Select Item --</option>
+                    <option value="">{s.selectItem}</option>
                     {inventoryOptions.map((opt) => (
                       <option key={opt.id} value={opt.id}>
                         {opt.displayName}
@@ -217,10 +275,13 @@ export function ServiceStep({
                     ))}
                   </select>
                   <div>
-                    <label className="text-xs text-slate-500">
-                      Quantity Used {item ? `(${item.unit})` : ""}
+                    <label className={`text-xs text-slate-500 ${font}`} dir={dir}>
+                      {s.quantityUsed} {item ? `(${item.unit})` : ""}
                       {item && value.inventoryEmployeeId === stockKnownForEmployeeId && (
-                        <span className="text-slate-400"> — Available: {item.currentStock.toLocaleString()} {item.unit}</span>
+                        <span className="text-slate-400">
+                          {" "}
+                          — {s.available}: {item.currentStock.toLocaleString()} {item.unit}
+                        </span>
                       )}
                     </label>
                     <input
@@ -239,9 +300,9 @@ export function ServiceStep({
           <button
             type="button"
             onClick={addUsageLine}
-            className="mt-3 w-full rounded-xl border border-dashed border-slate-300 text-slate-600 text-sm font-medium py-2.5"
+            className={`mt-3 w-full rounded-xl border border-dashed border-slate-300 text-slate-600 text-sm font-medium py-2.5 ${font}`}
           >
-            + Add Inventory Item
+            {s.addInventoryItem}
           </button>
         </div>
       )}
@@ -250,9 +311,9 @@ export function ServiceStep({
         type="button"
         disabled={!isValid}
         onClick={onNext}
-        className="mt-2 w-full rounded-xl bg-blue-700 disabled:bg-blue-300 text-white font-medium text-sm py-3.5 flex items-center justify-center gap-2"
+        className={`mt-2 w-full rounded-xl bg-blue-700 disabled:bg-blue-300 text-white font-medium text-sm py-3.5 flex items-center justify-center gap-2 ${font}`}
       >
-        Next
+        {s.next}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
