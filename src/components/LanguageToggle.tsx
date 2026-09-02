@@ -4,41 +4,34 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setEmployeeLang } from "@/app/actions/employeeLang";
 import type { EmployeeLang } from "@/lib/employeeLang";
+import { tajawal } from "@/lib/fonts";
 
 export function LanguageToggle({ lang }: { lang: EmployeeLang }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  function switchTo(next: EmployeeLang) {
-    if (next === lang || isPending) return;
+  const target: EmployeeLang = lang === "ar" ? "en" : "ar";
+  const label = target === "ar" ? "عربي" : "English";
+
+  function switchLang() {
+    if (isPending) return;
     startTransition(async () => {
-      await setEmployeeLang(next);
+      await setEmployeeLang(target);
       router.refresh();
     });
   }
 
   return (
-    <div className="flex items-center rounded-full border border-slate-200 bg-slate-50 p-0.5 text-[11px] font-bold">
-      <button
-        type="button"
-        onClick={() => switchTo("ar")}
-        disabled={isPending}
-        className={`px-2.5 py-1 rounded-full transition-colors ${
-          lang === "ar" ? "bg-blue-700 text-white" : "text-slate-500"
-        }`}
-      >
-        عربي
-      </button>
-      <button
-        type="button"
-        onClick={() => switchTo("en")}
-        disabled={isPending}
-        className={`px-2.5 py-1 rounded-full transition-colors ${
-          lang === "en" ? "bg-blue-700 text-white" : "text-slate-500"
-        }`}
-      >
-        EN
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={switchLang}
+      disabled={isPending}
+      className={`rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-bold text-slate-600 disabled:opacity-60 ${
+        target === "ar" ? tajawal.className : ""
+      }`}
+      dir={target === "ar" ? "rtl" : "ltr"}
+    >
+      {label}
+    </button>
   );
 }
