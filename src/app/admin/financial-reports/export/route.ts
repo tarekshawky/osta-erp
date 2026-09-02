@@ -63,6 +63,14 @@ export async function GET(request: NextRequest) {
       const comparativeParam = searchParams.get("comparative");
       const comparativeDate = comparativeParam ? new Date(comparativeParam) : null;
       const { current, comparative } = await computeBalanceSheet({ asOfDate, comparativeDate });
+      if (!current.isBalanced) {
+        return NextResponse.json(
+          {
+            error: `Statement of Financial Position is not balanced as at ${formatDate(current.asOfDate)} (difference: ${formatAed(Math.abs(current.difference))}). Fix the underlying figures before exporting.`,
+          },
+          { status: 409 }
+        );
+      }
       sheetName = "Balance Sheet";
       fileName = "statement-of-financial-position";
       headers = ["Line Item", `As at ${formatDate(current.asOfDate)}`, comparative ? `As at ${formatDate(comparative.asOfDate)}` : ""];

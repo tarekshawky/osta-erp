@@ -144,6 +144,43 @@ async function sumSalaryExpense(range: DateRange): Promise<number> {
   return agg._sum.amount ?? 0;
 }
 
+function yearsElapsed(from: Date, to: Date): number {
+  return Math.max(0, (to.getTime() - from.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+}
+
+// Straight-line depreciation, computed at query time (see Asset model comment for
+// why no accumulatedDepreciation column is stored). Shared by the Balance Sheet's
+// PPE total, the Asset Register page's per-asset breakdown, and this file's own
+// Depreciation Expense line, so none of the three can ever drift apart.
+export function computeAssetDepreciation(
+  asset: { purchaseCost: number; purchaseDate: Date; usefulLifeYears: number },
+  asOfDate: Date
+): { accumulatedDepreciation: number; netBookValue: number } {
+  const elapsed = yearsElapsed(asset.purchaseDate, asOfDate);
+  const accumulatedDepreciation =
+    asset.usefulLifeYears > 0 ? Math.min(asset.purchaseCost, (asset.purchaseCost / asset.usefulLifeYears) * elapsed) : 0;
+  return { accumulatedDepreciation, netBookValue: asset.purchaseCost - accumulatedDepreciation };
+}
+
+// Depreciation is a non-cash expense that reduces PPE's net book value every
+// period -- without a matching expense line here, Retained Earnings never
+// reflected that reduction, so the Balance Sheet drifted further out of balance
+// the longer an Asset had been owned. Charge for the range = accumulated
+// depreciation as at `to` minus accumulated depreciation as at the day before
+// `from` (so a full period's charge is captured even for an asset owned before
+// the range began), for every Asset ever purchased.
+async function sumDepreciationExpense(range: DateRange): Promise<number> {
+  const assets = await prisma.asset.findMany();
+  const dayBeforeFrom = new Date(range.from.getTime() - 24 * 60 * 60 * 1000);
+  let total = 0;
+  for (const asset of assets) {
+    const before = computeAssetDepreciation(asset, dayBeforeFrom).accumulatedDepreciation;
+    const through = computeAssetDepreciation(asset, range.to).accumulatedDepreciation;
+    total += Math.max(0, through - before);
+  }
+  return total;
+}
+
 async function sumOtherExpenses(range: DateRange): Promise<number> {
   const rows = await prisma.expense.groupBy({
     by: ["category"],
@@ -178,4 +215,5 @@ export const ADMIN_EXPENSE_LINES: AdminExpenseLine[] = [
   { label: "Vehicle Fines", compute: (r) => sumVehicleExpensesBySubcategories(["Fine"], r) },
   { label: "Insurance", compute: (r) => sumExpensesByCategory("Insurance", r) },
   { label: "Visa Expenses", compute: (r) => sumExpensesByCategory("Visa Expenses", r) },
+  { label: "Depreciation Expense", compute: (r) => sumDepreciationExpense(r) },
 ];

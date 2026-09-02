@@ -83,9 +83,13 @@ export async function computeIncomeStatement(range: DateRange): Promise<IncomeSt
   };
 }
 
-// Cumulative accumulated profit for ALL periods strictly before periodStart --
-// a real historical rollup, not scoped to just the current tax period.
-export async function computeRetainedEarnings(periodStart: Date): Promise<number> {
+// Cumulative accumulated profit for ALL periods up to and including asOfDate --
+// a real historical rollup, not scoped to just the current tax period. Every
+// call site (Balance Sheet, Equity Report, Financial Reports export) treats this
+// as "Retained Earnings as at asOfDate" (inclusive) -- a prior version computed
+// through asOfDate minus one day instead, which silently dropped any transaction
+// dated exactly on asOfDate (e.g. an end-of-month payroll run) from the figure.
+export async function computeRetainedEarnings(asOfDate: Date): Promise<number> {
   const [earliestInvoice, earliestExpense, earliestPayroll] = await Promise.all([
     prisma.invoice.findFirst({ orderBy: { date: "asc" }, select: { date: true } }),
     prisma.expense.findFirst({ orderBy: { date: "asc" }, select: { date: true } }),
@@ -96,10 +100,8 @@ export async function computeRetainedEarnings(periodStart: Date): Promise<number
   );
   if (candidates.length === 0) return 0;
   const earliest = new Date(Math.min(...candidates.map((d) => d.getTime())));
+  if (asOfDate < earliest) return 0;
 
-  const dayBeforePeriodStart = new Date(periodStart.getTime() - 24 * 60 * 60 * 1000);
-  if (dayBeforePeriodStart < earliest) return 0;
-
-  const statement = await computeIncomeStatement({ from: earliest, to: dayBeforePeriodStart });
+  const statement = await computeIncomeStatement({ from: earliest, to: asOfDate });
   return statement.profitForPeriod;
 }

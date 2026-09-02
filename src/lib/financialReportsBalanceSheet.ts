@@ -2,6 +2,13 @@ import { prisma } from "./prisma";
 import { canonicalExpensePayment } from "./expenseData";
 import { computeRetainedEarnings } from "./financialReportsIncomeStatement";
 import { SETTING_ID } from "./settings";
+// Lives in financialReportsCore.ts (not here) so financialReportsIncomeStatement.ts
+// can also use it for the Depreciation Expense line without a circular import
+// between the Income Statement and Balance Sheet modules. Re-exported so every
+// existing importer (export/route.ts, assets/page.tsx, asset-report/page.tsx)
+// keeps working unchanged.
+import { computeAssetDepreciation } from "./financialReportsCore";
+export { computeAssetDepreciation };
 
 // Callers often pass a date-only "as of" value (midnight UTC of a calendar day).
 // Bounding "createdAt" (a precise insert-time timestamp) against that exact
@@ -20,13 +27,19 @@ function boundBy(field: "date" | "createdAt", asOfDate: Date) {
 // of those compute "as of now" with no upper-bound cutoff, which doesn't support a
 // comparative Balance Sheet "as at" a prior date.
 
-export async function computeCashAndCashEquivalents(asOfDate: Date): Promise<number> {
-  const position = await prisma.cashPosition.findFirst({ orderBy: { updatedAt: "desc" } });
+// `overrideCashPosition` lets a candidate (not-yet-saved) opening balance/date be
+// checked before it's persisted -- see checkOpeningBalance(), used to block saving
+// an opening balance that would leave the sheet unbalanced.
+export async function computeCashAndCashEquivalents(
+  asOfDate: Date,
+  overrideCashPosition?: { openingBalance: number; openingDate: Date }
+): Promise<number> {
+  const position = overrideCashPosition ?? (await prisma.cashPosition.findFirst({ orderBy: { updatedAt: "desc" } }));
   const openingBalance = position?.openingBalance ?? 0;
   const openingDate = position?.openingDate ?? new Date(0);
   const range = { gte: openingDate, lte: endOfDayUtc(asOfDate) };
 
-  const [invoiceInflowRows, expenseOutflowAgg, cardPaymentAgg, payrollAgg] = await Promise.all([
+  const [invoiceInflowRows, expenseOutflowAgg, cardPaymentAgg, payrollAgg, assetPurchaseAgg, liabilityAgg] = await Promise.all([
     prisma.invoice.groupBy({
       by: ["payment"],
       _sum: { amount: true, refundedAmount: true },
@@ -45,6 +58,14 @@ export async function computeCashAndCashEquivalents(asOfDate: Date): Promise<num
       _sum: { amount: true },
       where: { type: { in: ["Salary", "Advance", "Deduction"] }, date: range },
     }),
+    // A Fixed Asset purchase is a real cash outflow -- the Cash Flow Statement's
+    // Investing line already assumes this (see computeCashFlowStatement), but until
+    // now this Balance Sheet's own Cash figure never actually subtracted it, so
+    // every Asset added inflated Total Assets (PPE) with nothing reducing Cash.
+    prisma.asset.aggregate({ _sum: { purchaseCost: true }, where: { purchaseDate: range } }),
+    // Symmetrically, a Liability (e.g. a bank loan) is real cash received --
+    // otherwise Total Liabilities grows with nothing backing it on the Asset side.
+    prisma.liability.aggregate({ _sum: { amount: true }, where: { createdAt: range } }),
   ]);
 
   const cashLikeInvoiceInflow = invoiceInflowRows
@@ -61,13 +82,18 @@ export async function computeCashAndCashEquivalents(asOfDate: Date): Promise<num
   const grossPayrollCashPaid = (payrollMap.get("Salary") ?? 0) + (payrollMap.get("Advance") ?? 0);
   const payrollDeductionOffset = payrollMap.get("Deduction") ?? 0;
 
+  const assetPurchaseOutflow = assetPurchaseAgg._sum.purchaseCost ?? 0;
+  const liabilityInflow = liabilityAgg._sum.amount ?? 0;
+
   return (
     openingBalance +
     cashLikeInvoiceInflow -
     cashLikeExpenseOutflow -
     cardPaymentOutflow -
     grossPayrollCashPaid +
-    payrollDeductionOffset
+    payrollDeductionOffset -
+    assetPurchaseOutflow +
+    liabilityInflow
   );
 }
 
@@ -106,23 +132,6 @@ export async function getAccountsReceivableDetail(asOfDate: Date): Promise<{ row
 export async function computeAdvancesDepositsPrepayments(): Promise<number> {
   const agg = await prisma.employee.aggregate({ _sum: { custody: true } });
   return agg._sum.custody ?? 0;
-}
-
-function yearsElapsed(from: Date, to: Date): number {
-  return Math.max(0, (to.getTime() - from.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-}
-
-// Straight-line depreciation, computed at query time (see Asset model comment for
-// why no accumulatedDepreciation column is stored). Shared by computePPE's total
-// and the Asset Register page's per-asset breakdown so the two never drift.
-export function computeAssetDepreciation(
-  asset: { purchaseCost: number; purchaseDate: Date; usefulLifeYears: number },
-  asOfDate: Date
-): { accumulatedDepreciation: number; netBookValue: number } {
-  const elapsed = yearsElapsed(asset.purchaseDate, asOfDate);
-  const accumulatedDepreciation =
-    asset.usefulLifeYears > 0 ? Math.min(asset.purchaseCost, (asset.purchaseCost / asset.usefulLifeYears) * elapsed) : 0;
-  return { accumulatedDepreciation, netBookValue: asset.purchaseCost - accumulatedDepreciation };
 }
 
 export async function computePPE(asOfDate: Date): Promise<number> {
@@ -190,27 +199,87 @@ export async function computeOtherNonCurrentLiabilities(asOfDate: Date): Promise
   return agg._sum.amount ?? 0;
 }
 
-// Date-bounded reimplementation of WalletsManager's admin-total formula
-// (custody + cash − expenses), scoped to the one configured shareholder employee.
+// A prior version reimplemented WalletsManager's per-employee wallet formula here
+// (custody + cash − expenses, using Invoice/Expense.createdById as a proxy for
+// "money this person personally handled"). That proxy holds for a field employee
+// who only ever logs their own collections/claims, but breaks down for whichever
+// employee is configured as the shareholder here -- typically the admin/CEO, who
+// administratively creates Invoice/Expense rows company-wide, not just their own.
+// Confirmed on real data: the admin had created AED 58k of Expense rows (every
+// category/payment method, entered on behalf of the whole company) against only
+// AED 26k of his own Cash-paid Invoices, producing a fabricated ~AED 32k negative
+// swing with no relationship to real shareholder drawings/contributions -- the
+// single largest driver of this report's imbalance. There is no reliable signal
+// in the current data model to separate a shareholder's personal transactions
+// from their administrative data entry, so this now reports the one figure that
+// IS real and dedicated for this purpose: the employee's own `custody` balance
+// (money actually advanced to/held by them, tracked as its own field with proper
+// create/reset semantics) -- not truly date-bounded, same documented limitation
+// as computeAdvancesDepositsPrepayments.
 export async function computeShareholdersCurrentAccount(asOfDate: Date, shareholderEmployeeId: string | null): Promise<number> {
+  void asOfDate;
   if (!shareholderEmployeeId) return 0;
   const employee = await prisma.employee.findUnique({ where: { id: shareholderEmployeeId }, select: { custody: true } });
-  if (!employee) return 0;
+  return employee?.custody ?? 0;
+}
 
-  const [invoiceCashAgg, expenseAgg] = await Promise.all([
-    prisma.invoice.aggregate({
-      _sum: { amount: true },
-      where: { createdById: shareholderEmployeeId, status: "Paid", payment: "Cash", ...boundBy("createdAt", asOfDate) },
-    }),
-    prisma.expense.aggregate({
-      _sum: { amount: true },
-      where: { createdById: shareholderEmployeeId, ...boundBy("createdAt", asOfDate) },
-    }),
-  ]);
+export type OpeningBalanceCheck = {
+  isBalanced: boolean;
+  difference: number;
+  totalAssets: number;
+  totalLiabilitiesAndEquity: number;
+  suggestedOpeningBalance: number;
+};
 
-  const cash = invoiceCashAgg._sum.amount ?? 0;
-  const expenses = expenseAgg._sum.amount ?? 0;
-  return employee.custody + cash - expenses;
+// Validates a candidate {openingBalance, openingDate} against Setting's Share
+// Capital/Statutory Reserves BEFORE either is saved -- computes the full Balance
+// Sheet identity AS AT openingDate itself (the day the books "open," so Retained
+// Earnings/Other Payables/etc. should all still be at their earliest values) and
+// reports the exact Cash figure that would make Assets = Liabilities + Equity.
+// This is what makes an inconsistent opening balance impossible to save, per the
+// requirement that Share Capital/Bank/Cash/Payables/Receivables opening balances
+// must reconcile before they're accepted.
+export async function checkOpeningBalance(input: {
+  openingBalance: number;
+  openingDate: Date;
+  shareCapital: number;
+  statutoryReserves: number;
+  shareholderEmployeeId: string | null;
+}): Promise<OpeningBalanceCheck> {
+  const { openingBalance, openingDate, shareCapital, statutoryReserves, shareholderEmployeeId } = input;
+
+  const [ppe, cash, ar, advances, otherPayables, bankBorrowings, otherNonCurrentLiabilities, shareholdersCurrentAccount, retainedEarnings] =
+    await Promise.all([
+      computePPE(openingDate),
+      computeCashAndCashEquivalents(openingDate, { openingBalance, openingDate }),
+      computeAccountsReceivable(openingDate),
+      computeAdvancesDepositsPrepayments(),
+      computeOtherPayables(openingDate),
+      computeBankBorrowings(openingDate),
+      computeOtherNonCurrentLiabilities(openingDate),
+      computeShareholdersCurrentAccount(openingDate, shareholderEmployeeId),
+      computeRetainedEarnings(openingDate),
+    ]);
+
+  const totalAssets = ppe + cash + ar + advances;
+  const totalLiabilitiesAndEquity =
+    otherPayables +
+    bankBorrowings.current +
+    bankBorrowings.nonCurrent +
+    otherNonCurrentLiabilities +
+    shareCapital +
+    statutoryReserves +
+    retainedEarnings +
+    shareholdersCurrentAccount;
+
+  const difference = totalAssets - totalLiabilitiesAndEquity;
+  return {
+    isBalanced: Math.abs(difference) <= 0.01,
+    difference,
+    totalAssets,
+    totalLiabilitiesAndEquity,
+    suggestedOpeningBalance: openingBalance - difference,
+  };
 }
 
 export type BalanceSheetColumn = {

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { SETTING_ID } from "@/lib/settings";
+import { checkOpeningBalance } from "@/lib/financialReportsBalanceSheet";
+import { formatAed } from "@/lib/format";
 
 export async function updateLogo(dataUrl: string): Promise<{ ok: boolean; error?: string }> {
   const session = await getSession();
@@ -116,9 +118,36 @@ export async function updateEquityAndSignatory(input: EquitySignatoryInput): Pro
   const session = await getSession();
   if (!session || session.role !== "ADMIN") return { ok: false, error: "Not authorized." };
 
+  const shareCapital = input.shareCapital ? Number(input.shareCapital) : null;
+  const statutoryReserves = input.statutoryReserves ? Number(input.statutoryReserves) : null;
+
+  const existingSetting = await prisma.setting.findUnique({ where: { id: SETTING_ID } });
+  // Only re-validate the balance when Share Capital / Statutory Reserves actually
+  // change -- editing an unrelated field (Signatory Name, etc.) shouldn't force the
+  // admin to fix a pre-existing opening-balance mismatch they haven't gotten to yet.
+  const capitalChanged =
+    (shareCapital ?? 0) !== (existingSetting?.shareCapital ?? 0) || (statutoryReserves ?? 0) !== (existingSetting?.statutoryReserves ?? 0);
+
+  if (capitalChanged) {
+    const cashPosition = await prisma.cashPosition.findFirst({ orderBy: { updatedAt: "desc" } });
+    const check = await checkOpeningBalance({
+      openingBalance: cashPosition?.openingBalance ?? 0,
+      openingDate: cashPosition?.openingDate ?? new Date(0),
+      shareCapital: shareCapital ?? 0,
+      statutoryReserves: statutoryReserves ?? 0,
+      shareholderEmployeeId: input.shareholderEmployeeId || null,
+    });
+    if (!check.isBalanced) {
+      return {
+        ok: false,
+        error: `This Share Capital / Statutory Reserves combination leaves the Statement of Financial Position unbalanced by ${formatAed(Math.abs(check.difference))} as at the Cash Position's opening date. Update the Opening Balance in Cash Position to ${formatAed(check.suggestedOpeningBalance)} to balance it.`,
+      };
+    }
+  }
+
   const data = {
-    shareCapital: input.shareCapital ? Number(input.shareCapital) : null,
-    statutoryReserves: input.statutoryReserves ? Number(input.statutoryReserves) : null,
+    shareCapital,
+    statutoryReserves,
     signatoryName: input.signatoryName.trim() || null,
     signatoryDesignation: input.signatoryDesignation.trim() || null,
     shareholderEmployeeId: input.shareholderEmployeeId || null,

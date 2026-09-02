@@ -47,6 +47,8 @@ export default async function BalanceSheetPage({
             targetId="balance-sheet-preview"
             fileName="statement-of-financial-position"
             excelHref={`/admin/financial-reports/export?report=balance-sheet&asOf=${toDateInputValue(asOfDate)}&comparative=${toDateInputValue(comparativeDate)}`}
+            disableExport={!balanceSheet.current.isBalanced}
+            disableExportReason={`Total Assets and Total Liabilities & Equity differ by AED ${Math.abs(balanceSheet.current.difference).toFixed(2)} as at ${toDateInputValue(asOfDate)}. Fix the underlying figures before exporting.`}
           />
         </div>
 
