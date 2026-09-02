@@ -10,7 +10,7 @@ function currentMonthLabel(lang: EmployeeLang) {
 
 type Title = string | { ar: string; en: string };
 
-export async function TopBar({ title = { ar: "أوستا للخدمات", en: "OSTA Services" } }: { title?: Title }) {
+export async function TopBar({ title = { ar: "اسطا للخدمات", en: "OSTA Services" } }: { title?: Title }) {
   const lang = await getEmployeeLang();
   const titleText = typeof title === "string" ? title : pickLang(lang, title);
 
