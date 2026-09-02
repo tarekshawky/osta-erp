@@ -27,6 +27,7 @@ const T = {
     addExpense: "إضافة مصروف",
     invoices: "الفواتير",
     requestStock: "طلب مخزون",
+    sparePartsCatalog: "كتالوج قطع الغيار",
     warrantyCertificate: "شهادة الضمان",
     myInventory: "مخزوني",
   },
@@ -47,6 +48,7 @@ const T = {
     addExpense: "Add Expense",
     invoices: "Invoices",
     requestStock: "Request Stock",
+    sparePartsCatalog: "Spare Parts Catalog",
     warrantyCertificate: "Warranty Certificate",
     myInventory: "My Inventory",
   },
@@ -283,6 +285,19 @@ export default async function EmployeeHomePage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M4 8l8-4 8 4v8l-8 4-8-4V8z" strokeLinejoin="round" />
                 <path d="M4 8l8 4 8-4M12 12v8" strokeLinejoin="round" />
+              </svg>
+            }
+          />
+          <QuickActionTile
+            href="/employee/inventory/catalog"
+            label={s.sparePartsCatalog}
+            lang={lang}
+            iconBg="bg-cyan-50"
+            iconColor="text-cyan-600"
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="10.5" cy="10.5" r="6.5" />
+                <path d="M20 20l-4.3-4.3" strokeLinecap="round" />
               </svg>
             }
           />

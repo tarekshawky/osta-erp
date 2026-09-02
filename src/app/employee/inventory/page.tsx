@@ -45,6 +45,8 @@ const T = {
     approved: "تمت الموافقة على",
     myReturns: "إرجاعاتي",
     noStockHistory: "لا توجد حركات مخزون بعد.",
+    browseCatalog: "تصفح كتالوج قطع الغيار",
+    browseCatalogHint: "ابحث بالصور والسعر والمخزون، وأضف عدة قطع لطلب واحد.",
   },
   en: {
     scanItem: "Scan Item",
@@ -55,6 +57,8 @@ const T = {
     approved: "Approved",
     myReturns: "My Returns",
     noStockHistory: "No stock movements yet.",
+    browseCatalog: "Browse Spare Parts Catalog",
+    browseCatalogHint: "Search by photo, price and stock, and add multiple items to one request.",
   },
 } as const;
 
@@ -141,6 +145,16 @@ export default async function MyInventoryPage({
                 {pickLang(lang, TABS[1].label)}
               </div>
             </div>
+
+            <Link
+              href="/employee/inventory/catalog"
+              className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3.5 hover:bg-slate-50"
+            >
+              <div dir={dir}>
+                <div className={`font-semibold text-sm text-slate-900 ${font}`}>{s.browseCatalog}</div>
+                <div className={`text-xs text-slate-500 mt-0.5 ${font}`}>{s.browseCatalogHint}</div>
+              </div>
+            </Link>
 
             <RequestStockForm items={itemOptions} lang={lang} />
 
