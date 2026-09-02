@@ -8,12 +8,20 @@ import { ReturnStockForm } from "@/components/inventory/ReturnStockForm";
 import { ReportDamagedForm } from "@/components/inventory/ReportDamagedForm";
 import { InventoryTransactionsTable } from "@/components/inventory/InventoryTransactionsTable";
 import { getEmployeeInventory, getInventoryItemDisplayName, getInventoryTransactions } from "@/lib/inventoryData";
+import { tajawal } from "@/lib/fonts";
 
 const STATUS_STYLES: Record<string, string> = {
   Pending: "bg-amber-50 text-amber-700",
   Approved: "bg-green-50 text-green-700",
   PartiallyApproved: "bg-blue-50 text-blue-700",
   Rejected: "bg-red-50 text-red-600",
+};
+
+const STATUS_LABELS_AR: Record<string, string> = {
+  Pending: "قيد الانتظار",
+  Approved: "تمت الموافقة",
+  PartiallyApproved: "موافقة جزئية",
+  Rejected: "مرفوض",
 };
 
 type InventoryTab = "stock" | "request" | "return" | "damaged" | "history";
@@ -93,15 +101,29 @@ export default async function MyInventoryPage({
 
         {tab === "request" && (
           <>
-            <h3 className="mb-3 font-semibold text-slate-900">Request Stock</h3>
+            <div
+              className="mb-4 rounded-2xl px-4 py-3.5 shadow-sm"
+              style={{ background: "linear-gradient(135deg, #0E3A7A, #081f42)" }}
+            >
+              <div className={`${tajawal.className} text-[15px] font-bold text-white`} dir="rtl">
+                طلب مخزون
+              </div>
+              <div className="text-[11px] text-white/70 mt-0.5">Request Stock</div>
+            </div>
+
             <RequestStockForm items={itemOptions} />
 
             {myRequests.length > 0 && (
               <>
-                <h3 className="mt-6 mb-3 font-semibold text-slate-900">My Requests</h3>
+                <div className="mt-6 mb-3 flex flex-row items-baseline gap-1.5">
+                  <span className={`${tajawal.className} font-bold text-slate-900 text-[14px]`} dir="rtl">
+                    طلباتي
+                  </span>
+                  <span className="text-[11px] text-slate-400">My Requests</span>
+                </div>
                 <div className="flex flex-col gap-2">
                   {myRequests.map((r) => (
-                    <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-3 flex items-center justify-between">
+                    <div key={r.id} className="rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm flex items-center justify-between">
                       <div>
                         <div className="text-sm font-medium text-slate-900">{getInventoryItemDisplayName(r.inventoryItem)}</div>
                         <div className="text-xs text-slate-500">
@@ -109,8 +131,11 @@ export default async function MyInventoryPage({
                           {r.approvedQuantity != null && r.status !== "Rejected" && ` · Approved ${r.approvedQuantity.toLocaleString()}`}
                         </div>
                       </div>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[r.status] ?? "bg-slate-100 text-slate-600"}`}>
-                        {r.status}
+                      <span className={`flex flex-col items-center text-center px-2.5 py-1 rounded-full ${STATUS_STYLES[r.status] ?? "bg-slate-100 text-slate-600"}`}>
+                        <span className={`${tajawal.className} text-[11px] font-bold leading-tight`} dir="rtl">
+                          {STATUS_LABELS_AR[r.status] ?? r.status}
+                        </span>
+                        <span className="text-[8.5px] opacity-75 leading-tight">{r.status}</span>
                       </span>
                     </div>
                   ))}
