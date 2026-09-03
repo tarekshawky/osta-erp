@@ -86,18 +86,6 @@ export function formatPeriodTitle(from: Date, to: Date): string {
 // diverge between what's shown and what's exported.
 export type AdminExpenseLine = { label: string; compute: (range: DateRange) => Promise<number> };
 
-const VEHICLE_MAINTENANCE_SUBCATEGORIES = [
-  "Service",
-  "Maintenance",
-  "Tires",
-  "Battery",
-  "Car Wash",
-  "Registration",
-  "Insurance",
-  "Salik",
-  "Parking",
-];
-
 // Categories that have their own dedicated ADMIN_EXPENSE_LINES entry below --
 // anything else (including "Other") falls through to the "Other Expenses" catch-all
 // so no Expense.category can ever silently disappear from the Income Statement.
@@ -133,6 +121,30 @@ async function sumVehicleExpensesBySubcategories(subcategories: string[], range:
   return (agg._sum.amount ?? 0) - (agg._sum.refundedAmount ?? 0);
 }
 
+// Catch-all for the "Vehicle Maintenance" line: every vehicle-linked expense
+// EXCEPT the two with their own dedicated lines (Fuel, Fine). A prior version
+// summed a fixed whitelist of subcategories instead -- any vehicle expense
+// whose subcategory was "Repair", null, or otherwise not on that list (a real,
+// selectable option in the Vehicle expense form) silently vanished from every
+// admin expense line while still reducing Cash, throwing the Balance Sheet out
+// of balance by exactly that amount. Excluding by name instead of whitelisting
+// makes it structurally impossible for a vehicle expense to go uncounted again.
+async function sumVehicleExpensesExcludingSubcategories(excludedSubcategories: string[], range: DateRange): Promise<number> {
+  const agg = await prisma.expense.aggregate({
+    _sum: { amount: true, refundedAmount: true },
+    where: {
+      vehicleId: { not: null },
+      // Plain `subcategory: { notIn }` follows SQL's three-valued NOT IN logic
+      // and silently drops rows where subcategory is NULL (a real, valid state
+      // for a vehicle expense, not something to exclude) -- the OR makes NULL
+      // an explicit pass-through instead of an accidental filter-out.
+      OR: [{ subcategory: { notIn: excludedSubcategories } }, { subcategory: null }],
+      date: buildCustomDateRange(range.from, range.to),
+    },
+  });
+  return (agg._sum.amount ?? 0) - (agg._sum.refundedAmount ?? 0);
+}
+
 async function sumSalaryExpense(range: DateRange): Promise<number> {
   // Gross -- Salary + Advance only, Deduction-type entries (e.g. a Vehicle Fine's
   // employee-recovered portion) never reduce this line. See plan Context for why
@@ -142,6 +154,23 @@ async function sumSalaryExpense(range: DateRange): Promise<number> {
     where: { type: { in: ["Salary", "Advance"] }, date: buildCustomDateRange(range.from, range.to) },
   });
   return agg._sum.amount ?? 0;
+}
+
+// A Deduction-type PayrollEntry (e.g. an employee's recovered share of a Vehicle
+// Fine) reduces the net cash actually paid out for payroll -- computeCashAndCash
+// Equivalents already adds it back to Cash for exactly that reason. Salary Expense
+// stays deliberately gross (see sumSalaryExpense above) and the Fine's own expense
+// line is deliberately gross too, so without this contra-expense line the cash
+// recovered from an employee had no matching effect on Retained Earnings, leaving
+// the Balance Sheet out of balance by the full Deduction total. A negative amount
+// here is a legitimate contra-expense presentation ("less: recovered from staff"),
+// not a display bug.
+async function sumPayrollDeductionRecoveries(range: DateRange): Promise<number> {
+  const agg = await prisma.payrollEntry.aggregate({
+    _sum: { amount: true },
+    where: { type: "Deduction", date: buildCustomDateRange(range.from, range.to) },
+  });
+  return -(agg._sum.amount ?? 0);
 }
 
 function yearsElapsed(from: Date, to: Date): number {
@@ -208,9 +237,10 @@ export const ADMIN_EXPENSE_LINES: AdminExpenseLine[] = [
   { label: "Rent", compute: (r) => sumExpensesByCategory("Rent", r) },
   { label: "Rent / Accommodation", compute: (r) => sumExpensesByCategory("Rent / Accommodation", r) },
   { label: "Salary", compute: (r) => sumSalaryExpense(r) },
+  { label: "Less: Payroll Deduction Recoveries", compute: (r) => sumPayrollDeductionRecoveries(r) },
   { label: "Telephone Expenses", compute: (r) => sumExpensesByCategory("Telephone Expenses", r) },
   { label: "Trade License Renewal Fee", compute: (r) => sumExpensesByCategory("Trade License Renewal Fee", r) },
-  { label: "Vehicle Maintenance", compute: (r) => sumVehicleExpensesBySubcategories(VEHICLE_MAINTENANCE_SUBCATEGORIES, r) },
+  { label: "Vehicle Maintenance", compute: (r) => sumVehicleExpensesExcludingSubcategories(["Petrol / Fuel", "Fine"], r) },
   { label: "Vehicle Fuel", compute: (r) => sumVehicleExpensesBySubcategories(["Petrol / Fuel"], r) },
   { label: "Vehicle Fines", compute: (r) => sumVehicleExpensesBySubcategories(["Fine"], r) },
   { label: "Insurance", compute: (r) => sumExpensesByCategory("Insurance", r) },
