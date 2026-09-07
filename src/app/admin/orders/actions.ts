@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
-import { getSession } from "@/lib/session";
+import { getSession, isAdminRole } from "@/lib/session";
 import { parseUaeDateTimeLocal, generateOrderNumber } from "@/lib/orderData";
 import { findOrCreateCustomer } from "@/lib/customerMatch";
 import type { Prisma } from "@/generated/prisma";
@@ -37,7 +37,7 @@ export type OrderActionResult = { ok: boolean; id?: string; error?: string };
 
 async function requireAdmin() {
   const session = await getSession();
-  if (!session || session.role !== "ADMIN") redirect("/");
+  if (!session || !isAdminRole(session.role)) redirect("/");
 }
 
 function validateOrderInput(customer: OrderCustomerInput, details: OrderDetailsInput) {
@@ -144,7 +144,7 @@ export async function setOrderStatus(
   options: { reason?: string; newScheduledAt?: string } = {}
 ): Promise<OrderActionResult> {
   const session = await getSession();
-  if (!session || session.role !== "ADMIN") redirect("/");
+  if (!session || !isAdminRole(session.role)) redirect("/");
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) return { ok: false, error: "Order not found." };

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getSession, isAdminRole } from "@/lib/session";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
 import { findOrCreateCustomer } from "@/lib/customerMatch";
 import type { CustomerFormData, ServiceFormData } from "@/components/invoice/types";
@@ -87,7 +87,7 @@ export async function updateQuotationFromWizard(
   service: ServiceFormData
 ): Promise<CreateQuotationResult> {
   const session = await getSession();
-  if (!session || session.role !== "ADMIN") return { ok: false, error: "Not authorized." };
+  if (!session || !isAdminRole(session.role)) return { ok: false, error: "Not authorized." };
 
   const existing = await prisma.quotation.findUnique({ where: { id: quotationId } });
   if (!existing) return { ok: false, error: "Quotation not found." };

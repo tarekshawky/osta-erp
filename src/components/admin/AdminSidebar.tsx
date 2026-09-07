@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import { initials } from "@/lib/format";
 import { logout } from "@/app/actions/logout";
 import { LogoImage } from "@/components/LogoImage";
+import { canAccessAdminSection } from "@/lib/adminSections";
 
 type NavItem = {
   href: string;
@@ -234,15 +235,20 @@ const NAV: NavItem[] = [
 
 export function AdminSidebar({
   adminName,
+  isSuperAdmin,
+  adminSections,
   open,
   onClose,
 }: {
   adminName: string;
+  isSuperAdmin: boolean;
+  adminSections: string[];
   open: boolean;
   onClose: () => void;
 }) {
   const pathname = usePathname();
   const [manualExpanded, setManualExpanded] = useState<Record<string, boolean>>({});
+  const visibleNav = isSuperAdmin ? NAV : NAV.filter((item) => canAccessAdminSection(adminSections, item.href));
 
   return (
     <aside
@@ -265,7 +271,7 @@ export function AdminSidebar({
       </div>
 
       <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
-        {NAV.map((item) => {
+        {visibleNav.map((item) => {
           const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
 
           if (!item.children) {
@@ -358,7 +364,7 @@ export function AdminSidebar({
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium truncate">{adminName}</div>
-          <div className="text-xs text-blue-300">Admin</div>
+          <div className="text-xs text-blue-300">{isSuperAdmin ? "Super Admin" : "Admin"}</div>
         </div>
       </div>
       <form action={logout} className="px-4 pb-4">

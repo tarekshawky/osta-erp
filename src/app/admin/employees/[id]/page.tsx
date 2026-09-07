@@ -34,7 +34,8 @@ export default async function EmployeeProfilePage({
         <div>
           <h2 className="text-2xl font-bold text-slate-900">{employee.name}</h2>
           <p className="text-sm text-slate-500 mt-0.5">
-            {employee.code} · {employee.jobTitle} · {employee.role === "ADMIN" ? "Admin" : "Employee"}
+            {employee.code} · {employee.jobTitle} ·{" "}
+            {employee.role === "SUPER_ADMIN" ? "Super Admin" : employee.role === "ADMIN" ? "Admin" : "Employee"}
           </p>
         </div>
 

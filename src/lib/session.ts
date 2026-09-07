@@ -6,8 +6,14 @@ const COOKIE_NAME = "osta_session";
 
 export type SessionPayload = {
   employeeId: string;
-  role: "EMPLOYEE" | "ADMIN";
+  role: "EMPLOYEE" | "ADMIN" | "SUPER_ADMIN";
 };
+
+// Super Admin is a strict superset of Admin -- every "is this an admin"
+// check across the app must treat the two the same, never just "ADMIN".
+export function isAdminRole(role: string | null | undefined): boolean {
+  return role === "ADMIN" || role === "SUPER_ADMIN";
+}
 
 function sign(value: string) {
   return createHmac("sha256", SECRET).update(value).digest("base64url");

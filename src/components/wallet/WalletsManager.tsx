@@ -9,7 +9,7 @@ export type WalletRow = {
   id: string;
   code: string;
   name: string;
-  role: "ADMIN" | "EMPLOYEE";
+  role: "ADMIN" | "EMPLOYEE" | "SUPER_ADMIN";
   photoData?: string | null;
   custody: number;
   revenue: number;
@@ -29,7 +29,7 @@ export function WalletsManager({
 }) {
   const [tab, setTab] = useState<"admin" | "employee" | "credit">("admin");
 
-  const admins = wallets.filter((w) => w.role === "ADMIN");
+  const admins = wallets.filter((w) => w.role === "ADMIN" || w.role === "SUPER_ADMIN");
   const employees = wallets.filter((w) => w.role === "EMPLOYEE");
 
   const adminTotal = admins.reduce((sum, w) => sum + w.custody + w.payments.cash - w.expenses, 0);
@@ -108,7 +108,7 @@ export function WalletsManager({
           {shown.map((w) => (
             <WalletCard
               key={w.id}
-              role={w.role === "ADMIN" ? "Admin" : "Employee"}
+              role={w.role === "ADMIN" || w.role === "SUPER_ADMIN" ? "Admin" : "Employee"}
               code={w.code}
               name={w.name}
               photoData={w.photoData}

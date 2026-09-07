@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
+import { getSession, isAdminRole } from "@/lib/session";
 import { OstaLogo } from "@/components/OstaLogo";
 
 export default async function RoleSelectPage() {
   const session = await getSession();
   if (session?.role === "EMPLOYEE") redirect("/employee");
-  if (session?.role === "ADMIN") redirect("/admin");
+  if (isAdminRole(session?.role)) redirect("/admin");
 
   return (
     <div className="min-h-dvh flex flex-col items-center bg-white px-6 pt-20">

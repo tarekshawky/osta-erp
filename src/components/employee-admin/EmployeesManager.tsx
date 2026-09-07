@@ -18,7 +18,7 @@ export type EmployeeRow = {
   jobTitle: string;
   phone: string | null;
   teamName: string | null;
-  role: "EMPLOYEE" | "ADMIN";
+  role: "EMPLOYEE" | "ADMIN" | "SUPER_ADMIN";
   status: string;
   custody: number;
   revenue: number;
@@ -26,6 +26,7 @@ export type EmployeeRow = {
   hasWallet: boolean;
   invoicesAccess: string;
   expensesAccess: string;
+  adminSections: string[];
   joinDate: string | null;
   endOfServiceDate: string | null;
   sparePartPriceModification: string;
@@ -41,7 +42,7 @@ function toFormValue(emp: EmployeeRow): EmployeeFormValue {
     jobTitle: emp.jobTitle,
     phone: emp.phone ?? "",
     teamName: emp.teamName ?? "Ajman",
-    role: emp.role === "ADMIN" ? "admin" : "employee",
+    role: emp.role === "SUPER_ADMIN" ? "super_admin" : emp.role === "ADMIN" ? "admin" : "employee",
     pin: "",
     status: (emp.status as EmployeeFormValue["status"]) ?? "active",
     custody: emp.custody,
@@ -49,6 +50,7 @@ function toFormValue(emp: EmployeeRow): EmployeeFormValue {
     hasWallet: emp.hasWallet,
     invoicesAccess: emp.invoicesAccess,
     expensesAccess: emp.expensesAccess,
+    adminSections: emp.adminSections,
     joinDate: emp.joinDate ?? "",
     endOfServiceDate: emp.endOfServiceDate ?? "",
     sparePartPriceModification: emp.sparePartPriceModification,
@@ -72,6 +74,7 @@ const emptyFormValue: EmployeeFormValue = {
   hasWallet: true,
   invoicesAccess: "No Access",
   expensesAccess: "No Access",
+  adminSections: [],
   joinDate: "",
   endOfServiceDate: "",
   sparePartPriceModification: "Not Allowed",
@@ -85,11 +88,13 @@ export function EmployeesManager({
   totalCount,
   page,
   totalPages,
+  actingIsSuperAdmin,
 }: {
   employees: EmployeeRow[];
   totalCount: number;
   page: number;
   totalPages: number;
+  actingIsSuperAdmin: boolean;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -152,6 +157,7 @@ export function EmployeesManager({
         <EmployeeForm
           initial={emptyFormValue}
           isEdit={false}
+          actingIsSuperAdmin={actingIsSuperAdmin}
           onSave={async (value) => {
             const res = await createEmployee(value);
             if (res.ok) {
@@ -168,6 +174,7 @@ export function EmployeesManager({
         <EmployeeForm
           initial={toFormValue(editingEmployee)}
           isEdit
+          actingIsSuperAdmin={actingIsSuperAdmin}
           onSave={async (value) => {
             const res = await updateEmployee(editingEmployee.id, value);
             if (res.ok) {
@@ -202,7 +209,7 @@ export function EmployeesManager({
                 <td className="px-4 py-3">
                   <div className="font-medium text-slate-900">{emp.name}</div>
                   <div className="text-xs text-slate-400">
-                    {emp.role === "ADMIN" ? "admin" : "employee"}
+                    {emp.role === "SUPER_ADMIN" ? "super admin" : emp.role === "ADMIN" ? "admin" : "employee"}
                     {emp.joinDate && ` · Joined ${formatDate(new Date(emp.joinDate))}`}
                   </div>
                   {emp.endOfServiceDate && (

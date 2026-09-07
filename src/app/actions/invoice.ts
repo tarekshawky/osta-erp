@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getSession, isAdminRole } from "@/lib/session";
 import { CUSTOM_SERVICE_VALUE, WARRANTY_DAYS } from "@/lib/invoiceData";
 import { findOrCreateCustomer } from "@/lib/customerMatch";
 import { recordInventoryUsage, reverseInventoryUsage, InsufficientStockError } from "@/lib/inventoryData";
@@ -46,7 +46,7 @@ function validateInvoiceItemPrices(
     labourMaxDiscountPercent: number | null;
   }
 ): string | null {
-  if (actingEmployee.role === "ADMIN") return null;
+  if (isAdminRole(actingEmployee.role)) return null;
   for (const item of items) {
     if (item.itemType === "SparePart") {
       const res = validatePriceModification(
@@ -165,8 +165,8 @@ export async function createInvoiceFromWizard(
   const amount = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
   const date = parseInvoiceDate(payment.date);
   if (!date) return { ok: false, error: "Enter a valid invoice date." };
-  const teamId = await resolveInvoiceTeamId(payment.teamId, session.role === "ADMIN", employee.teamId);
-  if (session.role === "ADMIN" && !teamId) return { ok: false, error: "Select Ajman or Al Ain team." };
+  const teamId = await resolveInvoiceTeamId(payment.teamId, isAdminRole(session.role), employee.teamId);
+  if (isAdminRole(session.role) && !teamId) return { ok: false, error: "Select Ajman or Al Ain team." };
   const dbCustomer = await findOrCreateCustomer(customer, employee.id);
   const warrantyUntil = new Date(date);
   warrantyUntil.setUTCDate(warrantyUntil.getUTCDate() + WARRANTY_DAYS);
@@ -248,7 +248,7 @@ export async function updateInvoiceFromWizard(
   payment: PaymentFormData
 ): Promise<CreateInvoiceResult> {
   const session = await getSession();
-  if (!session || session.role !== "ADMIN") return { ok: false, error: "Not authorized." };
+  if (!session || !isAdminRole(session.role)) return { ok: false, error: "Not authorized." };
 
   const existing = await prisma.invoice.findUnique({ where: { id: invoiceId } });
   if (!existing) return { ok: false, error: "Invoice not found." };

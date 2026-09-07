@@ -2,11 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getSession, isAdminRole } from "@/lib/session";
 
 async function requireAdmin() {
   const session = await getSession();
-  if (!session || session.role !== "ADMIN") redirect("/");
+  if (!session || !isAdminRole(session.role)) redirect("/");
 }
 
 export async function deleteWarrantyCertificate(id: string) {

@@ -5,7 +5,10 @@ import type { Employee } from "@/generated/prisma";
 
 export async function requireEmployee(role: "ADMIN" | "EMPLOYEE"): Promise<Employee> {
   const session = await getSession();
-  if (!session || session.role !== role) redirect("/");
+  // A Super Admin session satisfies an "ADMIN" check too -- Super Admin is a
+  // strict superset of Admin, never a separate, narrower login surface.
+  const satisfies = role === "ADMIN" ? session?.role === "ADMIN" || session?.role === "SUPER_ADMIN" : session?.role === role;
+  if (!session || !satisfies) redirect("/");
 
   const employee = await prisma.employee.findUnique({ where: { id: session.employeeId } });
   if (!employee) {

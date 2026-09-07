@@ -11,6 +11,7 @@ datasource db {
 enum Role {
   EMPLOYEE
   ADMIN
+  SUPER_ADMIN
 }
 
 enum CustomerType {
@@ -81,6 +82,12 @@ model Employee {
   canViewCreditCardWallets     Boolean                        @default(false)
   invoicesAccess               String                         @default("No Access")
   expensesAccess               String                         @default("No Access")
+  // Which /admin dashboard sections a plain ADMIN can see (Employee.role
+  // ADMIN, not SUPER_ADMIN). Empty = unrestricted (sees everything) -- the
+  // default, so no existing or newly-created Admin loses access until a
+  // Super Admin explicitly narrows this list. Ignored entirely for
+  // SUPER_ADMIN, who is always unrestricted. See src/lib/adminSections.ts.
+  adminSections                String[]                       @default([])
   joinDate                     DateTime?
   endOfServiceDate             DateTime?
   teamId                       String?

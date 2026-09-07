@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getSession, isAdminRole } from "@/lib/session";
 import { checkOpeningBalance } from "@/lib/financialReportsBalanceSheet";
 import { SETTING_ID } from "@/lib/settings";
 import { formatAed } from "@/lib/format";
@@ -25,7 +25,7 @@ export async function updateCashPosition(
   openingDate: string
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await getSession();
-  if (!session || session.role !== "ADMIN") return { ok: false, error: "Not authorized." };
+  if (!session || !isAdminRole(session.role)) return { ok: false, error: "Not authorized." };
 
   const amount = Number(openingBalance);
   if (Number.isNaN(amount)) return { ok: false, error: "Enter a valid opening balance." };

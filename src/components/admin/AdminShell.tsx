@@ -5,16 +5,26 @@ import { AdminSidebar } from "./AdminSidebar";
 
 export function AdminShell({
   adminName,
+  isSuperAdmin,
+  adminSections,
   children,
 }: {
   adminName: string;
+  isSuperAdmin: boolean;
+  adminSections: string[];
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
     <div className="min-h-dvh flex bg-slate-50">
-      <AdminSidebar adminName={adminName} open={open} onClose={() => setOpen(false)} />
+      <AdminSidebar
+        adminName={adminName}
+        isSuperAdmin={isSuperAdmin}
+        adminSections={adminSections}
+        open={open}
+        onClose={() => setOpen(false)}
+      />
       {open && (
         <div
           className="fixed inset-0 bg-black/30 z-20 md:hidden"

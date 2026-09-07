@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import type { EmployeeFormInput } from "@/app/admin/employees/actions";
 import { PRICE_MODIFICATION_LEVELS } from "@/lib/pricePermissions";
 import { RECORD_ACCESS_LEVELS } from "@/lib/recordAccess";
+import { ADMIN_SECTIONS } from "@/lib/adminSections";
 
 export type EmployeeFormValue = EmployeeFormInput;
 
@@ -12,11 +13,13 @@ const TEAM_OPTIONS = ["Ajman", "Al Ain", "Admin"];
 export function EmployeeForm({
   initial,
   isEdit,
+  actingIsSuperAdmin,
   onSave,
   onCancel,
 }: {
   initial: EmployeeFormValue;
   isEdit: boolean;
+  actingIsSuperAdmin: boolean;
   onSave: (value: EmployeeFormValue) => Promise<{ ok: boolean; error?: string }>;
   onCancel: () => void;
 }) {
@@ -96,10 +99,11 @@ export function EmployeeForm({
           <select
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             value={value.role}
-            onChange={(e) => setValue({ ...value, role: e.target.value as "employee" | "admin" })}
+            onChange={(e) => setValue({ ...value, role: e.target.value as EmployeeFormValue["role"] })}
           >
             <option value="employee">Employee</option>
             <option value="admin">Admin</option>
+            {(actingIsSuperAdmin || value.role === "super_admin") && <option value="super_admin">Super Admin</option>}
           </select>
         </label>
         <label className="flex flex-col gap-1.5">
@@ -179,6 +183,44 @@ export function EmployeeForm({
             <option value="none">No wallet needed</option>
           </select>
         </label>
+        {value.role === "admin" && (
+          <div className="sm:col-span-2 flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-slate-600">Dashboard Access</span>
+            <select
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 disabled:opacity-60"
+              disabled={!actingIsSuperAdmin}
+              value={value.adminSections.length === 0 ? "all" : "custom"}
+              onChange={(e) =>
+                setValue({ ...value, adminSections: e.target.value === "all" ? [] : ADMIN_SECTIONS.map((s) => s.key) })
+              }
+            >
+              <option value="all">All Sections</option>
+              <option value="custom">Custom — choose sections below</option>
+            </select>
+            {value.adminSections.length > 0 && (
+              <div className="mt-1 grid grid-cols-2 sm:grid-cols-3 gap-1.5 rounded-lg border border-slate-200 p-3">
+                {ADMIN_SECTIONS.map((s) => (
+                  <label key={s.key} className="flex items-center gap-1.5 text-xs text-slate-700">
+                    <input
+                      type="checkbox"
+                      disabled={!actingIsSuperAdmin}
+                      checked={value.adminSections.includes(s.key)}
+                      onChange={(e) =>
+                        setValue({
+                          ...value,
+                          adminSections: e.target.checked
+                            ? [...value.adminSections, s.key]
+                            : value.adminSections.filter((k) => k !== s.key),
+                        })
+                      }
+                    />
+                    {s.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Invoices Access</span>
           <select

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getSession, isAdminRole } from "@/lib/session";
 import { WARRANTY_DAYS } from "@/lib/invoiceData";
 
 export type WarrantyCertificateFormInput = {
@@ -67,7 +67,7 @@ export async function updateWarrantyCertificate(
   input: WarrantyCertificateFormInput
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await getSession();
-  if (!session || session.role !== "ADMIN") return { ok: false, error: "Not authorized." };
+  if (!session || !isAdminRole(session.role)) return { ok: false, error: "Not authorized." };
 
   const existing = await prisma.warrantyCertificate.findUnique({ where: { id } });
   if (!existing) return { ok: false, error: "Certificate not found." };

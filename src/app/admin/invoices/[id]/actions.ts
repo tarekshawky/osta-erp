@@ -3,12 +3,12 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getSession, isAdminRole } from "@/lib/session";
 import { reverseInventoryUsage } from "@/lib/inventoryData";
 
 async function requireAdmin() {
   const session = await getSession();
-  if (!session || session.role !== "ADMIN") redirect("/");
+  if (!session || !isAdminRole(session.role)) redirect("/");
   return session;
 }
 

@@ -3,6 +3,7 @@ import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { EmployeesManager } from "@/components/employee-admin/EmployeesManager";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { getEmployeeFinancials } from "@/lib/walletData";
+import { getSession } from "@/lib/session";
 
 export default async function AdminEmployeesPage({
   searchParams,
@@ -11,6 +12,8 @@ export default async function AdminEmployeesPage({
 }) {
   const { page: pageParam } = await searchParams;
   const page = parsePage(pageParam);
+  const session = await getSession();
+  const actingIsSuperAdmin = session?.role === "SUPER_ADMIN";
 
   const totalCount = await prisma.employee.count();
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -42,6 +45,7 @@ export default async function AdminEmployeesPage({
     hasWallet: emp.hasWallet,
     invoicesAccess: emp.invoicesAccess,
     expensesAccess: emp.expensesAccess,
+    adminSections: emp.adminSections,
     joinDate: emp.joinDate ? emp.joinDate.toISOString().slice(0, 10) : null,
     endOfServiceDate: emp.endOfServiceDate ? emp.endOfServiceDate.toISOString().slice(0, 10) : null,
     sparePartPriceModification: emp.sparePartPriceModification,
@@ -55,7 +59,13 @@ export default async function AdminEmployeesPage({
       <AdminTopBar title="Employees" />
 
       <div className="px-6 py-6">
-        <EmployeesManager employees={rows} totalCount={totalCount} page={safePage} totalPages={totalPages} />
+        <EmployeesManager
+          employees={rows}
+          totalCount={totalCount}
+          page={safePage}
+          totalPages={totalPages}
+          actingIsSuperAdmin={actingIsSuperAdmin}
+        />
       </div>
     </div>
   );
