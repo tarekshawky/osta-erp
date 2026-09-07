@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getSession } from "@/lib/session";
+import { redirect } from "next/navigation";
+import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatAed, formatDate } from "@/lib/format";
 import { TopBar } from "@/components/TopBar";
@@ -14,14 +15,15 @@ const T = {
 } as const;
 
 export default async function EmployeeExpensesPage() {
-  const session = await getSession();
+  const employee = await requireEmployee("EMPLOYEE");
+  if (!employee.canViewExpenses) redirect("/employee");
   const lang = await getEmployeeLang();
   const s = pickLang(lang, T);
   const dir = lang === "ar" ? "rtl" : "ltr";
   const font = lang === "ar" ? tajawal.className : "";
 
   const expenses = await prisma.expense.findMany({
-    where: { createdById: session!.employeeId },
+    where: { createdById: employee.id },
     orderBy: { date: "desc" },
   });
 

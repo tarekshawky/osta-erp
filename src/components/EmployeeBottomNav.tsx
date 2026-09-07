@@ -5,7 +5,16 @@ import { usePathname } from "next/navigation";
 import { tajawal } from "@/lib/fonts";
 import type { EmployeeLang } from "@/lib/employeeLang";
 
-const items = [
+type NavItem = {
+  href: string;
+  matchPath: string;
+  exact: boolean;
+  label: { ar: string; en: string };
+  permission?: "canViewInvoices" | "canViewExpenses";
+  icon: React.ReactNode;
+};
+
+const items: NavItem[] = [
   {
     href: "/employee",
     matchPath: "/employee",
@@ -20,6 +29,7 @@ const items = [
     matchPath: "/employee/invoices",
     exact: false,
     label: { ar: "الفواتير", en: "Invoices" },
+    permission: "canViewInvoices" as const,
     icon: (
       <>
         <path d="M7 3h10a1 1 0 011 1v16l-3-2-2 2-2-2-2 2-3-2V4a1 1 0 011-1z" strokeLinejoin="round" />
@@ -44,6 +54,7 @@ const items = [
     matchPath: "/employee/expenses",
     exact: false,
     label: { ar: "المصاريف", en: "Expenses" },
+    permission: "canViewExpenses" as const,
     icon: (
       <>
         <rect x="3" y="6" width="18" height="13" rx="2" />
@@ -65,12 +76,28 @@ const items = [
   },
 ];
 
-export function EmployeeBottomNav({ lang }: { lang: EmployeeLang }) {
+const GRID_COLS_CLASS: Record<number, string> = {
+  3: "grid-cols-3",
+  4: "grid-cols-4",
+  5: "grid-cols-5",
+};
+
+export function EmployeeBottomNav({
+  lang,
+  canViewInvoices,
+  canViewExpenses,
+}: {
+  lang: EmployeeLang;
+  canViewInvoices: boolean;
+  canViewExpenses: boolean;
+}) {
   const pathname = usePathname();
+  const permissions = { canViewInvoices, canViewExpenses };
+  const visibleItems = items.filter((item) => !item.permission || permissions[item.permission]);
 
   return (
-    <nav className="sticky bottom-0 z-10 grid grid-cols-5 border-t border-slate-100 bg-white/95 backdrop-blur">
-      {items.map((item) => {
+    <nav className={`sticky bottom-0 z-10 grid ${GRID_COLS_CLASS[visibleItems.length] ?? "grid-cols-3"} border-t border-slate-100 bg-white/95 backdrop-blur`}>
+      {visibleItems.map((item) => {
         const active = item.exact ? pathname === item.matchPath : pathname.startsWith(item.matchPath);
         return (
           <Link

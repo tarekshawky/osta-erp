@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
-import { getSession } from "@/lib/session";
+import { notFound, redirect } from "next/navigation";
+import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatUaePhone } from "@/lib/format";
 import { TopBar } from "@/components/TopBar";
@@ -18,7 +18,8 @@ export default async function EmployeeInvoiceDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await getSession();
+  const employee = await requireEmployee("EMPLOYEE");
+  if (!employee.canViewInvoices) redirect("/employee");
   const lang = await getEmployeeLang();
   const s = pickLang(lang, T);
 
@@ -26,7 +27,7 @@ export default async function EmployeeInvoiceDetailPage({
     where: { id },
     include: { customer: true, items: true, createdBy: true },
   });
-  if (!invoice || invoice.createdById !== session!.employeeId) notFound();
+  if (!invoice || invoice.createdById !== employee.id) notFound();
 
   return (
     <div className="pb-10">

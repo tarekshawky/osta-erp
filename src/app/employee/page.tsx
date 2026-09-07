@@ -185,19 +185,21 @@ export default async function EmployeeHomePage() {
           {s.quickActions}
         </h2>
         <div className="grid grid-cols-3 gap-3">
-          <QuickActionTile
-            href="/employee/invoices/new"
-            label={s.createInvoice}
-            lang={lang}
-            iconBg="bg-blue-50"
-            iconColor="text-blue-600"
-            icon={
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" strokeLinejoin="round" />
-                <path d="M12 11v6M9 14h6" strokeLinecap="round" />
-              </svg>
-            }
-          />
+          {employee.canViewInvoices && (
+            <QuickActionTile
+              href="/employee/invoices/new"
+              label={s.createInvoice}
+              lang={lang}
+              iconBg="bg-blue-50"
+              iconColor="text-blue-600"
+              icon={
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" strokeLinejoin="round" />
+                  <path d="M12 11v6M9 14h6" strokeLinecap="round" />
+                </svg>
+              }
+            />
+          )}
           <QuickActionTile
             href="/employee/quotation"
             label={s.createQuotation}
@@ -249,32 +251,36 @@ export default async function EmployeeHomePage() {
               </svg>
             }
           />
-          <QuickActionTile
-            href="/employee/expenses/new"
-            label={s.addExpense}
-            lang={lang}
-            iconBg="bg-red-50"
-            iconColor="text-red-500"
-            icon={
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 8l6 6 4-4 6 8" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M15 18h5v-5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            }
-          />
-          <QuickActionTile
-            href="/employee/invoices"
-            label={s.invoices}
-            lang={lang}
-            iconBg="bg-green-50"
-            iconColor="text-green-600"
-            icon={
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="4" y="4" width="16" height="16" rx="2" />
-                <path d="M8 9h8M8 13h5" strokeLinecap="round" />
-              </svg>
-            }
-          />
+          {employee.canViewExpenses && (
+            <QuickActionTile
+              href="/employee/expenses/new"
+              label={s.addExpense}
+              lang={lang}
+              iconBg="bg-red-50"
+              iconColor="text-red-500"
+              icon={
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 8l6 6 4-4 6 8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M15 18h5v-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              }
+            />
+          )}
+          {employee.canViewInvoices && (
+            <QuickActionTile
+              href="/employee/invoices"
+              label={s.invoices}
+              lang={lang}
+              iconBg="bg-green-50"
+              iconColor="text-green-600"
+              icon={
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                  <path d="M8 9h8M8 13h5" strokeLinecap="round" />
+                </svg>
+              }
+            />
+          )}
           <QuickActionTile
             href="/employee/inventory?tab=request"
             label={s.requestStock}

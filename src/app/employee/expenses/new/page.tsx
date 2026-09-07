@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireEmployee } from "@/lib/auth";
 import { TopBar } from "@/components/TopBar";
 import { NewExpenseForm } from "./NewExpenseForm";
 import { getVehicleCurrentOdometer } from "@/lib/vehicleData";
@@ -8,6 +10,8 @@ export default async function NewExpensePage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  const employee = await requireEmployee("EMPLOYEE");
+  if (!employee.canViewExpenses) redirect("/employee");
   const { error } = await searchParams;
   const [activeCards, vehicles] = await Promise.all([
     prisma.creditCard.findMany({

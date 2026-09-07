@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { TopBar } from "@/components/TopBar";
@@ -13,8 +14,10 @@ export default async function NewInvoicePage({
   searchParams: Promise<{ orderId?: string; quotationId?: string }>;
 }) {
   const { orderId, quotationId } = await searchParams;
+  const employeeGuard = await requireEmployee("EMPLOYEE");
+  if (!employeeGuard.canViewInvoices) redirect("/employee");
   const [employee, lang, order, quotation, activeItems, labourItems] = await Promise.all([
-    requireEmployee("EMPLOYEE"),
+    Promise.resolve(employeeGuard),
     getEmployeeLang(),
     orderId ? prisma.order.findUnique({ where: { id: orderId }, include: { customer: true } }) : null,
     quotationId ? prisma.quotation.findUnique({ where: { id: quotationId }, include: { customer: true, items: true } }) : null,

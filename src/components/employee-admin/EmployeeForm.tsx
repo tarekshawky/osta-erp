@@ -179,6 +179,28 @@ export function EmployeeForm({
           </select>
         </label>
         <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Invoices Access</span>
+          <select
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            value={value.canViewInvoices ? "yes" : "no"}
+            onChange={(e) => setValue({ ...value, canViewInvoices: e.target.value === "yes" })}
+          >
+            <option value="no">No access</option>
+            <option value="yes">Can view Invoices</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-600">Expenses Access</span>
+          <select
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            value={value.canViewExpenses ? "yes" : "no"}
+            onChange={(e) => setValue({ ...value, canViewExpenses: e.target.value === "yes" })}
+          >
+            <option value="no">No access</option>
+            <option value="yes">Can view Expenses</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Allow Spare Part Price Modification</span>
           <select
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"

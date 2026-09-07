@@ -23,6 +23,8 @@ export type EmployeeFormInput = {
   custody: number;
   monthlySalary: number;
   hasWallet: boolean;
+  canViewInvoices: boolean;
+  canViewExpenses: boolean;
   joinDate: string;
   endOfServiceDate: string;
   sparePartPriceModification: string;
@@ -98,6 +100,8 @@ export async function createEmployee(input: EmployeeFormInput): Promise<{ ok: bo
       custody: Number.isFinite(input.custody) ? input.custody : 0,
       monthlySalary: Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0,
       hasWallet: input.hasWallet,
+      canViewInvoices: input.canViewInvoices,
+      canViewExpenses: input.canViewExpenses,
       joinDate: parseDate(input.joinDate),
       endOfServiceDate: parseDate(input.endOfServiceDate),
       ...buildPricePermissionData(input),
@@ -135,6 +139,8 @@ export async function updateEmployee(
       custody: Number.isFinite(input.custody) ? input.custody : 0,
       monthlySalary: Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0,
       hasWallet: input.hasWallet,
+      canViewInvoices: input.canViewInvoices,
+      canViewExpenses: input.canViewExpenses,
       joinDate: parseDate(input.joinDate),
       endOfServiceDate: parseDate(input.endOfServiceDate),
       ...buildPricePermissionData(input),

@@ -3,7 +3,7 @@ import { EmployeeBottomNav } from "@/components/EmployeeBottomNav";
 import { getEmployeeLang } from "@/lib/employeeLang";
 
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
-  await requireEmployee("EMPLOYEE");
+  const employee = await requireEmployee("EMPLOYEE");
   const lang = await getEmployeeLang();
 
   return (
@@ -14,7 +14,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
         lang={lang}
       >
         <div className="flex-1">{children}</div>
-        <EmployeeBottomNav lang={lang} />
+        <EmployeeBottomNav lang={lang} canViewInvoices={employee.canViewInvoices} canViewExpenses={employee.canViewExpenses} />
       </div>
     </div>
   );
