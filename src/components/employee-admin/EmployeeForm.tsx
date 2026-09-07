@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { EmployeeFormInput } from "@/app/admin/employees/actions";
 import { PRICE_MODIFICATION_LEVELS } from "@/lib/pricePermissions";
+import { RECORD_ACCESS_LEVELS } from "@/lib/recordAccess";
 
 export type EmployeeFormValue = EmployeeFormInput;
 
@@ -182,22 +183,28 @@ export function EmployeeForm({
           <span className="text-xs font-medium text-slate-600">Invoices Access</span>
           <select
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
-            value={value.canViewInvoices ? "yes" : "no"}
-            onChange={(e) => setValue({ ...value, canViewInvoices: e.target.value === "yes" })}
+            value={value.invoicesAccess}
+            onChange={(e) => setValue({ ...value, invoicesAccess: e.target.value })}
           >
-            <option value="no">No access</option>
-            <option value="yes">Can view Invoices</option>
+            {RECORD_ACCESS_LEVELS.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
           </select>
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-600">Expenses Access</span>
           <select
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
-            value={value.canViewExpenses ? "yes" : "no"}
-            onChange={(e) => setValue({ ...value, canViewExpenses: e.target.value === "yes" })}
+            value={value.expensesAccess}
+            onChange={(e) => setValue({ ...value, expensesAccess: e.target.value })}
           >
-            <option value="no">No access</option>
-            <option value="yes">Can view Expenses</option>
+            {RECORD_ACCESS_LEVELS.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
           </select>
         </label>
         <label className="flex flex-col gap-1.5">

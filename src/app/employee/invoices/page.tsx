@@ -15,16 +15,17 @@ const T = {
 
 export default async function EmployeeInvoicesPage() {
   const employee = await requireEmployee("EMPLOYEE");
-  if (!employee.canViewInvoices) redirect("/employee");
+  if (employee.invoicesAccess === "No Access") redirect("/employee");
+  const seeAll = employee.invoicesAccess === "All Records";
   const lang = await getEmployeeLang();
   const s = pickLang(lang, T);
   const dir = lang === "ar" ? "rtl" : "ltr";
   const font = lang === "ar" ? tajawal.className : "";
 
   const invoices = await prisma.invoice.findMany({
-    where: { createdById: employee.id },
+    where: seeAll ? {} : { createdById: employee.id },
     orderBy: { date: "desc" },
-    include: { customer: true, items: true },
+    include: { customer: true, items: true, createdBy: true },
   });
 
   return (
@@ -60,6 +61,7 @@ export default async function EmployeeInvoicesPage() {
                 </div>
                 <div className="text-xs text-slate-500 mt-0.5">
                   {formatDate(inv.date)} · {inv.items.map((it) => it.serviceName).join(", ")}
+                  {seeAll && <> · {inv.createdBy.name}</>}
                 </div>
               </div>
               <div className="font-bold text-slate-900 text-sm">{formatAed(inv.amount)}</div>

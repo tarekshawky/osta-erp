@@ -146,7 +146,7 @@ export async function createInvoiceFromWizard(
 
   const employee = await prisma.employee.findUnique({ where: { id: session.employeeId } });
   if (!employee) return { ok: false, error: "Your session has expired. Please log in again." };
-  if (session.role === "EMPLOYEE" && !employee.canViewInvoices) {
+  if (session.role === "EMPLOYEE" && employee.invoicesAccess === "No Access") {
     return { ok: false, error: "You don't have permission to create invoices." };
   }
 

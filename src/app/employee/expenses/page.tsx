@@ -16,15 +16,17 @@ const T = {
 
 export default async function EmployeeExpensesPage() {
   const employee = await requireEmployee("EMPLOYEE");
-  if (!employee.canViewExpenses) redirect("/employee");
+  if (employee.expensesAccess === "No Access") redirect("/employee");
+  const seeAll = employee.expensesAccess === "All Records";
   const lang = await getEmployeeLang();
   const s = pickLang(lang, T);
   const dir = lang === "ar" ? "rtl" : "ltr";
   const font = lang === "ar" ? tajawal.className : "";
 
   const expenses = await prisma.expense.findMany({
-    where: { createdById: employee.id },
+    where: seeAll ? {} : { createdById: employee.id },
     orderBy: { date: "desc" },
+    include: { createdBy: true },
   });
 
   return (
@@ -53,6 +55,7 @@ export default async function EmployeeExpensesPage() {
               {exp.notes && <div className="text-xs text-slate-600 mt-0.5">{exp.notes}</div>}
               <div className="text-xs text-slate-500 mt-0.5">
                 {formatDate(exp.date)} · {[exp.category, exp.vehicle, exp.subcategory].filter(Boolean).join(" · ")}
+                {seeAll && <> · {exp.createdBy.name}</>}
               </div>
             </div>
             <div className="font-bold text-red-500 text-sm">-{formatAed(exp.amount)}</div>

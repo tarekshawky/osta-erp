@@ -17,7 +17,7 @@ export async function createExpense(
   formData: FormData
 ): Promise<{ ok: boolean; error?: string; requiresOverride?: boolean } | void> {
   const employee = await requireEmployee("EMPLOYEE");
-  if (!employee.canViewExpenses) redirect("/employee");
+  if (employee.expensesAccess === "No Access") redirect("/employee");
 
   const description = String(formData.get("description") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();

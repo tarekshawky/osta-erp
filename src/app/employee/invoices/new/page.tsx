@@ -15,7 +15,7 @@ export default async function NewInvoicePage({
 }) {
   const { orderId, quotationId } = await searchParams;
   const employeeGuard = await requireEmployee("EMPLOYEE");
-  if (!employeeGuard.canViewInvoices) redirect("/employee");
+  if (employeeGuard.invoicesAccess === "No Access") redirect("/employee");
   const [employee, lang, order, quotation, activeItems, labourItems] = await Promise.all([
     Promise.resolve(employeeGuard),
     getEmployeeLang(),

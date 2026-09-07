@@ -14,7 +14,11 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
         lang={lang}
       >
         <div className="flex-1">{children}</div>
-        <EmployeeBottomNav lang={lang} canViewInvoices={employee.canViewInvoices} canViewExpenses={employee.canViewExpenses} />
+        <EmployeeBottomNav
+          lang={lang}
+          canViewInvoices={employee.invoicesAccess !== "No Access"}
+          canViewExpenses={employee.expensesAccess !== "No Access"}
+        />
       </div>
     </div>
   );

@@ -24,8 +24,8 @@ export type EmployeeRow = {
   revenue: number;
   monthlySalary: number;
   hasWallet: boolean;
-  canViewInvoices: boolean;
-  canViewExpenses: boolean;
+  invoicesAccess: string;
+  expensesAccess: string;
   joinDate: string | null;
   endOfServiceDate: string | null;
   sparePartPriceModification: string;
@@ -47,8 +47,8 @@ function toFormValue(emp: EmployeeRow): EmployeeFormValue {
     custody: emp.custody,
     monthlySalary: emp.monthlySalary,
     hasWallet: emp.hasWallet,
-    canViewInvoices: emp.canViewInvoices,
-    canViewExpenses: emp.canViewExpenses,
+    invoicesAccess: emp.invoicesAccess,
+    expensesAccess: emp.expensesAccess,
     joinDate: emp.joinDate ?? "",
     endOfServiceDate: emp.endOfServiceDate ?? "",
     sparePartPriceModification: emp.sparePartPriceModification,
@@ -70,8 +70,8 @@ const emptyFormValue: EmployeeFormValue = {
   custody: 0,
   monthlySalary: 0,
   hasWallet: true,
-  canViewInvoices: false,
-  canViewExpenses: false,
+  invoicesAccess: "No Access",
+  expensesAccess: "No Access",
   joinDate: "",
   endOfServiceDate: "",
   sparePartPriceModification: "Not Allowed",

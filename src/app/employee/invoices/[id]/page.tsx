@@ -19,7 +19,7 @@ export default async function EmployeeInvoiceDetailPage({
 }) {
   const { id } = await params;
   const employee = await requireEmployee("EMPLOYEE");
-  if (!employee.canViewInvoices) redirect("/employee");
+  if (employee.invoicesAccess === "No Access") redirect("/employee");
   const lang = await getEmployeeLang();
   const s = pickLang(lang, T);
 
@@ -27,7 +27,8 @@ export default async function EmployeeInvoiceDetailPage({
     where: { id },
     include: { customer: true, items: true, createdBy: true },
   });
-  if (!invoice || invoice.createdById !== employee.id) notFound();
+  const canViewThis = employee.invoicesAccess === "All Records" || invoice?.createdById === employee.id;
+  if (!invoice || !canViewThis) notFound();
 
   return (
     <div className="pb-10">

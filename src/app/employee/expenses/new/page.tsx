@@ -11,7 +11,7 @@ export default async function NewExpensePage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const employee = await requireEmployee("EMPLOYEE");
-  if (!employee.canViewExpenses) redirect("/employee");
+  if (employee.expensesAccess === "No Access") redirect("/employee");
   const { error } = await searchParams;
   const [activeCards, vehicles] = await Promise.all([
     prisma.creditCard.findMany({

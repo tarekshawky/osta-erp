@@ -185,7 +185,7 @@ export default async function EmployeeHomePage() {
           {s.quickActions}
         </h2>
         <div className="grid grid-cols-3 gap-3">
-          {employee.canViewInvoices && (
+          {employee.invoicesAccess !== "No Access" && (
             <QuickActionTile
               href="/employee/invoices/new"
               label={s.createInvoice}
@@ -251,7 +251,7 @@ export default async function EmployeeHomePage() {
               </svg>
             }
           />
-          {employee.canViewExpenses && (
+          {employee.expensesAccess !== "No Access" && (
             <QuickActionTile
               href="/employee/expenses/new"
               label={s.addExpense}
@@ -266,7 +266,7 @@ export default async function EmployeeHomePage() {
               }
             />
           )}
-          {employee.canViewInvoices && (
+          {employee.invoicesAccess !== "No Access" && (
             <QuickActionTile
               href="/employee/invoices"
               label={s.invoices}

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession, hashPin } from "@/lib/session";
 import { PRICE_MODIFICATION_LEVELS } from "@/lib/pricePermissions";
+import { RECORD_ACCESS_LEVELS } from "@/lib/recordAccess";
 
 async function requireAdmin() {
   const session = await getSession();
@@ -23,8 +24,8 @@ export type EmployeeFormInput = {
   custody: number;
   monthlySalary: number;
   hasWallet: boolean;
-  canViewInvoices: boolean;
-  canViewExpenses: boolean;
+  invoicesAccess: string;
+  expensesAccess: string;
   joinDate: string;
   endOfServiceDate: string;
   sparePartPriceModification: string;
@@ -54,6 +55,12 @@ function validate(input: EmployeeFormInput, isCreate: boolean) {
   }
   if (!(PRICE_MODIFICATION_LEVELS as readonly string[]).includes(input.labourPriceModification)) {
     return "Invalid Labour Price Modification level.";
+  }
+  if (!(RECORD_ACCESS_LEVELS as readonly string[]).includes(input.invoicesAccess)) {
+    return "Invalid Invoices Access level.";
+  }
+  if (!(RECORD_ACCESS_LEVELS as readonly string[]).includes(input.expensesAccess)) {
+    return "Invalid Expenses Access level.";
   }
   if (input.sparePartPriceModification === "Allowed with Maximum Discount") {
     const pct = Number(input.sparePartMaxDiscountPercent);
@@ -100,8 +107,8 @@ export async function createEmployee(input: EmployeeFormInput): Promise<{ ok: bo
       custody: Number.isFinite(input.custody) ? input.custody : 0,
       monthlySalary: Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0,
       hasWallet: input.hasWallet,
-      canViewInvoices: input.canViewInvoices,
-      canViewExpenses: input.canViewExpenses,
+      invoicesAccess: input.invoicesAccess,
+      expensesAccess: input.expensesAccess,
       joinDate: parseDate(input.joinDate),
       endOfServiceDate: parseDate(input.endOfServiceDate),
       ...buildPricePermissionData(input),
@@ -139,8 +146,8 @@ export async function updateEmployee(
       custody: Number.isFinite(input.custody) ? input.custody : 0,
       monthlySalary: Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0,
       hasWallet: input.hasWallet,
-      canViewInvoices: input.canViewInvoices,
-      canViewExpenses: input.canViewExpenses,
+      invoicesAccess: input.invoicesAccess,
+      expensesAccess: input.expensesAccess,
       joinDate: parseDate(input.joinDate),
       endOfServiceDate: parseDate(input.endOfServiceDate),
       ...buildPricePermissionData(input),
