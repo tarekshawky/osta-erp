@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireCustomer } from "@/lib/customerAuth";
 import { apiSuccess, apiError, parseJsonBody, parsePagination, corsPreflight } from "@/lib/apiResponse";
 import { ORDER_TYPES, CUSTOMER_LANGUAGES, generateOrderNumber, parseUaeDateTimeLocal } from "@/lib/orderData";
+import { notifyAdminOfBooking } from "@/lib/emailSender";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -98,6 +99,26 @@ export async function POST(request: NextRequest) {
     },
     select: orderSelect,
   });
+
+  // Same reasoning as the signup endpoint: a flaky email provider must never fail
+  // the booking itself, and this is awaited so it finishes before the serverless
+  // function returns and gets frozen.
+  try {
+    // The web app's booking form funnels its service-category picker into
+    // "Service requested: <category>\n\n<notes>" since the Order model has no
+    // dedicated service-category column -- pull that back out for a readable email.
+    const serviceMatch = order.notes?.match(/^Service requested: (.+)$/m);
+    await notifyAdminOfBooking({
+      orderNumber: order.number,
+      customerName: customer.name,
+      phone: customer.phone,
+      location: order.locationUrl || "Not specified",
+      service: serviceMatch?.[1] ?? order.orderType,
+      scheduledAt: order.scheduledAt ? order.scheduledAt.toISOString() : "Not specified",
+    });
+  } catch (err) {
+    console.error("[orders] admin notification failed:", err);
+  }
 
   return apiSuccess(order, { status: 201 });
 }

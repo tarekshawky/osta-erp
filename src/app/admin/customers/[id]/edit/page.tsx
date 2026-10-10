@@ -20,6 +20,7 @@ export default async function AdminEditCustomerPage({ params }: { params: Promis
     phone: customer.phone,
     whatsapp: customer.whatsapp ?? "",
     email: customer.email ?? "",
+    password: "",
     language: customer.language,
     emirate: customer.emirate,
     city: customer.city ?? "",

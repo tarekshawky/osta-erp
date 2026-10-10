@@ -3,24 +3,22 @@ info:
   title: OSTA Services ERP - Customer API
   version: "1.0.0"
   description: |
-    Customer-facing API for the OSTA Services ERP. Customers authenticate with their
-    phone number and a one-time code (OTP), then use a bearer token to view their own
-    orders and invoices and to book a new order.
+    Customer-facing API for the OSTA Services ERP. Customers can self-register with
+    `POST /auth/signup`, or an OSTA admin can set a password for them from the internal
+    Edit Customer page. Either way, authenticate with `POST /auth/login` (email and
+    password) and use the returned bearer token to view your own orders and invoices
+    and to book a new order.
 
-    **Note on OTP delivery**: SMS/WhatsApp delivery is currently a pluggable stub
-    (see `src/lib/otpSender.ts` in the repository). In non-production environments,
-    the `POST /auth/otp/request` response includes a `devCode` field with the plaintext
-    code for testing. In production, no `devCode` is returned, and until a real
-    provider is wired in, the code is only written to the server log -- it does not yet
-    reach a customer's phone.
+    **Note on passwords**: must be at least 8 characters, start with a capital letter,
+    and include a number.
 servers:
   - url: /api/v1
 security:
   - bearerAuth: []
 paths:
-  /auth/otp/request:
+  /auth/signup:
     post:
-      summary: Request a one-time login code
+      summary: Self-register as a new customer and receive an access token
       security: []
       requestBody:
         required: true
@@ -28,14 +26,27 @@ paths:
           application/json:
             schema:
               type: object
-              required: [phone]
+              required: [name, phone, email, password]
               properties:
+                name:
+                  type: string
+                  example: "Ahmed Mohamed"
                 phone:
                   type: string
                   example: "501234567"
+                email:
+                  type: string
+                  example: "customer@example.com"
+                password:
+                  type: string
+                  example: "Osta1234"
+                emirate:
+                  type: string
+                  description: Defaults to "Dubai" if omitted.
+                  example: "Dubai"
       responses:
-        "200":
-          description: Code sent (or logged, in production without a real provider configured)
+        "201":
+          description: Account created and logged in
           content:
             application/json:
               schema:
@@ -44,29 +55,22 @@ paths:
                   data:
                     type: object
                     properties:
-                      sent:
-                        type: boolean
-                      devCode:
+                      accessToken:
                         type: string
-                        description: Only present outside production.
+                      customer:
+                        $ref: "#/components/schemas/CustomerSummary"
         "400":
           $ref: "#/components/responses/BadRequest"
-        "404":
-          description: No customer found for this phone number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "429":
-          description: Too many codes requested recently
+        "409":
+          description: An account with this phone number or email already exists
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /auth/otp/verify:
+  /auth/login:
     post:
-      summary: Verify a one-time code and receive an access token
+      summary: Log in with email and password to receive an access token
       security: []
       requestBody:
         required: true
@@ -74,13 +78,14 @@ paths:
           application/json:
             schema:
               type: object
-              required: [phone, code]
+              required: [email, password]
               properties:
-                phone:
+                email:
                   type: string
-                code:
+                  example: "customer@example.com"
+                password:
                   type: string
-                  example: "482913"
+                  example: "Osta1234"
       responses:
         "200":
           description: Login successful
@@ -99,13 +104,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
-          description: Incorrect or expired code
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: No customer found for this phone number
+          description: Incorrect email or password, or no password set for this account
           content:
             application/json:
               schema:

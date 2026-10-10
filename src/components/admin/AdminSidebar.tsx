@@ -149,6 +149,26 @@ const NAV: NavItem[] = [
     ),
   },
   {
+    href: "/admin/blog",
+    label: "Blog",
+    icon: (
+      <>
+        <path d="M4 4h12l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z" strokeLinejoin="round" />
+        <path d="M8 10h8M8 14h8M8 18h4" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
+    href: "/admin/services",
+    label: "Website Services",
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M4 12a8 8 0 0116 0M4 12a8 8 0 0016 0" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/wallets",
     label: "Wallets",
     icon: (

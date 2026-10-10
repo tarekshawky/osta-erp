@@ -108,6 +108,10 @@ model Employee {
   invoiceStatusChanges         InvoiceStatusChange[]
   customersCreated             Customer[]                     @relation("CustomerCreatedBy")
   customersUpdated             Customer[]                     @relation("CustomerUpdatedBy")
+  blogPostsCreated              BlogPost[]                     @relation("BlogPostCreatedBy")
+  blogPostsUpdated              BlogPost[]                     @relation("BlogPostUpdatedBy")
+  servicePagesCreated           ServicePage[]                  @relation("ServicePageCreatedBy")
+  servicePagesUpdated           ServicePage[]                  @relation("ServicePageUpdatedBy")
   customerNotesCreated         CustomerNote[]
   creditCardsCreated           CreditCard[]                   @relation("CreditCardCreatedBy")
   creditCardPaymentsRecorded   CreditCardPayment[]            @relation("CreditCardPaymentRecordedBy")
@@ -147,7 +151,8 @@ model Customer {
   trn              String?
   phone            String            @unique
   whatsapp         String?
-  email            String?
+  email            String?           @unique
+  passwordHash     String?
   language         String            @default("Arabic")
   emirate          String
   city             String?
@@ -173,24 +178,8 @@ model Customer {
   orders           Order[]
   quotations       Quotation[]
   customerNotes    CustomerNote[]
-  otps             CustomerOtp[]
   rentalAgreements RentalAgreement[]
   createdAt        DateTime          @default(now())
-}
-
-// One-time codes for the customer-facing phone-login API (src/app/api/v1/auth/otp/*).
-// Never store the plaintext code -- only its hash, mirroring hashPin/verifyPin in session.ts.
-model CustomerOtp {
-  id         String    @id @default(cuid())
-  customerId String
-  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  codeHash   String
-  expiresAt  DateTime
-  attempts   Int       @default(0)
-  consumedAt DateTime?
-  createdAt  DateTime  @default(now())
-
-  @@index([customerId, createdAt])
 }
 
 model CustomerNote {
@@ -900,4 +889,68 @@ model InvoiceInventoryUsage {
   createdAt       DateTime             @default(now())
 
   @@unique([invoiceId, inventoryItemId])
+}
+
+// Public marketing-site content, managed from /admin and served to the public
+// website (ostaservices.com / the Next.js marketing app) via GET /api/v1/blog.
+// Bilingual fields are flat En/Ar pairs rather than a JSON blob, matching this
+// schema's existing convention of flat columns over nested structures.
+model BlogPost {
+  id                String    @id @default(cuid())
+  slug              String    @unique
+  titleEn           String
+  titleAr           String
+  excerptEn         String
+  excerptAr         String
+  contentEn         String
+  contentAr         String
+  coverImageUrl     String?
+  seoTitleEn        String?
+  seoTitleAr        String?
+  seoDescriptionEn  String?
+  seoDescriptionAr  String?
+  authorName        String?
+  published         Boolean   @default(false)
+  publishedAt       DateTime?
+  createdById       String?
+  createdBy         Employee? @relation("BlogPostCreatedBy", fields: [createdById], references: [id])
+  updatedById       String?
+  updatedBy         Employee? @relation("BlogPostUpdatedBy", fields: [updatedById], references: [id])
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now()) @updatedAt
+
+  @@index([published, publishedAt])
+}
+
+// Public marketing-site service pages (e.g. "AC Repair", "Duct Cleaning"), each
+// with its own slug/content/price, served via GET /api/v1/services. Separate from
+// the internal order-booking category list (osta-bookig-users' hardcoded SERVICES
+// array) -- this model is purely marketing content, not tied to order creation.
+model ServicePage {
+  id                  String    @id @default(cuid())
+  slug                String    @unique
+  nameEn              String
+  nameAr              String
+  shortDescriptionEn  String
+  shortDescriptionAr  String
+  contentEn           String
+  contentAr           String
+  iconName            String?
+  coverImageUrl       String?
+  priceFrom           Float?
+  priceNote           String?
+  seoTitleEn          String?
+  seoTitleAr          String?
+  seoDescriptionEn    String?
+  seoDescriptionAr    String?
+  displayOrder        Int       @default(0)
+  published           Boolean   @default(true)
+  createdById         String?
+  createdBy           Employee? @relation("ServicePageCreatedBy", fields: [createdById], references: [id])
+  updatedById         String?
+  updatedBy           Employee? @relation("ServicePageUpdatedBy", fields: [updatedById], references: [id])
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @default(now()) @updatedAt
+
+  @@index([published, displayOrder])
 }

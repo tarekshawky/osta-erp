@@ -18,6 +18,7 @@ const emptyCustomer: CustomerFormInput = {
   phone: "",
   whatsapp: "",
   email: "",
+  password: "",
   language: "Arabic",
   emirate: "Dubai",
   city: "",
@@ -170,7 +171,7 @@ export function CustomerForm({
         </div>
       </Field>
 
-      <Field label="Email (Optional)">
+      <Field label="Email (Optional, required for customer portal login)">
         <input
           type="email"
           className={inputClassName}
@@ -178,6 +179,25 @@ export function CustomerForm({
           value={customer.email}
           onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
         />
+      </Field>
+
+      <Field
+        label={
+          mode === "edit"
+            ? "Portal Password (leave blank to keep current)"
+            : "Portal Password (Optional)"
+        }
+      >
+        <input
+          type="text"
+          className={inputClassName}
+          placeholder="e.g. Osta1234"
+          value={customer.password}
+          onChange={(e) => setCustomer({ ...customer, password: e.target.value })}
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          At least 8 characters, starting with a capital letter, with at least one number.
+        </p>
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">

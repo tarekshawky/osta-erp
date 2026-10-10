@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { generateCustomerCode } from "@/lib/customerData";
 import { findPossibleDuplicate, type DuplicateMatch } from "@/lib/customerMatch";
+import { hashPassword, isValidPassword, PASSWORD_REQUIREMENTS } from "@/lib/password";
 import type { CustomerType } from "@/generated/prisma";
 
 export type CustomerFormInput = {
@@ -16,6 +17,10 @@ export type CustomerFormInput = {
   phone: string;
   whatsapp: string;
   email: string;
+  // Blank = "leave unchanged" on edit / "no portal access yet" on create. Only
+  // validated and hashed when non-empty -- see setCustomerPassword below for the
+  // same rule applied in its own focused action.
+  password: string;
   language: string;
   emirate: string;
   city: string;
@@ -37,6 +42,8 @@ function validate(input: CustomerFormInput) {
   if (!billName) return "Customer name is required.";
   if (!input.phone.trim()) return "Phone number is required.";
   if (!input.emirate) return "Emirate is required.";
+  if (input.password && !input.email.trim()) return "An email is required to set a portal password.";
+  if (input.password && !isValidPassword(input.password)) return PASSWORD_REQUIREMENTS;
   return null;
 }
 
@@ -111,6 +118,11 @@ export async function createCustomer(input: CustomerFormInput, force = false): P
   const existing = await prisma.customer.findUnique({ where: { phone: input.phone.trim() } });
   if (existing) return { ok: true, id: existing.id };
 
+  if (input.email.trim()) {
+    const emailClash = await prisma.customer.findUnique({ where: { email: input.email.trim() } });
+    if (emailClash) return { ok: false, error: "Another customer already uses this email address." };
+  }
+
   const code = await generateCustomerCode();
   const billName = input.type === "COMPANY" ? input.companyName.trim() : input.name.trim();
 
@@ -124,6 +136,7 @@ export async function createCustomer(input: CustomerFormInput, force = false): P
       phone: input.phone.trim(),
       whatsapp: input.whatsapp.trim() || null,
       email: input.email.trim() || null,
+      passwordHash: input.password ? hashPassword(input.password) : null,
       language: input.language,
       emirate: input.emirate,
       city: input.city.trim() || null,
@@ -157,6 +170,11 @@ export async function updateCustomer(customerId: string, input: CustomerFormInpu
     if (clash && clash.id !== customerId) return { ok: false, error: "Another customer already uses this phone number." };
   }
 
+  if (input.email.trim() && input.email.trim() !== existing.email) {
+    const emailClash = await prisma.customer.findUnique({ where: { email: input.email.trim() } });
+    if (emailClash && emailClash.id !== customerId) return { ok: false, error: "Another customer already uses this email address." };
+  }
+
   await prisma.customer.update({
     where: { id: customerId },
     data: {
@@ -167,6 +185,8 @@ export async function updateCustomer(customerId: string, input: CustomerFormInpu
       phone: input.phone.trim(),
       whatsapp: input.whatsapp.trim() || null,
       email: input.email.trim() || null,
+      // Blank password on edit = leave the existing hash untouched, not cleared.
+      ...(input.password ? { passwordHash: hashPassword(input.password) } : {}),
       language: input.language,
       emirate: input.emirate,
       city: input.city.trim() || null,
