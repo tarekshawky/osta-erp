@@ -49,6 +49,8 @@ const T = {
     team: "الفريق",
     selectTeam: "اختر فريقاً",
     teamSuffix: "فريق",
+    paymentLink: "رابط الدفع (اختياري)",
+    paymentLinkHelp: "مثال: رابط دفع من Ziina. إذا تم إدخاله، الفاتورة تبقى \"غير مدفوعة\" للعميل حتى تؤكد استلام الدفع.",
     subtotal: "المجموع الفرعي",
     total: "الإجمالي",
     next: "التالي",
@@ -59,6 +61,9 @@ const T = {
     team: "Team",
     selectTeam: "Select a team",
     teamSuffix: "Team",
+    paymentLink: "Payment Link (optional)",
+    paymentLinkHelp:
+      "e.g. a Ziina payment link. If set, the invoice stays \"Unpaid\" for the customer until you confirm the payment came through.",
     subtotal: "Subtotal",
     total: "Total",
     next: "Next",
@@ -146,6 +151,21 @@ export function PaymentStep({
               ))}
             </select>
           </Field>
+          <div className="sm:col-span-2">
+            <Field label={s.paymentLink} dir={dir} labelClassName={font}>
+              <input
+                type="url"
+                inputMode="url"
+                placeholder="https://pay.ziina.com/..."
+                className={inputClassName}
+                value={value.paymentLink}
+                onChange={(event) => onChange({ ...value, paymentLink: event.target.value })}
+              />
+            </Field>
+            <p className={`mt-1.5 text-[11px] text-slate-400 ${font}`} dir={dir}>
+              {s.paymentLinkHelp}
+            </p>
+          </div>
         </div>
       )}
 

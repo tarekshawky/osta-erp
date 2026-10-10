@@ -50,6 +50,7 @@ export type PaymentFormData = {
   method: "Cash" | "Bank Transfer" | "Ziina";
   date: string;
   teamId: string;
+  paymentLink: string;
 };
 
 export const emptyCustomer: CustomerFormData = {
@@ -93,6 +94,7 @@ export const emptyPayment: PaymentFormData = {
   method: "Cash",
   date: new Date().toISOString().slice(0, 10),
   teamId: "",
+  paymentLink: "",
 };
 
 export type CreateInvoiceResult = {

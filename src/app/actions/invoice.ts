@@ -194,7 +194,13 @@ export async function createInvoiceFromWizard(
           category: service.category,
           payment: payment.method,
           amount,
-          status: "Paid",
+          // A payment link means the customer still has to pay it themselves --
+          // the invoice starts Unpaid and only becomes Paid once an admin
+          // confirms the payment came through (see InvoiceStatusControl). With
+          // no link, the admin is recording a payment already collected in
+          // hand/bank, so it's Paid immediately, same as before.
+          status: payment.paymentLink.trim() ? "Unpaid" : "Paid",
+          paymentLink: payment.paymentLink.trim() || null,
           leadSource: customer.leadSource,
           warrantyUntil,
           teamId,
@@ -295,6 +301,7 @@ export async function updateInvoiceFromWizard(
           category: service.category,
           payment: payment.method,
           amount,
+          paymentLink: payment.paymentLink.trim() || null,
           leadSource: customer.leadSource,
           date,
           warrantyUntil,

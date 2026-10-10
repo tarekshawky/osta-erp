@@ -70,6 +70,24 @@ export default async function AdminInvoiceDetailPage({
           />
         </div>
 
+        {invoice.paymentLink && (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+            <h3 className="text-xs font-semibold text-slate-500 mb-1.5">Payment Link</h3>
+            <a
+              href={invoice.paymentLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 break-all"
+            >
+              {invoice.paymentLink}
+            </a>
+            <p className="mt-1.5 text-xs text-slate-400">
+              Shown to the customer as the &ldquo;Pay Invoice&rdquo; button. Mark this invoice Paid below once you&apos;ve
+              confirmed the payment came through.
+            </p>
+          </div>
+        )}
+
         {canToggleStatus && (
           <div className="mt-4">
             <InvoiceStatusControl invoiceId={invoice.id} currentStatus={invoice.status} />

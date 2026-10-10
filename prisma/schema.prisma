@@ -251,7 +251,8 @@ model Invoice {
   category              String                  @default("AC")
   payment               String
   amount                Float
-  status                String                  @default("Paid")
+  status                String                  @default("Unpaid")
+  paymentLink           String?
   refundedAmount        Float                   @default(0)
   leadSource            String                  @default("Organic")
   warrantyUntil         DateTime?

@@ -94,6 +94,7 @@ export default async function AdminInvoiceEditPage({
     method: invoice.payment as "Cash" | "Bank Transfer" | "Ziina",
     date: invoice.date.toISOString().slice(0, 10),
     teamId: invoice.teamId ?? "",
+    paymentLink: invoice.paymentLink ?? "",
   };
 
   return (

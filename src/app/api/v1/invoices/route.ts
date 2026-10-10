@@ -16,6 +16,7 @@ const invoiceSelect = {
   payment: true,
   amount: true,
   status: true,
+  paymentLink: true,
   refundedAmount: true,
   warrantyUntil: true,
   createdAt: true,

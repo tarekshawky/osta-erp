@@ -24,6 +24,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       payment: true,
       amount: true,
       status: true,
+      paymentLink: true,
       refundedAmount: true,
       warrantyUntil: true,
       items: { select: { serviceName: true, description: true, qty: true, unitPrice: true } },
