@@ -47,3 +47,6 @@ next-env.d.ts
 # design mockup: keep the .dc.html/canvas.json source, skip the generated
 # seeded canvas payload (regenerate with seed-canvas.mjs, see design skill)
 design-mockup/osta-spare-parts-mobile.html
+
+# claude code
+.claude
