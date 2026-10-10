@@ -112,6 +112,7 @@ model Employee {
   blogPostsUpdated              BlogPost[]                     @relation("BlogPostUpdatedBy")
   servicePagesCreated           ServicePage[]                  @relation("ServicePageCreatedBy")
   servicePagesUpdated           ServicePage[]                  @relation("ServicePageUpdatedBy")
+  homeSectionsUpdated            HomeSection[]                  @relation("HomeSectionUpdatedBy")
   customerNotesCreated         CustomerNote[]
   creditCardsCreated           CreditCard[]                   @relation("CreditCardCreatedBy")
   creditCardPaymentsRecorded   CreditCardPayment[]            @relation("CreditCardPaymentRecordedBy")
@@ -953,4 +954,51 @@ model ServicePage {
   updatedAt           DateTime  @default(now()) @updatedAt
 
   @@index([published, displayOrder])
+}
+
+// Generic, reusable content block for the marketing homepage's named sections
+// (hero, sustainability, booking, why-choose-ajman, why-choose, areas-we-cover,
+// brands-we-service, prime-membership, achievements -- see HOME_SECTION_KEYS in
+// the admin). One row per section slot; `key` is a fixed set defined in code, not
+// admin-creatable, but every other field (heading/description/image/items) is
+// fully admin-editable via /admin/home-sections. `enabled` lets an admin hide a
+// whole section from the live site without deleting its content.
+model HomeSection {
+  id            String             @id @default(cuid())
+  key           String             @unique
+  headingEn     String
+  headingAr     String
+  descriptionEn String?
+  descriptionAr String?
+  imageUrl      String?
+  ctaLabelEn    String?
+  ctaLabelAr    String?
+  ctaUrl        String?
+  enabled       Boolean            @default(true)
+  displayOrder  Int                @default(0)
+  items         HomeSectionItem[]
+  updatedById   String?
+  updatedBy     Employee?          @relation("HomeSectionUpdatedBy", fields: [updatedById], references: [id])
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @default(now()) @updatedAt
+}
+
+// Repeating entries within a HomeSection -- a trust/feature card, a covered area,
+// a serviced brand logo, an achievement, a Prime membership perk, etc. depending
+// on which section it belongs to. Admin can add, edit, and delete these freely.
+model HomeSectionItem {
+  id            String      @id @default(cuid())
+  sectionId     String
+  section       HomeSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  titleEn       String
+  titleAr       String
+  descriptionEn String?
+  descriptionAr String?
+  iconName      String?
+  imageUrl      String?
+  linkUrl       String?
+  displayOrder  Int         @default(0)
+  createdAt     DateTime    @default(now())
+
+  @@index([sectionId, displayOrder])
 }

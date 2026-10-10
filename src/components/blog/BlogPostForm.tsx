@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
+import { ImageUploadField } from "@/components/ImageUploadField";
 import { createBlogPost, updateBlogPost, type BlogPostFormInput } from "@/app/admin/blog/actions";
 
 const emptyPost: BlogPostFormInput = {
@@ -135,14 +136,11 @@ export function BlogPostForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Cover Image URL">
-          <input
-            className={inputClassName}
-            placeholder="https://..."
-            value={post.coverImageUrl}
-            onChange={(e) => setPost({ ...post, coverImageUrl: e.target.value })}
-          />
-        </Field>
+        <ImageUploadField
+          label="Cover Image"
+          value={post.coverImageUrl}
+          onChange={(coverImageUrl) => setPost({ ...post, coverImageUrl })}
+        />
         <Field label="Author Name">
           <input
             className={inputClassName}

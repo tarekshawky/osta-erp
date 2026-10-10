@@ -169,6 +169,17 @@ const NAV: NavItem[] = [
     ),
   },
   {
+    href: "/admin/home-sections",
+    label: "Homepage Sections",
+    icon: (
+      <>
+        <rect x="3" y="4" width="18" height="6" rx="1.5" />
+        <rect x="3" y="14" width="8" height="6" rx="1.5" />
+        <rect x="13" y="14" width="8" height="6" rx="1.5" />
+      </>
+    ),
+  },
+  {
     href: "/admin/wallets",
     label: "Wallets",
     icon: (

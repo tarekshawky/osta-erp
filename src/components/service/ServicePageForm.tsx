@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
+import { ImageUploadField } from "@/components/ImageUploadField";
 import { createServicePage, updateServicePage, type ServicePageFormInput } from "@/app/admin/services/actions";
 
 const emptyService: ServicePageFormInput = {
@@ -158,14 +159,11 @@ export function ServicePageForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Cover Image URL">
-          <input
-            className={inputClassName}
-            placeholder="https://..."
-            value={service.coverImageUrl}
-            onChange={(e) => setService({ ...service, coverImageUrl: e.target.value })}
-          />
-        </Field>
+        <ImageUploadField
+          label="Cover Image"
+          value={service.coverImageUrl}
+          onChange={(coverImageUrl) => setService({ ...service, coverImageUrl })}
+        />
         <Field label="Display Order (lower = first)">
           <input
             className={inputClassName}
