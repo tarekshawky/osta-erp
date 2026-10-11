@@ -9,6 +9,7 @@ import { revalidateSite } from "@/lib/cms/publish";
 import { requireEmployee } from "@/lib/auth";
 import { analyzePage, type AeoItem, type SeoIssue } from "@/lib/seo/analyze";
 import { loadSeoContext } from "@/lib/seo/context";
+import { homepageBlocks } from "@/lib/cms/homepageSeed";
 import { computePublishProblems } from "@/lib/cms/publishGate";
 import type { Prisma } from "@/generated/prisma";
 
@@ -71,8 +72,10 @@ export async function saveDraft(id: string, input: DraftInput, autosave: boolean
   if (!page) return fail("Page not found.");
   if (!PAGE_TYPES.includes(input.type)) return fail("Unknown page type.");
 
-  const slug = slugify(input.slug);
-  const problem = slugProblem(slug);
+  // The homepage always lives at "/" and stays a plain page: its slug and type can't be changed.
+  const slug = page.isHomepage ? page.slug : slugify(input.slug);
+  if (page.isHomepage) input = { ...input, type: "page", slug };
+  const problem = page.isHomepage ? null : slugProblem(slug);
   if (problem) return fail(problem);
   if (slug !== page.slug && (await prisma.cmsPage.findUnique({ where: { slug } }))) return fail("A page with this slug already exists.");
 
@@ -160,7 +163,7 @@ export async function publishPage(id: string, publishAtIso: string | null): Prom
   await prisma.cmsRedirect.deleteMany({ where: { fromPath: `/${page.slug}` } });
 
   await writeAudit(g.admin, publishAt ? "cms.page.schedule" : "cms.page.publish", "CmsPage", id, null, { slug: page.slug, version: version.version, publishAt });
-  if (!publishAt) await revalidateSite([page.slug, ...(oldSlug && oldSlug !== page.slug ? [oldSlug] : [])]);
+  if (!publishAt) await revalidateSite([page.isHomepage ? "" : page.slug, ...(oldSlug && oldSlug !== page.slug ? [oldSlug] : [])]);
   return done(id);
 }
 
@@ -171,7 +174,7 @@ export async function unpublishPage(id: string): Promise<ActionResult> {
   if (!page) return fail("Page not found.");
   await prisma.cmsPage.update({ where: { id }, data: { status: "DRAFT", publishedVersionId: null, scheduledVersionId: null, publishAt: null } });
   await writeAudit(g.admin, "cms.page.unpublish", "CmsPage", id, { slug: page.slug }, null);
-  if (page.publishedVersion) await revalidateSite([page.publishedVersion.slug]);
+  if (page.publishedVersion) await revalidateSite([page.isHomepage ? "" : page.publishedVersion.slug]);
   return done(id);
 }
 
@@ -228,6 +231,7 @@ export async function deletePage(id: string): Promise<ActionResult> {
   if (!g.ok) return fail(g.error);
   const page = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null }, include: { publishedVersion: { select: { slug: true } } } });
   if (!page) return fail("Page not found.");
+  if (page.isHomepage) return fail("The homepage can't be deleted. Unpublish it to go back to the built-in homepage.");
   // Free the slug so a new page can use it; keep the original in the audit trail.
   await prisma.cmsPage.update({
     where: { id },
@@ -263,4 +267,28 @@ export async function analyzeDraft(pageId: string, draft: DraftInput): Promise<{
     },
     ctx
   );
+}
+
+// Creates the editable homepage as a DRAFT holding exactly what the site shows today. The public site keeps using
+// its built-in homepage until the owner previews this one and clicks Publish.
+export async function createHomepage(): Promise<ActionResult> {
+  const g = await guardPermission("pages.create");
+  if (!g.ok) return fail(g.error);
+  if (await prisma.cmsPage.findFirst({ where: { isHomepage: true, deletedAt: null } })) return fail("The homepage already exists.");
+  if (await prisma.cmsPage.findUnique({ where: { slug: "home" } })) return fail("A page already uses the internal homepage address.");
+
+  const page = await prisma.cmsPage.create({
+    data: {
+      slug: "home", isHomepage: true, type: "page", titleEn: "Home", titleAr: "الرئيسية", showInMenus: false, showInSitemap: false,
+      draftBlocks: homepageBlocks() as unknown as Prisma.InputJsonValue,
+      draftSeo: {
+        titleEn: "OSTA Services — AC Repair & Home Maintenance in the UAE", titleAr: "", canonical: "", noindex: false, ogImage: "", focusKeyword: "", secondaryKeywords: "",
+        descriptionEn: "Trusted AC repair, cleaning, installation, and home maintenance services across the UAE. Transparent pricing, certified technicians, same-day service, and a 14-day warranty.",
+        descriptionAr: "",
+      } as unknown as Prisma.InputJsonValue,
+      createdById: g.admin.id, updatedById: g.admin.id,
+    },
+  });
+  await writeAudit(g.admin, "cms.homepage.create", "CmsPage", page.id, null, { blocks: 6 });
+  return done(page.id);
 }

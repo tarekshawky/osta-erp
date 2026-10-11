@@ -7,13 +7,13 @@ import { loadJsonLdArea, loadJsonLdSite, loadSeoContext } from "@/lib/seo/contex
 
 type PageRow = {
   id: string; slug: string; type: string; titleEn: string; titleAr: string; areaId: string | null; showInSitemap: boolean;
-  draftBlocks: unknown; draftSeo: unknown;
+  draftBlocks: unknown; draftSeo: unknown; isHomepage?: boolean;
 };
 
 // Everything that must be true before a page goes live: basic rules, valid structured data, and (for area pages)
 // content that is genuinely different from other area pages. Empty list = OK to publish.
 export async function computePublishProblems(page: PageRow): Promise<string[]> {
-  const problems = publishProblems({ slug: page.slug, titleEn: page.titleEn, titleAr: page.titleAr, blocks: page.draftBlocks });
+  const problems = publishProblems({ slug: page.slug, titleEn: page.titleEn, titleAr: page.titleAr, blocks: page.draftBlocks }, { isHomepage: page.isHomepage });
 
   const parsed = parseBlocks(page.draftBlocks);
   if (!parsed.ok) return problems;
@@ -22,6 +22,7 @@ export async function computePublishProblems(page: PageRow): Promise<string[]> {
     if (!slug) problems.push("A Form block has no form selected.");
     else if (!(await prisma.cmsForm.findFirst({ where: { slug, active: true }, select: { id: true } }))) problems.push(`The form “${slug}” doesn't exist or is inactive, so visitors couldn't submit it.`);
   }
+  if (page.isHomepage) return problems;
   const seo = (page.draftSeo ?? {}) as Record<string, string>;
   const [site, area] = await Promise.all([loadJsonLdSite(), loadJsonLdArea(page.areaId)]);
 

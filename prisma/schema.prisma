@@ -1258,6 +1258,7 @@ model CmsPage {
   showInMenus        Boolean          @default(true)
   showInSitemap      Boolean          @default(true)
   translationGroupId String?
+  isHomepage         Boolean          @default(false)
   areaId             String?
   area               ServiceArea?     @relation(fields: [areaId], references: [id], onDelete: SetNull)
   showLastUpdated    Boolean          @default(false)

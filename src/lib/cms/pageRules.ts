@@ -4,7 +4,7 @@ import { parseBlocks } from "./blocks";
 // Slugs that belong to real routes of the public app (or reserved paths). A CMS page can never take them.
 export const RESERVED_SLUGS = [
   "about", "blog", "contact", "dashboard", "invoices", "login", "more", "orders", "pricing", "profile",
-  "services", "signup", "api", "preview", "admin", "p", "sitemap.xml", "robots.txt", "favicon.ico", "_next",
+  "services", "signup", "home", "api", "preview", "admin", "p", "sitemap.xml", "robots.txt", "favicon.ico", "_next",
 ];
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -30,9 +30,10 @@ export function redirectProblem(from: string, to: string): string | null {
 }
 
 // Everything that must be true before a page can go live. Pure so it can be unit-tested.
-export function publishProblems(page: { slug: string; titleEn: string; titleAr: string; blocks: unknown }): string[] {
+export function publishProblems(page: { slug: string; titleEn: string; titleAr: string; blocks: unknown }, opts: { isHomepage?: boolean } = {}): string[] {
   const problems: string[] = [];
-  const slug = slugProblem(page.slug);
+  // The homepage lives at "/", not at its internal slug, so the slug rules don't apply to it.
+  const slug = opts.isHomepage ? null : slugProblem(page.slug);
   if (slug) problems.push(slug);
   if (!page.titleEn.trim() || !page.titleAr.trim()) problems.push("Both the English and Arabic titles are required.");
   const parsed = parseBlocks(page.blocks);

@@ -3,7 +3,7 @@ import { parseBlocks } from "@/lib/cms/blocks";
 import { analyzePage, type SeoFields, type SeoIssue } from "./analyze";
 import { loadSeoContext } from "./context";
 
-export type PageSeoRow = { id: string; titleEn: string; slug: string; status: string; score: number; issues: SeoIssue[] };
+export type PageSeoRow = { id: string; titleEn: string; slug: string; isHomepage: boolean; status: string; score: number; issues: SeoIssue[] };
 
 const emptySeo: SeoFields = { titleEn: "", titleAr: "", descriptionEn: "", descriptionAr: "", canonical: "", noindex: false, ogImage: "" };
 
@@ -22,6 +22,6 @@ export async function seoReport(): Promise<PageSeoRow[]> {
       { slug: p.slug, type: p.type, titleEn: p.titleEn, titleAr: p.titleAr, showInSitemap: p.showInSitemap, showLastUpdated: p.showLastUpdated, blocks: parsed.ok ? parsed.blocks : [], seo, areaNames: p.area ? { en: p.area.nameEn, ar: p.area.nameAr } : undefined },
       { ...ctx, others, areaPages: ctx.areaPages?.filter((a) => a.label !== p.titleEn) }
     );
-    return { id: p.id, titleEn: p.titleEn, slug: p.slug, status: p.status, score: result.score, issues: result.issues };
+    return { id: p.id, titleEn: p.titleEn, slug: p.slug, isHomepage: p.isHomepage, status: p.status, score: result.score, issues: result.issues };
   });
 }

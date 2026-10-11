@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { apiSuccess, apiError, corsPreflight } from "@/lib/apiResponse";
+import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
 import { promoteDueScheduledPages } from "@/lib/cms/publish";
 import { toPublicPage } from "@/lib/cms/publicPage";
 import { loadJsonLdArea, loadJsonLdSite } from "@/lib/seo/context";
@@ -14,7 +14,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
   await promoteDueScheduledPages();
 
   const page = await prisma.cmsPage.findFirst({
-    where: { status: "PUBLISHED", deletedAt: null, publishedVersion: { slug } },
+    where: { status: "PUBLISHED", deletedAt: null, isHomepage: false, publishedVersion: { slug } },
     include: { publishedVersion: true },
   });
   if (page?.publishedVersion) {
@@ -25,5 +25,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
 
   const redirect = await prisma.cmsRedirect.findUnique({ where: { fromPath: `/${slug}` } });
   if (redirect) return apiSuccess({ redirect: redirect.toPath, permanent: redirect.permanent });
-  return apiError("not_found", "Page not found.", 404);
+  // 200 + flag, not a 404: the public site caches this response, and Next.js would keep serving an unpublished page
+  // forever if the refresh came back as an error.
+  return apiSuccess({ notFound: true });
 }

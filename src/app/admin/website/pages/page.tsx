@@ -4,6 +4,7 @@ import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { NewPageForm } from "@/components/cms/NewPageForm";
 import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
+import { SetupHomepage } from "@/components/cms/SetupHomepage";
 import { seoReport } from "@/lib/seo/report";
 import { scoreStyle } from "@/components/cms/SeoPanel";
 
@@ -38,6 +39,7 @@ export default async function CmsPagesPage() {
           </Link>
         </div>
 
+        {!pages.some((p) => p.isHomepage) && <SetupHomepage />}
         <NewPageForm />
 
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
@@ -63,8 +65,8 @@ export default async function CmsPagesPage() {
               )}
               {pages.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-900">{p.titleEn}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-slate-500">/{p.publishedVersion?.slug ?? p.slug}</td>
+                  <td className="px-4 py-3 font-medium text-slate-900">{p.titleEn}{p.isHomepage && <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">Homepage</span>}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-slate-500">{p.isHomepage ? "/" : `/${p.publishedVersion?.slug ?? p.slug}`}</td>
                   <td className="px-4 py-3 text-slate-500">{p.type}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLE[p.status] ?? ""}`}>{p.status}</span>

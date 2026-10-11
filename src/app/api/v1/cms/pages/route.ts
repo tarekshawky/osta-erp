@@ -10,7 +10,7 @@ export function OPTIONS() {
 export async function GET() {
   await promoteDueScheduledPages();
   const pages = await prisma.cmsPage.findMany({
-    where: { status: "PUBLISHED", deletedAt: null, publishedVersion: { isNot: null } },
+    where: { status: "PUBLISHED", deletedAt: null, isHomepage: false, publishedVersion: { isNot: null } },
     include: { publishedVersion: { select: { slug: true, titleEn: true, titleAr: true, seo: true } } },
     orderBy: { updatedAt: "desc" },
   });

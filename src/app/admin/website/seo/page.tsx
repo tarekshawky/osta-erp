@@ -39,7 +39,7 @@ export default async function SeoOverviewPage() {
               {rows.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400">No pages yet.</td></tr>}
               {rows.map((r) => (
                 <tr key={r.id} className="align-top">
-                  <td className="px-4 py-3"><p className="font-medium text-slate-900">{r.titleEn}</p><p className="font-mono text-xs text-slate-400">/{r.slug} · {r.status}</p></td>
+                  <td className="px-4 py-3"><p className="font-medium text-slate-900">{r.titleEn}</p><p className="font-mono text-xs text-slate-400">{r.isHomepage ? "/" : `/${r.slug}`} · {r.status}</p></td>
                   <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${scoreStyle(r.score)}`}>{r.score}</span></td>
                   <td className="px-4 py-3 text-xs text-slate-600">
                     {r.issues.length === 0 ? <span className="text-emerald-600">All good</span> : (

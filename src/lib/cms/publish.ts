@@ -9,7 +9,7 @@ export async function revalidateSite(slugs: string[]) {
     await fetch(`${base.replace(/\/$/, "")}/api/revalidate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secret, paths: slugs.map((s) => `/${s}`) }),
+      body: JSON.stringify({ secret, paths: slugs.map((s) => (s ? `/${s}` : "/")) }),
     });
   } catch {
     // The site's own short cache window (60s) catches up anyway.

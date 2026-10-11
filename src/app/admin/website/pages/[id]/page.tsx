@@ -36,6 +36,7 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
     showInSitemap: page.showInSitemap,
     showLastUpdated: page.showLastUpdated,
     areaName: page.area?.nameEn ?? null,
+    isHomepage: page.isHomepage,
     blocks: parsed.ok ? parsed.blocks : [],
     seo: { ...emptySeo, ...((page.draftSeo as Partial<SeoInput>) ?? {}) },
   };

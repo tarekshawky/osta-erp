@@ -7,7 +7,7 @@ describe("block registry", () => {
     for (const type of BLOCK_TYPES) {
       const res = parseBlocks([createBlock(type)]);
       expect(res.ok, type).toBe(true);
-      expect(BLOCK_REGISTRY[type].fields.length).toBeGreaterThan(0);
+      if (type !== "homeSections") expect(BLOCK_REGISTRY[type].fields.length).toBeGreaterThan(0);
     }
   });
   it("rejects unknown block types and malformed props", () => {
@@ -65,5 +65,26 @@ describe("preview tokens", () => {
     const fresh = createPreviewToken("page1");
     expect(verifyPreviewToken("page1", `${fresh}x`)).toBe(false);
     expect(verifyPreviewToken("page1", "garbage")).toBe(false);
+  });
+});
+
+import { homepageBlocks } from "./homepageSeed";
+describe("homepage seed", () => {
+  it("is valid and covers every section of the current homepage in order", () => {
+    const blocks = homepageBlocks();
+    expect(parseBlocks(blocks).ok).toBe(true);
+    expect(blocks.map((b) => b.type)).toEqual(["hero", "servicesGrid", "homeSections", "stats", "blogPreview", "cta"]);
+  });
+  it("older saved blocks without the new optional fields still validate", () => {
+    const hero = createBlock("hero");
+    delete (hero.props as Record<string, unknown>).variant;
+    delete (hero.props as Record<string, unknown>).badges;
+    delete (hero.props as Record<string, unknown>).headingAccent;
+    expect(parseBlocks([hero]).ok).toBe(true);
+  });
+  it("rejects an icon name that is not a plain identifier", () => {
+    const hero = homepageBlocks()[0];
+    (hero.props.badges as { icon: string }[])[0].icon = "<img src=x>";
+    expect(parseBlocks([hero]).ok).toBe(false);
   });
 });

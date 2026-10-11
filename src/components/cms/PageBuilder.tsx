@@ -26,6 +26,7 @@ export type BuilderPage = {
   showInSitemap: boolean;
   showLastUpdated: boolean;
   areaName: string | null;
+  isHomepage: boolean;
   blocks: Block[];
   seo: SeoInput;
 };
@@ -300,11 +301,11 @@ export function PageBuilder({ page, versions, siteOrigin }: { page: BuilderPage;
             <h3 className="mb-3 text-xs font-semibold uppercase text-slate-500">Page settings</h3>
             <div className="flex flex-col gap-3">
               <Field label="Slug (URL)">
-                <input className={inputClassName} dir="ltr" value={draft.slug} onChange={(e) => update({ slug: e.target.value })} />
+                <input className={inputClassName} dir="ltr" value={page.isHomepage ? "/ (homepage)" : draft.slug} disabled={page.isHomepage} onChange={(e) => update({ slug: e.target.value })} />
               </Field>
               {page.publishedSlug && page.publishedSlug !== draft.slug && <p className="text-xs text-amber-600">Live at /{page.publishedSlug} until you publish. A redirect is added automatically.</p>}
               <Field label="Type">
-                <select className={inputClassName} value={draft.type} onChange={(e) => update({ type: e.target.value })}>
+                <select className={inputClassName} value={draft.type} disabled={page.isHomepage} onChange={(e) => update({ type: e.target.value })}>
                   {["page", "service", "area", "article", "landing"].map((t) => (
                     <option key={t}>{t}</option>
                   ))}
@@ -355,6 +356,11 @@ export function PageBuilder({ page, versions, siteOrigin }: { page: BuilderPage;
             </ul>
           </section>
 
+          {page.isHomepage ? (
+            <section className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-500">
+              This is your homepage. Until you click Publish, visitors keep seeing the built-in homepage. Unpublish to go back to it at any time. It can&apos;t be deleted.
+            </section>
+          ) : (
           <section className="rounded-xl border border-slate-200 bg-white p-4">
             <div className="flex gap-3">
               <button type="button" disabled={pending} onClick={() => run(() => duplicatePage(page.id), "Duplicated.", () => { window.location.href = "/admin/website/pages"; })} className="text-sm font-medium text-slate-700">
@@ -365,6 +371,7 @@ export function PageBuilder({ page, versions, siteOrigin }: { page: BuilderPage;
               </button>
             </div>
           </section>
+          )}
         </aside>
       </div>
     </div>

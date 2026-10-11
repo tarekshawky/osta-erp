@@ -43,7 +43,7 @@ export function collectLinks(blocks: Block[]): string[] {
     if (Array.isArray(v)) v.forEach(walk);
     else if (v && typeof v === "object") {
       for (const [k, val] of Object.entries(v)) {
-        if (k === "url" && typeof val === "string" && val.trim()) out.push(val.trim());
+        if ((k === "url" || k === "viewAllUrl") && typeof val === "string" && val.trim()) out.push(val.trim());
         else walk(val);
       }
     }
