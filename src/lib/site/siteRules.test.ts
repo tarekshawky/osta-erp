@@ -52,3 +52,10 @@ describe("social + whatsapp", () => {
     expect(whatsappLink("971568676036", "")).toBe("https://wa.me/971568676036");
   });
 });
+
+describe("Areas We Cover menu item", () => {
+  const item = (url: string, children: MenuItemInput[] = []): MenuItemInput => ({ labelEn: "Areas", labelAr: "مناطق", url, visible: true, showDesktop: true, showMobile: true, newTab: false, children });
+  it("is accepted as a top-level item", () => expect(menuProblem([item("#areas")])).toBeNull());
+  it("is refused when nested", () => expect(menuProblem([item("/services", [item("#areas")])])).not.toBeNull());
+  it("other # links are still refused", () => expect(menuProblem([item("#nope")])).not.toBeNull());
+});

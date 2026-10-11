@@ -37,7 +37,7 @@ function Row({ item, onChange, onRemove, extra, pages }: { item: Item; onChange:
             <option value="">Choose a page…</option>
             {groups.map((g) => (
               <optgroup key={g} label={g}>
-                {pages.filter((p) => p.group === g).map((p) => <option key={p.url} value={p.url}>{p.labelEn} ({p.url})</option>)}
+                {pages.filter((p) => p.group === g).map((p) => <option key={p.url} value={p.url}>{p.url.startsWith("#") ? `${p.labelEn} — dropdown of your service areas` : `${p.labelEn} (${p.url})`}</option>)}
               </optgroup>
             ))}
           </select>

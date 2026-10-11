@@ -8,6 +8,9 @@ export type MenuKey = (typeof MENUS)[number];
 
 export const isSafeLink = (v: string) => SAFE_LINK.test(v.trim());
 
+// A header item with this link becomes the "Areas We Cover" dropdown (filled from the Service Areas screen).
+export const AREAS_MENU_URL = "#areas";
+
 export type SettingsInput = {
   siteNameEn: string; siteNameAr: string; taglineEn: string; taglineAr: string; descriptionEn: string; descriptionAr: string;
   logoUrl: string; faviconUrl: string; defaultLocale: string; allowIndexing: boolean; copyrightEn: string; copyrightAr: string;
@@ -45,7 +48,10 @@ export function menuProblem(items: MenuItemInput[]): string | null {
     for (const item of list) {
       count++;
       if (!item.labelEn.trim() || !item.labelAr.trim()) return "Every menu item needs an English and Arabic label.";
-      if (!item.url.trim() || !isSafeLink(item.url)) return `"${item.labelEn || "Item"}" needs a valid link (/path, https://, tel: or mailto:).`;
+      if (item.url.trim() === AREAS_MENU_URL) {
+        if (depth > 1) return "\"Areas We Cover\" can only be a top-level item.";
+        if (item.children.some((c) => c.url.trim() === AREAS_MENU_URL)) return "\"Areas We Cover\" can't be nested.";
+      } else if (!item.url.trim() || !isSafeLink(item.url)) return `"${item.labelEn || "Item"}" needs a valid link (/path, https://, tel: or mailto:).`;
       if (item.children.length) {
         if (depth >= 2) return "Menus can only be two levels deep.";
         const nested = check(item.children, depth + 1);

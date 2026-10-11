@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
+import { AREAS_MENU_URL } from "@/lib/site/siteRules";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -42,12 +43,16 @@ export async function GET() {
   const leaf = (labelEn: string, labelAr: string, url: string): NavItem => ({ labelEn, labelAr, url, newTab: false, showDesktop: true, showMobile: true, children: [] });
   const hasUrl = (items: NavItem[], url: string): boolean => items.some((m) => m.url.replace(/\/$/, "") === url || hasUrl(m.children, url));
 
-  // "Areas We Cover" dropdown: the active service areas (linked when the area has a published page), plus pages placed inside it.
-  const areaChildren = areaRows.map((a) => leaf(a.nameEn, a.nameAr, a.pages[0]?.publishedVersion ? `/${a.pages[0].publishedVersion.slug}` : ""));
-  const areasMenu: NavItem | null = areaChildren.length || menuPages.some((p) => p.menuParent === "areas")
-    ? { ...leaf("Areas We Cover", "المناطق التي نغطيها", ""), children: areaChildren }
-    : null;
-  if (areasMenu) header.push(areasMenu);
+  // "Areas We Cover" appears only when the admin has added that item to the header menu (link "#areas"). It then lists the
+  // active service areas (linked when the area has a published page); pages placed inside it follow.
+  const areasMenu = header.find((m) => m.url === AREAS_MENU_URL) ?? null;
+  if (areasMenu) {
+    areasMenu.url = "";
+    const manual = areasMenu.children;
+    areasMenu.children = [...areaRows.map((a) => leaf(a.nameEn, a.nameAr, a.pages[0]?.publishedVersion ? `/${a.pages[0].publishedVersion.slug}` : "")), ...manual];
+  }
+  // The footer has no dropdowns, so the special item means nothing there.
+  menus.footer = (menus.footer as NavItem[]).filter((m) => m.url !== AREAS_MENU_URL);
 
   for (const { publishedVersion: v, menuParent, type } of menuPages) {
     if (!v) continue;
