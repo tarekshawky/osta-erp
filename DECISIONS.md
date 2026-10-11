@@ -32,3 +32,12 @@
 20. **Indexing switch** sets `noindex` on every page and makes `robots.txt` disallow all, for use while the site is being rebuilt.
 21. **Social links** render as accessible text badges (no brand-icon dependency) and feed `sameAs` in the Organization data.
 22. **Permissions:** contact/settings/social need `company.edit`; menus need `pages.edit`. All changes are audited.
+
+## CMS (stage 3: media library)
+
+23. **Storage in Postgres, no new service.** Uploads are converted to WebP at 480/960/1600/2400 px (never upscaled, EXIF stripped, orientation applied) and stored as `MediaVariant` rows; served from `/api/media/<id>?w=` with immutable caching and ETags. Chosen because no blob/S3 account exists yet. If the library grows large (thousands of images), move variants to object storage behind the same URL.
+24. **WebP only for now.** AVIF would roughly double storage for a small saving; add it when storage moves off the database.
+25. **Safe uploads:** the file's real bytes decide the format (JPG/PNG/WebP/GIF/AVIF); SVG and anything else is refused; 10 MB and 40-megapixel limits; sanitised names; admin session plus `media.manage` required.
+26. **One image field everywhere.** The shared admin image field now picks from, or uploads into, the library. Old pasted URLs and inline images still display.
+27. **Delete protection.** An image can't be deleted while it appears in a published page, site settings, or live blog/service/homepage/bookable-service content; the UI lists every place first. Draft-only use only warns. Unused images are flagged.
+28. **Public pages use `srcset`** so phones download the 480/960 px version.

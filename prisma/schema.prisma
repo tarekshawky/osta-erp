@@ -1363,3 +1363,51 @@ model SocialLink {
   sortOrder Int     @default(0)
   visible   Boolean @default(true)
 }
+
+// ===== Media library =====
+
+model MediaFolder {
+  id        String       @id @default(cuid())
+  name      String
+  assets    MediaAsset[]
+  createdAt DateTime     @default(now())
+
+  @@unique([name])
+}
+
+// Uploaded images are converted to WebP at several widths and stored in the database
+// (see MediaVariant), so no external storage account is needed. Public URL: /api/media/<id>.
+model MediaAsset {
+  id             String         @id @default(cuid())
+  folderId       String?
+  folder         MediaFolder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  name           String // display / file name, editable
+  originalName   String
+  originalMime   String
+  width          Int
+  height         Int
+  originalBytes  Int
+  altEn          String         @default("")
+  altAr          String         @default("")
+  title          String         @default("")
+  caption        String         @default("")
+  variants       MediaVariant[]
+  uploadedById   String?
+  uploadedByName String?
+  createdAt      DateTime       @default(now())
+
+  @@index([folderId, createdAt])
+}
+
+model MediaVariant {
+  id      String     @id @default(cuid())
+  assetId String
+  asset   MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  width   Int
+  height  Int
+  format  String     @default("webp")
+  bytes   Int
+  data    Bytes
+
+  @@unique([assetId, width, format])
+}

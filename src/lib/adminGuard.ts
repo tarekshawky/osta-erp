@@ -42,3 +42,15 @@ export async function writeAudit(
     },
   });
 }
+
+// Same check as guardPermission but for API routes: never redirects, so callers can answer 401/403 as JSON.
+export async function peekPermission(permission: Permission): Promise<{ admin: Employee } | { error: "unauthorized" | "forbidden" }> {
+  const { getSession } = await import("./session");
+  const session = await getSession();
+  if (!session || (session.role !== "ADMIN" && session.role !== "SUPER_ADMIN")) return { error: "unauthorized" };
+  const admin = await prisma.employee.findUnique({ where: { id: session.employeeId } });
+  if (!admin) return { error: "unauthorized" };
+  const role = admin.adminRoleId ? await prisma.adminRole.findUnique({ where: { id: admin.adminRoleId }, select: { permissions: true } }) : null;
+  const perms = admin.adminRoleId ? (role?.permissions ?? []) : null;
+  return hasPermission(admin, perms, permission) ? { admin } : { error: "forbidden" };
+}
