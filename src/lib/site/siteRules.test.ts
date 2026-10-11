@@ -34,7 +34,7 @@ describe("menuProblem", () => {
   it("rejects missing labels, bad links, and 3 levels", () => {
     expect(menuProblem([item({ labelAr: "" })])).toMatch(/label/);
     expect(menuProblem([item({ url: "javascript:x" })])).toMatch(/valid link/);
-    expect(menuProblem([item({ url: "" })])).toMatch(/valid link/);
+    expect(menuProblem([item({ url: "" })])).toMatch(/needs a link/);
     expect(menuProblem([item({ children: [item({ children: [item({ children: [item()] })] })] })])).toMatch(/two levels/);
   });
   it("caps the size", () => expect(menuProblem(Array.from({ length: 41 }, () => item()))).toMatch(/40/));
@@ -58,4 +58,11 @@ describe("Areas We Cover menu item", () => {
   it("is accepted as a top-level item", () => expect(menuProblem([item("#areas")])).toBeNull());
   it("is refused when nested", () => expect(menuProblem([item("/services", [item("#areas")])])).not.toBeNull());
   it("other # links are still refused", () => expect(menuProblem([item("#nope")])).not.toBeNull());
+});
+
+describe("menu items without a link", () => {
+  const mk = (url: string, children: MenuItemInput[] = []): MenuItemInput => ({ labelEn: "Menu", labelAr: "قائمة", url, visible: true, showDesktop: true, showMobile: true, newTab: false, children });
+  it("a heading with sub-items needs no link", () => expect(menuProblem([mk("", [mk("/pricing")])])).toBeNull());
+  it("a heading with no sub-items is refused", () => expect(menuProblem([mk("")])).not.toBeNull());
+  it("a sub-item still needs a link", () => expect(menuProblem([mk("", [mk("")])])).not.toBeNull());
 });

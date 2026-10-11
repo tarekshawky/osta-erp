@@ -17,7 +17,7 @@ const blank = (): Item => ({ uid: uid(), labelEn: "", labelAr: "", url: "", visi
 export const toEditable = (items: MenuItemInput[]): Item[] => items.map((i) => ({ ...i, uid: uid(), children: toEditable(i.children) as Item[] }));
 const strip = (items: Item[]): MenuItemInput[] => items.map(({ uid: _u, children, ...rest }) => { void _u; return { ...rest, children: strip(children) }; });
 
-function Row({ item, onChange, onRemove, extra, pages }: { item: Item; onChange: (i: Item) => void; onRemove: () => void; extra?: React.ReactNode; pages: PageOption[] }) {
+function Row({ item, onChange, onRemove, extra, pages, top }: { item: Item; onChange: (i: Item) => void; onRemove: () => void; extra?: React.ReactNode; pages: PageOption[]; top?: boolean }) {
   const groups = [...new Set(pages.map((p) => p.group))];
   return (
     <div className="flex flex-col gap-2">
@@ -41,7 +41,7 @@ function Row({ item, onChange, onRemove, extra, pages }: { item: Item; onChange:
               </optgroup>
             ))}
           </select>
-          <input className={inputClassName} dir="ltr" placeholder="…or type /page or https://…" value={item.url} onChange={(e) => onChange({ ...item, url: e.target.value })} />
+          <input className={inputClassName} dir="ltr" placeholder={top ? "…or leave empty for a heading with sub-items" : "…or type /page or https://…"} value={item.url} onChange={(e) => onChange({ ...item, url: e.target.value })} />
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600">
@@ -68,7 +68,7 @@ function Sortable({ item, onChange, onRemove, pages }: { item: Item; onChange: (
       <div className="flex gap-2">
         <button type="button" aria-label="Drag to reorder" className="cursor-grab touch-none px-1 text-slate-400" {...attributes} {...listeners}>⠿</button>
         <div className="min-w-0 flex-1">
-          <Row pages={pages} item={item} onChange={onChange} onRemove={onRemove} extra={<button type="button" onClick={() => onChange({ ...item, children: [...item.children, blank()] })} className="font-medium text-blue-600">+ Sub-item</button>} />
+          <Row pages={pages} top item={item} onChange={onChange} onRemove={onRemove} extra={<button type="button" onClick={() => onChange({ ...item, children: [...item.children, blank()] })} className="font-medium text-blue-600">+ Sub-item</button>} />
           {item.children.length > 0 && (
             <div className="mt-3 flex flex-col gap-3 border-s-2 border-slate-100 ps-3">
               {item.children.map((c, i) => (

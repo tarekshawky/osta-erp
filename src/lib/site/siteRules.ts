@@ -51,7 +51,10 @@ export function menuProblem(items: MenuItemInput[]): string | null {
       if (item.url.trim() === AREAS_MENU_URL) {
         if (depth > 1) return "\"Areas We Cover\" can only be a top-level item.";
         if (item.children.some((c) => c.url.trim() === AREAS_MENU_URL)) return "\"Areas We Cover\" can't be nested.";
-      } else if (!item.url.trim() || !isSafeLink(item.url)) return `"${item.labelEn || "Item"}" needs a valid link (/path, https://, tel: or mailto:).`;
+      } else if (!item.url.trim()) {
+        // A top-level item may have no link when it is a heading for a dropdown; it then needs sub-items to be useful.
+        if (depth > 1 || item.children.length === 0) return `"${item.labelEn || "Item"}" needs a link, or sub-items if it is only a heading.`;
+      } else if (!isSafeLink(item.url)) return `"${item.labelEn || "Item"}" needs a valid link (/path, https://, tel: or mailto:).`;
       if (item.children.length) {
         if (depth >= 2) return "Menus can only be two levels deep.";
         const nested = check(item.children, depth + 1);
