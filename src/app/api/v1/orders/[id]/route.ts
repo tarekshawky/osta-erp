@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireCustomer } from "@/lib/customerAuth";
 import { apiSuccess, apiError, corsPreflight } from "@/lib/apiResponse";
 
+const CUSTOMER_EVENTS = ["CREATED", "CONFIRMED", "DISPATCHED", "ARRIVED", "COMPLETED", "CANCELLED_BY_CUSTOMER", "CANCELLED_BY_COMPANY"];
+
 export function OPTIONS() {
   return corsPreflight();
 }
@@ -32,6 +34,15 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       team: { select: { name: true } },
       assignedTo: { select: { name: true } },
       invoiceId: true,
+      totalFils: true,
+      quantity: true,
+      bookableService: { select: { nameEn: true, nameAr: true } },
+      // Only customer-safe milestones; internal events (visit-fee, no-answer, no-show) stay admin-side.
+      events: {
+        where: { type: { in: CUSTOMER_EVENTS } },
+        orderBy: { createdAt: "asc" },
+        select: { type: true, createdAt: true },
+      },
       invoice: { select: { number: true, amount: true, status: true } },
       acceptedAt: true,
       departedAt: true,
