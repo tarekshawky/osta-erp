@@ -5,6 +5,7 @@ import type { EmployeeFormInput } from "@/app/admin/employees/actions";
 import { PRICE_MODIFICATION_LEVELS } from "@/lib/pricePermissions";
 import { RECORD_ACCESS_LEVELS } from "@/lib/recordAccess";
 import { ADMIN_SECTIONS } from "@/lib/adminSections";
+import { ROLE_DEFINITIONS } from "@/lib/permissions";
 
 export type EmployeeFormValue = EmployeeFormInput;
 
@@ -183,6 +184,25 @@ export function EmployeeForm({
             <option value="none">No wallet needed</option>
           </select>
         </label>
+        {value.role === "admin" && (
+          <label className="sm:col-span-2 flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-slate-600">Permission Role</span>
+            <select
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 disabled:opacity-60"
+              disabled={!actingIsSuperAdmin}
+              value={value.adminRoleKey}
+              onChange={(e) => setValue({ ...value, adminRoleKey: e.target.value })}
+            >
+              <option value="">Full admin access (no restriction)</option>
+              {ROLE_DEFINITIONS.map((r) => (
+                <option key={r.key} value={r.key}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+            <span className="text-[11px] text-slate-400">Limits what this admin can change (prices, pages, orders…). Only a Super Admin can set it.</span>
+          </label>
+        )}
         {value.role === "admin" && (
           <div className="sm:col-span-2 flex flex-col gap-1.5">
             <span className="text-xs font-medium text-slate-600">Dashboard Access</span>

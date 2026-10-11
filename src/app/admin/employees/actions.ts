@@ -32,6 +32,7 @@ export type EmployeeFormInput = {
   invoicesAccess: string;
   expensesAccess: string;
   adminSections: string[];
+  adminRoleKey: string; // "" = full admin access (no restriction)
   joinDate: string;
   endOfServiceDate: string;
   sparePartPriceModification: string;
@@ -100,6 +101,15 @@ function resolveRole(role: EmployeeFormInput["role"]): "EMPLOYEE" | "ADMIN" | "S
   return "EMPLOYEE";
 }
 
+
+// Only a Super Admin assigns permission roles. "" clears the role (full admin access).
+async function resolveAdminRoleId(actingRole: string, role: string, key: string, current: string | null) {
+  if (role !== "admin") return null;
+  if (actingRole !== "SUPER_ADMIN") return current;
+  if (!key) return null;
+  return (await prisma.adminRole.findUnique({ where: { key }, select: { id: true } }))?.id ?? current;
+}
+
 export async function createEmployee(input: EmployeeFormInput): Promise<{ ok: boolean; error?: string }> {
   const actingRole = await requireAdmin();
 
@@ -114,6 +124,7 @@ export async function createEmployee(input: EmployeeFormInput): Promise<{ ok: bo
     return { ok: false, error: "Only a Super Admin can grant Super Admin access." };
   }
   const adminSections = actingRole === "SUPER_ADMIN" && input.role === "admin" ? input.adminSections : [];
+  const adminRoleId = await resolveAdminRoleId(actingRole, input.role, input.adminRoleKey, null);
 
   const team = await prisma.team.findUnique({ where: { name: input.teamName } });
   const existingCode = await prisma.employee.findUnique({ where: { code: input.code.trim() } });
@@ -135,6 +146,7 @@ export async function createEmployee(input: EmployeeFormInput): Promise<{ ok: bo
       invoicesAccess: input.invoicesAccess,
       expensesAccess: input.expensesAccess,
       adminSections,
+      adminRoleId,
       joinDate: parseDate(input.joinDate),
       endOfServiceDate: parseDate(input.endOfServiceDate),
       ...buildPricePermissionData(input),
@@ -155,7 +167,7 @@ export async function updateEmployee(
   const error = validate(input, false);
   if (error) return { ok: false, error };
 
-  const target = await prisma.employee.findUnique({ where: { id }, select: { role: true, adminSections: true } });
+  const target = await prisma.employee.findUnique({ where: { id }, select: { role: true, adminSections: true, adminRoleId: true } });
   if (!target) return { ok: false, error: "Employee not found." };
 
   // Any change that promotes someone TO Super Admin, or demotes an existing
@@ -178,6 +190,7 @@ export async function updateEmployee(
   // value is ignored and the existing one carried forward untouched.
   const adminSections =
     input.role !== "admin" ? [] : actingRole === "SUPER_ADMIN" ? input.adminSections : target.adminSections;
+  const adminRoleId = await resolveAdminRoleId(actingRole, input.role, input.adminRoleKey, target.adminRoleId);
 
   await prisma.employee.update({
     where: { id },
@@ -195,6 +208,7 @@ export async function updateEmployee(
       invoicesAccess: input.invoicesAccess,
       expensesAccess: input.expensesAccess,
       adminSections,
+      adminRoleId,
       joinDate: parseDate(input.joinDate),
       endOfServiceDate: parseDate(input.endOfServiceDate),
       ...buildPricePermissionData(input),

@@ -169,6 +169,15 @@ const NAV: NavItem[] = [
     ),
   },
   {
+    href: "/admin/audit-log",
+    label: "Audit Log",
+    icon: (
+      <>
+        <path d="M9 12h6M9 16h6M9 8h6M6 3h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z" strokeLinecap="round" strokeLinejoin="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/pricing",
     label: "Dynamic Pricing",
     icon: (

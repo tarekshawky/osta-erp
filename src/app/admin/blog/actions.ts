@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireEmployee } from "@/lib/auth";
+import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
 
 export type BlogPostFormInput = {
@@ -37,7 +37,10 @@ function validate(input: BlogPostFormInput) {
 }
 
 export async function createBlogPost(input: BlogPostFormInput): Promise<BlogActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pages.create");
+  if (!g.ok) return { ok: false, error: g.error };
+  const admin = g.admin;
+  if (input.published && !g.can("pages.publish")) return { ok: false, error: "You don't have permission to publish. Save it as a draft." };
   const error = validate(input);
   if (error) return { ok: false, error };
 
@@ -66,17 +69,24 @@ export async function createBlogPost(input: BlogPostFormInput): Promise<BlogActi
     },
   });
 
+  await writeAudit(admin, "blog.create", "BlogPost", post.id, null, { slug, published: input.published });
   revalidatePath("/admin/blog");
   return { ok: true, id: post.id };
 }
 
 export async function updateBlogPost(id: string, input: BlogPostFormInput): Promise<BlogActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pages.edit");
+  if (!g.ok) return { ok: false, error: g.error };
+  const admin = g.admin;
   const error = validate(input);
   if (error) return { ok: false, error };
 
   const existing = await prisma.blogPost.findUnique({ where: { id } });
   if (!existing) return { ok: false, error: "Blog post not found." };
+
+  if (input.published !== existing.published && !g.can("pages.publish")) {
+    return { ok: false, error: "You don't have permission to publish or unpublish." };
+  }
 
   const slug = slugify(input.slug);
   if (slug !== existing.slug) {
@@ -106,14 +116,18 @@ export async function updateBlogPost(id: string, input: BlogPostFormInput): Prom
     },
   });
 
+  await writeAudit(admin, "blog.update", "BlogPost", id, { slug: existing.slug, published: existing.published, titleEn: existing.titleEn }, { slug, published: input.published, titleEn: input.titleEn.trim() });
   revalidatePath("/admin/blog");
   revalidatePath(`/admin/blog/${id}/edit`);
   return { ok: true, id };
 }
 
 export async function deleteBlogPost(id: string) {
-  await requireEmployee("ADMIN");
+  const g = await guardPermission("pages.delete");
+  if (!g.ok) redirect("/admin/blog?toast=forbidden");
+  const before = await prisma.blogPost.findUnique({ where: { id }, select: { slug: true, titleEn: true } });
   await prisma.blogPost.delete({ where: { id } });
+  await writeAudit(g.admin, "blog.delete", "BlogPost", id, before, null);
   revalidatePath("/admin/blog");
   redirect("/admin/blog?toast=deleted");
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
+import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { HOME_SECTION_KEYS } from "@/lib/homeSections";
 
 export type HomeSectionItemInput = {
@@ -57,7 +58,9 @@ function validate(input: HomeSectionFormInput) {
 }
 
 export async function updateHomeSection(id: string, input: HomeSectionFormInput): Promise<HomeSectionActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pages.edit");
+  if (!g.ok) return { ok: false, error: g.error };
+  const admin = g.admin;
   const error = validate(input);
   if (error) return { ok: false, error };
 
@@ -108,6 +111,7 @@ export async function updateHomeSection(id: string, input: HomeSectionFormInput)
     }
   }
 
+  await writeAudit(admin, "homeSection.update", "HomeSection", id, { headingEn: existing.headingEn, items: existing.items.length }, { headingEn: input.headingEn.trim(), items: input.items.length, enabled: input.enabled });
   revalidatePath("/admin/home-sections");
   revalidatePath(`/admin/home-sections/${id}/edit`);
   return { ok: true };

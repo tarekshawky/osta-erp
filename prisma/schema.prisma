@@ -88,6 +88,10 @@ model Employee {
   // Super Admin explicitly narrows this list. Ignored entirely for
   // SUPER_ADMIN, who is always unrestricted. See src/lib/adminSections.ts.
   adminSections                String[]                       @default([])
+  // Optional granular permission role for an ADMIN. Null = full admin access, exactly as before, so no
+  // existing admin loses anything until a Super Admin assigns a narrower role. SUPER_ADMIN ignores it.
+  adminRoleId                  String?
+  adminRole                    AdminRole?                     @relation(fields: [adminRoleId], references: [id])
   joinDate                     DateTime?
   endOfServiceDate             DateTime?
   teamId                       String?
@@ -1207,4 +1211,31 @@ model PriceChangeLog {
   createdAt   DateTime @default(now())
 
   @@index([entity, entityId])
+}
+
+
+// ===== Roles, permissions & audit =====
+
+model AdminRole {
+  id          String     @id @default(cuid())
+  key         String     @unique // OWNER | ADMIN | EDITOR | SEO | OPERATIONS | VIEWER
+  name        String
+  permissions String[]
+  employees   Employee[]
+}
+
+// Every admin mutation: who, when, what, before/after.
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorName String?
+  action    String // e.g. "pricing.price.set"
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, createdAt])
+  @@index([createdAt])
 }

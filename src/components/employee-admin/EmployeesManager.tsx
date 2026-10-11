@@ -27,6 +27,7 @@ export type EmployeeRow = {
   invoicesAccess: string;
   expensesAccess: string;
   adminSections: string[];
+  adminRoleKey: string;
   joinDate: string | null;
   endOfServiceDate: string | null;
   sparePartPriceModification: string;
@@ -51,6 +52,7 @@ function toFormValue(emp: EmployeeRow): EmployeeFormValue {
     invoicesAccess: emp.invoicesAccess,
     expensesAccess: emp.expensesAccess,
     adminSections: emp.adminSections,
+    adminRoleKey: emp.adminRoleKey,
     joinDate: emp.joinDate ?? "",
     endOfServiceDate: emp.endOfServiceDate ?? "",
     sparePartPriceModification: emp.sparePartPriceModification,
@@ -75,6 +77,7 @@ const emptyFormValue: EmployeeFormValue = {
   invoicesAccess: "No Access",
   expensesAccess: "No Access",
   adminSections: [],
+  adminRoleKey: "",
   joinDate: "",
   endOfServiceDate: "",
   sparePartPriceModification: "Not Allowed",

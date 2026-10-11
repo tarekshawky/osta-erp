@@ -20,7 +20,7 @@ export default async function AdminEmployeesPage({
   const safePage = Math.min(page, totalPages);
 
   const employees = await prisma.employee.findMany({
-    include: { team: true },
+    include: { team: true, adminRole: true },
     orderBy: { createdAt: "asc" },
     skip: (safePage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
@@ -46,6 +46,7 @@ export default async function AdminEmployeesPage({
     invoicesAccess: emp.invoicesAccess,
     expensesAccess: emp.expensesAccess,
     adminSections: emp.adminSections,
+    adminRoleKey: emp.adminRole?.key ?? "",
     joinDate: emp.joinDate ? emp.joinDate.toISOString().slice(0, 10) : null,
     endOfServiceDate: emp.endOfServiceDate ? emp.endOfServiceDate.toISOString().slice(0, 10) : null,
     sparePartPriceModification: emp.sparePartPriceModification,

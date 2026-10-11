@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireEmployee } from "@/lib/auth";
+import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { aedToFils } from "@/lib/pricing/money";
 import { validateTiers } from "@/lib/pricing/priceQuote";
 
@@ -10,6 +10,8 @@ export type ActionResult = { ok: boolean; error?: string };
 const fail = (error: string): ActionResult => ({ ok: false, error });
 
 async function log(entity: string, entityId: string, before: unknown, after: unknown, changedById: string) {
+  const actor = await prisma.employee.findUnique({ where: { id: changedById }, select: { id: true, name: true } });
+  if (actor) await writeAudit(actor, `pricing.${entity}`, entity, entityId, before, after);
   await prisma.priceChangeLog.create({
     data: {
       entity,
@@ -30,7 +32,9 @@ function done(): ActionResult {
 
 // priceAed "" = not available in this emirate (the row is deactivated, never deleted, so history stays).
 export async function setServicePrice(serviceId: string, regionId: string, priceAed: string): Promise<ActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const admin = g.admin;
   const existing = await prisma.servicePrice.findUnique({ where: { serviceId_regionId: { serviceId, regionId } } });
 
   if (priceAed.trim() === "") {
@@ -85,7 +89,9 @@ function slugify(s: string) {
 }
 
 export async function saveService(id: string | null, input: ServiceInput): Promise<ActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const admin = g.admin;
   const error = validateService(input);
   if (error) return fail(error);
 
@@ -142,7 +148,9 @@ function parseRuleSet(input: RuleSetInput) {
 }
 
 export async function saveRuleSet(id: string | null, input: RuleSetInput): Promise<ActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("discounts.edit");
+  if (!g.ok) return fail(g.error);
+  const admin = g.admin;
   const parsed = parseRuleSet(input);
   if (!parsed.ok) return fail(parsed.error);
 
@@ -194,7 +202,9 @@ export type BookingTypeInput = {
 };
 
 export async function saveBookingType(id: string, input: BookingTypeInput): Promise<ActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const admin = g.admin;
   if (!input.nameEn.trim() || !input.nameAr.trim()) return fail("Both English and Arabic names are required.");
   const fee = input.feeAed.trim() === "" ? 0 : aedToFils(input.feeAed);
   if (fee === null) return fail("Enter a valid fee in AED.");
@@ -227,7 +237,9 @@ export async function addFeeOverride(
   regionId: string,
   feeAed: string
 ): Promise<ActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const admin = g.admin;
   if (!serviceId && !regionId) return fail("Pick a service, an emirate, or both.");
   const fee = aedToFils(feeAed || "");
   if (fee === null) return fail("Enter a valid fee in AED (0 is allowed).");
@@ -245,7 +257,9 @@ export async function addFeeOverride(
 }
 
 export async function deleteFeeOverride(id: string): Promise<ActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const admin = g.admin;
   const row = await prisma.bookingTypeFeeOverride.findUnique({ where: { id } });
   if (!row) return fail("Override not found.");
   await prisma.bookingTypeFeeOverride.delete({ where: { id } });
@@ -256,7 +270,9 @@ export async function deleteFeeOverride(id: string): Promise<ActionResult> {
 // ---------- Tax & visit fee ----------
 
 export async function saveTax(vatRatePercent: string, pricesIncludeVat: boolean): Promise<ActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const admin = g.admin;
   const rate = Number(vatRatePercent);
   if (vatRatePercent.trim() === "" || isNaN(rate) || rate < 0 || rate > 100) return fail("VAT rate must be between 0 and 100.");
   const before = await prisma.taxSetting.findUnique({ where: { id: "default" } });
@@ -281,7 +297,9 @@ export type VisitFeeInput = {
 
 // Policies are immutable: every save inserts the next version; orders keep pointing at the one they accepted.
 export async function publishVisitFeePolicy(input: VisitFeeInput): Promise<ActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const admin = g.admin;
   const amount = aedToFils(input.amountAed);
   if (amount === null || amount <= 0) return fail("Enter a valid visit-fee amount in AED.");
   if (!input.textAr.trim() || !input.textEn.trim() || !input.consentLabelAr.trim() || !input.consentLabelEn.trim()) {
@@ -306,7 +324,9 @@ export async function publishVisitFeePolicy(input: VisitFeeInput): Promise<Actio
 }
 
 export async function reviewVisitFeeCharge(id: string, decision: "APPROVED" | "REJECTED", note: string): Promise<ActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("visitFee.review");
+  if (!g.ok) return fail(g.error);
+  const admin = g.admin;
   if (decision === "REJECTED" && !note.trim()) return fail("A reason is required to reject a charge.");
   const charge = await prisma.visitFeeCharge.findUnique({ where: { id } });
   if (!charge) return fail("Charge not found.");

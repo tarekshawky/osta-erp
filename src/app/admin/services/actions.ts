@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireEmployee } from "@/lib/auth";
+import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
 
 export type ServicePageFormInput = {
@@ -62,7 +62,10 @@ function toData(input: ServicePageFormInput) {
 }
 
 export async function createServicePage(input: ServicePageFormInput): Promise<ServiceActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pages.create");
+  if (!g.ok) return { ok: false, error: g.error };
+  const admin = g.admin;
+  if (input.published && !g.can("pages.publish")) return { ok: false, error: "You don't have permission to publish. Save it as a draft." };
   const error = validate(input);
   if (error) return { ok: false, error };
 
@@ -74,17 +77,24 @@ export async function createServicePage(input: ServicePageFormInput): Promise<Se
     data: { slug, ...toData(input), createdById: admin.id },
   });
 
+  await writeAudit(admin, "servicePage.create", "ServicePage", service.id, null, { slug, published: input.published });
   revalidatePath("/admin/services");
   return { ok: true, id: service.id };
 }
 
 export async function updateServicePage(id: string, input: ServicePageFormInput): Promise<ServiceActionResult> {
-  const admin = await requireEmployee("ADMIN");
+  const g = await guardPermission("pages.edit");
+  if (!g.ok) return { ok: false, error: g.error };
+  const admin = g.admin;
   const error = validate(input);
   if (error) return { ok: false, error };
 
   const existing = await prisma.servicePage.findUnique({ where: { id } });
   if (!existing) return { ok: false, error: "Service page not found." };
+
+  if (input.published !== existing.published && !g.can("pages.publish")) {
+    return { ok: false, error: "You don't have permission to publish or unpublish." };
+  }
 
   const slug = slugify(input.slug);
   if (slug !== existing.slug) {
@@ -97,14 +107,18 @@ export async function updateServicePage(id: string, input: ServicePageFormInput)
     data: { slug, ...toData(input), updatedById: admin.id },
   });
 
+  await writeAudit(admin, "servicePage.update", "ServicePage", id, { slug: existing.slug, published: existing.published }, { slug, published: input.published });
   revalidatePath("/admin/services");
   revalidatePath(`/admin/services/${id}/edit`);
   return { ok: true, id };
 }
 
 export async function deleteServicePage(id: string) {
-  await requireEmployee("ADMIN");
+  const g = await guardPermission("pages.delete");
+  if (!g.ok) redirect("/admin/services?toast=forbidden");
+  const before = await prisma.servicePage.findUnique({ where: { id }, select: { slug: true, nameEn: true } });
   await prisma.servicePage.delete({ where: { id } });
+  await writeAudit(g.admin, "servicePage.delete", "ServicePage", id, before, null);
   revalidatePath("/admin/services");
   redirect("/admin/services?toast=deleted");
 }
