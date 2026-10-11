@@ -22,7 +22,7 @@ export async function GET() {
         },
       },
     }),
-    prisma.bookingType.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.bookingType.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" }, include: { overrides: true } }),
     prisma.taxSetting.findUnique({ where: { id: "default" } }),
     prisma.visitFeePolicy.findFirst({ orderBy: { version: "desc" } }),
   ]);
@@ -49,7 +49,8 @@ export async function GET() {
     bookingTypes: bookingTypes.map((b) => ({
       id: b.id, code: b.code, nameEn: b.nameEn, nameAr: b.nameAr,
       descriptionEn: b.descriptionEn, descriptionAr: b.descriptionAr,
-      defaultFeeFils: b.defaultFeeFils, sameDayAllowed: b.sameDayAllowed,
+      defaultFeeFils: b.defaultFeeFils, sameDayAllowed: b.sameDayAllowed, hoursStart: b.hoursStart, hoursEnd: b.hoursEnd,
+      overrides: b.overrides.map((o) => ({ serviceId: o.serviceId, regionId: o.regionId, feeFils: o.feeFils })),
     })),
     tax: { vatRatePercent: tax?.vatRatePercent ?? 5, pricesIncludeVat: tax?.pricesIncludeVat ?? true },
     visitFeePolicy: policy && {
