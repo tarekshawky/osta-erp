@@ -17,6 +17,11 @@ export async function computePublishProblems(page: PageRow): Promise<string[]> {
 
   const parsed = parseBlocks(page.draftBlocks);
   if (!parsed.ok) return problems;
+  for (const b of parsed.blocks.filter((x) => x.type === "form" && !x.hidden)) {
+    const slug = String(b.props.formSlug ?? "");
+    if (!slug) problems.push("A Form block has no form selected.");
+    else if (!(await prisma.cmsForm.findFirst({ where: { slug, active: true }, select: { id: true } }))) problems.push(`The form “${slug}” doesn't exist or is inactive, so visitors couldn't submit it.`);
+  }
   const seo = (page.draftSeo ?? {}) as Record<string, string>;
   const [site, area] = await Promise.all([loadJsonLdSite(), loadJsonLdArea(page.areaId)]);
 

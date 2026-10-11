@@ -16,7 +16,8 @@ const MODULES: { href?: string; title: string; text: string }[] = [
   { href: "/admin/website/areas", title: "Service areas (local SEO)", text: "Where you work, services per area, and a page per area with a near-duplicate guard." },
   { href: "/admin/website/redirects", title: "Redirects & sitemap", text: "Manage 301 redirects and see exactly what the sitemap lists." },
   { href: "/admin/website/media", title: "Media library", text: "Upload images, organise in folders, add alt text, see where each one is used." },
-  { title: "Integrations & forms", text: "Coming next." },
+  { href: "/admin/website/forms", title: "Forms & leads", text: "Build forms, add them to pages, manage and export the leads they collect." },
+  { title: "Integrations & analytics", text: "Coming next." },
 ];
 
 export default async function WebsiteOverviewPage() {

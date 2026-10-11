@@ -1436,3 +1436,42 @@ model ServiceArea {
   pages     CmsPage[]
   createdAt DateTime          @default(now())
 }
+
+// ===== Forms & leads =====
+
+// Admin-defined form (fields live in `fields` JSON, validated by src/lib/forms/forms.ts). Rendered on the public
+// site through the "form" CMS block and submitted to /api/v1/forms/<slug>/submit.
+model CmsForm {
+  id            String              @id @default(cuid())
+  slug          String              @unique
+  nameEn        String
+  nameAr        String
+  fields        Json                @default("[]")
+  recipients    String[]            @default([])
+  submitLabelEn String              @default("Send")
+  submitLabelAr String              @default("إرسال")
+  successEn     String              @default("Thank you! We'll be in touch shortly.")
+  successAr     String              @default("شكراً لك! سنتواصل معك قريباً.")
+  active        Boolean             @default(true)
+  submissions   CmsFormSubmission[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @default(now()) @updatedAt
+}
+
+// A lead. Contains personal data: only people with leads.view can read it. The visitor's IP is never stored,
+// only a keyed hash used for rate limiting.
+model CmsFormSubmission {
+  id         String   @id @default(cuid())
+  formId     String
+  form       CmsForm  @relation(fields: [formId], references: [id], onDelete: Cascade)
+  data       Json
+  status     String   @default("NEW") // NEW | CONTACTED | CLOSED | SPAM
+  notes      String   @default("")
+  language   String?
+  sourcePath String?
+  ipHash     String?
+  createdAt  DateTime @default(now())
+
+  @@index([formId, createdAt])
+  @@index([ipHash, createdAt])
+}

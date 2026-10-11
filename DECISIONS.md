@@ -63,3 +63,13 @@
 42. **Sitemap excludes noindex pages** (previously a page marked noindex could still be listed). The Redirects & Sitemap screen shows exactly what is included and why a page is left out.
 43. **Redirects** are single-path 301s (what page renames create); real routes, live pages, loops and non-https external targets are refused.
 44. **Publish gate is one function** (`computePublishProblems`) so the rules are tested without a browser session.
+
+## CMS (stage 6: forms & leads)
+
+45. **Forms are data, not code.** A form is a list of typed fields (text, email, phone, textarea, select, checkbox) with English and Arabic labels, defined in admin and shown on any page via the Form block. Publishing a page whose Form block points at a missing or inactive form is refused.
+46. **The server is the authority.** Every submission is validated against the saved definition (required, email/phone format, allowed options, length); unknown fields are dropped; the browser form is only a convenience. Errors come back as codes and are shown in the visitor's language.
+47. **Spam protection without CAPTCHA:** a hidden honeypot field, a minimum fill time (2 s), a 20 KB body cap, and a per-visitor rate limit (5 per 10 minutes per form). Bots receive a normal-looking success and nothing is stored. A determined human or a bot that behaves like one can still get through; add a CAPTCHA if abuse appears.
+48. **Privacy.** Leads are only visible with `leads.view`. The visitor's IP is never stored, only a keyed hash used for the rate limit. Lead contents never go into the audit log or server logs (the log records that a lead was triaged or exported, not what it said). CSV exports are audited and neutralise spreadsheet formulas.
+49. **Forms with leads are deactivated, not deleted.** Leads are business records.
+50. **Email alerts** reuse the existing sender: they go to the admin notification address plus any per-form recipients, and only once Resend is configured (otherwise logged to the console). A failed email never loses a lead; it is saved first. Resend's sandbox can only deliver to the account owner's address until a domain is verified.
+51. **Conversion hook.** A successful submit pushes a `form_submit` event to `dataLayer` if present, ready for the analytics integration.

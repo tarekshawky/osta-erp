@@ -8,19 +8,20 @@
 // only TO the email address that owns the Resend account. Verify a domain (Resend
 // dashboard -> Domains) to notify any admin address and use a custom From address.
 export interface EmailSender {
-  send(params: { subject: string; html: string; text: string }): Promise<void>;
+  send(params: { subject: string; html: string; text: string; to?: string[] }): Promise<void>;
 }
 
 class ConsoleEmailSender implements EmailSender {
-  async send({ subject, text }: { subject: string; html: string; text: string }) {
-    console.log(`[EMAIL to admin] ${subject}\n${text}`);
+  async send({ subject, text, to }: { subject: string; html: string; text: string; to?: string[] }) {
+    console.log(`[EMAIL to ${to?.length ? to.join(", ") : "admin"}] ${subject}\n${text}`);
   }
 }
 
 class ResendEmailSender implements EmailSender {
-  async send({ subject, html, text }: { subject: string; html: string; text: string }) {
+  async send({ subject, html, text, to: extra }: { subject: string; html: string; text: string; to?: string[] }) {
     const apiKey = process.env.RESEND_API_KEY!;
-    const to = process.env.ADMIN_NOTIFICATION_EMAIL!;
+    // The admin address always gets a copy; a form can add its own recipients.
+    const to = [...new Set([process.env.ADMIN_NOTIFICATION_EMAIL!, ...(extra ?? [])])];
     const from = process.env.RESEND_FROM_EMAIL || "OSTA Services <onboarding@resend.dev>";
 
     const res = await fetch("https://api.resend.com/emails", {
@@ -29,7 +30,7 @@ class ResendEmailSender implements EmailSender {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from, to: [to], subject, html, text }),
+      body: JSON.stringify({ from, to, subject, html, text }),
     });
 
     if (!res.ok) {
@@ -94,5 +95,16 @@ export async function notifyAdminOfBooking(params: {
     subject: `New booking: ${params.service} — ${params.customerName}`,
     html: `<h2>New service booking</h2>${html}`,
     text: `New service booking\n\n${text}`,
+  });
+}
+
+// Sent when a website form is submitted. Field values are visitor-supplied, so they are HTML-escaped.
+export async function notifyFormSubmission(params: { formName: string; rows: [string, string][]; to?: string[]; sourcePath?: string | null }) {
+  const { html, text } = renderRows([...params.rows, ...(params.sourcePath ? ([["Page", params.sourcePath]] as [string, string][]) : [])]);
+  await emailSender.send({
+    to: params.to,
+    subject: `New lead: ${params.formName}`,
+    html: `<h2>New website lead — ${escapeHtml(params.formName)}</h2>${html}`,
+    text: `New website lead — ${params.formName}\n\n${text}`,
   });
 }

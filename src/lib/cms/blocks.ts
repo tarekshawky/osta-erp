@@ -37,6 +37,7 @@ export const BLOCK_SCHEMAS = {
   faq: z.object({ heading: bi, items: z.array(z.object({ question: bi, answer: bi })).max(30) }),
   stats: z.object({ heading: bi, items: z.array(z.object({ value: z.string().max(40), label: bi })).max(8) }),
   cta: z.object({ heading: bi, subtitle: bi, button: cta }),
+  form: z.object({ heading: bi, intro: bi, formSlug: z.string().max(60).regex(/^[a-z0-9-]*$/) }),
 } as const;
 
 export type BlockType = keyof typeof BLOCK_SCHEMAS;
@@ -55,6 +56,7 @@ export type FieldDef =
   | { kind: "bi-text" | "bi-textarea"; key: string; label: string }
   | { kind: "text" | "textarea" | "url" | "image" | "number"; key: string; label: string }
   | { kind: "select"; key: string; label: string; options: { value: string; label: string }[] }
+  | { kind: "form-select"; key: string; label: string }
   | { kind: "group"; key: string; label: string; fields: FieldDef[] }
   | { kind: "list"; key: string; label: string; itemLabel: string; max: number; fields: FieldDef[] };
 
@@ -179,6 +181,16 @@ export const BLOCK_REGISTRY: Record<
       },
     ],
     defaults: () => ({ heading: biEmpty(), items: [] }),
+  },
+  form: {
+    label: "Form",
+    description: "A lead form from Website → Forms (contact, quote request…).",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "intro", label: "Intro text" },
+      { kind: "form-select", key: "formSlug", label: "Which form" },
+    ],
+    defaults: () => ({ heading: biEmpty(), intro: biEmpty(), formSlug: "" }),
   },
   cta: {
     label: "Call to action",

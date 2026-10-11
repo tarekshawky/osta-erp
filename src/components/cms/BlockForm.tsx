@@ -2,6 +2,8 @@
 
 import { inputClassName } from "@/components/FormField";
 import { ImageUploadField } from "@/components/ImageUploadField";
+import { useEffect, useState } from "react";
+import { listForms } from "@/app/admin/website/forms-actions";
 import type { FieldDef } from "@/lib/cms/blocks";
 
 type Obj = Record<string, unknown>;
@@ -22,6 +24,25 @@ function BiInput({ label, value, onChange, multiline }: { label: string; value: 
         {multiline ? <textarea {...common("ar")} /> : <input {...common("ar")} />}
       </div>
     </div>
+  );
+}
+
+function FormPicker({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const [forms, setForms] = useState<{ slug: string; name: string; active: boolean }[] | null>(null);
+  useEffect(() => {
+    void listForms().then(setForms).catch(() => setForms([]));
+  }, []);
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-slate-600">{label}</span>
+      <select className={inputClassName} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{forms === null ? "Loading…" : "Choose a form"}</option>
+        {forms?.map((f) => (
+          <option key={f.slug} value={f.slug}>{f.name}{f.active ? "" : " (inactive)"}</option>
+        ))}
+      </select>
+      {value && forms && !forms.some((f) => f.slug === value) && <span className="text-xs text-red-500">This form no longer exists.</span>}
+    </label>
   );
 }
 
@@ -74,6 +95,8 @@ export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; v
                 </select>
               </label>
             );
+          case "form-select":
+            return <FormPicker key={f.key} label={f.label} value={(v as string) ?? ""} onChange={(x) => set(f.key, x)} />;
           case "group":
             return (
               <fieldset key={f.key} className="rounded-lg border border-slate-200 p-3">
