@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
-import { MenuEditor } from "@/components/cms/MenuEditor";
+import { MenuEditor, type PageOption } from "@/components/cms/MenuEditor";
 import type { MenuItemInput } from "@/lib/site/siteRules";
 
 type Row = Awaited<ReturnType<typeof load>>[number];
@@ -17,7 +17,20 @@ function tree(rows: Row[], menu: string): MenuItemInput[] {
 
 export default async function MenusPage() {
   await requireEmployee("ADMIN");
-  const rows = await load();
+  const [rows, cmsPages] = await Promise.all([
+    load(),
+    prisma.cmsPage.findMany({
+      where: { status: "PUBLISHED", deletedAt: null, isHomepage: false, publishedVersion: { isNot: null } },
+      orderBy: { updatedAt: "desc" },
+      select: { publishedVersion: { select: { slug: true, titleEn: true, titleAr: true } } },
+    }),
+  ]);
+  // Built-in site pages first, then every page published from Website → Pages.
+  const pages: PageOption[] = [
+    ["/", "Home", "الرئيسية"], ["/services", "Services", "الخدمات"], ["/pricing", "Pricing & booking", "الأسعار"], ["/blog", "Blog", "المدونة"],
+    ["/about", "About Us", "من نحن"], ["/contact", "Contact", "تواصل معنا"],
+  ].map(([url, labelEn, labelAr]) => ({ group: "Site pages", url, labelEn, labelAr }));
+  for (const p of cmsPages) if (p.publishedVersion) pages.push({ group: "Your published pages", url: `/${p.publishedVersion.slug}`, labelEn: p.publishedVersion.titleEn, labelAr: p.publishedVersion.titleAr });
   return (
     <div className="pb-10">
       <AdminTopBar title="Website · Menus" />
@@ -25,8 +38,8 @@ export default async function MenusPage() {
         <WebsiteTabs />
         <p className="mb-5 max-w-2xl text-sm text-slate-500">Drag items to reorder. Sub-items appear as a dropdown. The log-in / dashboard button and language switch are part of the site and always shown.</p>
         <div className="flex max-w-4xl flex-col gap-6">
-          <MenuEditor menu="header" title="Header menu" initial={tree(rows, "header")} />
-          <MenuEditor menu="footer" title="Footer quick links" initial={tree(rows, "footer")} />
+          <MenuEditor menu="header" title="Header menu" initial={tree(rows, "header")} pages={pages} />
+          <MenuEditor menu="footer" title="Footer quick links" initial={tree(rows, "footer")} pages={pages} />
         </div>
       </div>
     </div>

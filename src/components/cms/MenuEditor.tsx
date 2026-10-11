@@ -10,19 +10,39 @@ import { saveMenu } from "@/app/admin/website/site-actions";
 import type { MenuItemInput } from "@/lib/site/siteRules";
 
 type Item = Omit<MenuItemInput, "children"> & { uid: string; children: Item[] };
+export type PageOption = { group: string; labelEn: string; labelAr: string; url: string };
 let counter = 0;
 const uid = () => `m${++counter}-${Math.random().toString(36).slice(2, 7)}`;
 const blank = (): Item => ({ uid: uid(), labelEn: "", labelAr: "", url: "", visible: true, showDesktop: true, showMobile: true, newTab: false, children: [] });
 export const toEditable = (items: MenuItemInput[]): Item[] => items.map((i) => ({ ...i, uid: uid(), children: toEditable(i.children) as Item[] }));
 const strip = (items: Item[]): MenuItemInput[] => items.map(({ uid: _u, children, ...rest }) => { void _u; return { ...rest, children: strip(children) }; });
 
-function Row({ item, onChange, onRemove, extra }: { item: Item; onChange: (i: Item) => void; onRemove: () => void; extra?: React.ReactNode }) {
+function Row({ item, onChange, onRemove, extra, pages }: { item: Item; onChange: (i: Item) => void; onRemove: () => void; extra?: React.ReactNode; pages: PageOption[] }) {
+  const groups = [...new Set(pages.map((p) => p.group))];
   return (
     <div className="flex flex-col gap-2">
       <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1.2fr]">
         <input className={inputClassName} placeholder="Label (English)" value={item.labelEn} onChange={(e) => onChange({ ...item, labelEn: e.target.value })} />
         <input className={inputClassName} dir="rtl" placeholder="العنوان بالعربية" value={item.labelAr} onChange={(e) => onChange({ ...item, labelAr: e.target.value })} />
-        <input className={inputClassName} dir="ltr" placeholder="/page or https://…" value={item.url} onChange={(e) => onChange({ ...item, url: e.target.value })} />
+        <div className="flex flex-col gap-1.5">
+          <select
+            className={inputClassName}
+            aria-label="Choose a page"
+            value=""
+            onChange={(e) => {
+              const p = pages.find((x) => x.url === e.target.value);
+              if (p) onChange({ ...item, url: p.url, labelEn: item.labelEn || p.labelEn, labelAr: item.labelAr || p.labelAr });
+            }}
+          >
+            <option value="">Choose a page…</option>
+            {groups.map((g) => (
+              <optgroup key={g} label={g}>
+                {pages.filter((p) => p.group === g).map((p) => <option key={p.url} value={p.url}>{p.labelEn} ({p.url})</option>)}
+              </optgroup>
+            ))}
+          </select>
+          <input className={inputClassName} dir="ltr" placeholder="…or type /page or https://…" value={item.url} onChange={(e) => onChange({ ...item, url: e.target.value })} />
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600">
         <label className="flex items-center gap-1.5"><input type="checkbox" checked={item.visible} onChange={(e) => onChange({ ...item, visible: e.target.checked })} /> Visible</label>
@@ -36,7 +56,7 @@ function Row({ item, onChange, onRemove, extra }: { item: Item; onChange: (i: It
   );
 }
 
-function Sortable({ item, onChange, onRemove }: { item: Item; onChange: (i: Item) => void; onRemove: () => void }) {
+function Sortable({ item, onChange, onRemove, pages }: { item: Item; onChange: (i: Item) => void; onRemove: () => void; pages: PageOption[] }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.uid });
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
@@ -48,7 +68,7 @@ function Sortable({ item, onChange, onRemove }: { item: Item; onChange: (i: Item
       <div className="flex gap-2">
         <button type="button" aria-label="Drag to reorder" className="cursor-grab touch-none px-1 text-slate-400" {...attributes} {...listeners}>⠿</button>
         <div className="min-w-0 flex-1">
-          <Row item={item} onChange={onChange} onRemove={onRemove} extra={<button type="button" onClick={() => onChange({ ...item, children: [...item.children, blank()] })} className="font-medium text-blue-600">+ Sub-item</button>} />
+          <Row pages={pages} item={item} onChange={onChange} onRemove={onRemove} extra={<button type="button" onClick={() => onChange({ ...item, children: [...item.children, blank()] })} className="font-medium text-blue-600">+ Sub-item</button>} />
           {item.children.length > 0 && (
             <div className="mt-3 flex flex-col gap-3 border-s-2 border-slate-100 ps-3">
               {item.children.map((c, i) => (
@@ -58,7 +78,7 @@ function Sortable({ item, onChange, onRemove }: { item: Item; onChange: (i: Item
                     <button type="button" aria-label="Move down" onClick={() => move(i, 1)}>▼</button>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <Row item={c} onChange={(nc) => onChange({ ...item, children: item.children.map((x) => (x.uid === c.uid ? { ...nc, children: [] } : x)) })} onRemove={() => onChange({ ...item, children: item.children.filter((x) => x.uid !== c.uid) })} />
+                    <Row pages={pages} item={c} onChange={(nc) => onChange({ ...item, children: item.children.map((x) => (x.uid === c.uid ? { ...nc, children: [] } : x)) })} onRemove={() => onChange({ ...item, children: item.children.filter((x) => x.uid !== c.uid) })} />
                   </div>
                 </div>
               ))}
@@ -70,7 +90,7 @@ function Sortable({ item, onChange, onRemove }: { item: Item; onChange: (i: Item
   );
 }
 
-export function MenuEditor({ menu, title, initial }: { menu: string; title: string; initial: MenuItemInput[] }) {
+export function MenuEditor({ menu, title, initial, pages }: { menu: string; title: string; initial: MenuItemInput[]; pages: PageOption[] }) {
   const { showToast } = useToast();
   const [items, setItems] = useState<Item[]>(() => toEditable(initial));
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +110,7 @@ export function MenuEditor({ menu, title, initial }: { menu: string; title: stri
           <div className="flex flex-col gap-3">
             {items.length === 0 && <p className="text-sm text-slate-400">No items. The site falls back to its built-in links.</p>}
             {items.map((it) => (
-              <Sortable key={it.uid} item={it} onChange={(n) => setItems((l) => l.map((x) => (x.uid === it.uid ? n : x)))} onRemove={() => setItems((l) => l.filter((x) => x.uid !== it.uid))} />
+              <Sortable key={it.uid} pages={pages} item={it} onChange={(n) => setItems((l) => l.map((x) => (x.uid === it.uid ? n : x)))} onRemove={() => setItems((l) => l.filter((x) => x.uid !== it.uid))} />
             ))}
           </div>
         </SortableContext>
