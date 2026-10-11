@@ -1475,3 +1475,19 @@ model CmsFormSubmission {
   @@index([formId, createdAt])
   @@index([ipHash, createdAt])
 }
+
+// ===== Integrations & cookie consent (single row, id = "default") =====
+// Every ID here is public by nature (it ends up in the page source), so none is a secret.
+model IntegrationSettings {
+  id                 String   @id @default("default")
+  ga4Id              String   @default("")
+  gtmId              String   @default("")
+  metaPixelId        String   @default("")
+  searchConsoleToken String   @default("")
+  bingToken          String   @default("")
+  requireConsent     Boolean  @default(true)
+  consentTextEn      String   @default("")
+  consentTextAr      String   @default("")
+  privacyUrl         String   @default("")
+  updatedAt          DateTime @default(now()) @updatedAt
+}

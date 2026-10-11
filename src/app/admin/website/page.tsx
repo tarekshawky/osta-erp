@@ -17,7 +17,7 @@ const MODULES: { href?: string; title: string; text: string }[] = [
   { href: "/admin/website/redirects", title: "Redirects & sitemap", text: "Manage 301 redirects and see exactly what the sitemap lists." },
   { href: "/admin/website/media", title: "Media library", text: "Upload images, organise in folders, add alt text, see where each one is used." },
   { href: "/admin/website/forms", title: "Forms & leads", text: "Build forms, add them to pages, manage and export the leads they collect." },
-  { title: "Integrations & analytics", text: "Coming next." },
+  { href: "/admin/website/integrations", title: "Integrations & analytics", text: "Google Analytics/Tag Manager, Search Console, Bing, Meta Pixel and the cookie-consent banner." },
 ];
 
 export default async function WebsiteOverviewPage() {

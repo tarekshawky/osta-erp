@@ -7,10 +7,11 @@ export function OPTIONS() {
 
 // Everything the public header, footer and contact details need, in one cacheable call.
 export async function GET() {
-  const [settings, menuRows, social] = await Promise.all([
+  const [settings, menuRows, social, integrations] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "default" } }),
     prisma.menuItem.findMany({ where: { visible: true }, orderBy: [{ sortOrder: "asc" }] }),
     prisma.socialLink.findMany({ where: { visible: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.integrationSettings.findUnique({ where: { id: "default" } }),
   ]);
   if (!settings) return apiSuccess(null);
 
@@ -29,5 +30,7 @@ export async function GET() {
     settings: publicSettings,
     menus,
     social: social.map((s) => ({ platform: s.platform, label: s.label, url: s.url })),
+    // Public by nature (they appear in page source). Nothing secret lives here.
+    integrations: integrations ? { ga4Id: integrations.ga4Id, gtmId: integrations.gtmId, metaPixelId: integrations.metaPixelId, searchConsoleToken: integrations.searchConsoleToken, bingToken: integrations.bingToken, requireConsent: integrations.requireConsent, consentTextEn: integrations.consentTextEn, consentTextAr: integrations.consentTextAr, privacyUrl: integrations.privacyUrl } : null,
   });
 }

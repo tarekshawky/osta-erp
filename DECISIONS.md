@@ -73,3 +73,13 @@
 49. **Forms with leads are deactivated, not deleted.** Leads are business records.
 50. **Email alerts** reuse the existing sender: they go to the admin notification address plus any per-form recipients, and only once Resend is configured (otherwise logged to the console). A failed email never loses a lead; it is saved first. Resend's sandbox can only deliver to the account owner's address until a domain is verified.
 51. **Conversion hook.** A successful submit pushes a `form_submit` event to `dataLayer` if present, ready for the analytics integration.
+
+## CMS (stage 7: integrations & consent)
+
+52. **Nothing changes until configured.** With no IDs set there is no banner, no script, and no extra request. Every integration is optional.
+53. **IDs are validated to each provider's exact format** (GA4 `G-…`, GTM `GTM-…`, Pixel digits, verification tokens), so an ID field can never inject script. They are public by nature (they appear in page source), so they are stored as ordinary settings, not secrets. Only the Owner (`integrations.manage`) can change them.
+54. **Consent gates tracking, not verification.** GA4/GTM need "analytics" consent, the Meta Pixel needs "marketing" consent; Search Console and Bing verification are plain meta tags with no cookies and always render. The default is consent required; the Owner can switch that off, with a warning that it loads everything for everyone.
+55. **Scripts load only after the choice, and unloading means reloading.** Withdrawing a permission reloads the page so the script is gone. The choice lasts 12 months, is versioned (bumping the version asks everyone again), and can be reopened from the footer "Cookie settings" link.
+56. **GTM wins over direct GA4** when both are set, to avoid counting every visit twice; the admin screen says so.
+57. **Conversion events** (call click, WhatsApp click, booking started, booking completed, form submit) go through one `track()` that sends nothing unless that visitor allowed it. Meta standard events are used where they fit (Lead, Contact, Schedule).
+58. **Not done:** client-side route changes rely on GA4/GTM's own history tracking; the Pixel gets a PageView per navigation. A server-side/Conversions API setup and consent-mode v2 signalling to Google are not implemented. The site has no privacy-policy page yet; the banner links to one once its address is set.
