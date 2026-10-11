@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Field, inputClassName } from "@/components/FormField";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import type { SeoInput } from "@/app/admin/website/actions";
-import { DESC_MAX, TITLE_MAX, type SeoIssue } from "@/lib/seo/analyze";
+import { DESC_MAX, TITLE_MAX, type AeoItem, type SeoIssue } from "@/lib/seo/analyze";
 
-export type Analysis = { score: number; issues: SeoIssue[] };
+export type Analysis = { score: number; issues: SeoIssue[]; aeo?: AeoItem[] };
 
 export const scoreStyle = (score: number) => (score >= 80 ? "bg-emerald-50 text-emerald-700" : score >= 55 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600");
 
@@ -81,6 +81,20 @@ export function SeoPanel({
               ))}
             </ul>
           )}
+        </div>
+      )}
+      {analysis?.aeo && (
+        <div className="mt-4 border-t border-slate-100 pt-3">
+          <p className="mb-1 text-xs font-semibold uppercase text-slate-500">Answer-engine checklist</p>
+          <p className="mb-2 text-[11px] text-slate-400">Clear, direct, up-to-date pages are easier for search and AI assistants to quote. Nothing can guarantee you appear in their answers.</p>
+          <ul className="flex flex-col gap-2">
+            {analysis.aeo.map((i) => (
+              <li key={i.id} className="flex gap-2 text-xs text-slate-600">
+                <span className={`mt-0.5 shrink-0 font-bold ${i.pass ? "text-emerald-600" : "text-slate-300"}`} aria-hidden>{i.pass ? "✓" : "○"}</span>
+                <span><b className="text-slate-800">{i.label}</b>{!i.pass && <span className="block text-slate-500">{i.hint}</span>}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </section>

@@ -1,4 +1,5 @@
 import type { Block } from "@/lib/cms/blocks";
+import { NEAR_DUPLICATE_BLOCK, NEAR_DUPLICATE_WARN, closestMatch, maskNames, pageText } from "./similarity";
 
 // SEO analyzer for CMS pages. Pure and unit-tested: all site knowledge (other pages' meta, which URLs exist)
 // arrives in `ctx`, so the same rules run in the editor, the pages list and the overview report.
@@ -12,10 +13,16 @@ export type SeoFields = {
 
 export type SeoPageInput = {
   slug: string; type: string; titleEn: string; titleAr: string; showInSitemap: boolean; blocks: Block[]; seo: SeoFields;
+  showLastUpdated?: boolean;
+  areaNames?: { en: string; ar: string }; // set for area pages: the place name is masked before comparing text
 };
 
 export type OtherMeta = { label: string; titleEn?: string; titleAr?: string; descriptionEn?: string; descriptionAr?: string };
-export type SeoContext = { others: OtherMeta[]; knownPaths: Set<string> };
+// Other area pages' body text with their own place names already masked.
+export type AreaPageText = { label: string; textEn: string; textAr: string };
+export type SeoContext = { others: OtherMeta[]; knownPaths: Set<string>; areaPages?: AreaPageText[] };
+
+export type AeoItem = { id: string; label: string; pass: boolean; hint: string };
 
 export const TITLE_MAX = 60;
 export const TITLE_MIN = 15;
@@ -69,7 +76,7 @@ function wordCount(blocks: Block[]): number {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
-export function analyzePage(page: SeoPageInput, ctx: SeoContext): { score: number; issues: SeoIssue[] } {
+export function analyzePage(page: SeoPageInput, ctx: SeoContext): { score: number; issues: SeoIssue[]; aeo: AeoItem[] } {
   const issues: SeoIssue[] = [];
   const add = (id: string, severity: Severity, message: string) => issues.push({ id, severity, message });
   const seo = page.seo;
@@ -142,7 +149,45 @@ export function analyzePage(page: SeoPageInput, ctx: SeoContext): { score: numbe
     if (heroes.length && !h1.includes(focus)) add("kw-h1", "info", "The focus keyword is not in the H1 heading.");
   }
 
+  // --- area pages must not be near-copies of each other ---
+  if (page.type === "area" && ctx.areaPages?.length) {
+    const names = page.areaNames ? [page.areaNames.en, page.areaNames.ar] : [];
+    const en = closestMatch(maskNames(pageText(page.blocks, "en"), names), ctx.areaPages.map((a) => ({ label: a.label, text: a.textEn })));
+    const arab = closestMatch(maskNames(pageText(page.blocks, "ar"), names), ctx.areaPages.map((a) => ({ label: a.label, text: a.textAr })));
+    const worst = [en, arab].filter((m): m is { label: string; score: number } => !!m).sort((a, b) => b.score - a.score)[0];
+    if (worst && worst.score >= NEAR_DUPLICATE_BLOCK) {
+      add("area-duplicate", "error", `This area page is ${Math.round(worst.score * 100)}% the same as "${worst.label}" once place names are ignored. Write area-specific content (local landmarks, common problems, how you serve it).`);
+    } else if (worst && worst.score >= NEAR_DUPLICATE_WARN) {
+      add("area-similar", "warn", `This area page is ${Math.round(worst.score * 100)}% similar to "${worst.label}". Make it more specific to this area.`);
+    }
+  }
+
   const penalty = { error: 20, warn: 8, info: 2 } as const;
   const score = Math.max(0, 100 - issues.reduce((sum, i) => sum + penalty[i.severity], 0));
-  return { score, issues };
+  return { score, issues, aeo: aeoChecklist(page) };
+}
+
+const QUESTION_START = /^(how|what|why|when|where|which|who|can|does|do|is|are|will|should)\b/i;
+const ARABIC_QUESTION_START = /^(كيف|ما|ماذا|هل|لماذا|متى|أين|كم|من)(\s|$)/;
+export const isQuestionHeading = (h: string) => /[?؟]\s*$/.test(h.trim()) || QUESTION_START.test(h.trim()) || ARABIC_QUESTION_START.test(h.trim());
+
+// A practical checklist for being quotable by answer engines (and featured snippets). It improves the odds of a clear
+// answer being picked up; nothing here guarantees appearing in Google AI or ChatGPT answers.
+export function aeoChecklist(page: SeoPageInput): AeoItem[] {
+  const blocks = visible(page.blocks);
+  const firstText = blocks
+    .map((b) => (b.type === "hero" ? bi(b.props.subtitle).en : b.type === "richText" || b.type === "imageText" ? bi(b.props.body).en : ""))
+    .find((t) => t.trim());
+  const firstPara = firstText?.split(/\n\s*\n/)[0].trim() ?? "";
+  const n = firstPara.split(/\s+/).filter(Boolean).length;
+
+  const headings = blocks.flatMap((b) => [bi(b.props.heading).en, ...(b.type === "faq" ? ((b.props.items as { question: unknown }[]) ?? []).map((i) => bi(i.question).en) : [])]).filter((h) => h.trim());
+  const faqItems = blocks.filter((b) => b.type === "faq").reduce((sum, b) => sum + ((b.props.items as unknown[]) ?? []).length, 0);
+
+  return [
+    { id: "aeo-direct-answer", label: "Opens with a direct answer", pass: n >= 15 && n <= 80, hint: n === 0 ? "Start the page with a short paragraph that answers the main question." : `The first paragraph has ${n} words; aim for a clear 15–80 word answer.` },
+    { id: "aeo-question-headings", label: "Has question-style headings", pass: headings.some(isQuestionHeading), hint: "Phrase at least one heading as a question people actually ask, e.g. “How much does AC cleaning cost?”." },
+    { id: "aeo-faq", label: "Has an FAQ with 3+ questions", pass: faqItems >= 3, hint: "Add an FAQ block with the questions customers really ask (needs English questions and answers for structured data)." },
+    { id: "aeo-last-updated", label: "Shows a last-updated date", pass: !!page.showLastUpdated, hint: "Turn on “Show last updated date” in page settings so readers and crawlers see the page is current." },
+  ];
 }

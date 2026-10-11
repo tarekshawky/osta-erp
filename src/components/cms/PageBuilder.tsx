@@ -24,11 +24,13 @@ export type BuilderPage = {
   type: string;
   showInMenus: boolean;
   showInSitemap: boolean;
+  showLastUpdated: boolean;
+  areaName: string | null;
   blocks: Block[];
   seo: SeoInput;
 };
 
-type Draft = Pick<BuilderPage, "titleEn" | "titleAr" | "slug" | "type" | "showInMenus" | "showInSitemap" | "blocks" | "seo">;
+type Draft = Pick<BuilderPage, "titleEn" | "titleAr" | "slug" | "type" | "showInMenus" | "showInSitemap" | "showLastUpdated" | "blocks" | "seo">;
 type SaveState = "saved" | "dirty" | "saving" | "error";
 
 const blockSummary = (b: Block): string => {
@@ -91,7 +93,7 @@ export function PageBuilder({ page, versions, siteOrigin }: { page: BuilderPage;
   const { showToast } = useToast();
   const [draft, setDraft] = useState<Draft>({
     titleEn: page.titleEn, titleAr: page.titleAr, slug: page.slug, type: page.type, showInMenus: page.showInMenus,
-    showInSitemap: page.showInSitemap, blocks: page.blocks, seo: page.seo,
+    showInSitemap: page.showInSitemap, showLastUpdated: page.showLastUpdated, blocks: page.blocks, seo: page.seo,
   });
   const [status, setStatus] = useState(page.status);
   const [publishAt, setPublishAt] = useState(page.publishAt ? page.publishAt.slice(0, 16) : "");
@@ -310,6 +312,8 @@ export function PageBuilder({ page, versions, siteOrigin }: { page: BuilderPage;
               </Field>
               <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.showInMenus} onChange={(e) => update({ showInMenus: e.target.checked })} /> Show in menus</label>
               <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.showInSitemap} onChange={(e) => update({ showInSitemap: e.target.checked })} /> Include in sitemap</label>
+              <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.showLastUpdated} onChange={(e) => update({ showLastUpdated: e.target.checked })} /> Show “last updated” date</label>
+              {page.areaName && <p className="text-xs text-slate-500">Service area: <b>{page.areaName}</b></p>}
             </div>
           </section>
 

@@ -4,12 +4,12 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { parseBlocks, type Block } from "@/lib/cms/blocks";
-import { createPreviewToken, publishProblems, slugProblem, slugify } from "@/lib/cms/pageRules";
+import { createPreviewToken, slugProblem, slugify } from "@/lib/cms/pageRules";
 import { revalidateSite } from "@/lib/cms/publish";
 import { requireEmployee } from "@/lib/auth";
-import { analyzePage, type SeoIssue } from "@/lib/seo/analyze";
-import { buildJsonLd, jsonLdProblems } from "@/lib/seo/jsonld";
-import { loadSeoContext, siteOrigin } from "@/lib/seo/context";
+import { analyzePage, type AeoItem, type SeoIssue } from "@/lib/seo/analyze";
+import { loadSeoContext } from "@/lib/seo/context";
+import { computePublishProblems } from "@/lib/cms/publishGate";
 import type { Prisma } from "@/generated/prisma";
 
 export type ActionResult = { ok: boolean; error?: string; id?: string; url?: string };
@@ -29,6 +29,7 @@ export type DraftInput = {
   type: string;
   showInMenus: boolean;
   showInSitemap: boolean;
+  showLastUpdated: boolean;
   blocks: Block[];
   seo: SeoInput;
 };
@@ -85,6 +86,7 @@ export async function saveDraft(id: string, input: DraftInput, autosave: boolean
     titleAr: input.titleAr.trim(),
     showInMenus: input.showInMenus,
     showInSitemap: input.showInSitemap,
+    showLastUpdated: input.showLastUpdated,
     draftBlocks: parsed.blocks as unknown as Prisma.InputJsonValue,
     draftSeo: input.seo as unknown as Prisma.InputJsonValue,
     updatedById: g.admin.id,
@@ -112,18 +114,7 @@ export async function publishPage(id: string, publishAtIso: string | null): Prom
   const page = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null }, include: { publishedVersion: { select: { slug: true } } } });
   if (!page) return fail("Page not found.");
 
-  const problems = publishProblems({ slug: page.slug, titleEn: page.titleEn, titleAr: page.titleAr, blocks: page.draftBlocks });
-  // Structured data is generated from the page; if it would be invalid (e.g. an FAQ answer left empty) the page can't go live.
-  const settings = await prisma.siteSettings.findUnique({ where: { id: "default" }, select: { siteNameEn: true, phone: true } });
-  const parsedBlocks = parseBlocks(page.draftBlocks);
-  if (parsedBlocks.ok) {
-    const seo = (page.draftSeo ?? {}) as Record<string, string>;
-    const ld = buildJsonLd(
-      { slug: page.slug, type: page.type, titleEn: page.titleEn, blocks: parsedBlocks.blocks, seo: { descriptionEn: seo.descriptionEn, ogImage: seo.ogImage } },
-      { origin: siteOrigin(), name: settings?.siteNameEn ?? "OSTA Services", phone: settings?.phone }
-    );
-    problems.push(...jsonLdProblems(ld));
-  }
+  const problems = await computePublishProblems(page);
   if (problems.length) return fail(`Can't publish yet: ${problems.join(" ")}`);
 
   let publishAt: Date | null = null;
@@ -258,12 +249,18 @@ export async function createPreviewUrl(id: string): Promise<ActionResult> {
 }
 
 // Live SEO check for the editor: runs the same analyzer the pages list and overview use, against the current (unsaved) draft.
-export async function analyzeDraft(pageId: string, draft: DraftInput): Promise<{ score: number; issues: SeoIssue[] }> {
+export async function analyzeDraft(pageId: string, draft: DraftInput): Promise<{ score: number; issues: SeoIssue[]; aeo: AeoItem[] }> {
   await requireEmployee("ADMIN");
   const parsed = parseBlocks(draft.blocks);
-  const ctx = await loadSeoContext(pageId);
+  const [ctx, row] = await Promise.all([
+    loadSeoContext(pageId),
+    prisma.cmsPage.findUnique({ where: { id: pageId }, select: { area: { select: { nameEn: true, nameAr: true } } } }),
+  ]);
   return analyzePage(
-    { slug: slugify(draft.slug), type: draft.type, titleEn: draft.titleEn, titleAr: draft.titleAr, showInSitemap: draft.showInSitemap, blocks: parsed.ok ? parsed.blocks : [], seo: draft.seo },
+    {
+      slug: slugify(draft.slug), type: draft.type, titleEn: draft.titleEn, titleAr: draft.titleAr, showInSitemap: draft.showInSitemap,
+      showLastUpdated: draft.showLastUpdated, blocks: parsed.ok ? parsed.blocks : [], seo: draft.seo, areaNames: row?.area ? { en: row.area.nameEn, ar: row.area.nameAr } : undefined,
+    },
     ctx
   );
 }

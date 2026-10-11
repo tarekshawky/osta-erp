@@ -1030,6 +1030,7 @@ model HomeSectionItem {
 
 model Region {
   id           String                   @id @default(cuid())
+  serviceAreas ServiceArea[]
   slug         String                   @unique
   nameEn       String
   nameAr       String
@@ -1043,6 +1044,7 @@ model Region {
 
 model BookableService {
   id                String                   @id @default(cuid())
+  serviceAreas      ServiceArea[]            @relation("AreaServices")
   slug              String                   @unique
   nameEn            String
   nameAr            String
@@ -1256,6 +1258,9 @@ model CmsPage {
   showInMenus        Boolean          @default(true)
   showInSitemap      Boolean          @default(true)
   translationGroupId String?
+  areaId             String?
+  area               ServiceArea?     @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  showLastUpdated    Boolean          @default(false)
   draftBlocks        Json             @default("[]")
   draftSeo           Json             @default("{}")
   publishedVersionId String?          @unique
@@ -1410,4 +1415,24 @@ model MediaVariant {
   data    Bytes
 
   @@unique([assetId, width, format])
+}
+
+// Where OSTA works: an emirate or a smaller area/city inside one. Phone, address and hours are NOT repeated here:
+// they come from SiteSettings so there is a single source of truth (NAP) everywhere.
+model ServiceArea {
+  id        String            @id @default(cuid())
+  regionId  String
+  region    Region            @relation(fields: [regionId], references: [id])
+  slug      String            @unique
+  nameEn    String
+  nameAr    String
+  kind      String            @default("area") // emirate | area
+  latitude  Float?
+  longitude Float?
+  mapsUrl   String            @default("")
+  active    Boolean           @default(true)
+  sortOrder Int               @default(0)
+  services  BookableService[] @relation("AreaServices")
+  pages     CmsPage[]
+  createdAt DateTime          @default(now())
 }

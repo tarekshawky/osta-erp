@@ -10,7 +10,7 @@ const emptySeo: SeoFields = { titleEn: "", titleAr: "", descriptionEn: "", descr
 // SEO score of every (non-deleted) page's current draft, using one shared scan of the rest of the site.
 export async function seoReport(): Promise<PageSeoRow[]> {
   const [pages, ctx] = await Promise.all([
-    prisma.cmsPage.findMany({ where: { deletedAt: null }, orderBy: { updatedAt: "desc" } }),
+    prisma.cmsPage.findMany({ where: { deletedAt: null }, orderBy: { updatedAt: "desc" }, include: { area: { select: { nameEn: true, nameAr: true } } } }),
     loadSeoContext(),
   ]);
   return pages.map((p) => {
@@ -19,8 +19,8 @@ export async function seoReport(): Promise<PageSeoRow[]> {
     const seo = { ...emptySeo, ...((p.draftSeo as Partial<SeoFields>) ?? {}) };
     const others = ctx.others.filter((o) => !(o.label === p.titleEn && o.titleEn === seo.titleEn && o.descriptionEn === seo.descriptionEn));
     const result = analyzePage(
-      { slug: p.slug, type: p.type, titleEn: p.titleEn, titleAr: p.titleAr, showInSitemap: p.showInSitemap, blocks: parsed.ok ? parsed.blocks : [], seo },
-      { ...ctx, others }
+      { slug: p.slug, type: p.type, titleEn: p.titleEn, titleAr: p.titleAr, showInSitemap: p.showInSitemap, showLastUpdated: p.showLastUpdated, blocks: parsed.ok ? parsed.blocks : [], seo, areaNames: p.area ? { en: p.area.nameEn, ar: p.area.nameAr } : undefined },
+      { ...ctx, others, areaPages: ctx.areaPages?.filter((a) => a.label !== p.titleEn) }
     );
     return { id: p.id, titleEn: p.titleEn, slug: p.slug, status: p.status, score: result.score, issues: result.issues };
   });

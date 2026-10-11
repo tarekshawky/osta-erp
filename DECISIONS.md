@@ -51,3 +51,15 @@
 33. **JSON-LD is English.** Both languages share one URL (language is a visitor choice, not a path), so Arabic structured data can't be a separate document.
 34. **No hreflang.** hreflang needs a distinct URL per language; this site serves both languages on one URL. Revisit only if language-specific URLs are introduced.
 35. **Broken-link check covers internal links** (site paths, published services/blog/CMS pages, redirects). Outbound link checking is deferred (needs a scheduled job).
+
+## CMS (stage 5: local SEO, answer engines, redirects)
+
+36. **Service areas** are emirates or smaller areas with coordinates, a map link and the services offered. Phone, address and hours are deliberately **not** repeated per area: they come from Site & Contact (one NAP source), so they can never disagree.
+37. **Area page = CMS page of type "area" linked to a service area.** "Create page" generates starter blocks; because the starter text is the same for every area, the duplicate guard refuses to publish an unedited starter.
+38. **Near-duplicate guard (blocks publishing).** Body text is compared with every other area page using 3-word shingles and Jaccard similarity, after the page's own place names (English and Arabic) are masked out so "Ajman" vs "Sharjah" doesn't hide a copy. 80%+ blocks publishing; 60%+ warns. Text-only: it can't judge whether two different-sounding pages say anything useful, so editors still need real local detail.
+39. **Local structured data.** Area pages emit a LocalBusiness (HomeAndConstructionBusiness) with areaServed, geo and map link, plus a Service per offered service, using the site-settings contact details; publishing is blocked if the phone number is missing.
+40. **Answer-engine checklist, not a promise.** Direct first answer (15-80 words), question-style headings (English and Arabic), an FAQ with 3+ questions, and a visible last-updated date. The UI states plainly that nothing guarantees appearing in AI answers.
+41. **Last-updated date** is a per-page switch, shown on the page and used by the checklist.
+42. **Sitemap excludes noindex pages** (previously a page marked noindex could still be listed). The Redirects & Sitemap screen shows exactly what is included and why a page is left out.
+43. **Redirects** are single-path 301s (what page renames create); real routes, live pages, loops and non-https external targets are refused.
+44. **Publish gate is one function** (`computePublishProblems`) so the rules are tested without a browser session.

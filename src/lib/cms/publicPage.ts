@@ -1,5 +1,5 @@
 import { parseBlocks, type Block } from "./blocks";
-import { buildJsonLd, jsonLdProblems } from "@/lib/seo/jsonld";
+import { buildJsonLd, jsonLdProblems, type JsonLdArea, type JsonLdSite } from "@/lib/seo/jsonld";
 
 export type PublicPage = {
   id: string;
@@ -10,16 +10,17 @@ export type PublicPage = {
   blocks: Block[];
   seo: Record<string, unknown>;
   jsonLd: Record<string, unknown>[];
+  showLastUpdated: boolean;
   updatedAt: string;
 };
 
 // Shapes a stored snapshot for the public site: re-validates the blocks and drops hidden ones,
 // so a hand-edited or stale row can never reach visitors as malformed or hidden content.
 export function toPublicPage(
-  page: { id: string; type: string; updatedAt: Date },
+  page: { id: string; type: string; updatedAt: Date; showLastUpdated?: boolean },
   snapshot: { slug: string; titleEn: string; titleAr: string; blocks: unknown; seo: unknown },
   includeHidden = false,
-  site?: { origin: string; name: string; phone?: string; publishedAt?: Date }
+  site?: JsonLdSite & { publishedAt?: Date; area?: JsonLdArea | null }
 ): PublicPage | null {
   const parsed = parseBlocks(snapshot.blocks);
   if (!parsed.ok) return null;
@@ -29,7 +30,7 @@ export function toPublicPage(
   if (site) {
     const built = buildJsonLd(
       {
-        slug: snapshot.slug, type: page.type, titleEn: snapshot.titleEn, blocks: parsed.blocks,
+        slug: snapshot.slug, type: page.type, titleEn: snapshot.titleEn, blocks: parsed.blocks, area: site.area,
         seo: { descriptionEn: seo.descriptionEn as string | undefined, ogImage: seo.ogImage as string | undefined },
         publishedAt: site.publishedAt?.toISOString(), updatedAt: page.updatedAt.toISOString(),
       },
@@ -46,6 +47,7 @@ export function toPublicPage(
     blocks: includeHidden ? parsed.blocks : parsed.blocks.filter((b) => !b.hidden),
     seo,
     jsonLd,
+    showLastUpdated: !!page.showLastUpdated,
     updatedAt: page.updatedAt.toISOString(),
   };
 }

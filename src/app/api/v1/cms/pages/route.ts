@@ -11,7 +11,7 @@ export async function GET() {
   await promoteDueScheduledPages();
   const pages = await prisma.cmsPage.findMany({
     where: { status: "PUBLISHED", deletedAt: null, publishedVersion: { isNot: null } },
-    include: { publishedVersion: { select: { slug: true, titleEn: true, titleAr: true } } },
+    include: { publishedVersion: { select: { slug: true, titleEn: true, titleAr: true, seo: true } } },
     orderBy: { updatedAt: "desc" },
   });
   return apiSuccess(
@@ -22,6 +22,7 @@ export async function GET() {
       titleAr: p.publishedVersion!.titleAr,
       showInMenus: p.showInMenus,
       showInSitemap: p.showInSitemap,
+      noindex: !!(p.publishedVersion!.seo as { noindex?: boolean } | null)?.noindex,
       updatedAt: p.updatedAt.toISOString(),
     }))
   );

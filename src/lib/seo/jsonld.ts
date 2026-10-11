@@ -6,12 +6,16 @@ const bi = (v: unknown) => {
   return { en: (o.en ?? "").trim(), ar: (o.ar ?? "").trim() };
 };
 
+export type JsonLdArea = { nameEn: string; kind: string; latitude?: number | null; longitude?: number | null; mapsUrl?: string; serviceNames: string[] };
+
 export type JsonLdPage = {
-  slug: string; type: string; titleEn: string; blocks: Block[];
+  slug: string; type: string; titleEn: string; blocks: Block[]; area?: JsonLdArea | null;
   seo: { descriptionEn?: string; ogImage?: string };
   publishedAt?: string; updatedAt?: string;
 };
-export type JsonLdSite = { origin: string; name: string; phone?: string };
+export type JsonLdSite = {
+  origin: string; name: string; phone?: string; email?: string; address?: string; businessProfileUrl?: string; sameAs?: string[];
+};
 
 // Structured data is generated from typed page data, never hand-written, so it can't drift from the page.
 export function buildJsonLd(page: JsonLdPage, site: JsonLdSite): Obj[] {
@@ -47,6 +51,24 @@ export function buildJsonLd(page: JsonLdPage, site: JsonLdSite): Obj[] {
       provider: { "@type": "Organization", name: site.name, url: site.origin, ...(site.phone ? { telephone: site.phone } : {}) },
     });
   }
+  // Area pages: one LocalBusiness whose contact details come from the single site-settings source (NAP).
+  if (page.type === "area" && page.area) {
+    const a = page.area;
+    const areaServed = { "@type": a.kind === "emirate" ? "AdministrativeArea" : "City", name: a.nameEn, containedInPlace: { "@type": "Country", name: "United Arab Emirates" } };
+    out.push({
+      "@context": "https://schema.org", "@type": "HomeAndConstructionBusiness", name: site.name, url: site.origin,
+      ...(site.phone ? { telephone: site.phone } : {}),
+      ...(site.email ? { email: site.email } : {}),
+      ...(site.address ? { address: { "@type": "PostalAddress", streetAddress: site.address, addressCountry: "AE" } } : {}),
+      ...(site.sameAs?.length ? { sameAs: site.sameAs } : {}),
+      ...(a.mapsUrl ? { hasMap: a.mapsUrl } : {}),
+      ...(a.latitude != null && a.longitude != null ? { geo: { "@type": "GeoCoordinates", latitude: a.latitude, longitude: a.longitude } } : {}),
+      areaServed,
+    });
+    for (const name of a.serviceNames.slice(0, 10)) {
+      out.push({ "@context": "https://schema.org", "@type": "Service", name, url, provider: { "@type": "Organization", name: site.name, url: site.origin }, areaServed });
+    }
+  }
   if (page.type === "article") {
     out.push({
       "@context": "https://schema.org", "@type": "Article", headline: page.titleEn, mainEntityOfPage: url,
@@ -78,6 +100,12 @@ export function jsonLdProblems(items: Obj[]): string[] {
         if (!nonEmpty(q.name) || !nonEmpty(text)) problems.push(`FAQ question ${i + 1} needs both an English question and an English answer (structured data requires them).`);
       });
       if (main.length === 0) problems.push("FAQ structured data has no questions.");
+    }
+    if (type === "HomeAndConstructionBusiness") {
+      const geo = item.geo as Obj | undefined;
+      if (!nonEmpty(item.name) || !nonEmpty(item.telephone)) problems.push("Local business data needs your phone number — add it under Site & Contact.");
+      if (!nonEmpty((item.areaServed as Obj | undefined)?.name)) problems.push("Local business data needs the area name.");
+      if (geo && (typeof geo.latitude !== "number" || typeof geo.longitude !== "number")) problems.push("Area coordinates must be numbers.");
     }
     if (type === "Service") {
       if (!nonEmpty(item.name) || !nonEmpty((item.provider as Obj | undefined)?.name)) problems.push("Service data needs a name and a provider.");

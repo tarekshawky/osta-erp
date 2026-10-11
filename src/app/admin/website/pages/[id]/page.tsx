@@ -16,6 +16,7 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
     where: { id, deletedAt: null },
     include: {
       publishedVersion: { select: { slug: true } },
+      area: { select: { nameEn: true } },
       versions: { orderBy: { version: "desc" }, take: 50, select: { id: true, version: true, kind: true, createdByName: true, createdAt: true } },
     },
   });
@@ -33,6 +34,8 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
     type: page.type,
     showInMenus: page.showInMenus,
     showInSitemap: page.showInSitemap,
+    showLastUpdated: page.showLastUpdated,
+    areaName: page.area?.nameEn ?? null,
     blocks: parsed.ok ? parsed.blocks : [],
     seo: { ...emptySeo, ...((page.draftSeo as Partial<SeoInput>) ?? {}) },
   };

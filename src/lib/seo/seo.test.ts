@@ -106,3 +106,104 @@ describe("JSON-LD", () => {
     expect(jsonLdProblems([{ "@type": "BreadcrumbList", itemListElement: [] }]).length).toBe(1);
   });
 });
+
+import { closestMatch, maskNames, pageText, similarity } from "./similarity";
+import { aeoChecklist, isQuestionHeading } from "./analyze";
+
+describe("similarity", () => {
+  const areaText = (place: string) => `AC repair in ${place} by certified technicians. We fix leaks, noisy units and weak cooling the same day anywhere in ${place}. Call us for a free quote today.`;
+  it("identical and unrelated text", () => {
+    expect(similarity(areaText("Ajman"), areaText("Ajman"))).toBe(1);
+    expect(similarity("alpha beta gamma delta epsilon", "one two three four five")).toBe(0);
+    expect(similarity("short", "short")).toBe(0);
+  });
+  it("a city-swapped copy is a near duplicate once names are masked", () => {
+    const raw = similarity(areaText("Ajman"), areaText("Sharjah"));
+    const masked = similarity(maskNames(areaText("Ajman"), ["Ajman"]), maskNames(areaText("Sharjah"), ["Sharjah"]));
+    expect(masked).toBeGreaterThan(0.99);
+    expect(masked).toBeGreaterThan(raw);
+  });
+  it("genuinely different area content stays low", () => {
+    const a = maskNames(areaText("Ajman"), ["Ajman"]);
+    const b = maskNames("Near Al Jurf we often see salt-air corrosion on outdoor condensers; our Ajman Free Zone clients book night visits to avoid office hours, and we stock Daikin and Gree parts locally.", ["Ajman"]);
+    expect(similarity(a, b)).toBeLessThan(0.2);
+    expect(closestMatch(a, [{ label: "x", text: b }, { label: "y", text: a }])?.label).toBe("y");
+  });
+  it("masks Arabic names too and extracts text per language", () => {
+    expect(maskNames("خدمات في عجمان اليوم", ["عجمان"])).toContain("areaname");
+    const hero = createBlock("hero");
+    hero.props = { ...hero.props, heading: { en: "Hello", ar: "مرحبا" } };
+    expect(pageText([hero], "ar")).toContain("مرحبا");
+    expect(pageText([hero], "en")).not.toContain("مرحبا");
+  });
+});
+
+describe("area page duplicate check", () => {
+  const body = (place: string) => `Looking for AC repair in ${place}? Our certified technicians diagnose weak cooling, water leaks and strange noises the same day. We service split, central and ducted systems and give a fourteen day warranty on all repair work.`;
+  const mk = (place: string) => {
+    const t = createBlock("richText");
+    t.props = { heading: { en: "Repair", ar: "إصلاح" }, body: { en: body(place), ar: "" }, align: "start" };
+    return { ...goodPage(), type: "area", blocks: [...goodPage().blocks, t], areaNames: { en: place, ar: "" } } as SeoPageInput;
+  };
+  it("blocks a copy-paste area page and ignores a different one", () => {
+    const other = { label: "Sharjah", textEn: maskNames(pageText(mk("Sharjah").blocks, "en"), ["Sharjah"]), textAr: "" };
+    const dup = analyzePage(mk("Ajman"), ctx({ areaPages: [other] }));
+    expect(dup.issues.find((i) => i.id === "area-duplicate")?.severity).toBe("error");
+    const distinct = { label: "Al Ain", textEn: "Desert dust clogs filters in Al Ain faster than anywhere else, so we recommend quarterly deep cleans and we carry extra filters on every van for the oasis neighbourhoods.", textAr: "" };
+    expect(analyzePage(mk("Ajman"), ctx({ areaPages: [distinct] })).issues.some((i) => i.id.startsWith("area-"))).toBe(false);
+  });
+  it("only applies to area pages", () => {
+    const p = mk("Ajman"); p.type = "page";
+    expect(analyzePage(p, ctx({ areaPages: [{ label: "S", textEn: maskNames(pageText(mk("Sharjah").blocks, "en"), ["Sharjah"]), textAr: "" }] })).issues.some((i) => i.id.startsWith("area-"))).toBe(false);
+  });
+});
+
+describe("AEO checklist", () => {
+  it("recognises question headings in English and Arabic", () => {
+    for (const h of ["How much does it cost?", "What is included", "هل الضمان متاح؟", "كيف أحجز"]) expect(isQuestionHeading(h), h).toBe(true);
+    expect(isQuestionHeading("Our services")).toBe(false);
+  });
+  it("passes a well-formed page and explains failures", () => {
+    const p = goodPage();
+    p.blocks[0].props.subtitle = { en: Array.from({ length: 30 }, (_, i) => `w${i}`).join(" "), ar: "" };
+    const faq = createBlock("faq");
+    faq.props = { heading: { en: "FAQ", ar: "" }, items: Array.from({ length: 3 }, () => ({ question: { en: "How long?", ar: "" }, answer: { en: "A day.", ar: "" } })) };
+    p.blocks.push(faq); p.showLastUpdated = true;
+    expect(aeoChecklist(p).every((i) => i.pass)).toBe(true);
+    const bare = goodPage(); bare.blocks = [createBlock("richText")];
+    expect(aeoChecklist(bare).filter((i) => !i.pass).length).toBe(4);
+  });
+});
+
+describe("LocalBusiness JSON-LD for area pages", () => {
+  const site = { origin: "https://www.ostaservices.com", name: "OSTA Services", phone: "+971568676036", email: "info@ostaservices.com", sameAs: ["https://instagram.com/osta"] };
+  const area = { nameEn: "Ajman", kind: "emirate", latitude: 25.4052, longitude: 55.5136, mapsUrl: "https://maps.google.com/?q=ajman", serviceNames: ["AC Cleaning"] };
+  const page = (a = area) => ({ slug: "ac-repair-ajman", type: "area", titleEn: "AC Repair Ajman", blocks: goodPage().blocks, seo: {}, area: a });
+  it("emits a valid LocalBusiness + Service with areaServed and geo", () => {
+    const ld = buildJsonLd(page(), site);
+    const lb = ld.find((x) => x["@type"] === "HomeAndConstructionBusiness") as Record<string, unknown>;
+    expect(lb.telephone).toBe("+971568676036");
+    expect((lb.geo as Record<string, unknown>).latitude).toBe(25.4052);
+    expect(ld.some((x) => x["@type"] === "Service")).toBe(true);
+    expect(jsonLdProblems(ld)).toEqual([]);
+  });
+  it("blocks when the phone is missing", () => {
+    expect(jsonLdProblems(buildJsonLd(page(), { ...site, phone: "" })).join(" ")).toMatch(/phone/);
+  });
+  it("is not emitted for non-area pages", () => {
+    expect(buildJsonLd({ ...page(), type: "page" }, site).some((x) => x["@type"] === "HomeAndConstructionBusiness")).toBe(false);
+  });
+});
+
+import { redirectProblem } from "@/lib/cms/pageRules";
+describe("redirectProblem", () => {
+  it("accepts a simple rename and rejects bad input", () => {
+    expect(redirectProblem("/old-page", "/new-page")).toBeNull();
+    expect(redirectProblem("/old-page", "https://example.com/x")).toBeNull();
+    expect(redirectProblem("/a/b", "/c")).toMatch(/single path/);
+    expect(redirectProblem("/about", "/c")).toMatch(/real page/);
+    expect(redirectProblem("/x", "/x")).toMatch(/itself/);
+    expect(redirectProblem("/x", "//evil.com")).toMatch(/To/);
+    expect(redirectProblem("/x", "javascript:alert(1)")).toMatch(/To/);
+  });
+});

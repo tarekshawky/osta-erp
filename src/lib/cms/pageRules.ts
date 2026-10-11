@@ -20,6 +20,15 @@ export function slugProblem(slug: string): string | null {
   return null;
 }
 
+// The public site resolves redirects for single-segment paths (/old-name), which is what page renames create.
+export function redirectProblem(from: string, to: string): string | null {
+  if (!/^\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(from)) return "“From” must be a single path like /old-page (lowercase letters, numbers, hyphens).";
+  if (RESERVED_SLUGS.includes(from.slice(1))) return `${from} is a real page of the site, so it can't be redirected.`;
+  if (!/^(\/|https:\/\/)/.test(to) || to.startsWith("//")) return "“To” must be a site path (/…) or an https:// address.";
+  if (to === from) return "A redirect can't point to itself.";
+  return null;
+}
+
 // Everything that must be true before a page can go live. Pure so it can be unit-tested.
 export function publishProblems(page: { slug: string; titleEn: string; titleAr: string; blocks: unknown }): string[] {
   const problems: string[] = [];
