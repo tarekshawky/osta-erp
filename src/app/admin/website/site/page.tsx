@@ -9,6 +9,7 @@ export default async function SitePage() {
   await requireEmployee("ADMIN");
   const s = await prisma.siteSettings.findUnique({ where: { id: "default" } });
   if (!s) return <div className="px-6 py-6 text-sm text-slate-500">Run the site seed (scripts/seedSite.ts) to create the settings.</div>;
+  const activeAreas = await prisma.serviceArea.count({ where: { active: true } });
   const areas = Array.isArray(s.footerAreas) ? (s.footerAreas as { en: string; ar: string }[]) : [];
   const initial: SettingsInput = {
     siteNameEn: s.siteNameEn, siteNameAr: s.siteNameAr, taglineEn: s.taglineEn, taglineAr: s.taglineAr, descriptionEn: s.descriptionEn, descriptionAr: s.descriptionAr,
@@ -22,7 +23,7 @@ export default async function SitePage() {
       <AdminTopBar title="Website · Site & Contact" />
       <div className="px-6 py-6">
         <WebsiteTabs />
-        <SiteSettingsForm initial={initial} />
+        <SiteSettingsForm initial={initial} activeServiceAreas={activeAreas} />
       </div>
     </div>
   );

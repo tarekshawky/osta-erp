@@ -28,7 +28,7 @@ const Section = ({ title, note, children }: { title: string; note?: string; chil
   </section>
 );
 
-export function SiteSettingsForm({ initial }: { initial: SettingsInput }) {
+export function SiteSettingsForm({ initial, activeServiceAreas = 0 }: { initial: SettingsInput; activeServiceAreas?: number }) {
   const { showToast } = useToast();
   const [v, setV] = useState(initial);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +81,11 @@ export function SiteSettingsForm({ initial }: { initial: SettingsInput }) {
             <span className="text-xs font-medium text-slate-600">Areas we cover</span>
             <button type="button" onClick={() => set({ footerAreas: [...v.footerAreas, { en: "", ar: "" }] })} className="text-xs font-medium text-blue-600">+ Add area</button>
           </div>
+          {activeServiceAreas > 0 && (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              The website footer currently shows your {activeServiceAreas} active <a href="/admin/website/areas" className="font-semibold underline">Service Areas</a>, so changes to this list will not appear. Edit the areas there. This list is used only if you have no active service areas.
+            </p>
+          )}
           {v.footerAreas.map((a, i) => (
             <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
               <input className={inputClassName} placeholder="English" value={a.en} onChange={(e) => set({ footerAreas: v.footerAreas.map((x, j) => (j === i ? { ...x, en: e.target.value } : x)) })} />
