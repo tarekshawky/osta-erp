@@ -108,11 +108,11 @@ model Employee {
   invoiceStatusChanges         InvoiceStatusChange[]
   customersCreated             Customer[]                     @relation("CustomerCreatedBy")
   customersUpdated             Customer[]                     @relation("CustomerUpdatedBy")
-  blogPostsCreated              BlogPost[]                     @relation("BlogPostCreatedBy")
-  blogPostsUpdated              BlogPost[]                     @relation("BlogPostUpdatedBy")
-  servicePagesCreated           ServicePage[]                  @relation("ServicePageCreatedBy")
-  servicePagesUpdated           ServicePage[]                  @relation("ServicePageUpdatedBy")
-  homeSectionsUpdated            HomeSection[]                  @relation("HomeSectionUpdatedBy")
+  blogPostsCreated             BlogPost[]                     @relation("BlogPostCreatedBy")
+  blogPostsUpdated             BlogPost[]                     @relation("BlogPostUpdatedBy")
+  servicePagesCreated          ServicePage[]                  @relation("ServicePageCreatedBy")
+  servicePagesUpdated          ServicePage[]                  @relation("ServicePageUpdatedBy")
+  homeSectionsUpdated          HomeSection[]                  @relation("HomeSectionUpdatedBy")
   customerNotesCreated         CustomerNote[]
   creditCardsCreated           CreditCard[]                   @relation("CreditCardCreatedBy")
   creditCardPaymentsRecorded   CreditCardPayment[]            @relation("CreditCardPaymentRecordedBy")
@@ -336,6 +336,24 @@ model Order {
   jobNotes      String?
 
   photos OrderPhoto[]
+
+  // Dynamic pricing (all nullable so every pre-existing order stays valid). Money is
+  // integer fils. pricingSnapshot is the full immutable quote JSON taken at creation.
+  regionId          String?
+  region            Region?          @relation(fields: [regionId], references: [id])
+  bookableServiceId String?
+  bookableService   BookableService? @relation(fields: [bookableServiceId], references: [id])
+  bookingTypeId     String?
+  bookingType       BookingType?     @relation(fields: [bookingTypeId], references: [id])
+  quantity          Int?
+  totalFils         Int?
+  pricingSnapshot   Json?
+  visitFeePolicyId  String?
+  visitFeePolicy    VisitFeePolicy?  @relation(fields: [visitFeePolicyId], references: [id])
+  consentAcceptedAt DateTime?
+  idempotencyKey    String?          @unique
+  events            OrderEvent[]
+  visitFeeCharges   VisitFeeCharge[]
 
   // Admin-only status overrides (Done / Cancelled / Reschedule) -- see OrderStatusChange
   // for the full audit trail, including the before/after appointment on each reschedule.
@@ -785,19 +803,19 @@ model StockRequest {
 // Employee-initiated return; Admin decides. Only an Approved row triggers a
 // real returnToWarehouse() call.
 model StockReturnRequest {
-  id                      String        @id @default(cuid())
-  employeeId              String
-  employee                Employee      @relation("StockReturnRequestBy", fields: [employeeId], references: [id])
-  inventoryItemId         String
-  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id])
-  quantity                Float
-  reason                  String // "Not Used" | "Wrong Part" | "Extra Stock" | "Other"
-  status                  String        @default("Pending") // Pending | Approved | Rejected
-  destinationWarehouseId  String?
-  decidedById             String?
-  decidedBy               Employee?     @relation("StockReturnRequestDecidedBy", fields: [decidedById], references: [id])
-  decidedAt               DateTime?
-  createdAt               DateTime      @default(now())
+  id                     String        @id @default(cuid())
+  employeeId             String
+  employee               Employee      @relation("StockReturnRequestBy", fields: [employeeId], references: [id])
+  inventoryItemId        String
+  inventoryItem          InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity               Float
+  reason                 String // "Not Used" | "Wrong Part" | "Extra Stock" | "Other"
+  status                 String        @default("Pending") // Pending | Approved | Rejected
+  destinationWarehouseId String?
+  decidedById            String?
+  decidedBy              Employee?     @relation("StockReturnRequestDecidedBy", fields: [decidedById], references: [id])
+  decidedAt              DateTime?
+  createdAt              DateTime      @default(now())
 }
 
 model Supplier {
@@ -898,28 +916,28 @@ model InvoiceInventoryUsage {
 // Bilingual fields are flat En/Ar pairs rather than a JSON blob, matching this
 // schema's existing convention of flat columns over nested structures.
 model BlogPost {
-  id                String    @id @default(cuid())
-  slug              String    @unique
-  titleEn           String
-  titleAr           String
-  excerptEn         String
-  excerptAr         String
-  contentEn         String
-  contentAr         String
-  coverImageUrl     String?
-  seoTitleEn        String?
-  seoTitleAr        String?
-  seoDescriptionEn  String?
-  seoDescriptionAr  String?
-  authorName        String?
-  published         Boolean   @default(false)
-  publishedAt       DateTime?
-  createdById       String?
-  createdBy         Employee? @relation("BlogPostCreatedBy", fields: [createdById], references: [id])
-  updatedById       String?
-  updatedBy         Employee? @relation("BlogPostUpdatedBy", fields: [updatedById], references: [id])
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @default(now()) @updatedAt
+  id               String    @id @default(cuid())
+  slug             String    @unique
+  titleEn          String
+  titleAr          String
+  excerptEn        String
+  excerptAr        String
+  contentEn        String
+  contentAr        String
+  coverImageUrl    String?
+  seoTitleEn       String?
+  seoTitleAr       String?
+  seoDescriptionEn String?
+  seoDescriptionAr String?
+  authorName       String?
+  published        Boolean   @default(false)
+  publishedAt      DateTime?
+  createdById      String?
+  createdBy        Employee? @relation("BlogPostCreatedBy", fields: [createdById], references: [id])
+  updatedById      String?
+  updatedBy        Employee? @relation("BlogPostUpdatedBy", fields: [updatedById], references: [id])
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
 
   @@index([published, publishedAt])
 }
@@ -929,30 +947,30 @@ model BlogPost {
 // the internal order-booking category list (osta-bookig-users' hardcoded SERVICES
 // array) -- this model is purely marketing content, not tied to order creation.
 model ServicePage {
-  id                  String    @id @default(cuid())
-  slug                String    @unique
-  nameEn              String
-  nameAr              String
-  shortDescriptionEn  String
-  shortDescriptionAr  String
-  contentEn           String
-  contentAr           String
-  iconName            String?
-  coverImageUrl       String?
-  priceFrom           Float?
-  priceNote           String?
-  seoTitleEn          String?
-  seoTitleAr          String?
-  seoDescriptionEn    String?
-  seoDescriptionAr    String?
-  displayOrder        Int       @default(0)
-  published           Boolean   @default(true)
-  createdById         String?
-  createdBy           Employee? @relation("ServicePageCreatedBy", fields: [createdById], references: [id])
-  updatedById         String?
-  updatedBy           Employee? @relation("ServicePageUpdatedBy", fields: [updatedById], references: [id])
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @default(now()) @updatedAt
+  id                 String    @id @default(cuid())
+  slug               String    @unique
+  nameEn             String
+  nameAr             String
+  shortDescriptionEn String
+  shortDescriptionAr String
+  contentEn          String
+  contentAr          String
+  iconName           String?
+  coverImageUrl      String?
+  priceFrom          Float?
+  priceNote          String?
+  seoTitleEn         String?
+  seoTitleAr         String?
+  seoDescriptionEn   String?
+  seoDescriptionAr   String?
+  displayOrder       Int       @default(0)
+  published          Boolean   @default(true)
+  createdById        String?
+  createdBy          Employee? @relation("ServicePageCreatedBy", fields: [createdById], references: [id])
+  updatedById        String?
+  updatedBy          Employee? @relation("ServicePageUpdatedBy", fields: [updatedById], references: [id])
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now()) @updatedAt
 
   @@index([published, displayOrder])
 }
@@ -965,8 +983,8 @@ model ServicePage {
 // fully admin-editable via /admin/home-sections. `enabled` lets an admin hide a
 // whole section from the live site without deleting its content.
 model HomeSection {
-  id            String             @id @default(cuid())
-  key           String             @unique
+  id            String            @id @default(cuid())
+  key           String            @unique
   headingEn     String
   headingAr     String
   descriptionEn String?
@@ -975,13 +993,13 @@ model HomeSection {
   ctaLabelEn    String?
   ctaLabelAr    String?
   ctaUrl        String?
-  enabled       Boolean            @default(true)
-  displayOrder  Int                @default(0)
+  enabled       Boolean           @default(true)
+  displayOrder  Int               @default(0)
   items         HomeSectionItem[]
   updatedById   String?
-  updatedBy     Employee?          @relation("HomeSectionUpdatedBy", fields: [updatedById], references: [id])
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @default(now()) @updatedAt
+  updatedBy     Employee?         @relation("HomeSectionUpdatedBy", fields: [updatedById], references: [id])
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @default(now()) @updatedAt
 }
 
 // Repeating entries within a HomeSection -- a trust/feature card, a covered area,
@@ -1002,4 +1020,191 @@ model HomeSectionItem {
   createdAt     DateTime    @default(now())
 
   @@index([sectionId, displayOrder])
+}
+
+// ===== Dynamic pricing =====
+
+model Region {
+  id           String                   @id @default(cuid())
+  slug         String                   @unique
+  nameEn       String
+  nameAr       String
+  active       Boolean                  @default(true)
+  sortOrder    Int                      @default(0)
+  prices       ServicePrice[]
+  addOnPrices  AddOnPrice[]
+  feeOverrides BookingTypeFeeOverride[]
+  orders       Order[]
+}
+
+model BookableService {
+  id                String                   @id @default(cuid())
+  slug              String                   @unique
+  nameEn            String
+  nameAr            String
+  descriptionEn     String?
+  descriptionAr     String?
+  imageUrl          String?
+  pricingUnit       String                   @default("UNIT") // AC_UNIT | UNIT | ROOM | AREA_SQM | VISIT | FIXED
+  minQuantity       Int                      @default(1)
+  active            Boolean                  @default(true)
+  sortOrder         Int                      @default(0)
+  pricesIncludeVat  Boolean? // null = use global TaxSetting
+  discountRuleSetId String?
+  discountRuleSet   DiscountRuleSet?         @relation(fields: [discountRuleSetId], references: [id])
+  prices            ServicePrice[]
+  addOns            AddOn[]
+  feeOverrides      BookingTypeFeeOverride[]
+  orders            Order[]
+}
+
+// A service is bookable in a region only if an active row exists here.
+model ServicePrice {
+  id            String          @id @default(cuid())
+  serviceId     String
+  service       BookableService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  regionId      String
+  region        Region          @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  unitPriceFils Int
+  active        Boolean         @default(true)
+  updatedAt     DateTime        @default(now()) @updatedAt
+
+  @@unique([serviceId, regionId])
+}
+
+model AddOn {
+  id        String          @id @default(cuid())
+  serviceId String
+  service   BookableService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  nameEn    String
+  nameAr    String
+  active    Boolean         @default(true)
+  prices    AddOnPrice[]
+}
+
+model AddOnPrice {
+  id        String  @id @default(cuid())
+  addOnId   String
+  addOn     AddOn   @relation(fields: [addOnId], references: [id], onDelete: Cascade)
+  regionId  String
+  region    Region  @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  priceFils Int
+  active    Boolean @default(true)
+
+  @@unique([addOnId, regionId])
+}
+
+model BookingType {
+  id             String                   @id @default(cuid())
+  code           String                   @unique // STANDARD | PRIORITY | EMERGENCY
+  nameEn         String
+  nameAr         String
+  descriptionEn  String?
+  descriptionAr  String?
+  defaultFeeFils Int                      @default(0)
+  hoursStart     String? // "08:00"
+  hoursEnd       String? // "22:00"
+  sameDayAllowed Boolean                  @default(false)
+  active         Boolean                  @default(true)
+  sortOrder      Int                      @default(0)
+  overrides      BookingTypeFeeOverride[]
+  orders         Order[]
+}
+
+model BookingTypeFeeOverride {
+  id            String           @id @default(cuid())
+  bookingTypeId String
+  bookingType   BookingType      @relation(fields: [bookingTypeId], references: [id], onDelete: Cascade)
+  serviceId     String?
+  service       BookableService? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  regionId      String?
+  region        Region?          @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  feeFils       Int
+}
+
+model DiscountRuleSet {
+  id       String            @id @default(cuid())
+  name     String
+  active   Boolean           @default(true)
+  startsAt DateTime?
+  endsAt   DateTime?
+  tiers    DiscountTier[]
+  services BookableService[]
+}
+
+model DiscountTier {
+  id        String          @id @default(cuid())
+  ruleSetId String
+  ruleSet   DiscountRuleSet @relation(fields: [ruleSetId], references: [id], onDelete: Cascade)
+  minQty    Int
+  maxQty    Int? // null = open-ended
+  percent   Float
+  startsAt  DateTime?
+  endsAt    DateTime?
+
+  @@index([ruleSetId, minQty])
+}
+
+// Single-row settings table (id = "default").
+model TaxSetting {
+  id               String   @id @default("default")
+  vatRatePercent   Float    @default(5)
+  pricesIncludeVat Boolean  @default(true)
+  updatedAt        DateTime @default(now()) @updatedAt
+}
+
+// Versioned and immutable: every edit inserts a new row; orders point at the version accepted.
+model VisitFeePolicy {
+  id                  String           @id @default(cuid())
+  version             Int              @unique
+  amountFils          Int              @default(10000)
+  textAr              String
+  textEn              String
+  consentLabelAr      String
+  consentLabelEn      String
+  reasons             String[] // e.g. CUSTOMER_REFUSED, UNREACHABLE, CANCELLED_AFTER_DISPATCH
+  requiresAdminReview Boolean          @default(true)
+  createdById         String?
+  createdAt           DateTime         @default(now())
+  orders              Order[]
+  charges             VisitFeeCharge[]
+}
+
+model OrderEvent {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type      String // CREATED | CONFIRMED | DISPATCHED | ARRIVED | COMPLETED | CANCELLED_BY_CUSTOMER | CANCELLED_BY_COMPANY | NO_ANSWER
+  note      String?
+  actorId   String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+model VisitFeeCharge {
+  id           String         @id @default(cuid())
+  orderId      String
+  order        Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  policyId     String
+  policy       VisitFeePolicy @relation(fields: [policyId], references: [id])
+  reason       String
+  evidence     String?
+  status       String         @default("PENDING_REVIEW") // PENDING_REVIEW | APPROVED | REJECTED
+  reviewedById String?
+  reviewNote   String?
+  createdAt    DateTime       @default(now())
+  reviewedAt   DateTime?
+}
+
+model PriceChangeLog {
+  id          String   @id @default(cuid())
+  entity      String // ServicePrice | DiscountTier | BookingType | TaxSetting | VisitFeePolicy
+  entityId    String
+  before      Json?
+  after       Json?
+  changedById String?
+  createdAt   DateTime @default(now())
+
+  @@index([entity, entityId])
 }
