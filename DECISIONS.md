@@ -22,3 +22,13 @@
 ### Env vars (CMS)
 - Admin app: `SITE_URL` (public site origin, for previews and cache refresh), `REVALIDATE_SECRET`, optional `CRON_SECRET`.
 - Public app: `REVALIDATE_SECRET` (same value).
+
+## CMS (stage 2: site settings, menus, social)
+
+16. **One record for brand + contact (`SiteSettings`)** feeds header, footer, contact page, WhatsApp links, the booking forms and the homepage structured data (name, phone, email, `sameAs`). Fixes the old per-file copies (one `tel:` link was missing a digit).
+17. **Menus are replaced atomically** on save (two levels, up to 40 items) so a half-saved menu can never reach the header. Links allow only paths, https, tel: and mailto:.
+18. **Safe fallback.** If the site API is down, or an admin empties a menu, the public site uses its built-in header/footer, so navigation can never disappear.
+19. **Language:** a visitor's own choice (cookie) wins; the admin's default language applies only to first-time visitors.
+20. **Indexing switch** sets `noindex` on every page and makes `robots.txt` disallow all, for use while the site is being rebuilt.
+21. **Social links** render as accessible text badges (no brand-icon dependency) and feed `sameAs` in the Organization data.
+22. **Permissions:** contact/settings/social need `company.edit`; menus need `pages.edit`. All changes are audited.

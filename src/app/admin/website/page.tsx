@@ -2,13 +2,16 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
+import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 
 const MODULES: { href?: string; title: string; text: string }[] = [
   { href: "/admin/website/pages", title: "Pages", text: "Build pages from blocks, preview, publish or schedule, restore old versions." },
   { href: "/admin/home-sections", title: "Homepage sections", text: "Edit the current homepage content blocks." },
   { href: "/admin/blog", title: "Blog & articles", text: "Write and publish articles." },
   { href: "/admin/services", title: "Website services", text: "Service pages shown on the site." },
-  { title: "Header, footer & menus", text: "Coming next." },
+  { href: "/admin/website/menus", title: "Header & footer menus", text: "Drag to reorder links, add dropdown sub-items, show or hide per device." },
+  { href: "/admin/website/site", title: "Site & contact details", text: "Name, logo, phone, WhatsApp, email, address, header button, footer areas, indexing." },
+  { href: "/admin/website/social", title: "Social links", text: "Facebook, Instagram, TikTok and more, shown in the footer." },
   { title: "SEO · GEO · AEO", text: "Coming next." },
   { title: "Media library", text: "Coming next." },
   { title: "Integrations & forms", text: "Coming next." },
@@ -25,6 +28,7 @@ export default async function WebsiteOverviewPage() {
     <div className="pb-10">
       <AdminTopBar title="Website" />
       <div className="px-6 py-6">
+        <WebsiteTabs />
         <h2 className="mb-4 text-2xl font-bold text-slate-900">Website management</h2>
         <div className="mb-6 grid max-w-xl grid-cols-3 gap-3">
           {[["Published", published], ["Drafts", drafts], ["Scheduled", scheduled]].map(([label, n]) => (

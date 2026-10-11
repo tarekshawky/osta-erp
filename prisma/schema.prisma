@@ -1299,3 +1299,67 @@ model CmsRedirect {
   permanent Boolean  @default(true)
   createdAt DateTime @default(now())
 }
+
+// ===== Site settings, menus, social (website CMS) =====
+
+// Single row (id = "default"). The one source of truth for brand + contact details
+// (name, phone, WhatsApp, email, address) used by header, footer, contact page and structured data.
+model SiteSettings {
+  id                 String   @id @default("default")
+  siteNameEn         String   @default("OSTA Services")
+  siteNameAr         String   @default("خدمات أسطا")
+  taglineEn          String   @default("Your Comfort. Our Priority.")
+  taglineAr          String   @default("راحتك. أولويتنا.")
+  descriptionEn      String   @default("")
+  descriptionAr      String   @default("")
+  logoUrl            String   @default("")
+  faviconUrl         String   @default("")
+  defaultLocale      String   @default("en")
+  allowIndexing      Boolean  @default(true)
+  copyrightEn        String   @default("All rights reserved.")
+  copyrightAr        String   @default("جميع الحقوق محفوظة.")
+  phone              String   @default("")
+  whatsapp           String   @default("")
+  whatsappMessageEn  String   @default("")
+  whatsappMessageAr  String   @default("")
+  email              String   @default("")
+  addressEn          String   @default("")
+  addressAr          String   @default("")
+  hoursEn            String   @default("")
+  hoursAr            String   @default("")
+  mapsUrl            String   @default("")
+  businessProfileUrl String   @default("")
+  headerCtaLabelEn   String   @default("Book Now")
+  headerCtaLabelAr   String   @default("احجز الآن")
+  headerCtaUrl       String   @default("/orders/new")
+  footerAreas        Json     @default("[]") // [{ en, ar }]
+  updatedAt          DateTime @default(now()) @updatedAt
+}
+
+// Two levels deep (item -> children). menu: "header" | "footer".
+model MenuItem {
+  id          String     @id @default(cuid())
+  menu        String
+  parentId    String?
+  parent      MenuItem?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    MenuItem[] @relation("MenuTree")
+  labelEn     String
+  labelAr     String
+  url         String
+  sortOrder   Int        @default(0)
+  visible     Boolean    @default(true)
+  showDesktop Boolean    @default(true)
+  showMobile  Boolean    @default(true)
+  newTab      Boolean    @default(false)
+
+  @@index([menu, sortOrder])
+}
+
+model SocialLink {
+  id        String  @id @default(cuid())
+  platform  String // facebook | instagram | linkedin | tiktok | youtube | x | whatsapp | custom
+  label     String  @default("")
+  url       String
+  sortOrder Int     @default(0)
+  visible   Boolean @default(true)
+}
