@@ -19,6 +19,7 @@ export const ADMIN_SECTIONS = [
   { key: "/admin/blog", label: "Blog" },
   { key: "/admin/services", label: "Website Services" },
   { key: "/admin/home-sections", label: "Homepage Sections" },
+  { key: "/admin/pricing", label: "Dynamic Pricing" },
   { key: "/admin/wallets", label: "Wallets" },
   { key: "/admin/vehicles", label: "Vehicles" },
   { key: "/admin/vehicles/expense-report", label: "Vehicle Expense Report" },

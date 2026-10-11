@@ -169,6 +169,15 @@ const NAV: NavItem[] = [
     ),
   },
   {
+    href: "/admin/pricing",
+    label: "Dynamic Pricing",
+    icon: (
+      <>
+        <path d="M12 2v20M17 6H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" strokeLinecap="round" strokeLinejoin="round" />
+      </>
+    ),
+  },
+  {
     href: "/admin/home-sections",
     label: "Homepage Sections",
     icon: (
