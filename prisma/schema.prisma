@@ -1491,3 +1491,23 @@ model IntegrationSettings {
   privacyUrl         String   @default("")
   updatedAt          DateTime @default(now()) @updatedAt
 }
+
+// ===== Backlinks (tracking only: nothing here creates links) =====
+model Backlink {
+  id            String    @id @default(cuid())
+  sourceSite    String // domain, e.g. example.com
+  sourceUrl     String // the page that links to us
+  targetUrl     String // our page being linked to (path like /services or full URL)
+  anchorText    String    @default("")
+  linkType      String    @default("dofollow") // dofollow | nofollow | sponsored | ugc
+  status        String    @default("ACTIVE") // ACTIVE | PENDING | LOST | REJECTED
+  campaign      String    @default("")
+  notes         String    @default("")
+  discoveredAt  DateTime  @default(now())
+  lastCheckedAt DateTime?
+  lastCheckNote String    @default("")
+  createdAt     DateTime  @default(now())
+
+  @@index([status, discoveredAt])
+  @@index([targetUrl])
+}
