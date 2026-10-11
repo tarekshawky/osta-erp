@@ -12,11 +12,11 @@ export async function GET() {
     prisma.menuItem.findMany({ where: { visible: true }, orderBy: [{ sortOrder: "asc" }] }),
     prisma.socialLink.findMany({ where: { visible: true }, orderBy: { sortOrder: "asc" } }),
     prisma.integrationSettings.findUnique({ where: { id: "default" } }),
-    // Published "page" type pages marked "Show in menus" join the header automatically.
+    // Published pages marked "Show in the navigation bar": top level (type "page" only) or inside a dropdown.
     prisma.cmsPage.findMany({
-      where: { status: "PUBLISHED", deletedAt: null, isHomepage: false, type: "page", showInMenus: true, publishedVersion: { isNot: null } },
+      where: { status: "PUBLISHED", deletedAt: null, isHomepage: false, showInMenus: true, publishedVersion: { isNot: null } },
       orderBy: { createdAt: "asc" },
-      select: { publishedVersion: { select: { slug: true, titleEn: true, titleAr: true } } },
+      select: { type: true, menuParent: true, areaId: true, publishedVersion: { select: { slug: true, titleEn: true, titleAr: true } } },
     }),
     // "Areas We Cover" follows the Service Areas screen: active areas show, inactive or deleted ones do not.
     prisma.serviceArea.findMany({
@@ -35,11 +35,30 @@ export async function GET() {
     const top = menuRows.filter((m) => m.menu === key && m.parentId === null);
     menus[key] = top.map((t) => ({ ...shape(t), children: menuRows.filter((c) => c.parentId === t.id).map(shape) }));
   }
-  // Skip a page the admin already linked by hand, so it never appears twice.
-  const linked = new Set((menus.header as { url: string }[]).map((m) => m.url.replace(/\/$/, "")));
-  for (const { publishedVersion: v } of menuPages) {
-    if (!v || linked.has(`/${v.slug}`)) continue;
-    menus.header.push({ labelEn: v.titleEn, labelAr: v.titleAr, url: `/${v.slug}`, newTab: false, showDesktop: true, showMobile: true, children: [] });
+  type NavItem = { labelEn: string; labelAr: string; url: string; newTab: boolean; showDesktop: boolean; showMobile: boolean; children: NavItem[] };
+  const header = menus.header as NavItem[];
+  // Top-level header rows map 1:1, in order, to the first items of `header`; remember them by id before anything is appended.
+  const headerById = new Map(menuRows.filter((m) => m.menu === "header" && m.parentId === null).map((r, i) => [r.id, header[i]]));
+  const leaf = (labelEn: string, labelAr: string, url: string): NavItem => ({ labelEn, labelAr, url, newTab: false, showDesktop: true, showMobile: true, children: [] });
+  const hasUrl = (items: NavItem[], url: string): boolean => items.some((m) => m.url.replace(/\/$/, "") === url || hasUrl(m.children, url));
+
+  // "Areas We Cover" dropdown: the active service areas (linked when the area has a published page), plus pages placed inside it.
+  const areaChildren = areaRows.map((a) => leaf(a.nameEn, a.nameAr, a.pages[0]?.publishedVersion ? `/${a.pages[0].publishedVersion.slug}` : ""));
+  const areasMenu: NavItem | null = areaChildren.length || menuPages.some((p) => p.menuParent === "areas")
+    ? { ...leaf("Areas We Cover", "المناطق التي نغطيها", ""), children: areaChildren }
+    : null;
+  if (areasMenu) header.push(areasMenu);
+
+  for (const { publishedVersion: v, menuParent, type } of menuPages) {
+    if (!v) continue;
+    const url = `/${v.slug}`;
+    if (hasUrl(header, url)) continue; // already linked by hand (or as an area), never twice
+    if (menuParent === "") {
+      if (type === "page") header.push(leaf(v.titleEn, v.titleAr, url));
+    } else {
+      const parent = menuParent === "areas" ? areasMenu : headerById.get(menuParent);
+      parent?.children.push(leaf(v.titleEn, v.titleAr, url));
+    }
   }
   const { updatedAt: _updatedAt, id: _id, ...publicSettings } = settings;
   void _updatedAt;

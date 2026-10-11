@@ -21,6 +21,7 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
     },
   });
   if (!page) notFound();
+  const parents = await prisma.menuItem.findMany({ where: { menu: "header", parentId: null }, orderBy: { sortOrder: "asc" }, select: { id: true, labelEn: true } });
 
   const parsed = parseBlocks(page.draftBlocks);
   const builderPage: BuilderPage = {
@@ -33,6 +34,7 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
     slug: page.slug,
     type: page.type,
     showInMenus: page.showInMenus,
+    menuParent: page.menuParent,
     showInSitemap: page.showInSitemap,
     showLastUpdated: page.showLastUpdated,
     areaName: page.area?.nameEn ?? null,
@@ -48,6 +50,7 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
       <PageBuilder
         siteOrigin={siteOrigin()}
         page={builderPage}
+        menuParents={parents.map((m) => ({ id: m.id, label: m.labelEn }))}
         versions={page.versions.map((v) => ({ id: v.id, version: v.version, kind: v.kind, by: v.createdByName ?? "—", at: v.createdAt.toISOString().slice(0, 16).replace("T", " ") }))}
       />
     </div>

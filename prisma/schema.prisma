@@ -1256,6 +1256,7 @@ model CmsPage {
   titleEn            String
   titleAr            String
   showInMenus        Boolean          @default(true)
+  menuParent         String           @default("") // "" = top level of the header | "areas" = inside Areas We Cover | a header MenuItem id
   showInSitemap      Boolean          @default(true)
   translationGroupId String?
   isHomepage         Boolean          @default(false)

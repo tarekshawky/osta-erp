@@ -29,6 +29,7 @@ export type DraftInput = {
   slug: string;
   type: string;
   showInMenus: boolean;
+  menuParent: string;
   showInSitemap: boolean;
   showLastUpdated: boolean;
   blocks: Block[];
@@ -79,6 +80,10 @@ export async function saveDraft(id: string, input: DraftInput, autosave: boolean
   if (problem) return fail(problem);
   if (slug !== page.slug && (await prisma.cmsPage.findUnique({ where: { slug } }))) return fail("A page with this slug already exists.");
 
+  // The navigation parent must be the top level, the Areas We Cover dropdown, or a real top-level header item.
+  const menuParent = input.menuParent ?? "";
+  if (menuParent !== "" && menuParent !== "areas" && !(await prisma.menuItem.findFirst({ where: { id: menuParent, menu: "header", parentId: null } }))) return fail("Choose a valid navigation placement.");
+
   const parsed = parseBlocks(input.blocks);
   if (!parsed.ok) return fail(parsed.error);
 
@@ -88,6 +93,7 @@ export async function saveDraft(id: string, input: DraftInput, autosave: boolean
     titleEn: input.titleEn.trim(),
     titleAr: input.titleAr.trim(),
     showInMenus: input.showInMenus,
+    menuParent,
     showInSitemap: input.showInSitemap,
     showLastUpdated: input.showLastUpdated,
     draftBlocks: parsed.blocks as unknown as Prisma.InputJsonValue,
@@ -217,7 +223,7 @@ export async function duplicatePage(id: string): Promise<ActionResult> {
   const blocks = (Array.isArray(src.draftBlocks) ? (src.draftBlocks as unknown as Block[]) : []).map((b) => ({ ...b, id: `blk_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}` }));
   const copy = await prisma.cmsPage.create({
     data: {
-      slug, type: src.type, titleEn: `${src.titleEn} (copy)`, titleAr: `${src.titleAr} (نسخة)`, showInMenus: src.showInMenus, showInSitemap: src.showInSitemap,
+      slug, type: src.type, titleEn: `${src.titleEn} (copy)`, titleAr: `${src.titleAr} (نسخة)`, showInMenus: src.showInMenus, menuParent: src.menuParent, showInSitemap: src.showInSitemap,
       draftBlocks: blocks as unknown as Prisma.InputJsonValue, draftSeo: src.draftSeo as Prisma.InputJsonValue, createdById: g.admin.id, updatedById: g.admin.id,
     },
   });

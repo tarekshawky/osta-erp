@@ -23,6 +23,7 @@ export type BuilderPage = {
   slug: string;
   type: string;
   showInMenus: boolean;
+  menuParent: string;
   showInSitemap: boolean;
   showLastUpdated: boolean;
   areaName: string | null;
@@ -31,7 +32,7 @@ export type BuilderPage = {
   seo: SeoInput;
 };
 
-type Draft = Pick<BuilderPage, "titleEn" | "titleAr" | "slug" | "type" | "showInMenus" | "showInSitemap" | "showLastUpdated" | "blocks" | "seo">;
+type Draft = Pick<BuilderPage, "titleEn" | "titleAr" | "slug" | "type" | "showInMenus" | "menuParent" | "showInSitemap" | "showLastUpdated" | "blocks" | "seo">;
 type SaveState = "saved" | "dirty" | "saving" | "error";
 
 const blockSummary = (b: Block): string => {
@@ -90,10 +91,10 @@ function SortableBlock({
   );
 }
 
-export function PageBuilder({ page, versions, siteOrigin }: { page: BuilderPage; versions: VersionRow[]; siteOrigin: string }) {
+export function PageBuilder({ page, versions, siteOrigin, menuParents }: { page: BuilderPage; versions: VersionRow[]; siteOrigin: string; menuParents: { id: string; label: string }[] }) {
   const { showToast } = useToast();
   const [draft, setDraft] = useState<Draft>({
-    titleEn: page.titleEn, titleAr: page.titleAr, slug: page.slug, type: page.type, showInMenus: page.showInMenus,
+    titleEn: page.titleEn, titleAr: page.titleAr, slug: page.slug, type: page.type, showInMenus: page.showInMenus, menuParent: page.menuParent,
     showInSitemap: page.showInSitemap, showLastUpdated: page.showLastUpdated, blocks: page.blocks, seo: page.seo,
   });
   const [status, setStatus] = useState(page.status);
@@ -311,7 +312,23 @@ export function PageBuilder({ page, versions, siteOrigin }: { page: BuilderPage;
                   ))}
                 </select>
               </Field>
-              <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.showInMenus} onChange={(e) => update({ showInMenus: e.target.checked })} /> Show in the navigation bar (pages of type “page”, once published)</label>
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                <span>Navigation bar</span>
+                <select
+                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm"
+                  value={!draft.showInMenus ? "none" : draft.menuParent === "" ? "top" : draft.menuParent}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    update(v === "none" ? { showInMenus: false } : { showInMenus: true, menuParent: v === "top" ? "" : v });
+                  }}
+                >
+                  <option value="none">Don’t show in the navigation bar</option>
+                  <option value="top">Add to the top bar{draft.type === "page" ? "" : " (pages of type “page” only)"}</option>
+                  <option value="areas">Inside “Areas We Cover”</option>
+                  {menuParents.map((m) => <option key={m.id} value={m.id}>Inside “{m.label}”</option>)}
+                </select>
+                <span className="text-xs text-slate-400">Takes effect once the page is published.</span>
+              </label>
               <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.showInSitemap} onChange={(e) => update({ showInSitemap: e.target.checked })} /> Include in sitemap</label>
               <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.showLastUpdated} onChange={(e) => update({ showLastUpdated: e.target.checked })} /> Show “last updated” date</label>
               {page.areaName && <p className="text-xs text-slate-500">Service area: <b>{page.areaName}</b></p>}
