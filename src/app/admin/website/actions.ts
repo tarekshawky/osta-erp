@@ -1,0 +1,243 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
+import { guardPermission, writeAudit } from "@/lib/adminGuard";
+import { parseBlocks, type Block } from "@/lib/cms/blocks";
+import { createPreviewToken, publishProblems, slugProblem, slugify } from "@/lib/cms/pageRules";
+import { revalidateSite } from "@/lib/cms/publish";
+import type { Prisma } from "@/generated/prisma";
+
+export type ActionResult = { ok: boolean; error?: string; id?: string; url?: string };
+const fail = (error: string): ActionResult => ({ ok: false, error });
+
+const PAGE_TYPES = ["page", "service", "area", "article", "landing"];
+
+export type SeoInput = {
+  titleEn: string; titleAr: string; descriptionEn: string; descriptionAr: string;
+  canonical: string; noindex: boolean; ogImage: string;
+};
+
+export type DraftInput = {
+  titleEn: string;
+  titleAr: string;
+  slug: string;
+  type: string;
+  showInMenus: boolean;
+  showInSitemap: boolean;
+  blocks: Block[];
+  seo: SeoInput;
+};
+
+function done(id?: string): ActionResult {
+  revalidatePath("/admin/website/pages");
+  if (id) revalidatePath(`/admin/website/pages/${id}`);
+  return { ok: true, id };
+}
+
+async function nextVersion(tx: Prisma.TransactionClient, pageId: string) {
+  const last = await tx.cmsPageVersion.findFirst({ where: { pageId }, orderBy: { version: "desc" }, select: { version: true } });
+  return (last?.version ?? 0) + 1;
+}
+
+export async function createPage(input: { titleEn: string; titleAr: string; slug: string; type: string }): Promise<ActionResult> {
+  const g = await guardPermission("pages.create");
+  if (!g.ok) return fail(g.error);
+  const slug = slugify(input.slug || input.titleEn);
+  const problem = slugProblem(slug);
+  if (problem) return fail(problem);
+  if (!input.titleEn.trim() || !input.titleAr.trim()) return fail("Both the English and Arabic titles are required.");
+  if (!PAGE_TYPES.includes(input.type)) return fail("Unknown page type.");
+  if (await prisma.cmsPage.findUnique({ where: { slug } })) return fail("A page with this slug already exists.");
+
+  const page = await prisma.cmsPage.create({
+    data: { slug, type: input.type, titleEn: input.titleEn.trim(), titleAr: input.titleAr.trim(), createdById: g.admin.id, updatedById: g.admin.id },
+  });
+  await writeAudit(g.admin, "cms.page.create", "CmsPage", page.id, null, { slug, type: input.type });
+  return done(page.id);
+}
+
+// autosave=true only updates the working draft (no new history row); a manual save also snapshots a version.
+export async function saveDraft(id: string, input: DraftInput, autosave: boolean): Promise<ActionResult> {
+  const g = await guardPermission("pages.edit");
+  if (!g.ok) return fail(g.error);
+
+  const page = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null } });
+  if (!page) return fail("Page not found.");
+  if (!PAGE_TYPES.includes(input.type)) return fail("Unknown page type.");
+
+  const slug = slugify(input.slug);
+  const problem = slugProblem(slug);
+  if (problem) return fail(problem);
+  if (slug !== page.slug && (await prisma.cmsPage.findUnique({ where: { slug } }))) return fail("A page with this slug already exists.");
+
+  const parsed = parseBlocks(input.blocks);
+  if (!parsed.ok) return fail(parsed.error);
+
+  const data = {
+    slug,
+    type: input.type,
+    titleEn: input.titleEn.trim(),
+    titleAr: input.titleAr.trim(),
+    showInMenus: input.showInMenus,
+    showInSitemap: input.showInSitemap,
+    draftBlocks: parsed.blocks as unknown as Prisma.InputJsonValue,
+    draftSeo: input.seo as unknown as Prisma.InputJsonValue,
+    updatedById: g.admin.id,
+  };
+
+  await prisma.$transaction(async (tx) => {
+    await tx.cmsPage.update({ where: { id }, data });
+    if (!autosave) {
+      await tx.cmsPageVersion.create({
+        data: {
+          pageId: id, version: await nextVersion(tx, id), kind: "SAVE", slug, titleEn: data.titleEn, titleAr: data.titleAr,
+          blocks: data.draftBlocks, seo: data.draftSeo, createdById: g.admin.id, createdByName: g.admin.name,
+        },
+      });
+    }
+  });
+  if (!autosave) await writeAudit(g.admin, "cms.page.save", "CmsPage", id, { slug: page.slug, title: page.titleEn }, { slug, title: data.titleEn });
+  return done(id);
+}
+
+export async function publishPage(id: string, publishAtIso: string | null): Promise<ActionResult> {
+  const g = await guardPermission("pages.publish");
+  if (!g.ok) return fail(g.error);
+
+  const page = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null }, include: { publishedVersion: { select: { slug: true } } } });
+  if (!page) return fail("Page not found.");
+
+  const problems = publishProblems({ slug: page.slug, titleEn: page.titleEn, titleAr: page.titleAr, blocks: page.draftBlocks });
+  if (problems.length) return fail(`Can't publish yet: ${problems.join(" ")}`);
+
+  let publishAt: Date | null = null;
+  if (publishAtIso) {
+    publishAt = new Date(publishAtIso);
+    if (isNaN(+publishAt)) return fail("Invalid publish date.");
+    if (publishAt <= new Date()) publishAt = null; // a past/now date just means publish now
+  }
+
+  const clash = await prisma.cmsPage.findFirst({
+    where: { id: { not: id }, status: "PUBLISHED", deletedAt: null, publishedVersion: { slug: page.slug } },
+  });
+  if (clash) return fail("Another published page already uses this URL. Change this page's slug first.");
+
+  const version = await prisma.$transaction(async (tx) => {
+    const created = await tx.cmsPageVersion.create({
+      data: {
+        pageId: id, version: await nextVersion(tx, id), kind: publishAt ? "SCHEDULE" : "PUBLISH", slug: page.slug,
+        titleEn: page.titleEn, titleAr: page.titleAr, blocks: page.draftBlocks as Prisma.InputJsonValue, seo: page.draftSeo as Prisma.InputJsonValue,
+        createdById: g.admin.id, createdByName: g.admin.name,
+      },
+    });
+    if (publishAt) {
+      await tx.cmsPage.update({ where: { id }, data: { status: "SCHEDULED", publishAt, scheduledVersionId: created.id, updatedById: g.admin.id } });
+    } else {
+      await tx.cmsPage.update({
+        where: { id },
+        data: { status: "PUBLISHED", publishedVersionId: created.id, publishAt: null, scheduledVersionId: null, updatedById: g.admin.id },
+      });
+    }
+    return created;
+  });
+
+  const oldSlug = page.publishedVersion?.slug;
+  if (!publishAt && oldSlug && oldSlug !== page.slug) {
+    await prisma.cmsRedirect.upsert({
+      where: { fromPath: `/${oldSlug}` },
+      update: { toPath: `/${page.slug}` },
+      create: { fromPath: `/${oldSlug}`, toPath: `/${page.slug}` },
+    });
+  }
+  // A page can come back to a URL it used to redirect from -- that redirect must stop firing.
+  await prisma.cmsRedirect.deleteMany({ where: { fromPath: `/${page.slug}` } });
+
+  await writeAudit(g.admin, publishAt ? "cms.page.schedule" : "cms.page.publish", "CmsPage", id, null, { slug: page.slug, version: version.version, publishAt });
+  if (!publishAt) await revalidateSite([page.slug, ...(oldSlug && oldSlug !== page.slug ? [oldSlug] : [])]);
+  return done(id);
+}
+
+export async function unpublishPage(id: string): Promise<ActionResult> {
+  const g = await guardPermission("pages.publish");
+  if (!g.ok) return fail(g.error);
+  const page = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null }, include: { publishedVersion: { select: { slug: true } } } });
+  if (!page) return fail("Page not found.");
+  await prisma.cmsPage.update({ where: { id }, data: { status: "DRAFT", publishedVersionId: null, scheduledVersionId: null, publishAt: null } });
+  await writeAudit(g.admin, "cms.page.unpublish", "CmsPage", id, { slug: page.slug }, null);
+  if (page.publishedVersion) await revalidateSite([page.publishedVersion.slug]);
+  return done(id);
+}
+
+export async function restoreVersion(pageId: string, versionId: string): Promise<ActionResult> {
+  const g = await guardPermission("pages.edit");
+  if (!g.ok) return fail(g.error);
+  const version = await prisma.cmsPageVersion.findFirst({ where: { id: versionId, pageId } });
+  if (!version) return fail("Version not found.");
+  const clash = await prisma.cmsPage.findFirst({ where: { slug: version.slug, id: { not: pageId } } });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.cmsPage.update({
+      where: { id: pageId },
+      data: {
+        titleEn: version.titleEn, titleAr: version.titleAr, slug: clash ? undefined : version.slug,
+        draftBlocks: version.blocks as Prisma.InputJsonValue, draftSeo: version.seo as Prisma.InputJsonValue, updatedById: g.admin.id,
+      },
+    });
+    await tx.cmsPageVersion.create({
+      data: {
+        pageId, version: await nextVersion(tx, pageId), kind: "RESTORE", slug: clash ? (await tx.cmsPage.findUnique({ where: { id: pageId } }))!.slug : version.slug,
+        titleEn: version.titleEn, titleAr: version.titleAr, blocks: version.blocks as Prisma.InputJsonValue, seo: version.seo as Prisma.InputJsonValue,
+        createdById: g.admin.id, createdByName: g.admin.name,
+      },
+    });
+  });
+  await writeAudit(g.admin, "cms.page.restore", "CmsPage", pageId, null, { restoredVersion: version.version });
+  return done(pageId);
+}
+
+export async function duplicatePage(id: string): Promise<ActionResult> {
+  const g = await guardPermission("pages.create");
+  if (!g.ok) return fail(g.error);
+  const src = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null } });
+  if (!src) return fail("Page not found.");
+  let slug = `${src.slug}-copy`;
+  for (let n = 2; await prisma.cmsPage.findUnique({ where: { slug } }); n++) slug = `${src.slug}-copy-${n}`;
+
+  // Fresh block ids so the copy never shares identity with the original.
+  const blocks = (Array.isArray(src.draftBlocks) ? (src.draftBlocks as unknown as Block[]) : []).map((b) => ({ ...b, id: `blk_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}` }));
+  const copy = await prisma.cmsPage.create({
+    data: {
+      slug, type: src.type, titleEn: `${src.titleEn} (copy)`, titleAr: `${src.titleAr} (نسخة)`, showInMenus: src.showInMenus, showInSitemap: src.showInSitemap,
+      draftBlocks: blocks as unknown as Prisma.InputJsonValue, draftSeo: src.draftSeo as Prisma.InputJsonValue, createdById: g.admin.id, updatedById: g.admin.id,
+    },
+  });
+  await writeAudit(g.admin, "cms.page.duplicate", "CmsPage", copy.id, { from: src.id }, { slug });
+  return done(copy.id);
+}
+
+// Soft delete: the row and its history stay recoverable; the page goes offline.
+export async function deletePage(id: string): Promise<ActionResult> {
+  const g = await guardPermission("pages.delete");
+  if (!g.ok) return fail(g.error);
+  const page = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null }, include: { publishedVersion: { select: { slug: true } } } });
+  if (!page) return fail("Page not found.");
+  // Free the slug so a new page can use it; keep the original in the audit trail.
+  await prisma.cmsPage.update({
+    where: { id },
+    data: { deletedAt: new Date(), status: "ARCHIVED", publishedVersionId: null, scheduledVersionId: null, slug: `${page.slug}--deleted-${Date.now()}` },
+  });
+  await writeAudit(g.admin, "cms.page.delete", "CmsPage", id, { slug: page.slug, title: page.titleEn }, null);
+  if (page.publishedVersion) await revalidateSite([page.publishedVersion.slug]);
+  return done();
+}
+
+export async function createPreviewUrl(id: string): Promise<ActionResult> {
+  const g = await guardPermission("pages.edit");
+  if (!g.ok) return fail(g.error);
+  const base = process.env.SITE_URL ?? (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000");
+  if (!base) return fail("Set the SITE_URL environment variable to enable previews.");
+  const page = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null }, select: { id: true } });
+  if (!page) return fail("Page not found.");
+  return { ok: true, url: `${base.replace(/\/$/, "")}/preview/${id}?token=${createPreviewToken(id)}` };
+}

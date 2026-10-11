@@ -1,0 +1,49 @@
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { requireEmployee } from "@/lib/auth";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
+import { PageBuilder, type BuilderPage } from "@/components/cms/PageBuilder";
+import { parseBlocks } from "@/lib/cms/blocks";
+import type { SeoInput } from "@/app/admin/website/actions";
+
+const emptySeo: SeoInput = { titleEn: "", titleAr: "", descriptionEn: "", descriptionAr: "", canonical: "", noindex: false, ogImage: "" };
+
+export default async function CmsPageEditor({ params }: { params: Promise<{ id: string }> }) {
+  await requireEmployee("ADMIN");
+  const { id } = await params;
+  const page = await prisma.cmsPage.findFirst({
+    where: { id, deletedAt: null },
+    include: {
+      publishedVersion: { select: { slug: true } },
+      versions: { orderBy: { version: "desc" }, take: 50, select: { id: true, version: true, kind: true, createdByName: true, createdAt: true } },
+    },
+  });
+  if (!page) notFound();
+
+  const parsed = parseBlocks(page.draftBlocks);
+  const builderPage: BuilderPage = {
+    id: page.id,
+    status: page.status,
+    publishAt: page.publishAt ? page.publishAt.toISOString() : null,
+    publishedSlug: page.publishedVersion?.slug ?? null,
+    titleEn: page.titleEn,
+    titleAr: page.titleAr,
+    slug: page.slug,
+    type: page.type,
+    showInMenus: page.showInMenus,
+    showInSitemap: page.showInSitemap,
+    blocks: parsed.ok ? parsed.blocks : [],
+    seo: { ...emptySeo, ...((page.draftSeo as Partial<SeoInput>) ?? {}) },
+  };
+
+  return (
+    <div>
+      <AdminTopBar title="Website · Page Builder" />
+      {!parsed.ok && <p className="bg-red-50 px-6 py-3 text-sm text-red-600">This draft has invalid content ({parsed.error}). It was loaded empty; restore a version from History if needed.</p>}
+      <PageBuilder
+        page={builderPage}
+        versions={page.versions.map((v) => ({ id: v.id, version: v.version, kind: v.kind, by: v.createdByName ?? "—", at: v.createdAt.toISOString().slice(0, 16).replace("T", " ") }))}
+      />
+    </div>
+  );
+}

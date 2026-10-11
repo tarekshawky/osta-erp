@@ -1213,7 +1213,6 @@ model PriceChangeLog {
   @@index([entity, entityId])
 }
 
-
 // ===== Roles, permissions & audit =====
 
 model AdminRole {
@@ -1238,4 +1237,65 @@ model AuditLog {
 
   @@index([entity, createdAt])
   @@index([createdAt])
+}
+
+// ===== Website CMS (block-based pages) =====
+
+// One row per page. Content is bilingual inside the blocks (every text prop is {en, ar}), so a
+// page serves both locales; translationGroupId is reserved for splitting locales later.
+// draftBlocks/draftSeo are what the editor works on; the live site only ever reads the
+// published CmsPageVersion snapshot, so editing never touches what visitors see until Publish.
+model CmsPage {
+  id                 String           @id @default(cuid())
+  slug               String           @unique
+  type               String           @default("page") // page | service | area | article | landing
+  status             String           @default("DRAFT") // DRAFT | PUBLISHED | SCHEDULED | ARCHIVED
+  publishAt          DateTime?
+  titleEn            String
+  titleAr            String
+  showInMenus        Boolean          @default(true)
+  showInSitemap      Boolean          @default(true)
+  translationGroupId String?
+  draftBlocks        Json             @default("[]")
+  draftSeo           Json             @default("{}")
+  publishedVersionId String?          @unique
+  publishedVersion   CmsPageVersion?  @relation("PublishedVersion", fields: [publishedVersionId], references: [id])
+  scheduledVersionId String?
+  versions           CmsPageVersion[] @relation("PageVersions")
+  deletedAt          DateTime?
+  createdById        String?
+  updatedById        String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @default(now()) @updatedAt
+
+  @@index([status, deletedAt])
+}
+
+// Immutable snapshot (content + SEO) created on every manual save, publish and restore.
+model CmsPageVersion {
+  id            String   @id @default(cuid())
+  pageId        String
+  page          CmsPage  @relation("PageVersions", fields: [pageId], references: [id], onDelete: Cascade)
+  version       Int
+  kind          String // SAVE | PUBLISH | SCHEDULE | RESTORE
+  slug          String
+  titleEn       String
+  titleAr       String
+  blocks        Json
+  seo           Json
+  createdById   String?
+  createdByName String?
+  createdAt     DateTime @default(now())
+  publishedFor  CmsPage? @relation("PublishedVersion")
+
+  @@unique([pageId, version])
+}
+
+// Created automatically when a published slug changes; served as a 301 by the public site.
+model CmsRedirect {
+  id        String   @id @default(cuid())
+  fromPath  String   @unique
+  toPath    String
+  permanent Boolean  @default(true)
+  createdAt DateTime @default(now())
 }
