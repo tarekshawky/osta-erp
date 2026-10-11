@@ -311,7 +311,7 @@ export function PageBuilder({ page, versions, siteOrigin }: { page: BuilderPage;
                   ))}
                 </select>
               </Field>
-              <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.showInMenus} onChange={(e) => update({ showInMenus: e.target.checked })} /> Show in menus</label>
+              <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.showInMenus} onChange={(e) => update({ showInMenus: e.target.checked })} /> Show in the navigation bar (pages of type “page”, once published)</label>
               <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.showInSitemap} onChange={(e) => update({ showInSitemap: e.target.checked })} /> Include in sitemap</label>
               <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.showLastUpdated} onChange={(e) => update({ showLastUpdated: e.target.checked })} /> Show “last updated” date</label>
               {page.areaName && <p className="text-xs text-slate-500">Service area: <b>{page.areaName}</b></p>}

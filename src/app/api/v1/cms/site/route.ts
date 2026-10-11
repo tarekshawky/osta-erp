@@ -7,11 +7,17 @@ export function OPTIONS() {
 
 // Everything the public header, footer and contact details need, in one cacheable call.
 export async function GET() {
-  const [settings, menuRows, social, integrations] = await Promise.all([
+  const [settings, menuRows, social, integrations, menuPages] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "default" } }),
     prisma.menuItem.findMany({ where: { visible: true }, orderBy: [{ sortOrder: "asc" }] }),
     prisma.socialLink.findMany({ where: { visible: true }, orderBy: { sortOrder: "asc" } }),
     prisma.integrationSettings.findUnique({ where: { id: "default" } }),
+    // Published "page" type pages marked "Show in menus" join the header automatically.
+    prisma.cmsPage.findMany({
+      where: { status: "PUBLISHED", deletedAt: null, isHomepage: false, type: "page", showInMenus: true, publishedVersion: { isNot: null } },
+      orderBy: { createdAt: "asc" },
+      select: { publishedVersion: { select: { slug: true, titleEn: true, titleAr: true } } },
+    }),
   ]);
   if (!settings) return apiSuccess(null);
 
@@ -22,6 +28,12 @@ export async function GET() {
   for (const key of Object.keys(menus)) {
     const top = menuRows.filter((m) => m.menu === key && m.parentId === null);
     menus[key] = top.map((t) => ({ ...shape(t), children: menuRows.filter((c) => c.parentId === t.id).map(shape) }));
+  }
+  // Skip a page the admin already linked by hand, so it never appears twice.
+  const linked = new Set((menus.header as { url: string }[]).map((m) => m.url.replace(/\/$/, "")));
+  for (const { publishedVersion: v } of menuPages) {
+    if (!v || linked.has(`/${v.slug}`)) continue;
+    menus.header.push({ labelEn: v.titleEn, labelAr: v.titleAr, url: `/${v.slug}`, newTab: false, showDesktop: true, showMobile: true, children: [] });
   }
   const { updatedAt: _updatedAt, id: _id, ...publicSettings } = settings;
   void _updatedAt;
