@@ -41,3 +41,13 @@
 26. **One image field everywhere.** The shared admin image field now picks from, or uploads into, the library. Old pasted URLs and inline images still display.
 27. **Delete protection.** An image can't be deleted while it appears in a published page, site settings, or live blog/service/homepage/bookable-service content; the UI lists every place first. Draft-only use only warns. Unused images are flagged.
 28. **Public pages use `srcset`** so phones download the 480/960 px version.
+
+## CMS (stage 4: SEO)
+
+29. **One analyzer, everywhere.** `analyzePage` is pure and unit-tested; the editor (live, on unsaved changes), the pages list and the SEO overview all run it. Score = 100 minus 20 per error, 8 per warning, 2 per tip. It is a guide, not a ranking promise.
+30. **What counts as an error:** multiple H1s, broken internal links, invalid canonical. Everything else is a warning or tip. Publishing asks for confirmation when errors exist, rather than blocking, because a link may point to a page about to be published.
+31. **Structured data is generated, never typed.** WebPage and BreadcrumbList always; FAQPage only when the page has an FAQ block; Service/Article by page type. It is validated before publishing, and **invalid structured data blocks publishing** (e.g. an FAQ item with an empty answer). The public API only serves data that validates, and the site escapes `<` so content can't break out of the script tag.
+32. **H1 = the Hero heading.** Pages without a Hero are flagged, because that is the only block that renders an H1.
+33. **JSON-LD is English.** Both languages share one URL (language is a visitor choice, not a path), so Arabic structured data can't be a separate document.
+34. **No hreflang.** hreflang needs a distinct URL per language; this site serves both languages on one URL. Revisit only if language-specific URLs are introduced.
+35. **Broken-link check covers internal links** (site paths, published services/blog/CMS pages, redirects). Outbound link checking is deferred (needs a scheduled job).

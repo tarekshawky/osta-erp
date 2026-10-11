@@ -6,6 +6,10 @@ import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { parseBlocks, type Block } from "@/lib/cms/blocks";
 import { createPreviewToken, publishProblems, slugProblem, slugify } from "@/lib/cms/pageRules";
 import { revalidateSite } from "@/lib/cms/publish";
+import { requireEmployee } from "@/lib/auth";
+import { analyzePage, type SeoIssue } from "@/lib/seo/analyze";
+import { buildJsonLd, jsonLdProblems } from "@/lib/seo/jsonld";
+import { loadSeoContext, siteOrigin } from "@/lib/seo/context";
 import type { Prisma } from "@/generated/prisma";
 
 export type ActionResult = { ok: boolean; error?: string; id?: string; url?: string };
@@ -15,7 +19,7 @@ const PAGE_TYPES = ["page", "service", "area", "article", "landing"];
 
 export type SeoInput = {
   titleEn: string; titleAr: string; descriptionEn: string; descriptionAr: string;
-  canonical: string; noindex: boolean; ogImage: string;
+  canonical: string; noindex: boolean; ogImage: string; focusKeyword: string; secondaryKeywords: string;
 };
 
 export type DraftInput = {
@@ -109,6 +113,17 @@ export async function publishPage(id: string, publishAtIso: string | null): Prom
   if (!page) return fail("Page not found.");
 
   const problems = publishProblems({ slug: page.slug, titleEn: page.titleEn, titleAr: page.titleAr, blocks: page.draftBlocks });
+  // Structured data is generated from the page; if it would be invalid (e.g. an FAQ answer left empty) the page can't go live.
+  const settings = await prisma.siteSettings.findUnique({ where: { id: "default" }, select: { siteNameEn: true, phone: true } });
+  const parsedBlocks = parseBlocks(page.draftBlocks);
+  if (parsedBlocks.ok) {
+    const seo = (page.draftSeo ?? {}) as Record<string, string>;
+    const ld = buildJsonLd(
+      { slug: page.slug, type: page.type, titleEn: page.titleEn, blocks: parsedBlocks.blocks, seo: { descriptionEn: seo.descriptionEn, ogImage: seo.ogImage } },
+      { origin: siteOrigin(), name: settings?.siteNameEn ?? "OSTA Services", phone: settings?.phone }
+    );
+    problems.push(...jsonLdProblems(ld));
+  }
   if (problems.length) return fail(`Can't publish yet: ${problems.join(" ")}`);
 
   let publishAt: Date | null = null;
@@ -240,4 +255,15 @@ export async function createPreviewUrl(id: string): Promise<ActionResult> {
   const page = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null }, select: { id: true } });
   if (!page) return fail("Page not found.");
   return { ok: true, url: `${base.replace(/\/$/, "")}/preview/${id}?token=${createPreviewToken(id)}` };
+}
+
+// Live SEO check for the editor: runs the same analyzer the pages list and overview use, against the current (unsaved) draft.
+export async function analyzeDraft(pageId: string, draft: DraftInput): Promise<{ score: number; issues: SeoIssue[] }> {
+  await requireEmployee("ADMIN");
+  const parsed = parseBlocks(draft.blocks);
+  const ctx = await loadSeoContext(pageId);
+  return analyzePage(
+    { slug: slugify(draft.slug), type: draft.type, titleEn: draft.titleEn, titleAr: draft.titleAr, showInSitemap: draft.showInSitemap, blocks: parsed.ok ? parsed.blocks : [], seo: draft.seo },
+    ctx
+  );
 }

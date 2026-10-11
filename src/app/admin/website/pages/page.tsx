@@ -4,6 +4,8 @@ import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { NewPageForm } from "@/components/cms/NewPageForm";
 import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
+import { seoReport } from "@/lib/seo/report";
+import { scoreStyle } from "@/components/cms/SeoPanel";
 
 const STATUS_STYLE: Record<string, string> = {
   PUBLISHED: "bg-emerald-50 text-emerald-700",
@@ -14,6 +16,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default async function CmsPagesPage() {
   await requireEmployee("ADMIN");
+  const scores = new Map((await seoReport()).map((r) => [r.id, r.score]));
   const pages = await prisma.cmsPage.findMany({
     where: { deletedAt: null },
     orderBy: { updatedAt: "desc" },
@@ -45,6 +48,7 @@ export default async function CmsPagesPage() {
                 <th className="px-4 py-3">URL</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">SEO</th>
                 <th className="px-4 py-3">Updated</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -52,7 +56,7 @@ export default async function CmsPagesPage() {
             <tbody className="divide-y divide-slate-100">
               {pages.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
                     No pages yet. Create your first one.
                   </td>
                 </tr>
@@ -64,6 +68,9 @@ export default async function CmsPagesPage() {
                   <td className="px-4 py-3 text-slate-500">{p.type}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLE[p.status] ?? ""}`}>{p.status}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${scoreStyle(scores.get(p.id) ?? 0)}`}>{scores.get(p.id) ?? 0}</span>
                   </td>
                   <td className="px-4 py-3 text-slate-500">{p.updatedAt.toISOString().slice(0, 10)}</td>
                   <td className="px-4 py-3 text-right">

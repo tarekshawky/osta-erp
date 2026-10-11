@@ -1,4 +1,5 @@
 import { parseBlocks, type Block } from "./blocks";
+import { buildJsonLd, jsonLdProblems } from "@/lib/seo/jsonld";
 
 export type PublicPage = {
   id: string;
@@ -8,6 +9,7 @@ export type PublicPage = {
   titleAr: string;
   blocks: Block[];
   seo: Record<string, unknown>;
+  jsonLd: Record<string, unknown>[];
   updatedAt: string;
 };
 
@@ -16,10 +18,25 @@ export type PublicPage = {
 export function toPublicPage(
   page: { id: string; type: string; updatedAt: Date },
   snapshot: { slug: string; titleEn: string; titleAr: string; blocks: unknown; seo: unknown },
-  includeHidden = false
+  includeHidden = false,
+  site?: { origin: string; name: string; phone?: string; publishedAt?: Date }
 ): PublicPage | null {
   const parsed = parseBlocks(snapshot.blocks);
   if (!parsed.ok) return null;
+  const seo = (snapshot.seo && typeof snapshot.seo === "object" ? snapshot.seo : {}) as Record<string, unknown>;
+  // Only ever serve structured data that validates; a half-filled schema would be worse than none.
+  let jsonLd: Record<string, unknown>[] = [];
+  if (site) {
+    const built = buildJsonLd(
+      {
+        slug: snapshot.slug, type: page.type, titleEn: snapshot.titleEn, blocks: parsed.blocks,
+        seo: { descriptionEn: seo.descriptionEn as string | undefined, ogImage: seo.ogImage as string | undefined },
+        publishedAt: site.publishedAt?.toISOString(), updatedAt: page.updatedAt.toISOString(),
+      },
+      site
+    );
+    jsonLd = jsonLdProblems(built).length === 0 ? built : built.filter((x) => x["@type"] === "WebPage" || x["@type"] === "BreadcrumbList");
+  }
   return {
     id: page.id,
     slug: snapshot.slug,
@@ -27,7 +44,8 @@ export function toPublicPage(
     titleEn: snapshot.titleEn,
     titleAr: snapshot.titleAr,
     blocks: includeHidden ? parsed.blocks : parsed.blocks.filter((b) => !b.hidden),
-    seo: (snapshot.seo && typeof snapshot.seo === "object" ? snapshot.seo : {}) as Record<string, unknown>,
+    seo,
+    jsonLd,
     updatedAt: page.updatedAt.toISOString(),
   };
 }

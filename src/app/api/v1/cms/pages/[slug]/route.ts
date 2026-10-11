@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError, corsPreflight } from "@/lib/apiResponse";
 import { promoteDueScheduledPages } from "@/lib/cms/publish";
 import { toPublicPage } from "@/lib/cms/publicPage";
+import { siteOrigin } from "@/lib/seo/context";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -17,7 +18,10 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     include: { publishedVersion: true },
   });
   if (page?.publishedVersion) {
-    const publicPage = toPublicPage(page, page.publishedVersion);
+    const settings = await prisma.siteSettings.findUnique({ where: { id: "default" }, select: { siteNameEn: true, phone: true } });
+    const publicPage = toPublicPage(page, page.publishedVersion, false, {
+      origin: siteOrigin(), name: settings?.siteNameEn ?? "OSTA Services", phone: settings?.phone || undefined, publishedAt: page.publishedVersion.createdAt,
+    });
     if (publicPage) return apiSuccess(publicPage);
   }
 

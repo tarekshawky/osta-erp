@@ -7,10 +7,10 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from "@dnd-kit/utilities";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
-import { ImageUploadField } from "@/components/ImageUploadField";
 import { FieldEditor } from "@/components/cms/BlockForm";
 import { BLOCK_REGISTRY, BLOCK_TYPES, createBlock, newBlockId, type Block, type BlockType } from "@/lib/cms/blocks";
-import { createPreviewUrl, deletePage, duplicatePage, publishPage, restoreVersion, saveDraft, unpublishPage, type SeoInput } from "@/app/admin/website/actions";
+import { SeoPanel, type Analysis } from "@/components/cms/SeoPanel";
+import { analyzeDraft, createPreviewUrl, deletePage, duplicatePage, publishPage, restoreVersion, saveDraft, unpublishPage, type SeoInput } from "@/app/admin/website/actions";
 
 export type VersionRow = { id: string; version: number; kind: string; by: string; at: string };
 export type BuilderPage = {
@@ -87,7 +87,7 @@ function SortableBlock({
   );
 }
 
-export function PageBuilder({ page, versions }: { page: BuilderPage; versions: VersionRow[] }) {
+export function PageBuilder({ page, versions, siteOrigin }: { page: BuilderPage; versions: VersionRow[]; siteOrigin: string }) {
   const { showToast } = useToast();
   const [draft, setDraft] = useState<Draft>({
     titleEn: page.titleEn, titleAr: page.titleAr, slug: page.slug, type: page.type, showInMenus: page.showInMenus,
@@ -100,6 +100,7 @@ export function PageBuilder({ page, versions }: { page: BuilderPage; versions: V
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [adding, setAdding] = useState(false);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [pending, startTransition] = useTransition();
 
   const serialized = useMemo(() => JSON.stringify(draft), [draft]);
@@ -134,6 +135,12 @@ export function PageBuilder({ page, versions }: { page: BuilderPage; versions: V
     const timer = setTimeout(() => void persist(true), 3000);
     return () => clearTimeout(timer);
   }, [serialized, persist]);
+
+  // Live SEO checks against the current (even unsaved) draft.
+  useEffect(() => {
+    const timer = setTimeout(() => void analyzeDraft(page.id, latest.current).then(setAnalysis).catch(() => {}), 1200);
+    return () => clearTimeout(timer);
+  }, [serialized, page.id]);
 
   // Unsaved-changes guard.
   useEffect(() => {
@@ -175,6 +182,14 @@ export function PageBuilder({ page, versions }: { page: BuilderPage; versions: V
     });
   }
 
+  async function publishWithCheck() {
+    const result = await analyzeDraft(page.id, latest.current);
+    setAnalysis(result);
+    const errors = result.issues.filter((i) => i.severity === "error");
+    if (errors.length && !confirm(`${errors.length} SEO problem${errors.length === 1 ? "" : "s"} found:\n\n• ${errors.slice(0, 4).map((e) => e.message).join("\n• ")}\n\nPublish anyway?`)) return;
+    run(() => publishPage(page.id, null), "Published.", () => setStatus("PUBLISHED"));
+  }
+
   const SAVE_LABEL: Record<SaveState, string> = { saved: "All changes saved", dirty: "Unsaved changes…", saving: "Saving…", error: "Autosave failed" };
   const seo = draft.seo;
   const setSeo = (patch: Partial<SeoInput>) => update({ seo: { ...seo, ...patch } });
@@ -197,7 +212,7 @@ export function PageBuilder({ page, versions }: { page: BuilderPage; versions: V
           <button type="button" disabled={pending || saveState === "saving"} onClick={() => startTransition(async () => { if (await persist(false)) showToast("Saved."); })} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 disabled:opacity-50">
             Save
           </button>
-          <button type="button" disabled={pending} onClick={() => run(() => publishPage(page.id, null), "Published.", () => { setStatus("PUBLISHED"); })} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          <button type="button" disabled={pending} onClick={() => void publishWithCheck()} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
             Publish
           </button>
         </div>
@@ -317,18 +332,7 @@ export function PageBuilder({ page, versions }: { page: BuilderPage; versions: V
             </div>
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase text-slate-500">SEO</h3>
-            <div className="flex flex-col gap-3">
-              <Field label={`SEO title (English) · ${seo.titleEn.length}/60`}><input className={inputClassName} value={seo.titleEn} onChange={(e) => setSeo({ titleEn: e.target.value })} /></Field>
-              <Field label="عنوان السيو (Arabic)" dir="rtl"><input className={inputClassName} dir="rtl" value={seo.titleAr} onChange={(e) => setSeo({ titleAr: e.target.value })} /></Field>
-              <Field label={`Meta description (English) · ${seo.descriptionEn.length}/160`}><textarea className={`${inputClassName} min-h-20`} value={seo.descriptionEn} onChange={(e) => setSeo({ descriptionEn: e.target.value })} /></Field>
-              <Field label="وصف السيو (Arabic)" dir="rtl"><textarea className={`${inputClassName} min-h-20`} dir="rtl" value={seo.descriptionAr} onChange={(e) => setSeo({ descriptionAr: e.target.value })} /></Field>
-              <Field label="Canonical URL (optional)"><input className={inputClassName} dir="ltr" value={seo.canonical} onChange={(e) => setSeo({ canonical: e.target.value })} /></Field>
-              <ImageUploadField label="Social share image" value={seo.ogImage} onChange={(v) => setSeo({ ogImage: v })} />
-              <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={seo.noindex} onChange={(e) => setSeo({ noindex: e.target.checked })} /> Hide from search engines (noindex)</label>
-            </div>
-          </section>
+          <SeoPanel seo={seo} setSeo={setSeo} titleEn={draft.titleEn} titleAr={draft.titleAr} slug={draft.slug} origin={siteOrigin} analysis={analysis} />
 
           <section className="rounded-xl border border-slate-200 bg-white p-4">
             <h3 className="mb-3 text-xs font-semibold uppercase text-slate-500">History</h3>
