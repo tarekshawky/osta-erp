@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { ImageUploadField } from "@/components/ImageUploadField";
+import { ICON_NAMES } from "@/lib/cms/icons";
 import {
   updateHomeSection,
   type HomeSectionFormInput,
@@ -190,12 +191,14 @@ export function HomeSectionForm({ id, initial }: { id: string; initial: HomeSect
                 <Field label="Icon name (lucide-react)">
                   <input
                     className={inputClassName}
-                    placeholder="ShieldCheck"
+                    placeholder="Start typing: Star, Clock, ShieldCheck…"
+                    list="osta-icon-names"
                     disabled={Boolean(item.imageUrl)}
                     value={item.iconName}
                     onChange={(e) => updateItem(index, { iconName: e.target.value })}
                   />
                 </Field>
+                <datalist id="osta-icon-names">{ICON_NAMES.map((n) => (<option key={n} value={n} />))}</datalist>
                 <Field label="Display Order">
                   <input
                     className={inputClassName}

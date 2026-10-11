@@ -8,6 +8,7 @@ const TABS = [
   { href: "/admin/website/pages", label: "Pages" },
   { href: "/admin/website/forms", label: "Forms & Leads" },
   { href: "/admin/website/integrations", label: "Integrations" },
+  { href: "/admin/website/backup", label: "Backup" },
   { href: "/admin/website/seo", label: "SEO" },
   { href: "/admin/website/links", label: "Page Links" },
   { href: "/admin/website/backlinks", label: "Backlinks" },

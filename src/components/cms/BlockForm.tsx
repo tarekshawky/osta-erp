@@ -5,6 +5,7 @@ import { ImageUploadField } from "@/components/ImageUploadField";
 import { useEffect, useState } from "react";
 import { listForms } from "@/app/admin/website/forms-actions";
 import type { FieldDef } from "@/lib/cms/blocks";
+import { ICON_NAMES } from "@/lib/cms/icons";
 
 type Obj = Record<string, unknown>;
 
@@ -63,7 +64,8 @@ export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; v
             return (
               <label key={f.key} className="flex flex-col gap-1.5">
                 <span className="text-xs font-medium text-slate-600">{f.label}</span>
-                <input className={inputClassName} dir={f.kind === "url" ? "ltr" : undefined} placeholder={f.kind === "url" ? "/services or https://…" : undefined} value={(v as string) ?? ""} onChange={(e) => set(f.key, e.target.value)} />
+                <input className={inputClassName} dir={f.kind === "url" ? "ltr" : undefined} list={f.key === "icon" ? "osta-icon-names" : undefined} placeholder={f.kind === "url" ? "/services or https://…" : f.key === "icon" ? "Start typing: Star, Clock, ShieldCheck…" : undefined} value={(v as string) ?? ""} onChange={(e) => set(f.key, e.target.value)} />
+                {f.key === "icon" && <datalist id="osta-icon-names">{ICON_NAMES.map((n) => (<option key={n} value={n} />))}</datalist>}
               </label>
             );
           case "textarea":
