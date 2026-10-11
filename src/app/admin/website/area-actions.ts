@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { createBlock, type Block } from "@/lib/cms/blocks";
 import { SLUG_PATTERN, slugProblem } from "@/lib/cms/pageRules";
+import { revalidateSite } from "@/lib/cms/publish";
 import type { Prisma } from "@/generated/prisma";
 
 export type ActionResult = { ok: boolean; error?: string; id?: string };
@@ -56,6 +57,7 @@ export async function saveArea(id: string | null, input: AreaInput): Promise<Act
     ? await prisma.serviceArea.update({ where: { id }, data: { ...data, services: { set: serviceRefs } } })
     : await prisma.serviceArea.create({ data: { ...data, services: { connect: serviceRefs } } });
   await writeAudit(g.admin, id ? "area.update" : "area.create", "ServiceArea", saved.id, before, { slug: data.slug, nameEn: data.nameEn, active: data.active, services: input.serviceIds.length });
+  await revalidateSite([]);
   return done(saved.id);
 }
 
@@ -67,6 +69,7 @@ export async function deleteArea(id: string): Promise<ActionResult> {
   if (!a) return fail("Area not found.");
   await prisma.serviceArea.delete({ where: { id } });
   await writeAudit(g.admin, "area.delete", "ServiceArea", id, { slug: a.slug, nameEn: a.nameEn }, null);
+  await revalidateSite([]);
   return done();
 }
 

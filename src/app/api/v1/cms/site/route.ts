@@ -7,7 +7,7 @@ export function OPTIONS() {
 
 // Everything the public header, footer and contact details need, in one cacheable call.
 export async function GET() {
-  const [settings, menuRows, social, integrations, menuPages] = await Promise.all([
+  const [settings, menuRows, social, integrations, menuPages, areaRows] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "default" } }),
     prisma.menuItem.findMany({ where: { visible: true }, orderBy: [{ sortOrder: "asc" }] }),
     prisma.socialLink.findMany({ where: { visible: true }, orderBy: { sortOrder: "asc" } }),
@@ -17,6 +17,12 @@ export async function GET() {
       where: { status: "PUBLISHED", deletedAt: null, isHomepage: false, type: "page", showInMenus: true, publishedVersion: { isNot: null } },
       orderBy: { createdAt: "asc" },
       select: { publishedVersion: { select: { slug: true, titleEn: true, titleAr: true } } },
+    }),
+    // "Areas We Cover" follows the Service Areas screen: active areas show, inactive or deleted ones do not.
+    prisma.serviceArea.findMany({
+      where: { active: true },
+      orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
+      select: { slug: true, nameEn: true, nameAr: true, pages: { where: { status: "PUBLISHED", deletedAt: null }, take: 1, select: { publishedVersion: { select: { slug: true } } } } },
     }),
   ]);
   if (!settings) return apiSuccess(null);
@@ -41,6 +47,7 @@ export async function GET() {
   return apiSuccess({
     settings: publicSettings,
     menus,
+    serviceAreas: areaRows.map((a) => ({ slug: a.slug, nameEn: a.nameEn, nameAr: a.nameAr, pageSlug: a.pages[0]?.publishedVersion?.slug ?? null })),
     social: social.map((s) => ({ platform: s.platform, label: s.label, url: s.url })),
     // Public by nature (they appear in page source). Nothing secret lives here.
     integrations: integrations ? { ga4Id: integrations.ga4Id, gtmId: integrations.gtmId, metaPixelId: integrations.metaPixelId, searchConsoleToken: integrations.searchConsoleToken, bingToken: integrations.bingToken, requireConsent: integrations.requireConsent, consentTextEn: integrations.consentTextEn, consentTextAr: integrations.consentTextAr, privacyUrl: integrations.privacyUrl } : null,
