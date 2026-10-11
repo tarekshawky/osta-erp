@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, parsePagination, corsPreflight } from "@/lib/apiResponse";
+import { publicCoverUrl } from "@/lib/blogCover";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -27,5 +28,6 @@ export async function GET(request: NextRequest) {
     prisma.blogPost.count({ where }),
   ]);
 
-  return apiSuccess(posts, { meta: { page, pageSize, total } });
+  const origin = request.nextUrl.origin;
+  return apiSuccess(posts.map((p) => ({ ...p, coverImageUrl: publicCoverUrl(origin, p.slug, p.coverImageUrl) })), { meta: { page, pageSize, total } });
 }

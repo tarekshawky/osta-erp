@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError, corsPreflight } from "@/lib/apiResponse";
+import { publicCoverUrl } from "@/lib/blogCover";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -22,9 +23,9 @@ const blogDetailSelect = {
   publishedAt: true,
 } as const;
 
-export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = await prisma.blogPost.findFirst({ where: { slug, published: true }, select: blogDetailSelect });
   if (!post) return apiError("not_found", "Blog post not found.", 404);
-  return apiSuccess(post);
+  return apiSuccess({ ...post, coverImageUrl: publicCoverUrl(new URL(request.url).origin, post.slug, post.coverImageUrl) });
 }
