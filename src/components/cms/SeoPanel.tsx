@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { scoreStyle } from "@/lib/seo/scoreStyle";
 import { Field, inputClassName } from "@/components/FormField";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import type { SeoInput } from "@/app/admin/website/actions";
@@ -8,7 +9,6 @@ import { DESC_MAX, TITLE_MAX, type AeoItem, type SeoIssue } from "@/lib/seo/anal
 
 export type Analysis = { score: number; issues: SeoIssue[]; aeo?: AeoItem[] };
 
-export const scoreStyle = (score: number) => (score >= 80 ? "bg-emerald-50 text-emerald-700" : score >= 55 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600");
 
 const SEV: Record<SeoIssue["severity"], { label: string; dot: string }> = {
   error: { label: "Fix", dot: "bg-red-500" },

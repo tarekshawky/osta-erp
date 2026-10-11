@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
-import { scoreStyle } from "@/components/cms/SeoPanel";
+import { scoreStyle } from "@/lib/seo/scoreStyle";
 import { seoReport } from "@/lib/seo/report";
 
 export default async function SeoOverviewPage() {

@@ -6,7 +6,7 @@ import { NewPageForm } from "@/components/cms/NewPageForm";
 import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { SetupHomepage } from "@/components/cms/SetupHomepage";
 import { seoReport } from "@/lib/seo/report";
-import { scoreStyle } from "@/components/cms/SeoPanel";
+import { scoreStyle } from "@/lib/seo/scoreStyle";
 
 const STATUS_STYLE: Record<string, string> = {
   PUBLISHED: "bg-emerald-50 text-emerald-700",
