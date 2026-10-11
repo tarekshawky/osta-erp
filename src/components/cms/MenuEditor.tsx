@@ -9,13 +9,13 @@ import { inputClassName } from "@/components/FormField";
 import { saveMenu } from "@/app/admin/website/site-actions";
 import type { MenuItemInput } from "@/lib/site/siteRules";
 
-type Item = Omit<MenuItemInput, "children"> & { uid: string; children: Item[] };
+type Item = Omit<MenuItemInput, "children"> & { uid: string; heading?: boolean; children: Item[] };
 export type PageOption = { group: string; labelEn: string; labelAr: string; url: string };
 let counter = 0;
 const uid = () => `m${++counter}-${Math.random().toString(36).slice(2, 7)}`;
-const blank = (): Item => ({ uid: uid(), labelEn: "", labelAr: "", url: "", visible: true, showDesktop: true, showMobile: true, newTab: false, children: [] });
-export const toEditable = (items: MenuItemInput[]): Item[] => items.map((i) => ({ ...i, uid: uid(), children: toEditable(i.children) as Item[] }));
-const strip = (items: Item[]): MenuItemInput[] => items.map(({ uid: _u, children, ...rest }) => { void _u; return { ...rest, children: strip(children) }; });
+const blank = (): Item => ({ uid: uid(), heading: false, labelEn: "", labelAr: "", url: "", visible: true, showDesktop: true, showMobile: true, newTab: false, children: [] });
+export const toEditable = (items: MenuItemInput[]): Item[] => items.map((i) => ({ ...i, uid: uid(), heading: i.url === "", children: toEditable(i.children) as Item[] }));
+const strip = (items: Item[]): MenuItemInput[] => items.map(({ uid: _u, heading: _h, children, ...rest }) => { void _u; void _h; return { ...rest, url: _h ? "" : rest.url, children: strip(children) }; });
 
 function Row({ item, onChange, onRemove, extra, pages, top }: { item: Item; onChange: (i: Item) => void; onRemove: () => void; extra?: React.ReactNode; pages: PageOption[]; top?: boolean }) {
   const groups = [...new Set(pages.map((p) => p.group))];
@@ -24,6 +24,9 @@ function Row({ item, onChange, onRemove, extra, pages, top }: { item: Item; onCh
       <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1.2fr]">
         <input className={inputClassName} placeholder="Label (English)" value={item.labelEn} onChange={(e) => onChange({ ...item, labelEn: e.target.value })} />
         <input className={inputClassName} dir="rtl" placeholder="العنوان بالعربية" value={item.labelAr} onChange={(e) => onChange({ ...item, labelAr: e.target.value })} />
+        {top && item.heading ? (
+          <p className="flex items-center rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500">No link: shows as a heading with a dropdown of its sub-items.</p>
+        ) : (
         <div className="flex flex-col gap-1.5">
           <select
             className={inputClassName}
@@ -41,13 +44,19 @@ function Row({ item, onChange, onRemove, extra, pages, top }: { item: Item; onCh
               </optgroup>
             ))}
           </select>
-          <input className={inputClassName} dir="ltr" placeholder={top ? "…or leave empty for a heading with sub-items" : "…or type /page or https://…"} value={item.url} onChange={(e) => onChange({ ...item, url: e.target.value })} />
+          <input className={inputClassName} dir="ltr" placeholder="…or type /page or https://…" value={item.url} onChange={(e) => onChange({ ...item, url: e.target.value })} />
         </div>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600">
         <label className="flex items-center gap-1.5"><input type="checkbox" checked={item.visible} onChange={(e) => onChange({ ...item, visible: e.target.checked })} /> Visible</label>
         <label className="flex items-center gap-1.5"><input type="checkbox" checked={item.showDesktop} onChange={(e) => onChange({ ...item, showDesktop: e.target.checked })} /> Desktop</label>
         <label className="flex items-center gap-1.5"><input type="checkbox" checked={item.showMobile} onChange={(e) => onChange({ ...item, showMobile: e.target.checked })} /> Mobile</label>
+        {top && (
+          <label className="flex items-center gap-1.5 font-medium text-slate-800">
+            <input type="checkbox" checked={!!item.heading} onChange={(e) => onChange({ ...item, heading: e.target.checked, url: e.target.checked ? "" : item.url })} /> No link, just a heading for sub-items
+          </label>
+        )}
         <label className="flex items-center gap-1.5"><input type="checkbox" checked={item.newTab} onChange={(e) => onChange({ ...item, newTab: e.target.checked })} /> New tab</label>
         {extra}
         <button type="button" onClick={onRemove} className="ml-auto font-medium text-red-600">Remove</button>
