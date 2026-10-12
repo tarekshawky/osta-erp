@@ -21,6 +21,8 @@ const RAW_SCHEMAS = {
     subtitle: bi,
     imageUrl: image,
     imagePosition: z.enum(["end", "start", "background"]),
+    // A full-width background behind the whole hero (under the overlay). Independent of the side image above.
+    backgroundImage: image.optional(),
     align: z.enum(["start", "center"]),
     ctas: z.array(cta).max(3),
     // Optional so blocks saved before these existed stay valid.
@@ -125,7 +127,8 @@ export const BLOCK_REGISTRY: Record<
       { kind: "bi-text", key: "eyebrow", label: "Small label above heading" },
       { kind: "bi-text", key: "heading", label: "Heading (H1)" },
       { kind: "bi-textarea", key: "subtitle", label: "Subtitle" },
-      { kind: "image", key: "imageUrl", label: "Image (beside the text, or the background image)" },
+      { kind: "image", key: "backgroundImage", label: "Background image (fills the whole hero, under a dark overlay)" },
+      { kind: "image", key: "imageUrl", label: "Side image (beside the text)" },
       {
         kind: "select",
         key: "imagePosition",
@@ -133,7 +136,7 @@ export const BLOCK_REGISTRY: Record<
         options: [
           { value: "end", label: "Beside text (end)" },
           { value: "start", label: "Beside text (start)" },
-          { value: "background", label: "Background (with a dark overlay so the text stays readable)" },
+          { value: "background", label: "Background (older option: use the Background image field above instead)" },
         ],
       },
       { kind: "number", key: "overlay", label: "Overlay strength over the background image, 0–100 (higher = darker)" },
@@ -162,7 +165,7 @@ export const BLOCK_REGISTRY: Record<
         ],
       },
     ],
-    defaults: () => ({ eyebrow: biEmpty(), heading: biEmpty(), subtitle: biEmpty(), imageUrl: "", imagePosition: "end", overlay: 85, overlayColor: "#050b1a", align: "start", ctas: [], variant: "standard", headingAccent: biEmpty(), badges: [] }),
+    defaults: () => ({ eyebrow: biEmpty(), heading: biEmpty(), subtitle: biEmpty(), imageUrl: "", backgroundImage: "", imagePosition: "end", overlay: 85, overlayColor: "#050b1a", align: "start", ctas: [], variant: "standard", headingAccent: biEmpty(), badges: [] }),
   },
   servicesGrid: {
     label: "Services grid",
