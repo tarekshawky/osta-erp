@@ -6,6 +6,7 @@ import { PageBuilder, type BuilderPage } from "@/components/cms/PageBuilder";
 import { parseBlocks } from "@/lib/cms/blocks";
 import type { SeoInput } from "@/app/admin/website/actions";
 import { siteOrigin } from "@/lib/seo/context";
+import { isBuiltInSlug } from "@/lib/cms/pageRules";
 
 const emptySeo: SeoInput = { titleEn: "", titleAr: "", descriptionEn: "", descriptionAr: "", canonical: "", noindex: false, ogImage: "", focusKeyword: "", secondaryKeywords: "" };
 
@@ -41,6 +42,7 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
     showLastUpdated: page.showLastUpdated,
     areaName: page.area?.nameEn ?? null,
     isHomepage: page.isHomepage,
+    builtIn: isBuiltInSlug(page.slug),
     blocks: parsed.ok ? parsed.blocks : [],
     seo: { ...emptySeo, ...((page.draftSeo as Partial<SeoInput>) ?? {}) },
   };

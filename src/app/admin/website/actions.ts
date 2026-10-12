@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { parseBlocks, type Block } from "@/lib/cms/blocks";
-import { createPreviewToken, slugProblem, slugify } from "@/lib/cms/pageRules";
+import { BUILT_IN_PAGES, createPreviewToken, isBuiltInSlug, slugProblem, slugify } from "@/lib/cms/pageRules";
+import { BUILT_IN_SEEDS, type BuiltInSlug } from "@/lib/cms/pageSeeds";
 import { revalidateSite } from "@/lib/cms/publish";
 import { requireEmployee } from "@/lib/auth";
 import { analyzePage, type AeoItem, type SeoIssue } from "@/lib/seo/analyze";
@@ -76,7 +77,9 @@ export async function saveDraft(id: string, input: DraftInput, autosave: boolean
   // The homepage always lives at "/" and stays a plain page: its slug and type can't be changed.
   const slug = page.isHomepage ? page.slug : slugify(input.slug);
   if (page.isHomepage) input = { ...input, type: "page", slug };
-  const problem = page.isHomepage ? null : slugProblem(slug);
+  // A built-in page (About, Contact…) keeps its own address.
+  const builtIn = isBuiltInSlug(page.slug) && slug === page.slug;
+  const problem = page.isHomepage ? null : slugProblem(slug, builtIn);
   if (problem) return fail(problem);
   if (slug !== page.slug && (await prisma.cmsPage.findUnique({ where: { slug } }))) return fail("A page with this slug already exists.");
 
@@ -273,6 +276,26 @@ export async function analyzeDraft(pageId: string, draft: DraftInput): Promise<{
     },
     ctx
   );
+}
+
+// Creates an editable draft of a built-in page (About, Contact, Services, Blog, Pricing) holding what the site shows
+// today. Visitors keep the built-in page until the draft is published; unpublishing returns to it.
+export async function createBuiltInPage(slug: string): Promise<ActionResult> {
+  const g = await guardPermission("pages.create");
+  if (!g.ok) return fail(g.error);
+  if (!(BUILT_IN_PAGES as readonly string[]).includes(slug)) return fail("Unknown page.");
+  if (await prisma.cmsPage.findFirst({ where: { slug, deletedAt: null } })) return fail("This page is already editable.");
+  const seed = BUILT_IN_SEEDS[slug as BuiltInSlug];
+  const page = await prisma.cmsPage.create({
+    data: {
+      slug, type: "page", titleEn: seed.titleEn, titleAr: seed.titleAr, showInMenus: false, showInSitemap: false,
+      draftBlocks: seed.blocks() as unknown as Prisma.InputJsonValue,
+      draftSeo: { titleEn: seed.seo.titleEn, titleAr: "", descriptionEn: seed.seo.descriptionEn, descriptionAr: "", canonical: "", noindex: false, ogImage: "", focusKeyword: "", secondaryKeywords: "" } as unknown as Prisma.InputJsonValue,
+      createdById: g.admin.id, updatedById: g.admin.id,
+    },
+  });
+  await writeAudit(g.admin, "cms.builtin.create", "CmsPage", page.id, null, { slug });
+  return done(page.id);
 }
 
 // Creates the editable homepage as a DRAFT holding exactly what the site shows today. The public site keeps using

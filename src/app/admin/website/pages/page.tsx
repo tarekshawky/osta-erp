@@ -5,6 +5,8 @@ import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { NewPageForm } from "@/components/cms/NewPageForm";
 import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { SetupHomepage } from "@/components/cms/SetupHomepage";
+import { SetupBuiltInPages } from "@/components/cms/SetupBuiltInPages";
+import { BUILT_IN_PAGES } from "@/lib/cms/pageRules";
 import { seoReport } from "@/lib/seo/report";
 import { scoreStyle } from "@/lib/seo/scoreStyle";
 
@@ -40,6 +42,12 @@ export default async function CmsPagesPage() {
         </div>
 
         {!pages.some((p) => p.isHomepage) && <SetupHomepage />}
+        <SetupBuiltInPages
+          rows={BUILT_IN_PAGES.map((slug) => {
+            const p = pages.find((x) => x.slug === slug);
+            return { slug, label: { about: "About Us", contact: "Contact Us", services: "Services list", blog: "Blog list", pricing: "Pricing & booking" }[slug], pageId: p?.id ?? null, status: p?.status ?? null };
+          })}
+        />
         <NewPageForm />
 
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">

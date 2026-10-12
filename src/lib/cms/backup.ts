@@ -68,7 +68,7 @@ export function validateBundle(input: unknown): ValidationResult {
       homepages++;
       if (slug !== "home") errors.push(`${label}: the homepage's internal slug must be "home".`);
     } else {
-      const sp = slugProblem(slug);
+      const sp = slugProblem(slug, true);
       if (sp) errors.push(`${label}: ${sp}`);
     }
     if (seen.has(slug)) errors.push(`${label}: appears twice.`);

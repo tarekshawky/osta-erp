@@ -14,7 +14,7 @@ const image = z
   .refine((v) => v === "" || /^(\/|https?:\/\/|data:image\/(png|jpe?g|webp|gif);base64,)/.test(v), "Invalid image.");
 const cta = z.object({ label: bi, url: link });
 
-export const BLOCK_SCHEMAS = {
+const RAW_SCHEMAS = {
   hero: z.object({
     eyebrow: bi,
     heading: bi,
@@ -31,8 +31,8 @@ export const BLOCK_SCHEMAS = {
     headingAccent: bi.optional(),
     badges: z.array(z.object({ icon: z.string().max(40).regex(/^[A-Za-z0-9]*$/), label: bi })).max(6).optional(),
   }),
-  servicesGrid: z.object({ heading: bi, subtitle: bi, limit: z.number().int().min(1).max(12), eyebrow: bi.optional(), viewAllLabel: bi.optional(), viewAllUrl: link.optional() }),
-  blogPreview: z.object({ eyebrow: bi, heading: bi, limit: z.number().int().min(1).max(6), viewAllLabel: bi, viewAllUrl: link }),
+  servicesGrid: z.object({ heading: bi, subtitle: bi, limit: z.number().int().min(1).max(24), eyebrow: bi.optional(), viewAllLabel: bi.optional(), viewAllUrl: link.optional() }),
+  blogPreview: z.object({ eyebrow: bi, heading: bi, limit: z.number().int().min(1).max(12), viewAllLabel: bi, viewAllUrl: link }),
   homeSections: z.object({}),
   richText: z.object({ heading: bi, body: bi, align: z.enum(["start", "center"]) }),
   imageText: z.object({
@@ -47,6 +47,35 @@ export const BLOCK_SCHEMAS = {
   stats: z.object({ heading: bi, items: z.array(z.object({ value: z.string().max(40), label: bi, icon: z.string().max(40).regex(/^[A-Za-z0-9]*$/).optional() })).max(8) }),
   cta: z.object({ heading: bi, subtitle: bi, button: cta }),
   form: z.object({ heading: bi, intro: bi, formSlug: z.string().max(60).regex(/^[a-z0-9-]*$/) }),
+  // Phone / WhatsApp / email cards, address and hours, all read from Website → Site & Contact.
+  contactCards: z.object({ heading: bi, subtitle: bi, whatsappButtonLabel: bi }),
+  // The live price calculator: emirate, service, quantity, booking type, summary, agreement and Book.
+  bookingCalculator: z.object({ heading: bi, subtitle: bi }),
+} as const;
+
+// Any section can have its own background: an image under a dark overlay, or a plain colour.
+const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a colour like #050b1a.");
+const sectionStyle = z.object({
+  bgImage: image.optional(),
+  overlay: z.number().int().min(0).max(100).optional(),
+  overlayColor: hex.optional(),
+  bgColor: hex.optional(),
+});
+const withStyle = <T extends z.ZodRawShape>(s: z.ZodObject<T>) => s.extend({ style: sectionStyle.optional() });
+
+export const BLOCK_SCHEMAS = {
+  hero: withStyle(RAW_SCHEMAS.hero),
+  servicesGrid: withStyle(RAW_SCHEMAS.servicesGrid),
+  blogPreview: withStyle(RAW_SCHEMAS.blogPreview),
+  homeSections: withStyle(RAW_SCHEMAS.homeSections),
+  richText: withStyle(RAW_SCHEMAS.richText),
+  imageText: withStyle(RAW_SCHEMAS.imageText),
+  faq: withStyle(RAW_SCHEMAS.faq),
+  stats: withStyle(RAW_SCHEMAS.stats),
+  cta: withStyle(RAW_SCHEMAS.cta),
+  form: withStyle(RAW_SCHEMAS.form),
+  contactCards: withStyle(RAW_SCHEMAS.contactCards),
+  bookingCalculator: withStyle(RAW_SCHEMAS.bookingCalculator),
 } as const;
 
 export type BlockType = keyof typeof BLOCK_SCHEMAS;
@@ -154,7 +183,7 @@ export const BLOCK_REGISTRY: Record<
     fields: [
       { kind: "bi-text", key: "eyebrow", label: "Small label above heading" },
       { kind: "bi-text", key: "heading", label: "Heading" },
-      { kind: "number", key: "limit", label: "How many posts (1–6)" },
+      { kind: "number", key: "limit", label: "How many posts (1–12)" },
       { kind: "bi-text", key: "viewAllLabel", label: "“View all” link text" },
       { kind: "url", key: "viewAllUrl", label: "“View all” link" },
     ],
@@ -256,7 +285,40 @@ export const BLOCK_REGISTRY: Record<
     ],
     defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), button: ctaEmpty() }),
   },
+  contactCards: {
+    label: "Contact cards",
+    description: "WhatsApp, phone and email cards plus address and hours. The details come from Website → Site & Contact.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle" },
+      { kind: "bi-text", key: "whatsappButtonLabel", label: "WhatsApp button text (leave empty to hide the button)" },
+    ],
+    defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), whatsappButtonLabel: biEmpty() }),
+  },
+  bookingCalculator: {
+    label: "Price calculator & booking",
+    description: "The live calculator: emirate, service, quantity, booking type, price summary, agreement and a Book button. Prices come from Dynamic Pricing.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle" },
+    ],
+    defaults: () => ({ heading: biEmpty(), subtitle: biEmpty() }),
+  },
 };
+
+// Every block (except the hero, which has its own background controls) can take a section background.
+const STYLE_FIELD: FieldDef = {
+  kind: "group",
+  key: "style",
+  label: "Section background (optional)",
+  fields: [
+    { kind: "image", key: "bgImage", label: "Background image" },
+    { kind: "number", key: "overlay", label: "Overlay strength over the image, 0–100 (higher = darker)" },
+    { kind: "color", key: "overlayColor", label: "Overlay colour" },
+    { kind: "color", key: "bgColor", label: "Plain background colour (used when there is no image)" },
+  ],
+};
+for (const type of Object.keys(BLOCK_REGISTRY) as BlockType[]) if (type !== "hero") BLOCK_REGISTRY[type].fields.push(STYLE_FIELD);
 
 export function newBlockId(): string {
   return `blk_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;

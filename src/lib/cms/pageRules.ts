@@ -7,16 +7,21 @@ export const RESERVED_SLUGS = [
   "services", "signup", "home", "api", "preview", "admin", "p", "sitemap.xml", "robots.txt", "favicon.ico", "_next",
 ];
 
+// Built-in pages of the public site that can be replaced by an editable CMS page with the same address. They are
+// created only through "Make editable" (never the New page form), and keep their address.
+export const BUILT_IN_PAGES = ["about", "contact", "services", "blog", "pricing"] as const;
+export const isBuiltInSlug = (slug: string) => (BUILT_IN_PAGES as readonly string[]).includes(slug);
+
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function slugify(input: string): string {
   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
 }
 
-export function slugProblem(slug: string): string | null {
+export function slugProblem(slug: string, allowBuiltIn = false): string | null {
   if (!slug) return "Slug is required.";
   if (!SLUG_PATTERN.test(slug)) return "Slug can only contain lowercase letters, numbers and single hyphens.";
-  if (RESERVED_SLUGS.includes(slug)) return `"${slug}" is used by an existing page of the site. Choose another slug.`;
+  if (RESERVED_SLUGS.includes(slug) && !(allowBuiltIn && isBuiltInSlug(slug))) return `"${slug}" is used by an existing page of the site. Choose another slug.`;
   return null;
 }
 
@@ -33,7 +38,7 @@ export function redirectProblem(from: string, to: string): string | null {
 export function publishProblems(page: { slug: string; titleEn: string; titleAr: string; blocks: unknown }, opts: { isHomepage?: boolean } = {}): string[] {
   const problems: string[] = [];
   // The homepage lives at "/", not at its internal slug, so the slug rules don't apply to it.
-  const slug = opts.isHomepage ? null : slugProblem(page.slug);
+  const slug = opts.isHomepage ? null : slugProblem(page.slug, true);
   if (slug) problems.push(slug);
   if (!page.titleEn.trim() || !page.titleAr.trim()) problems.push("Both the English and Arabic titles are required.");
   const parsed = parseBlocks(page.blocks);

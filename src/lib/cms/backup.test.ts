@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { BACKUP_VERSION, validateBundle } from "./backup";
 import { createBlock } from "./blocks";
-
+import { slugProblem } from "./pageRules";
 const page = (over: Record<string, unknown> = {}) => ({ slug: "warranty", type: "page", titleEn: "Warranty", titleAr: "الضمان", blocks: [createBlock("richText")], seo: {}, ...over });
 const bundle = (over: Record<string, unknown> = {}) => ({ version: BACKUP_VERSION, pages: [page()], menus: { header: [], footer: [] }, social: [], forms: [], areas: [], redirects: [], site: null, ...over });
 
@@ -17,11 +17,11 @@ describe("validateBundle", () => {
     expect(validateBundle({ ...bundle(), version: 99 }).ok).toBe(false);
   });
   it("applies the same page rules as the editor (reserved slugs, titles, blocks, duplicates)", () => {
-    const r = validateBundle(bundle({ pages: [page({ slug: "about" }), page({ slug: "ok", titleAr: "" }), page({ slug: "bad", blocks: [{ id: "x", type: "script", props: {}, hidden: false, visibility: { desktop: true, mobile: true } }] }), page({ slug: "dup" }), page({ slug: "dup" })] }));
+    const r = validateBundle(bundle({ pages: [page({ slug: "login" }), page({ slug: "ok", titleAr: "" }), page({ slug: "bad", blocks: [{ id: "x", type: "script", props: {}, hidden: false, visibility: { desktop: true, mobile: true } }] }), page({ slug: "dup" }), page({ slug: "dup" })] }));
     expect(r.ok).toBe(false);
     if (!r.ok) {
       const all = r.errors.join(" | ");
-      expect(all).toMatch(/about/);
+      expect(all).toMatch(/login/);
       expect(all).toMatch(/both titles/);
       expect(all).toMatch(/malformed/);
       expect(all).toMatch(/twice/);
@@ -55,5 +55,16 @@ describe("validateBundle", () => {
     const r = validateBundle(bundle({ pages: [page({ status: "PUBLISHED" })] }));
     expect(r.ok).toBe(true);
     if (r.ok) expect("status" in r.bundle.pages[0]).toBe(false);
+  });
+});
+
+describe("built-in page addresses", () => {
+  it("About, Contact, Services, Blog and Pricing are valid addresses for a page; other site routes are not", () => {
+    for (const slug of ["about", "contact", "services", "blog", "pricing"]) {
+      expect(slugProblem(slug)).not.toBeNull(); // the New page form still refuses them
+      expect(slugProblem(slug, true)).toBeNull(); // the "Make editable" flow allows them
+    }
+    expect(slugProblem("login", true)).not.toBeNull();
+    expect(slugProblem("dashboard", true)).not.toBeNull();
   });
 });

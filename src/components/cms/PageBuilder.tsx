@@ -28,6 +28,7 @@ export type BuilderPage = {
   showLastUpdated: boolean;
   areaName: string | null;
   isHomepage: boolean;
+  builtIn: boolean;
   blocks: Block[];
   seo: SeoInput;
 };
@@ -302,11 +303,11 @@ export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasM
             <h3 className="mb-3 text-xs font-semibold uppercase text-slate-500">Page settings</h3>
             <div className="flex flex-col gap-3">
               <Field label="Slug (URL)">
-                <input className={inputClassName} dir="ltr" value={page.isHomepage ? "/ (homepage)" : draft.slug} disabled={page.isHomepage} onChange={(e) => update({ slug: e.target.value })} />
+                <input className={inputClassName} dir="ltr" value={page.isHomepage ? "/ (homepage)" : draft.slug} disabled={page.isHomepage || page.builtIn} onChange={(e) => update({ slug: e.target.value })} />
               </Field>
               {page.publishedSlug && page.publishedSlug !== draft.slug && <p className="text-xs text-amber-600">Live at /{page.publishedSlug} until you publish. A redirect is added automatically.</p>}
               <Field label="Type">
-                <select className={inputClassName} value={draft.type} disabled={page.isHomepage} onChange={(e) => update({ type: e.target.value })}>
+                <select className={inputClassName} value={draft.type} disabled={page.isHomepage || page.builtIn} onChange={(e) => update({ type: e.target.value })}>
                   {["page", "service", "area", "article", "landing"].map((t) => (
                     <option key={t}>{t}</option>
                   ))}
