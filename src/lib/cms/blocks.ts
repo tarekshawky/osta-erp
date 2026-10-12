@@ -1,7 +1,10 @@
 import { z } from "zod";
+import { hasUnsafeInlineLink } from "./inlineLinks";
 
 // ---- shared field schemas ----
-const bi = z.object({ en: z.string().max(4000), ar: z.string().max(4000) });
+// Text may contain [link text](address){flags}; the address must be a site path, https://, tel: or mailto:.
+const text = z.string().max(4000).refine((v) => !hasUnsafeInlineLink(v), "A link in this text has an address that is not allowed. Use a site path (/…), https://, tel: or mailto:.");
+const bi = z.object({ en: text, ar: text });
 // Links: site paths, http(s), tel: and mailto: only -- never javascript: or data:.
 const link = z
   .string()

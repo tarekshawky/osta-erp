@@ -1,9 +1,11 @@
 import type { Block } from "@/lib/cms/blocks";
+import { stripInline } from "@/lib/cms/inlineLinks";
 
 type Obj = Record<string, unknown>;
 const bi = (v: unknown) => {
   const o = (v ?? {}) as { en?: string; ar?: string };
-  return { en: (o.en ?? "").trim(), ar: (o.ar ?? "").trim() };
+  // Structured data carries the visible text only, never the [link](address) markup.
+  return { en: stripInline(o.en ?? "").trim(), ar: stripInline(o.ar ?? "").trim() };
 };
 
 export type JsonLdArea = { nameEn: string; kind: string; latitude?: number | null; longitude?: number | null; mapsUrl?: string; serviceNames: string[] };

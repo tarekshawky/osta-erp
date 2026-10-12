@@ -10,6 +10,7 @@ import { Field, inputClassName } from "@/components/FormField";
 import { FieldEditor } from "@/components/cms/BlockForm";
 import { BLOCK_REGISTRY, BLOCK_TYPES, createBlock, newBlockId, type Block, type BlockType } from "@/lib/cms/blocks";
 import { SeoPanel, type Analysis } from "@/components/cms/SeoPanel";
+import { LinkTargetsContext, type LinkTarget } from "@/components/cms/LinkInserter";
 import { analyzeDraft, createPreviewUrl, deletePage, duplicatePage, publishPage, restoreVersion, saveDraft, unpublishPage, type SeoInput } from "@/app/admin/website/actions";
 
 export type VersionRow = { id: string; version: number; kind: string; by: string; at: string };
@@ -92,7 +93,7 @@ function SortableBlock({
   );
 }
 
-export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasMenu }: { page: BuilderPage; versions: VersionRow[]; siteOrigin: string; hasAreasMenu: boolean; menuParents: { id: string; label: string }[] }) {
+export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasMenu, linkTargets }: { page: BuilderPage; versions: VersionRow[]; siteOrigin: string; hasAreasMenu: boolean; linkTargets: LinkTarget[]; menuParents: { id: string; label: string }[] }) {
   const { showToast } = useToast();
   const [draft, setDraft] = useState<Draft>({
     titleEn: page.titleEn, titleAr: page.titleAr, slug: page.slug, type: page.type, showInMenus: page.showInMenus, menuParent: page.menuParent,
@@ -201,6 +202,7 @@ export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasM
   const frameWidth = device === "desktop" ? "100%" : device === "tablet" ? "768px" : "390px";
 
   return (
+    <LinkTargetsContext.Provider value={linkTargets}>
     <div className="pb-16">
       <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-6 py-3">
         <div className="flex items-center gap-4">
@@ -393,5 +395,6 @@ export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasM
         </aside>
       </div>
     </div>
+    </LinkTargetsContext.Provider>
   );
 }

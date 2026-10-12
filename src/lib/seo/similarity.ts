@@ -1,4 +1,5 @@
 import type { Block } from "@/lib/cms/blocks";
+import { stripInline } from "@/lib/cms/inlineLinks";
 
 // Near-duplicate detection for area pages: search engines treat "same page with the city name swapped" as thin,
 // duplicate content, so area pages must say something genuinely different.
@@ -11,7 +12,7 @@ export function pageText(blocks: Block[], lang: "en" | "ar"): string {
     if (Array.isArray(v)) v.forEach(walk);
     else if (v && typeof v === "object") {
       const o = v as Record<string, unknown>;
-      if (typeof o.en === "string" && typeof o.ar === "string") text += ` ${o[lang]}`;
+      if (typeof o.en === "string" && typeof o.ar === "string") text += ` ${stripInline(o[lang] as string)}`;
       else Object.values(o).forEach(walk);
     }
   };

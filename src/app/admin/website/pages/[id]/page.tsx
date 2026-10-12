@@ -23,6 +23,13 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
   });
   if (!page) notFound();
   const headerTop = await prisma.menuItem.findMany({ where: { menu: "header", parentId: null }, orderBy: { sortOrder: "asc" }, select: { id: true, labelEn: true, url: true } });
+  // Pages an editor can link to from inside text: the built-in site pages and every published page.
+  const published = await prisma.cmsPage.findMany({ where: { status: "PUBLISHED", deletedAt: null, isHomepage: false, publishedVersion: { isNot: null }, NOT: { id } }, orderBy: { updatedAt: "desc" }, select: { publishedVersion: { select: { slug: true, titleEn: true } } } });
+  const linkTargets = [
+    ...[["/", "Home"], ["/services", "Services"], ["/pricing", "Pricing & booking"], ["/blog", "Blog"], ["/about", "About Us"], ["/contact", "Contact"]].map(([url, label]) => ({ group: "Site pages", label, url })),
+    // A published page that replaces a built-in one (About, Contact…) is already listed above.
+    ...published.flatMap((p) => (p.publishedVersion && !isBuiltInSlug(p.publishedVersion.slug) ? [{ group: "Your published pages", label: p.publishedVersion.titleEn, url: `/${p.publishedVersion.slug}` }] : [])),
+  ];
   const hasAreasMenu = headerTop.some((m) => m.url === "#areas");
   const parents = headerTop.filter((m) => m.url !== "#areas");
 
@@ -55,6 +62,7 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
         siteOrigin={siteOrigin()}
         page={builderPage}
         hasAreasMenu={hasAreasMenu}
+        linkTargets={linkTargets}
         menuParents={parents.map((m) => ({ id: m.id, label: m.labelEn }))}
         versions={page.versions.map((v) => ({ id: v.id, version: v.version, kind: v.kind, by: v.createdByName ?? "—", at: v.createdAt.toISOString().slice(0, 16).replace("T", " ") }))}
       />

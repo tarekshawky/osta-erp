@@ -1,5 +1,6 @@
 import type { Block } from "@/lib/cms/blocks";
 import { NEAR_DUPLICATE_BLOCK, NEAR_DUPLICATE_WARN, closestMatch, maskNames, pageText } from "./similarity";
+import { stripInline } from "@/lib/cms/inlineLinks";
 
 // SEO analyzer for CMS pages. Pure and unit-tested: all site knowledge (other pages' meta, which URLs exist)
 // arrives in `ctx`, so the same rules run in the editor, the pages list and the overview report.
@@ -32,7 +33,7 @@ export const DESC_MIN = 70;
 const norm = (s: string | undefined) => (s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 const bi = (v: unknown): { en: string; ar: string } => {
   const o = (v ?? {}) as { en?: string; ar?: string };
-  return { en: o.en ?? "", ar: o.ar ?? "" };
+  return { en: stripInline(o.en ?? ""), ar: stripInline(o.ar ?? "") };
 };
 const visible = (blocks: Block[]) => blocks.filter((b) => !b.hidden && (b.visibility.desktop || b.visibility.mobile));
 

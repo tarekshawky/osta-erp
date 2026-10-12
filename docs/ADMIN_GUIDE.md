@@ -46,6 +46,9 @@ Every change is recorded in **Audit Log**.
 
 **Area (local) pages:** Website → Service Areas → *Create page*. Each area page needs its own content: a near-copy of another area page cannot be published.
 
+### Links inside text
+Under every multi-line text box in a block (Text, Hero subtitle, FAQ answers…) there is **🔗 Add a link**. Select the words first if you like, press the button, choose a page (or type `/page`, `https://…`, `tel:…`, `mailto:…`) and tick the style: **Bold**, **Thin**, **Underline**. Links open in the **same tab**; tick **Open in a new tab** only when you want a new one. The editor stores the link as `[words](/page){b,u}` (b = bold, t = thin, u = underline, n = new tab); you can also type it by hand. Only site paths, https, tel and mailto addresses are accepted.
+
 ## 4. SEO (Website → SEO, and the panel inside the page builder)
 
 * A **score out of 100** and a list of fixes: titles/descriptions (EN + AR), one H1, image text, broken internal links, duplicate titles, thin content.
@@ -183,6 +186,9 @@ npm run build
 **الصفحة الرئيسية:** الموقع ← الصفحات ← *Create editable homepage* تنشئ **مسودة** نسخة من الرئيسية الحالية. عاينها وقارنها ثم انشرها. وإلغاء النشر يعيدك للصفحة الرئيسية المدمجة في أي وقت.
 
 **صفحات المناطق (السيو المحلي):** الموقع ← مناطق الخدمة ← *Create page*. كل صفحة منطقة تحتاج محتوى خاصاً بها؛ ولا يمكن نشر صفحة تكاد تكون نسخة من صفحة منطقة أخرى.
+
+### الروابط داخل النص
+تحت كل مربع نص متعدد الأسطر في أي قسم (النص، عنوان فرعي البطل، إجابات الأسئلة الشائعة…) يوجد زر **🔗 Add a link**. حدّد الكلمات أولاً إن أردت، اضغط الزر، اختر صفحة (أو اكتب `/page` أو `https://…` أو `tel:…` أو `mailto:…`) وحدد النمط: **عريض** أو **رفيع** أو **تسطير**. تُفتح الروابط في **نفس التبويب**؛ فعّل **Open in a new tab** فقط عندما تريد تبويباً جديداً. يُخزَّن الرابط بصيغة `[الكلمات](/page){b,u}` (b عريض، t رفيع، u تسطير، n تبويب جديد) ويمكنك كتابته يدوياً. تُقبل فقط عناوين مسارات الموقع وhttps وtel وmailto.
 
 ## ٤. السيو (الموقع ← السيو، واللوحة داخل منشئ الصفحات)
 

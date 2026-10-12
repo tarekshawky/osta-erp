@@ -2,7 +2,8 @@
 
 import { inputClassName } from "@/components/FormField";
 import { ImageUploadField } from "@/components/ImageUploadField";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { LinkInserter } from "@/components/cms/LinkInserter";
 import { listForms } from "@/app/admin/website/forms-actions";
 import type { FieldDef } from "@/lib/cms/blocks";
 import { ICON_NAMES } from "@/lib/cms/icons";
@@ -17,13 +18,22 @@ function BiInput({ label, value, onChange, multiline }: { label: string; value: 
     placeholder: lang === "en" ? "English" : "العربية",
     onChange: (e: React.ChangeEvent<HTMLInputElement & HTMLTextAreaElement>) => onChange({ ...value, [lang]: e.target.value }),
   });
+  const enRef = useRef<HTMLTextAreaElement>(null);
+  const arRef = useRef<HTMLTextAreaElement>(null);
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-xs font-medium text-slate-600">{label}</span>
       <div className="grid gap-2 sm:grid-cols-2">
-        {multiline ? <textarea {...common("en")} /> : <input {...common("en")} />}
-        {multiline ? <textarea {...common("ar")} /> : <input {...common("ar")} />}
+        <div className="flex flex-col gap-1.5">
+          {multiline ? <textarea ref={enRef} {...common("en")} /> : <input {...common("en")} />}
+          {multiline && <LinkInserter textareaRef={enRef} value={value?.en ?? ""} onValue={(v) => onChange({ ...value, en: v })} />}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {multiline ? <textarea ref={arRef} {...common("ar")} /> : <input {...common("ar")} />}
+          {multiline && <LinkInserter textareaRef={arRef} value={value?.ar ?? ""} onValue={(v) => onChange({ ...value, ar: v })} />}
+        </div>
       </div>
+      {multiline && <p className="text-[11px] text-slate-400">Links look like [words](/page){`{b,u}`} in the text. Use the “Add a link” button; links open in the same tab unless you tick “Open in a new tab”.</p>}
     </div>
   );
 }
