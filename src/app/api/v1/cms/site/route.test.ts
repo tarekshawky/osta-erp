@@ -6,6 +6,7 @@ const menuRows = [
   row({ id: "h2", menu: "header", parentId: null, labelEn: "Areas We Cover", url: "#areas" }),
   row({ id: "c1", menu: "header", parentId: "h2", labelEn: "Dubai", url: "/services-in-dubai" }), // a hand-added sub-item
   row({ id: "h3", menu: "header", parentId: null, labelEn: "Services", url: "/services" }),
+  row({ id: "h4", menu: "header", parentId: null, labelEn: "Sharjah", url: "/services-in-sharjah" }), // its page is only a draft
   row({ id: "f1", menu: "footer", parentId: null, labelEn: "Areas", url: "#areas" }),
 ];
 
@@ -17,6 +18,7 @@ vi.mock("@/lib/prisma", () => ({
     integrationSettings: { findUnique: async () => null },
     cmsPage: {
       findMany: async () => [
+        { slug: "services-in-sharjah", type: "area", menuParent: "", areaId: null, publishedVersion: null },
         { type: "page", menuParent: "", areaId: null, publishedVersion: { slug: "about-us", titleEn: "About", titleAr: "ع" } },
         { type: "page", menuParent: "h3", areaId: null, publishedVersion: { slug: "extras", titleEn: "Extras", titleAr: "ع" } },
         { type: "page", menuParent: "", areaId: null, publishedVersion: { slug: "services-in-dubai", titleEn: "Dubai", titleAr: "ع" } }, // already linked by hand
@@ -38,6 +40,7 @@ describe("GET /api/v1/cms/site", () => {
     expect(areas.children.filter((c) => c.url === "/services-in-dubai")).toHaveLength(2); // area + the hand-added one: both kept, they are explicit
     expect(header.find((m) => m.labelEn === "Services")!.children.map((c) => c.url)).toEqual(["/extras"]);
     expect(header.some((m) => m.url === "/about-us")).toBe(true);
+    expect(header.some((m) => m.url === "/services-in-sharjah")).toBe(false); // a link to a draft page is hidden
     expect(header.filter((m) => m.url === "/services-in-dubai")).toHaveLength(0); // not duplicated at top level
   });
 

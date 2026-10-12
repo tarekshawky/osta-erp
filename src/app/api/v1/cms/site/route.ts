@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
 import { AREAS_MENU_URL } from "@/lib/site/siteRules";
+import { hideUnpublishedLinks } from "@/lib/site/menuLinks";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -8,7 +9,7 @@ export function OPTIONS() {
 
 // Everything the public header, footer and contact details need, in one cacheable call.
 export async function GET() {
-  const [settings, menuRows, social, integrations, menuPages, areaRows] = await Promise.all([
+  const [settings, menuRows, social, integrations, menuPages, areaRows, allPages] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "default" } }),
     prisma.menuItem.findMany({ where: { visible: true }, orderBy: [{ sortOrder: "asc" }] }),
     prisma.socialLink.findMany({ where: { visible: true }, orderBy: { sortOrder: "asc" } }),
@@ -25,6 +26,8 @@ export async function GET() {
       orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
       select: { slug: true, nameEn: true, nameAr: true, pages: { where: { status: "PUBLISHED", deletedAt: null }, take: 1, select: { publishedVersion: { select: { slug: true } } } } },
     }),
+    // Every page, to know which addresses exist only as unpublished drafts.
+    prisma.cmsPage.findMany({ where: { deletedAt: null }, select: { slug: true, publishedVersion: { select: { slug: true } } } }),
   ]);
   if (!settings) return apiSuccess(null);
 
@@ -54,6 +57,7 @@ export async function GET() {
   // The footer has no dropdowns, so the special item means nothing there.
   menus.footer = (menus.footer as NavItem[]).filter((m) => m.url !== AREAS_MENU_URL);
 
+
   for (const { publishedVersion: v, menuParent, type } of menuPages) {
     if (!v) continue;
     const url = `/${v.slug}`;
@@ -65,6 +69,11 @@ export async function GET() {
       parent?.children.push(leaf(v.titleEn, v.titleAr, url));
     }
   }
+  // Never link visitors to a page that is still a draft (it would be "page not found").
+  const liveSlugs = new Set(allPages.flatMap((p) => (p.publishedVersion ? [p.publishedVersion.slug] : [])));
+  const draftSlugs = new Set(allPages.filter((p) => !p.publishedVersion && !liveSlugs.has(p.slug)).map((p) => p.slug));
+  menus.header = hideUnpublishedLinks(menus.header as NavItem[], draftSlugs);
+  menus.footer = hideUnpublishedLinks(menus.footer as NavItem[], draftSlugs);
   const { updatedAt: _updatedAt, id: _id, ...publicSettings } = settings;
   void _updatedAt;
   void _id;
