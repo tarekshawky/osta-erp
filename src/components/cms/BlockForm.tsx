@@ -82,6 +82,18 @@ export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; v
                 <input className={inputClassName} inputMode="numeric" value={String(v ?? "")} onChange={(e) => set(f.key, e.target.value === "" ? 0 : Number(e.target.value) || 0)} />
               </label>
             );
+          case "color": {
+            const hex = typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : "#050b1a";
+            return (
+              <label key={f.key} className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-slate-600">{f.label}</span>
+                <div className="flex items-center gap-2">
+                  <input type="color" aria-label={f.label} value={hex} onChange={(e) => set(f.key, e.target.value)} className="h-10 w-14 cursor-pointer rounded border border-slate-200 bg-white p-1" />
+                  <span className="text-xs text-slate-500" dir="ltr">{hex}</span>
+                </div>
+              </label>
+            );
+          }
           case "image":
             return <ImageUploadField key={f.key} label={f.label} value={(v as string) ?? ""} onChange={(x) => set(f.key, x)} />;
           case "select":

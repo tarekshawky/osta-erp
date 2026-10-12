@@ -34,14 +34,14 @@ export async function GET() {
   const menus: Record<string, unknown[]> = { header: [], footer: [] };
   for (const key of Object.keys(menus)) {
     const top = menuRows.filter((m) => m.menu === key && m.parentId === null);
-    menus[key] = top.map((t) => ({ ...shape(t), children: menuRows.filter((c) => c.parentId === t.id).map(shape) }));
+    menus[key] = top.map((t) => ({ ...shape(t), children: menuRows.filter((c) => c.parentId === t.id).map((c) => ({ ...shape(c), children: [] })) }));
   }
   type NavItem = { labelEn: string; labelAr: string; url: string; newTab: boolean; showDesktop: boolean; showMobile: boolean; children: NavItem[] };
   const header = menus.header as NavItem[];
   // Top-level header rows map 1:1, in order, to the first items of `header`; remember them by id before anything is appended.
   const headerById = new Map(menuRows.filter((m) => m.menu === "header" && m.parentId === null).map((r, i) => [r.id, header[i]]));
   const leaf = (labelEn: string, labelAr: string, url: string): NavItem => ({ labelEn, labelAr, url, newTab: false, showDesktop: true, showMobile: true, children: [] });
-  const hasUrl = (items: NavItem[], url: string): boolean => items.some((m) => m.url.replace(/\/$/, "") === url || hasUrl(m.children, url));
+  const hasUrl = (items: NavItem[], url: string): boolean => items.some((m) => m.url.replace(/\/$/, "") === url || hasUrl(m.children ?? [], url));
 
   // "Areas We Cover" appears only when the admin has added that item to the header menu (link "#areas"). It then lists the
   // active service areas (linked when the area has a published page); pages placed inside it follow.

@@ -24,6 +24,9 @@ export const BLOCK_SCHEMAS = {
     align: z.enum(["start", "center"]),
     ctas: z.array(cta).max(3),
     // Optional so blocks saved before these existed stay valid.
+    // Dark layer over a background image: strength 0-100 (%) and its colour.
+    overlay: z.number().int().min(0).max(100).optional(),
+    overlayColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Overlay colour must look like #050b1a.").optional(),
     variant: z.enum(["standard", "landing"]).optional(),
     headingAccent: bi.optional(),
     badges: z.array(z.object({ icon: z.string().max(40).regex(/^[A-Za-z0-9]*$/), label: bi })).max(6).optional(),
@@ -60,7 +63,7 @@ export type Block = {
 // ---- editor field definitions (drive the generic block form) ----
 export type FieldDef =
   | { kind: "bi-text" | "bi-textarea"; key: string; label: string }
-  | { kind: "text" | "textarea" | "url" | "image" | "number"; key: string; label: string }
+  | { kind: "text" | "textarea" | "url" | "image" | "number" | "color"; key: string; label: string }
   | { kind: "select"; key: string; label: string; options: { value: string; label: string }[] }
   | { kind: "form-select"; key: string; label: string }
   | { kind: "group"; key: string; label: string; fields: FieldDef[] }
@@ -93,7 +96,7 @@ export const BLOCK_REGISTRY: Record<
       { kind: "bi-text", key: "eyebrow", label: "Small label above heading" },
       { kind: "bi-text", key: "heading", label: "Heading (H1)" },
       { kind: "bi-textarea", key: "subtitle", label: "Subtitle" },
-      { kind: "image", key: "imageUrl", label: "Image" },
+      { kind: "image", key: "imageUrl", label: "Image (beside the text, or the background image)" },
       {
         kind: "select",
         key: "imagePosition",
@@ -101,9 +104,11 @@ export const BLOCK_REGISTRY: Record<
         options: [
           { value: "end", label: "Beside text (end)" },
           { value: "start", label: "Beside text (start)" },
-          { value: "background", label: "Background" },
+          { value: "background", label: "Background (with a dark overlay so the text stays readable)" },
         ],
       },
+      { kind: "number", key: "overlay", label: "Overlay strength over the background image, 0–100 (higher = darker)" },
+      { kind: "color", key: "overlayColor", label: "Overlay colour" },
       align,
       { kind: "list", key: "ctas", label: "Buttons", itemLabel: "Button", max: 3, fields: ctaFields },
       {
@@ -128,7 +133,7 @@ export const BLOCK_REGISTRY: Record<
         ],
       },
     ],
-    defaults: () => ({ eyebrow: biEmpty(), heading: biEmpty(), subtitle: biEmpty(), imageUrl: "", imagePosition: "end", align: "start", ctas: [], variant: "standard", headingAccent: biEmpty(), badges: [] }),
+    defaults: () => ({ eyebrow: biEmpty(), heading: biEmpty(), subtitle: biEmpty(), imageUrl: "", imagePosition: "end", overlay: 85, overlayColor: "#050b1a", align: "start", ctas: [], variant: "standard", headingAccent: biEmpty(), badges: [] }),
   },
   servicesGrid: {
     label: "Services grid",
