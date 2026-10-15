@@ -46,6 +46,11 @@ Every change is recorded in **Audit Log**.
 
 **Area (local) pages:** Website → Service Areas → *Create page*. Each area page needs its own content: a near-copy of another area page cannot be published.
 
+### Blog categories (Blog → Categories)
+The blog is organised in categories ("sections"). Twenty default categories (English and Arabic) are created for you; add, rename, reorder (▲▼), deactivate or delete as many as you like in **Blog → Categories**. Each has English and Arabic names and descriptions, a slug, SEO title and meta description, and an optional cover image. When you write an article, **choose its category** (required) and optionally tick extra categories under *Also show in*; **+ Create New Category** inside the article form creates one on the spot and selects it. Tick **Featured article** to show it in the blog's Featured section.
+
+On the website each category has its own page (`/blog/category/<slug>`). A category appears once it has at least one published article, and is offered to search engines (and the sitemap) from 3 articles; smaller ones stay reachable but are kept out of Google so they don't count as thin pages. Deactivating a category hides it and its label (the articles stay). A category with articles can't be deleted: move the articles first or deactivate it. Article addresses (`/blog/<slug>`) never change, and the slugs `category`, `categories` and `page` are reserved.
+
 ### Blog posts and service pages use the same blocks
 Website content like articles and service pages is built with the same blocks as pages. In **Blog** (new or edit) and **Website Services** (new or edit) scroll to **Article content (blocks)** / **Service page content (blocks)**: press **+ Add block** and choose Hero, Text, Image + text, FAQ, Call to action, Services grid, Latest blog posts, Contact cards or Price calculator. When a post or service has blocks, visitors see the blocks instead of the plain text fields above them (those stay as a fallback and are only required when there are no blocks).
 
@@ -189,6 +194,11 @@ npm run build
 **الصفحة الرئيسية:** الموقع ← الصفحات ← *Create editable homepage* تنشئ **مسودة** نسخة من الرئيسية الحالية. عاينها وقارنها ثم انشرها. وإلغاء النشر يعيدك للصفحة الرئيسية المدمجة في أي وقت.
 
 **صفحات المناطق (السيو المحلي):** الموقع ← مناطق الخدمة ← *Create page*. كل صفحة منطقة تحتاج محتوى خاصاً بها؛ ولا يمكن نشر صفحة تكاد تكون نسخة من صفحة منطقة أخرى.
+
+### أقسام المدونة (المدونة ← الأقسام)
+تُنظَّم المدونة في أقسام. تم إنشاء عشرين قسماً افتراضياً (بالعربية والإنجليزية)، ويمكنك إضافة أي عدد من الأقسام أو تعديل أسمائها أو إعادة ترتيبها (▲▼) أو إيقافها أو حذفها من **Blog → Categories**. لكل قسم اسم ووصف بالعربية والإنجليزية، ورابط (slug)، وعنوان ووصف للسيو، وصورة غلاف اختيارية. عند كتابة مقال **اختر قسمه** (إلزامي) ويمكنك تحديد أقسام إضافية تحت *Also show in*؛ والخيار **+ Create New Category** داخل نموذج المقال ينشئ قسماً فوراً ويختاره. فعّل **Featured article** ليظهر المقال في قسم المقالات المميزة.
+
+لكل قسم صفحة على الموقع (`/blog/category/<slug>`). يظهر القسم عندما يحتوي على مقال منشور واحد على الأقل، ويُعرَض لمحركات البحث (وخريطة الموقع) من 3 مقالات؛ أما الأقسام الأصغر فتبقى متاحة للزوار لكن خارج جوجل حتى لا تُعدّ صفحات ضعيفة. إيقاف القسم يخفيه ويخفي وسمه (وتبقى المقالات). لا يمكن حذف قسم فيه مقالات: انقل المقالات أولاً أو أوقف القسم. روابط المقالات (`/blog/<slug>`) لا تتغير، والكلمات `category` و`categories` و`page` محجوزة.
 
 ### المقالات وصفحات الخدمات تستخدم نفس الأقسام
 تُبنى المقالات وصفحات الخدمات بنفس أقسام الصفحات. في **المدونة** (جديد أو تعديل) و**خدمات الموقع** (جديد أو تعديل) انزل إلى **Article content (blocks)** / **Service page content (blocks)**: اضغط **+ Add block** واختر Hero أو Text أو Image + text أو FAQ أو Call to action أو Services grid أو Latest blog posts أو Contact cards أو Price calculator. عندما يحتوي المقال أو الخدمة على أقسام يرى الزوار الأقسام بدلاً من حقول النص العادي أعلاها (وتبقى تلك الحقول احتياطية ولا تكون مطلوبة إلا عند عدم وجود أقسام).

@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
 import { parseBlocks, type Block } from "@/lib/cms/blocks";
+import { RESERVED_BLOG_SLUGS } from "@/lib/blog/categoryRules";
+import { revalidateSite } from "@/lib/cms/publish";
 import type { Prisma } from "@/generated/prisma";
 
 export type BlogPostFormInput = {
@@ -23,10 +25,21 @@ export type BlogPostFormInput = {
   seoDescriptionAr: string;
   authorName: string;
   blocks: Block[];
+  categoryId: string;
+  secondaryCategoryIds: string[];
+  featured: boolean;
   published: boolean;
 };
 
 export type BlogActionResult = { ok: boolean; id?: string; error?: string };
+
+async function categoryProblem(input: BlogPostFormInput): Promise<string | null> {
+  if (!input.categoryId) return "Choose a category for this article.";
+  const ids = [input.categoryId, ...(input.secondaryCategoryIds ?? [])];
+  const found = await prisma.blogCategory.count({ where: { id: { in: ids } } });
+  if (found !== new Set(ids).size) return "One of the selected categories no longer exists. Reload the page and choose again.";
+  return null;
+}
 
 function validate(input: BlogPostFormInput) {
   if (!input.titleEn.trim()) return "English title is required.";
@@ -40,6 +53,7 @@ function validate(input: BlogPostFormInput) {
   if (!hasBlocks && !input.contentEn.trim()) return "Add English content, or at least one block.";
   if (!hasBlocks && !input.contentAr.trim()) return "Add Arabic content, or at least one block.";
   if (!input.slug.trim()) return "Slug is required.";
+  if (RESERVED_BLOG_SLUGS.includes(slugify(input.slug))) return `"${slugify(input.slug)}" is reserved for the blog category pages. Choose another slug.`;
   return null;
 }
 
@@ -48,7 +62,7 @@ export async function createBlogPost(input: BlogPostFormInput): Promise<BlogActi
   if (!g.ok) return { ok: false, error: g.error };
   const admin = g.admin;
   if (input.published && !g.can("pages.publish")) return { ok: false, error: "You don't have permission to publish. Save it as a draft." };
-  const error = validate(input);
+  const error = validate(input) ?? (await categoryProblem(input));
   if (error) return { ok: false, error };
 
   const slug = slugify(input.slug);
@@ -71,6 +85,9 @@ export async function createBlogPost(input: BlogPostFormInput): Promise<BlogActi
       seoDescriptionAr: input.seoDescriptionAr.trim() || null,
       authorName: input.authorName.trim() || null,
       blocks: (input.blocks ?? []) as unknown as Prisma.InputJsonValue,
+      categoryId: input.categoryId,
+      secondaryCategories: { connect: [...new Set(input.secondaryCategoryIds ?? [])].filter((id) => id !== input.categoryId).map((id) => ({ id })) },
+      featured: input.featured,
       published: input.published,
       publishedAt: input.published ? new Date() : null,
       createdById: admin.id,
@@ -79,6 +96,7 @@ export async function createBlogPost(input: BlogPostFormInput): Promise<BlogActi
 
   await writeAudit(admin, "blog.create", "BlogPost", post.id, null, { slug, published: input.published });
   revalidatePath("/admin/blog");
+  await revalidateSite(["blog"]);
   return { ok: true, id: post.id };
 }
 
@@ -86,7 +104,7 @@ export async function updateBlogPost(id: string, input: BlogPostFormInput): Prom
   const g = await guardPermission("pages.edit");
   if (!g.ok) return { ok: false, error: g.error };
   const admin = g.admin;
-  const error = validate(input);
+  const error = validate(input) ?? (await categoryProblem(input));
   if (error) return { ok: false, error };
 
   const existing = await prisma.blogPost.findUnique({ where: { id } });
@@ -119,6 +137,9 @@ export async function updateBlogPost(id: string, input: BlogPostFormInput): Prom
       seoDescriptionAr: input.seoDescriptionAr.trim() || null,
       authorName: input.authorName.trim() || null,
       blocks: (input.blocks ?? []) as unknown as Prisma.InputJsonValue,
+      categoryId: input.categoryId,
+      secondaryCategories: { set: [...new Set(input.secondaryCategoryIds ?? [])].filter((id) => id !== input.categoryId).map((id) => ({ id })) },
+      featured: input.featured,
       published: input.published,
       publishedAt: input.published ? (existing.publishedAt ?? new Date()) : existing.publishedAt,
       updatedById: admin.id,
@@ -128,6 +149,7 @@ export async function updateBlogPost(id: string, input: BlogPostFormInput): Prom
   await writeAudit(admin, "blog.update", "BlogPost", id, { slug: existing.slug, published: existing.published, titleEn: existing.titleEn }, { slug, published: input.published, titleEn: input.titleEn.trim() });
   revalidatePath("/admin/blog");
   revalidatePath(`/admin/blog/${id}/edit`);
+  await revalidateSite(["blog"]);
   return { ok: true, id };
 }
 

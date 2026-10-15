@@ -10,7 +10,7 @@ export async function revalidateSite(slugs: string[]) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       // "site" refreshes the shared header/footer data, so a new page's menu link appears at once too.
-      body: JSON.stringify({ secret, paths: slugs.map((s) => (s ? `/${s}` : "/")), tags: ["site"] }),
+      body: JSON.stringify({ secret, paths: slugs.map((s) => (s ? `/${s}` : "/")), tags: ["site", "blog"] }),
     });
   } catch {
     // The site's own short cache window (60s) catches up anyway.

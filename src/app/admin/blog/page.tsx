@@ -18,6 +18,8 @@ export default async function AdminBlogPage() {
       published: true,
       publishedAt: true,
       createdAt: true,
+      featured: true,
+      category: { select: { nameEn: true } },
     },
   });
 
@@ -29,12 +31,15 @@ export default async function AdminBlogPage() {
       <div className="px-6 py-6">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-slate-900">Blog Posts</h2>
+          <div className="flex items-center gap-4">
+            <Link href="/admin/blog/categories" className="text-sm font-medium text-blue-600">Categories</Link>
           <Link
             href="/admin/blog/new"
             className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white"
           >
             + New Post
           </Link>
+          </div>
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
@@ -42,6 +47,7 @@ export default async function AdminBlogPage() {
             <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-3">Title</th>
+                <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Slug</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Created</th>
@@ -51,7 +57,7 @@ export default async function AdminBlogPage() {
             <tbody className="divide-y divide-slate-100">
               {posts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                     No blog posts yet.
                   </td>
                 </tr>
@@ -59,6 +65,7 @@ export default async function AdminBlogPage() {
                 posts.map((post) => (
                   <tr key={post.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 font-medium text-slate-900">{post.titleEn}</td>
+                    <td className="px-4 py-3 text-slate-600">{post.category?.nameEn ?? <span className="text-amber-600">None — choose one</span>}{post.featured && <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">Featured</span>}</td>
                     <td className="px-4 py-3 text-slate-500">/{post.slug}</td>
                     <td className="px-4 py-3">
                       <span

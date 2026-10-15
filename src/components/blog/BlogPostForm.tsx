@@ -8,6 +8,9 @@ import { ImageUploadField } from "@/components/ImageUploadField";
 import { BlocksEditor } from "@/components/cms/BlocksEditor";
 import type { LinkTarget } from "@/components/cms/LinkInserter";
 import { createBlogPost, updateBlogPost, type BlogPostFormInput } from "@/app/admin/blog/actions";
+import { createBlogCategoryQuick } from "@/app/admin/blog/category-actions";
+
+export type CategoryOption = { id: string; nameEn: string; nameAr: string; active: boolean };
 
 const emptyPost: BlogPostFormInput = {
   slug: "",
@@ -24,6 +27,9 @@ const emptyPost: BlogPostFormInput = {
   seoDescriptionAr: "",
   authorName: "",
   blocks: [],
+  categoryId: "",
+  secondaryCategoryIds: [],
+  featured: false,
   published: false,
 };
 
@@ -34,11 +40,13 @@ export function BlogPostForm({
   editId,
   initial,
   linkTargets,
+  categories: initialCategories = [],
 }: {
   mode?: "create" | "edit";
   editId?: string;
   initial?: BlogPostFormInput;
   linkTargets?: LinkTarget[];
+  categories?: CategoryOption[];
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -47,7 +55,27 @@ export function BlogPostForm({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const isValid = post.titleEn.trim().length > 0 && post.titleAr.trim().length > 0 && post.slug.trim().length > 0;
+  const [categories, setCategories] = useState<CategoryOption[]>(initialCategories);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState({ en: "", ar: "" });
+  const [creatingBusy, setCreatingBusy] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+
+  // Creates the category on the spot; it joins the list and is selected straight away.
+  async function createCategory() {
+    setCategoryError(null);
+    setCreatingBusy(true);
+    const r = await createBlogCategoryQuick({ nameEn: newName.en, nameAr: newName.ar });
+    setCreatingBusy(false);
+    if (!r.ok || !r.category) return setCategoryError(r.error ?? "Could not create the category.");
+    setCategories((list) => [...list, { id: r.category!.id, nameEn: r.category!.nameEn, nameAr: r.category!.nameAr, active: true }]);
+    setPost((p) => ({ ...p, categoryId: r.category!.id }));
+    setNewName({ en: "", ar: "" });
+    setCreating(false);
+    showToast("Category created and selected.");
+  }
+
+  const isValid = post.titleEn.trim().length > 0 && post.titleAr.trim().length > 0 && post.slug.trim().length > 0 && post.categoryId !== "";
 
   function submit() {
     setError(null);
@@ -78,6 +106,47 @@ export function BlogPostForm({
           }}
         />
       </Field>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <Field label="Category *">
+          <select className={inputClassName} value={post.categoryId} onChange={(e) => { if (e.target.value === "__new") setCreating(true); else setPost({ ...post, categoryId: e.target.value, secondaryCategoryIds: post.secondaryCategoryIds.filter((id) => id !== e.target.value) }); }}>
+            <option value="">Choose a category…</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.nameEn} — {c.nameAr}{c.active ? "" : " (inactive)"}</option>)}
+            <option value="__new">+ Create New Category</option>
+          </select>
+        </Field>
+        {creating && (
+          <div className="flex flex-col gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
+            <p className="text-xs font-medium text-blue-900">New category (you can add descriptions and SEO later in Blog → Categories)</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <input className={inputClassName} placeholder="Name (English)" value={newName.en} onChange={(e) => setNewName({ ...newName, en: e.target.value })} />
+              <input className={inputClassName} dir="rtl" placeholder="الاسم بالعربية" value={newName.ar} onChange={(e) => setNewName({ ...newName, ar: e.target.value })} />
+            </div>
+            {categoryError && <p className="text-xs text-red-600">{categoryError}</p>}
+            <div className="flex gap-3">
+              <button type="button" disabled={creatingBusy} onClick={createCategory} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{creatingBusy ? "Creating…" : "Create category"}</button>
+              <button type="button" onClick={() => { setCreating(false); setCategoryError(null); }} className="text-xs font-medium text-slate-500">Cancel</button>
+            </div>
+          </div>
+        )}
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-slate-600">Also show in (optional)</p>
+          <div className="flex flex-wrap gap-2">
+            {categories.filter((c) => c.id !== post.categoryId).map((c) => {
+              const on = post.secondaryCategoryIds.includes(c.id);
+              return (
+                <label key={c.id} className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${on ? "border-blue-400 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600"}`}>
+                  <input type="checkbox" className="hidden" checked={on} onChange={(e) => setPost({ ...post, secondaryCategoryIds: e.target.checked ? [...post.secondaryCategoryIds, c.id] : post.secondaryCategoryIds.filter((id) => id !== c.id) })} />
+                  {on ? "✓ " : ""}{c.nameEn}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" checked={post.featured} onChange={(e) => setPost({ ...post, featured: e.target.checked })} /> Featured article (shown in the Featured section of the blog)
+        </label>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Title (English) *">

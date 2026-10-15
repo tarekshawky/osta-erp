@@ -11,7 +11,7 @@ export default async function EditBlogPostPage({ params }: { params: Promise<{ i
   await requireEmployee("ADMIN");
   const { id } = await params;
 
-  const post = await prisma.blogPost.findUnique({ where: { id } });
+  const post = await prisma.blogPost.findUnique({ where: { id }, include: { secondaryCategories: { select: { id: true } } } });
   if (!post) notFound();
 
   const initial: BlogPostFormInput = {
@@ -29,8 +29,14 @@ export default async function EditBlogPostPage({ params }: { params: Promise<{ i
     seoDescriptionAr: post.seoDescriptionAr ?? "",
     authorName: post.authorName ?? "",
     blocks: (() => { const p = parseBlocks(post.blocks); return p.ok ? p.blocks : []; })(),
+    categoryId: post.categoryId ?? "",
+    secondaryCategoryIds: post.secondaryCategories.map((c) => c.id),
+    featured: post.featured,
     published: post.published,
   };
+  // Active categories, plus the ones this article already uses even if they are switched off.
+  const used = [post.categoryId, ...post.secondaryCategories.map((c) => c.id)].filter((x): x is string => !!x);
+  const categories = await prisma.blogCategory.findMany({ where: { OR: [{ active: true }, { id: { in: used } }] }, orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }], select: { id: true, nameEn: true, nameAr: true, active: true } });
 
   return (
     <div className="pb-10">
@@ -44,7 +50,7 @@ export default async function EditBlogPostPage({ params }: { params: Promise<{ i
             </button>
           </form>
         </div>
-        <BlogPostForm mode="edit" editId={id} initial={initial} linkTargets={await loadLinkTargets()} />
+        <BlogPostForm mode="edit" editId={id} initial={initial} linkTargets={await loadLinkTargets()} categories={categories} />
       </div>
     </div>
   );

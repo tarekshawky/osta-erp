@@ -920,32 +920,61 @@ model InvoiceInventoryUsage {
 // Bilingual fields are flat En/Ar pairs rather than a JSON blob, matching this
 // schema's existing convention of flat columns over nested structures.
 model BlogPost {
-  id               String    @id @default(cuid())
-  slug             String    @unique
-  titleEn          String
-  titleAr          String
-  excerptEn        String
-  excerptAr        String
-  contentEn        String
-  contentAr        String
-  coverImageUrl    String?
+  id                  String         @id @default(cuid())
+  slug                String         @unique
+  titleEn             String
+  titleAr             String
+  excerptEn           String
+  excerptAr           String
+  contentEn           String
+  contentAr           String
+  coverImageUrl       String?
+  seoTitleEn          String?
+  seoTitleAr          String?
+  seoDescriptionEn    String?
+  seoDescriptionAr    String?
+  authorName          String?
+  // Primary category (required in the editor; older posts may have none) plus optional secondary categories.
+  categoryId          String?
+  category            BlogCategory?  @relation("BlogPrimary", fields: [categoryId], references: [id], onDelete: SetNull)
+  secondaryCategories BlogCategory[] @relation("BlogSecondary")
+  featured            Boolean        @default(false)
+  // Optional block-based body (same blocks as CMS pages). When it has blocks the public article shows them.
+  blocks              Json           @default("[]")
+  published           Boolean        @default(false)
+  publishedAt         DateTime?
+  createdById         String?
+  createdBy           Employee?      @relation("BlogPostCreatedBy", fields: [createdById], references: [id])
+  updatedById         String?
+  updatedBy           Employee?      @relation("BlogPostUpdatedBy", fields: [updatedById], references: [id])
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @default(now()) @updatedAt
+
+  @@index([published, publishedAt])
+  @@index([categoryId])
+}
+
+// Blog categories ("sections"): managed in the admin, unlimited, bilingual, with their own SEO fields.
+model BlogCategory {
+  id               String     @id @default(cuid())
+  slug             String     @unique
+  nameEn           String
+  nameAr           String
+  descriptionEn    String     @default("")
+  descriptionAr    String     @default("")
   seoTitleEn       String?
   seoTitleAr       String?
   seoDescriptionEn String?
   seoDescriptionAr String?
-  authorName       String?
-  // Optional block-based body (same blocks as CMS pages). When it has blocks the public article shows them.
-  blocks           Json      @default("[]")
-  published        Boolean   @default(false)
-  publishedAt      DateTime?
-  createdById      String?
-  createdBy        Employee? @relation("BlogPostCreatedBy", fields: [createdById], references: [id])
-  updatedById      String?
-  updatedBy        Employee? @relation("BlogPostUpdatedBy", fields: [updatedById], references: [id])
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @default(now()) @updatedAt
+  coverImageUrl    String?
+  active           Boolean    @default(true)
+  sortOrder        Int        @default(0)
+  posts            BlogPost[] @relation("BlogPrimary")
+  secondaryPosts   BlogPost[] @relation("BlogSecondary")
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @default(now()) @updatedAt
 
-  @@index([published, publishedAt])
+  @@index([active, sortOrder])
 }
 
 // Public marketing-site service pages (e.g. "AC Repair", "Duct Cleaning"), each
