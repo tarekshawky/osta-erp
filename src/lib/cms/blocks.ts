@@ -1,10 +1,16 @@
 import { z } from "zod";
 import { hasUnsafeInlineLink } from "./inlineLinks";
+import { cleanRichValue } from "./richText";
 
 // ---- shared field schemas ----
-// Text may contain [link text](address){flags}; the address must be a site path, https://, tel: or mailto:.
-// No practical limit on how much text a field can hold (long articles are fine); this only guards against absurd input.
-const text = z.string().max(200_000).refine((v) => !hasUnsafeInlineLink(v), "A link in this text has an address that is not allowed. Use a site path (/…), https://, tel: or mailto:.");
+// Text is either plain (with optional [link text](address){flags} links) or HTML from the visual editor, which is
+// rebuilt through an allow-list on every save (see richText.ts). The address of a link must be a site path, https://,
+// tel: or mailto:. No practical limit on how much text a field can hold (long articles are fine); this only guards against absurd input.
+const text = z
+  .string()
+  .max(2_000_000)
+  .refine((v) => !hasUnsafeInlineLink(v), "A link in this text has an address that is not allowed. Use a site path (/…), https://, tel: or mailto:.")
+  .transform(cleanRichValue);
 const bi = z.object({ en: text, ar: text });
 // Links: site paths, http(s), tel: and mailto: only -- never javascript: or data:.
 const link = z
@@ -97,7 +103,8 @@ export type Block = {
 
 // ---- editor field definitions (drive the generic block form) ----
 export type FieldDef =
-  | { kind: "bi-text" | "bi-textarea"; key: string; label: string }
+  // rich: edited in the visual editor (headings, colours, lists, links, images) instead of a plain text box.
+  | { kind: "bi-text" | "bi-textarea"; key: string; label: string; rich?: boolean }
   | { kind: "text" | "textarea" | "url" | "image" | "number" | "color"; key: string; label: string }
   | { kind: "select"; key: string; label: string; options: { value: string; label: string }[] }
   | { kind: "form-select"; key: string; label: string }
@@ -204,10 +211,10 @@ export const BLOCK_REGISTRY: Record<
   },
   richText: {
     label: "Text",
-    description: "A heading and paragraphs. Leave a blank line between paragraphs.",
+    description: "A heading and formatted text: headings, bold, colours, lists, links and images.",
     fields: [
       { kind: "bi-text", key: "heading", label: "Heading" },
-      { kind: "bi-textarea", key: "body", label: "Body" },
+      { kind: "bi-textarea", key: "body", label: "Body", rich: true },
       align,
     ],
     defaults: () => ({ heading: biEmpty(), body: biEmpty(), align: "start" }),
@@ -217,7 +224,7 @@ export const BLOCK_REGISTRY: Record<
     description: "An image next to a heading, text and optional button.",
     fields: [
       { kind: "bi-text", key: "heading", label: "Heading" },
-      { kind: "bi-textarea", key: "body", label: "Body" },
+      { kind: "bi-textarea", key: "body", label: "Body", rich: true },
       { kind: "image", key: "imageUrl", label: "Image" },
       { kind: "bi-text", key: "imageAlt", label: "Image description (alt text)" },
       {
@@ -246,7 +253,7 @@ export const BLOCK_REGISTRY: Record<
         max: 200,
         fields: [
           { kind: "bi-text", key: "question", label: "Question" },
-          { kind: "bi-textarea", key: "answer", label: "Answer" },
+          { kind: "bi-textarea", key: "answer", label: "Answer", rich: true },
         ],
       },
     ],

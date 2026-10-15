@@ -28,10 +28,12 @@ describe("block registry", () => {
     const rt = createBlock("richText");
     rt.props.body = { en: "word ".repeat(30_000), ar: "كلمة ".repeat(30_000) }; // ~150,000 characters each
     expect(parseBlocks([rt]).ok).toBe(true);
+    rt.props.body = { en: `<p>${"word ".repeat(100_000)}</p>`, ar: "" }; // 500,000 characters of editor HTML
+    expect(parseBlocks([rt]).ok).toBe(true);
     const faq = createBlock("faq");
     faq.props.items = Array.from({ length: 100 }, () => ({ question: { en: "q", ar: "q" }, answer: { en: "a", ar: "a" } }));
     expect(parseBlocks([faq]).ok).toBe(true);
-    rt.props.body = { en: "x".repeat(200_001), ar: "" };
+    rt.props.body = { en: "x".repeat(2_000_001), ar: "" };
     expect(parseBlocks([rt]).ok).toBe(false); // only an absurd size is refused
   });
   it("rejects duplicate block ids", () => {
@@ -96,5 +98,15 @@ describe("homepage seed", () => {
     const hero = homepageBlocks()[0];
     (hero.props.badges as { icon: string }[])[0].icon = "<img src=x>";
     expect(parseBlocks([hero]).ok).toBe(false);
+  });
+});
+
+describe("rich text in blocks", () => {
+  it("rebuilds editor HTML through the allow-list when blocks are parsed", () => {
+    const rt = createBlock("richText");
+    rt.props.body = { en: '<p onclick="x()">Hi <script>alert(1)</script><a href="javascript:alert(1)">bad</a></p>', ar: "plain [x](/pricing){b}" };
+    const parsed = parseBlocks([rt]);
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(parsed.blocks[0].props.body).toEqual({ en: "<p>Hi bad</p>", ar: "plain [x](/pricing){b}" });
   });
 });

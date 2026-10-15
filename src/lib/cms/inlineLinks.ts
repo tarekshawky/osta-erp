@@ -4,6 +4,8 @@
 //
 //   [Book now](/pricing){b,u}      [Call us](tel:+971500000000)      [Guide](https://example.com){n}
 
+import { isRichHtml, richToText } from "./richText";
+
 export type Inline =
   | { kind: "text"; text: string }
   | { kind: "link"; text: string; url: string; bold: boolean; thin: boolean; underline: boolean; newTab: boolean };
@@ -29,7 +31,7 @@ export function parseInline(src: string): Inline[] {
 }
 
 // The text without link markup (for word counts, search snippets and structured data).
-export const stripInline = (src: string) => parseInline(src).map((p) => p.text).join("");
+export const stripInline = (src: string) => (isRichHtml(src) ? richToText(src) : parseInline(src).map((p) => p.text).join(""));
 
 // True when some [text](address) in the string points somewhere that is not allowed.
 export function hasUnsafeInlineLink(src: string): boolean {

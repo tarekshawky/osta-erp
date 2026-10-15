@@ -4,13 +4,14 @@ import { inputClassName } from "@/components/FormField";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import { useEffect, useRef, useState } from "react";
 import { LinkInserter, LinkPreview } from "@/components/cms/LinkInserter";
+import { RichTextEditor } from "@/components/cms/RichTextEditor";
 import { listForms } from "@/app/admin/website/forms-actions";
 import type { FieldDef } from "@/lib/cms/blocks";
 import { ICON_NAMES } from "@/lib/cms/icons";
 
 type Obj = Record<string, unknown>;
 
-function BiInput({ label, value, onChange, multiline }: { label: string; value: { en: string; ar: string }; onChange: (v: { en: string; ar: string }) => void; multiline: boolean }) {
+function BiInput({ label, value, onChange, multiline, rich }: { label: string; value: { en: string; ar: string }; onChange: (v: { en: string; ar: string }) => void; multiline: boolean; rich?: boolean }) {
   const common = (lang: "en" | "ar") => ({
     className: `${inputClassName} ${multiline ? "min-h-24 resize-none overflow-hidden" : ""}`,
     dir: lang === "ar" ? ("rtl" as const) : ("ltr" as const),
@@ -30,6 +31,19 @@ function BiInput({ label, value, onChange, multiline }: { label: string; value: 
       }
     }
   }, [value?.en, value?.ar]);
+  if (rich) {
+    return (
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-medium text-slate-600">{label}</span>
+        {(["en", "ar"] as const).map((lang) => (
+          <div key={lang} className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium text-slate-400">{lang === "en" ? "English" : "العربية"}</span>
+            <RichTextEditor dir={lang === "ar" ? "rtl" : "ltr"} value={value?.[lang] ?? ""} onChange={(v) => onChange({ ...value, [lang]: v })} placeholder={lang === "en" ? "Write in English…" : "اكتب بالعربية…"} />
+          </div>
+        ))}
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-xs font-medium text-slate-600">{label}</span>
@@ -80,7 +94,7 @@ export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; v
         switch (f.kind) {
           case "bi-text":
           case "bi-textarea":
-            return <BiInput key={f.key} label={f.label} multiline={f.kind === "bi-textarea"} value={(v as { en: string; ar: string }) ?? { en: "", ar: "" }} onChange={(x) => set(f.key, x)} />;
+            return <BiInput key={f.key} label={f.label} multiline={f.kind === "bi-textarea"} rich={f.kind === "bi-textarea" && f.rich} value={(v as { en: string; ar: string }) ?? { en: "", ar: "" }} onChange={(x) => set(f.key, x)} />;
           case "text":
           case "url":
             return (
