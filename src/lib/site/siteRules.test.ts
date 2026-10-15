@@ -6,7 +6,9 @@ const settings = (over: Partial<SettingsInput> = {}): SettingsInput => ({
   defaultLocale: "en", allowIndexing: true, copyrightEn: "", copyrightAr: "", phone: "+971 56 867 6036", whatsapp: "971568676036",
   whatsappMessageEn: "", whatsappMessageAr: "", email: "info@ostaservices.com", addressEn: "", addressAr: "", hoursEn: "", hoursAr: "",
   mapsUrl: "", businessProfileUrl: "", headerCtaLabelEn: "Book", headerCtaLabelAr: "احجز", headerCtaUrl: "/orders/new",
-  footerAreas: [{ en: "Dubai", ar: "دبي" }], ...over,
+  footerAreas: [{ en: "Dubai", ar: "دبي" }],
+  waPopupEnabled: true, waPopupAutoOpen: true, waPopupDelaySeconds: 10, waPopupTitleEn: "Chat", waPopupTitleAr: "تواصل", waPopupTextEn: "24/7", waPopupTextAr: "٢٤/٧", waPopupButtonEn: "Start", waPopupButtonAr: "ابدأ",
+  ...over,
 });
 const item = (over: Partial<MenuItemInput> = {}): MenuItemInput => ({ labelEn: "A", labelAr: "أ", url: "/a", visible: true, showDesktop: true, showMobile: true, newTab: false, children: [], ...over });
 
@@ -25,6 +27,14 @@ describe("settingsProblem", () => {
   it("needs names and a valid locale", () => {
     expect(settingsProblem(settings({ siteNameAr: " " }))).toMatch(/Site name/);
     expect(settingsProblem(settings({ defaultLocale: "fr" }))).toMatch(/language/);
+  });
+  it("WhatsApp pop-up: needs a number, a sensible delay and bounded text", () => {
+    expect(settingsProblem(settings({ whatsapp: "" }))).toMatch(/WhatsApp number/);
+    expect(settingsProblem(settings({ whatsapp: "", waPopupEnabled: false }))).toBeNull();
+    expect(settingsProblem(settings({ waPopupDelaySeconds: -1 }))).toMatch(/delay/);
+    expect(settingsProblem(settings({ waPopupDelaySeconds: 121 }))).toMatch(/delay/);
+    expect(settingsProblem(settings({ waPopupDelaySeconds: 2.5 }))).toMatch(/delay/);
+    expect(settingsProblem(settings({ waPopupTextEn: "x".repeat(301) }))).toMatch(/up to/);
   });
   it("needs bilingual footer areas", () => expect(settingsProblem(settings({ footerAreas: [{ en: "Dubai", ar: "" }] }))).toMatch(/footer area/));
 });

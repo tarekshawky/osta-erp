@@ -17,6 +17,9 @@ export default async function SitePage() {
     phone: s.phone, whatsapp: s.whatsapp, whatsappMessageEn: s.whatsappMessageEn, whatsappMessageAr: s.whatsappMessageAr, email: s.email,
     addressEn: s.addressEn, addressAr: s.addressAr, hoursEn: s.hoursEn, hoursAr: s.hoursAr, mapsUrl: s.mapsUrl, businessProfileUrl: s.businessProfileUrl,
     headerCtaLabelEn: s.headerCtaLabelEn, headerCtaLabelAr: s.headerCtaLabelAr, headerCtaUrl: s.headerCtaUrl, footerAreas: areas,
+    waPopupEnabled: s.waPopupEnabled, waPopupAutoOpen: s.waPopupAutoOpen, waPopupDelaySeconds: s.waPopupDelaySeconds,
+    waPopupTitleEn: s.waPopupTitleEn, waPopupTitleAr: s.waPopupTitleAr, waPopupTextEn: s.waPopupTextEn, waPopupTextAr: s.waPopupTextAr,
+    waPopupButtonEn: s.waPopupButtonEn, waPopupButtonAr: s.waPopupButtonAr,
   };
   return (
     <div className="pb-10">

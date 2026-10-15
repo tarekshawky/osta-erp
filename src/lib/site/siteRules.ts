@@ -17,6 +17,9 @@ export type SettingsInput = {
   phone: string; whatsapp: string; whatsappMessageEn: string; whatsappMessageAr: string; email: string;
   addressEn: string; addressAr: string; hoursEn: string; hoursAr: string; mapsUrl: string; businessProfileUrl: string;
   headerCtaLabelEn: string; headerCtaLabelAr: string; headerCtaUrl: string; footerAreas: { en: string; ar: string }[];
+  // WhatsApp chat pop-up
+  waPopupEnabled: boolean; waPopupAutoOpen: boolean; waPopupDelaySeconds: number;
+  waPopupTitleEn: string; waPopupTitleAr: string; waPopupTextEn: string; waPopupTextAr: string; waPopupButtonEn: string; waPopupButtonAr: string;
 };
 
 export function settingsProblem(s: SettingsInput): string | null {
@@ -24,6 +27,9 @@ export function settingsProblem(s: SettingsInput): string | null {
   if (!["en", "ar"].includes(s.defaultLocale)) return "Default language must be English or Arabic.";
   if (s.whatsapp && !/^\d{8,15}$/.test(s.whatsapp)) return "WhatsApp number must be digits only with the country code, e.g. 971568676036.";
   if (s.phone && !/^[+\d][\d\s()-]{5,24}$/.test(s.phone)) return "Phone number looks invalid.";
+  if (s.waPopupEnabled && !s.whatsapp) return "Enter the WhatsApp number (Contact section) to show the WhatsApp chat pop-up, or switch the pop-up off.";
+  if (!Number.isInteger(s.waPopupDelaySeconds) || s.waPopupDelaySeconds < 0 || s.waPopupDelaySeconds > 120) return "The pop-up delay must be a whole number of seconds from 0 to 120.";
+  if ([s.waPopupTitleEn, s.waPopupTitleAr, s.waPopupButtonEn, s.waPopupButtonAr].some((x) => x.length > 80) || [s.waPopupTextEn, s.waPopupTextAr].some((x) => x.length > 300)) return "Pop-up titles and buttons can be up to 80 characters, the message up to 300.";
   if (s.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email)) return "Email address looks invalid.";
   for (const [label, v] of [["Maps link", s.mapsUrl], ["Business profile link", s.businessProfileUrl]] as const) {
     if (v && !/^https?:\/\//.test(v)) return `${label} must start with https://`;

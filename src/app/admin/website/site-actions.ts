@@ -32,6 +32,9 @@ export async function saveSiteSettings(input: SettingsInput): Promise<ActionResu
     mapsUrl: trim(input.mapsUrl), businessProfileUrl: trim(input.businessProfileUrl), headerCtaLabelEn: trim(input.headerCtaLabelEn),
     headerCtaLabelAr: trim(input.headerCtaLabelAr), headerCtaUrl: trim(input.headerCtaUrl),
     footerAreas: input.footerAreas.map((a) => ({ en: a.en.trim(), ar: a.ar.trim() })),
+    waPopupEnabled: input.waPopupEnabled, waPopupAutoOpen: input.waPopupAutoOpen, waPopupDelaySeconds: input.waPopupDelaySeconds,
+    waPopupTitleEn: trim(input.waPopupTitleEn), waPopupTitleAr: trim(input.waPopupTitleAr), waPopupTextEn: trim(input.waPopupTextEn), waPopupTextAr: trim(input.waPopupTextAr),
+    waPopupButtonEn: trim(input.waPopupButtonEn), waPopupButtonAr: trim(input.waPopupButtonAr),
   };
   const before = await prisma.siteSettings.findUnique({ where: { id: "default" } });
   await prisma.siteSettings.upsert({ where: { id: "default" }, update: data, create: { id: "default", ...data } });

@@ -61,6 +61,25 @@ export function SiteSettingsForm({ initial, activeServiceAreas = 0 }: { initial:
         </div>
         <Bi label="WhatsApp pre-filled message" en={v.whatsappMessageEn} ar={v.whatsappMessageAr} onEn={(x) => set({ whatsappMessageEn: x })} onAr={(x) => set({ whatsappMessageAr: x })} />
         {v.whatsapp && <p className="text-xs text-slate-400">Link preview: <span dir="ltr">{whatsappLink(v.whatsapp, v.whatsappMessageEn)}</span></p>}
+        <div className="mt-2 flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
+          <p className="text-sm font-semibold text-slate-800">WhatsApp chat pop-up</p>
+          <p className="text-xs text-slate-500">A floating WhatsApp button on every public page. Clicking it opens a small card with your message and a button that starts a WhatsApp chat (using the number and pre-filled message above).</p>
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={v.waPopupEnabled} onChange={(e) => set({ waPopupEnabled: e.target.checked })} /> Show the WhatsApp chat pop-up</label>
+          {v.waPopupEnabled && (
+            <>
+              <Bi label="Title" en={v.waPopupTitleEn} ar={v.waPopupTitleAr} onEn={(x) => set({ waPopupTitleEn: x })} onAr={(x) => set({ waPopupTitleAr: x })} />
+              <Bi label="Message (e.g. available 24/7)" multiline en={v.waPopupTextEn} ar={v.waPopupTextAr} onEn={(x) => set({ waPopupTextEn: x })} onAr={(x) => set({ waPopupTextAr: x })} />
+              <Bi label="Button text" en={v.waPopupButtonEn} ar={v.waPopupButtonAr} onEn={(x) => set({ waPopupButtonEn: x })} onAr={(x) => set({ waPopupButtonAr: x })} />
+              <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={v.waPopupAutoOpen} onChange={(e) => set({ waPopupAutoOpen: e.target.checked })} /> Open the card by itself once, after a few seconds (visitors who close it are not asked again for a week)</label>
+              {v.waPopupAutoOpen && (
+                <Field label="Seconds before it opens (0–120)">
+                  <input className={`${inputClassName} w-32`} inputMode="numeric" value={String(v.waPopupDelaySeconds)} onChange={(e) => set({ waPopupDelaySeconds: Number(e.target.value.replace(/\D/g, "")) || 0 })} />
+                </Field>
+              )}
+              {!v.whatsapp && <p className="text-xs text-amber-700">Enter the WhatsApp number above first: the pop-up needs it.</p>}
+            </>
+          )}
+        </div>
         <Bi label="Address" multiline en={v.addressEn} ar={v.addressAr} onEn={(x) => set({ addressEn: x })} onAr={(x) => set({ addressAr: x })} />
         <Bi label="Working hours" en={v.hoursEn} ar={v.hoursAr} onEn={(x) => set({ hoursEn: x })} onAr={(x) => set({ hoursAr: x })} />
         <div className="grid gap-4 sm:grid-cols-2">

@@ -46,6 +46,9 @@ Every change is recorded in **Audit Log**.
 
 **Area (local) pages:** Website → Service Areas → *Create page*. Each area page needs its own content: a near-copy of another area page cannot be published.
 
+### WhatsApp chat pop-up (Website → Site & Contact)
+A floating WhatsApp button appears on every public page. Pressing it opens a small card (“Chat with us on WhatsApp · Available 24/7”) with a button that starts a chat with your WhatsApp number and pre-filled message. In **Site & Contact → WhatsApp chat pop-up** you can switch it off, edit the title, message and button text in English and Arabic, and choose whether the card opens by itself once after a number of seconds (a visitor who has seen or closed it is left alone for a week).
+
 ### The sidebar
 The sidebar is grouped into modules: **Dashboard**, **Orders & Bookings**, **HR & Employees**, **Finance & Accounting**, **Reports & Analytics**, **Marketing & Blog**, **Website Management**, **Fleet & Vehicles**, **Inventory & Services** and **System Administration**. Click a module to open its pages; the module and the page you are on stay highlighted and open. A page that belongs to two modules (for example Work Reports) is the same page, shown in both. Use the search box (or **Ctrl/Cmd + K**) to jump to any page. The arrow at the top collapses the sidebar to icons (click a module icon to open it again); the sidebar remembers whether you collapsed it and which modules you opened. On a phone the same menu opens as a drawer. You only see the modules and pages your role allows, and the server checks access on every page too.
 
