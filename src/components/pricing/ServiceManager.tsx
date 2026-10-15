@@ -5,8 +5,9 @@ import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { saveService, type ServiceInput } from "@/app/admin/pricing/actions";
 import { SERVICE_NOTE_MAX } from "@/lib/pricing/serviceNote";
+import { OptionsEditor, type OptionItem } from "@/components/pricing/OptionsEditor";
 
-export type ServiceRow = ServiceInput & { id: string; slug: string };
+export type ServiceRow = ServiceInput & { id: string; slug: string; options: OptionItem[] };
 
 const UNITS = ["AC_UNIT", "UNIT", "ROOM", "AREA_SQM", "VISIT", "FIXED"];
 const empty: ServiceInput = {
@@ -25,11 +26,13 @@ function ServiceForm({
   id,
   initial,
   ruleSets,
+  options = [],
   onDone,
 }: {
   id: string | null;
   initial: ServiceInput;
   ruleSets: { id: string; name: string }[];
+  options?: OptionItem[];
   onDone: () => void;
 }) {
   const { showToast } = useToast();
@@ -103,6 +106,7 @@ function ServiceForm({
         <input type="checkbox" checked={v.active} onChange={(e) => setV({ ...v, active: e.target.checked })} />
         Active (bookable)
       </label>
+      {id ? <OptionsEditor serviceId={id} options={options} /> : <p className="text-xs text-slate-400">Save the service first, then you can add options (for example weights for a gas refill).</p>}
       <div className="flex gap-3">
         <button type="button" disabled={pending} onClick={submit} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
           {pending ? "Saving…" : id ? "Save" : "Add service"}
@@ -121,14 +125,14 @@ export function ServiceManager({ services, ruleSets }: { services: ServiceRow[];
     <div className="flex flex-col gap-3">
       {services.map((s) =>
         editing === s.id ? (
-          <ServiceForm key={s.id} id={s.id} initial={s} ruleSets={ruleSets} onDone={() => setEditing(null)} />
+          <ServiceForm key={s.id} id={s.id} initial={s} ruleSets={ruleSets} options={s.options} onDone={() => setEditing(null)} />
         ) : (
           <div key={s.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm">
             <div>
               <span className="font-medium text-slate-900">{s.nameEn}</span>
               <span className="ml-2 text-slate-400" dir="rtl">{s.nameAr}</span>
               <span className="ml-3 text-xs text-slate-500">
-                {s.pricingUnit} · min {s.minQuantity}
+                {s.pricingUnit} · min {s.minQuantity}{s.options.length ? ` · ${s.options.length} option${s.options.length === 1 ? "" : "s"}` : ""}
                 {s.discountRuleSetId ? ` · ${ruleSets.find((r) => r.id === s.discountRuleSetId)?.name ?? "discount"}` : ""}
               </span>
               {!s.active && <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">inactive</span>}

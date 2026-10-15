@@ -15,6 +15,11 @@ export async function GET() {
       orderBy: { sortOrder: "asc" },
       include: {
         prices: { where: { active: true }, select: { regionId: true, unitPriceFils: true } },
+        options: {
+          where: { active: true },
+          orderBy: { sortOrder: "asc" },
+          include: { prices: { where: { active: true }, select: { regionId: true, unitPriceFils: true } } },
+        },
         discountRuleSet: { include: { tiers: true } },
         addOns: {
           where: { active: true },
@@ -43,6 +48,7 @@ export async function GET() {
       noteEn: s.noteEn,
       noteAr: s.noteAr,
       prices: s.prices,
+      options: s.options.map((o) => ({ id: o.id, nameEn: o.nameEn, nameAr: o.nameAr, prices: o.prices })),
       tiers: s.discountRuleSet?.active
         ? s.discountRuleSet.tiers.map((t) => ({ minQty: t.minQty, maxQty: t.maxQty, percent: t.percent, startsAt: t.startsAt, endsAt: t.endsAt }))
         : [],

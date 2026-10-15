@@ -1070,6 +1070,7 @@ model Region {
   active       Boolean                  @default(true)
   sortOrder    Int                      @default(0)
   prices       ServicePrice[]
+  optionPrices ServiceOptionPrice[]
   addOnPrices  AddOnPrice[]
   feeOverrides BookingTypeFeeOverride[]
   orders       Order[]
@@ -1095,6 +1096,8 @@ model BookableService {
   discountRuleSetId String?
   discountRuleSet   DiscountRuleSet?         @relation(fields: [discountRuleSetId], references: [id])
   prices            ServicePrice[]
+  // Choices the customer must pick from (e.g. a gas refill weight), each with its own price per emirate.
+  options           ServiceOption[]
   addOns            AddOn[]
   feeOverrides      BookingTypeFeeOverride[]
   orders            Order[]
@@ -1112,6 +1115,34 @@ model ServicePrice {
   updatedAt     DateTime        @default(now()) @updatedAt
 
   @@unique([serviceId, regionId])
+}
+
+// One choice of a service, e.g. "Quarter kg" / "Half kg" / "1 kg". When a service has active options the customer must
+// choose one and the option's price (not the service's own price) is the unit price.
+model ServiceOption {
+  id        String               @id @default(cuid())
+  serviceId String
+  service   BookableService      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  nameEn    String
+  nameAr    String
+  sortOrder Int                  @default(0)
+  active    Boolean              @default(true)
+  prices    ServiceOptionPrice[]
+
+  @@index([serviceId, sortOrder])
+}
+
+model ServiceOptionPrice {
+  id            String        @id @default(cuid())
+  optionId      String
+  option        ServiceOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  regionId      String
+  region        Region        @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  unitPriceFils Int
+  active        Boolean       @default(true)
+  updatedAt     DateTime      @default(now()) @updatedAt
+
+  @@unique([optionId, regionId])
 }
 
 model AddOn {

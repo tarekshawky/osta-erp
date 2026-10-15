@@ -8,7 +8,7 @@ export default async function PricingPage() {
     prisma.region.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.bookableService.findMany({
       orderBy: { sortOrder: "asc" },
-      include: { prices: { where: { active: true } } },
+      include: { prices: { where: { active: true } }, options: { orderBy: { sortOrder: "asc" }, include: { prices: { where: { active: true } } } } },
     }),
     prisma.discountRuleSet.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
@@ -27,6 +27,7 @@ export default async function PricingPage() {
             nameEn: s.nameEn,
             active: s.active,
             prices: Object.fromEntries(s.prices.map((p) => [p.regionId, filsToAed(p.unitPriceFils)])),
+            options: s.options.map((o) => ({ id: o.id, nameEn: o.nameEn, active: o.active, prices: Object.fromEntries(o.prices.map((p) => [p.regionId, filsToAed(p.unitPriceFils)])) })),
           }))}
         />
       </section>
@@ -47,6 +48,7 @@ export default async function PricingPage() {
             pricesIncludeVat: s.pricesIncludeVat === null ? "" : s.pricesIncludeVat ? "true" : "false",
             noteEn: s.noteEn,
             noteAr: s.noteAr,
+            options: s.options.map((o) => ({ id: o.id, nameEn: o.nameEn, nameAr: o.nameAr, active: o.active })),
           }))}
         />
       </section>

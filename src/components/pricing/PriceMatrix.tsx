@@ -2,12 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useToast } from "@/components/Toast";
-import { setServicePrice } from "@/app/admin/pricing/actions";
+import { setOptionPrice, setServicePrice } from "@/app/admin/pricing/actions";
 
 type Region = { id: string; nameEn: string; nameAr: string; active: boolean };
-type Row = { id: string; nameEn: string; active: boolean; prices: Record<string, string> };
+type OptionRow = { id: string; nameEn: string; active: boolean; prices: Record<string, string> };
+type Row = { id: string; nameEn: string; active: boolean; prices: Record<string, string>; options: OptionRow[] };
 
-function Cell({ serviceId, regionId, initial }: { serviceId: string; regionId: string; initial: string }) {
+function Cell({ serviceId, optionId, regionId, initial }: { serviceId?: string; optionId?: string; regionId: string; initial: string }) {
   const { showToast } = useToast();
   const [value, setValue] = useState(initial);
   const [saved, setSaved] = useState(initial);
@@ -16,7 +17,7 @@ function Cell({ serviceId, regionId, initial }: { serviceId: string; regionId: s
   function commit() {
     if (value === saved) return;
     startTransition(async () => {
-      const res = await setServicePrice(serviceId, regionId, value);
+      const res = optionId ? await setOptionPrice(optionId, regionId, value) : await setServicePrice(serviceId!, regionId, value);
       if (res.ok) {
         setSaved(value);
         showToast(value.trim() === "" ? "Marked unavailable." : "Price saved.");
@@ -59,19 +60,36 @@ export function PriceMatrix({ regions, services }: { regions: Region[]; services
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {services.map((s) => (
+          {services.flatMap((s) => [
             <tr key={s.id} className={s.active ? "" : "opacity-60"}>
               <td className="sticky left-0 bg-white px-4 py-2.5 font-medium text-slate-900">
                 {s.nameEn}
                 {!s.active && <span className="ml-2 text-xs text-slate-400">(inactive)</span>}
               </td>
-              {regions.map((r) => (
-                <td key={r.id} className="px-3 py-2 text-right">
-                  <Cell serviceId={s.id} regionId={r.id} initial={s.prices[r.id] ?? ""} />
+              {s.options.length > 0 ? (
+                <td colSpan={regions.length} className="px-3 py-2 text-xs text-slate-500">Priced per option below: choose one when booking, so this row has no price of its own.</td>
+              ) : (
+                regions.map((r) => (
+                  <td key={r.id} className="px-3 py-2 text-right">
+                    <Cell serviceId={s.id} regionId={r.id} initial={s.prices[r.id] ?? ""} />
+                  </td>
+                ))
+              )}
+            </tr>,
+            ...s.options.map((o) => (
+              <tr key={o.id} className={`bg-slate-50/60 ${s.active && o.active ? "" : "opacity-60"}`}>
+                <td className="sticky left-0 bg-slate-50 py-2 pl-9 pr-4 text-slate-700">
+                  ↳ {o.nameEn}
+                  {!o.active && <span className="ml-2 text-xs text-slate-400">(inactive)</span>}
                 </td>
-              ))}
-            </tr>
-          ))}
+                {regions.map((r) => (
+                  <td key={r.id} className="px-3 py-2 text-right">
+                    <Cell optionId={o.id} regionId={r.id} initial={o.prices[r.id] ?? ""} />
+                  </td>
+                ))}
+              </tr>
+            )),
+          ])}
         </tbody>
       </table>
       <p className="border-t border-slate-100 px-4 py-2.5 text-xs text-slate-400">

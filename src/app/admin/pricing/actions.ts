@@ -345,3 +345,75 @@ export async function reviewVisitFeeCharge(id: string, decision: "APPROVED" | "R
   });
   return done();
 }
+
+// ---------- Service options (e.g. gas weight: quarter kg / half kg / 1 kg) ----------
+
+export type OptionInput = { nameEn: string; nameAr: string; active: boolean };
+
+export async function saveOption(serviceId: string, id: string | null, input: OptionInput): Promise<ActionResult> {
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  if (!input.nameEn.trim() || !input.nameAr.trim()) return fail("Both English and Arabic names are required.");
+  if (input.nameEn.length > 80 || input.nameAr.length > 80) return fail("Option names can be up to 80 characters.");
+  const service = await prisma.bookableService.findUnique({ where: { id: serviceId }, select: { id: true } });
+  if (!service) return fail("Service not found.");
+  const data = { nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), active: input.active };
+  if (id) {
+    const before = await prisma.serviceOption.findFirst({ where: { id, serviceId } });
+    if (!before) return fail("Option not found.");
+    await prisma.serviceOption.update({ where: { id }, data });
+    await log("ServiceOption", id, { nameEn: before.nameEn, nameAr: before.nameAr, active: before.active }, data, g.admin.id);
+  } else {
+    const top = (await prisma.serviceOption.aggregate({ where: { serviceId }, _max: { sortOrder: true } }))._max.sortOrder ?? -1;
+    const created = await prisma.serviceOption.create({ data: { ...data, serviceId, sortOrder: top + 1 } });
+    await log("ServiceOption", created.id, null, data, g.admin.id);
+  }
+  return done();
+}
+
+export async function moveOption(serviceId: string, id: string, direction: "up" | "down"): Promise<ActionResult> {
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const all = await prisma.serviceOption.findMany({ where: { serviceId }, orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }], select: { id: true } });
+  const i = all.findIndex((o) => o.id === id);
+  const j = direction === "up" ? i - 1 : i + 1;
+  if (i < 0 || j < 0 || j >= all.length) return done();
+  [all[i], all[j]] = [all[j], all[i]];
+  await prisma.$transaction(all.map((o, n) => prisma.serviceOption.update({ where: { id: o.id }, data: { sortOrder: n } })));
+  return done();
+}
+
+// Orders keep a copy of the option's name, so deleting an option never changes past orders.
+export async function deleteOption(serviceId: string, id: string): Promise<ActionResult> {
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const before = await prisma.serviceOption.findFirst({ where: { id, serviceId } });
+  if (!before) return fail("Option not found.");
+  await prisma.serviceOption.delete({ where: { id } });
+  await log("ServiceOption", id, { nameEn: before.nameEn, nameAr: before.nameAr }, null, g.admin.id);
+  return done();
+}
+
+// priceAed "" = the option is not available in this emirate (the row is deactivated, never deleted).
+export async function setOptionPrice(optionId: string, regionId: string, priceAed: string): Promise<ActionResult> {
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const existing = await prisma.serviceOptionPrice.findUnique({ where: { optionId_regionId: { optionId, regionId } } });
+  if (priceAed.trim() === "") {
+    if (existing?.active) {
+      await prisma.serviceOptionPrice.update({ where: { id: existing.id }, data: { active: false } });
+      await log("ServiceOptionPrice", existing.id, { unitPriceFils: existing.unitPriceFils, active: true }, { active: false }, g.admin.id);
+    }
+    return done();
+  }
+  const fils = aedToFils(priceAed);
+  if (fils === null || fils <= 0) return fail("Enter a valid price in AED (up to 2 decimals).");
+  if (fils > 100_000_000) return fail("Price is too large.");
+  const saved = await prisma.serviceOptionPrice.upsert({
+    where: { optionId_regionId: { optionId, regionId } },
+    update: { unitPriceFils: fils, active: true },
+    create: { optionId, regionId, unitPriceFils: fils },
+  });
+  await log("ServiceOptionPrice", saved.id, existing ? { unitPriceFils: existing.unitPriceFils, active: existing.active } : null, { unitPriceFils: fils, active: true }, g.admin.id);
+  return done();
+}

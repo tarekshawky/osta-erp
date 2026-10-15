@@ -39,6 +39,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   const actorName = new Map(actors.map((a) => [a.id, a.name]));
 
   const q = order.pricingSnapshot as unknown as Quote | null;
+  const option = (order.pricingSnapshot as { option?: { nameEn?: string } | null } | null)?.option?.nameEn;
   const aed = (f: number) => `${filsToAed(f)} AED`;
   const lines: PricingLine[] = q
     ? [
@@ -61,7 +62,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         <OrderDetail order={order} basePath="/admin" />
         <OrderPricingPanel
           orderId={order.id}
-          summary={q && order.bookableService && order.region && order.bookingType ? `${order.bookableService.nameEn} × ${order.quantity} · ${order.region.nameEn} · ${order.bookingType.nameEn}` : null}
+          summary={q && order.bookableService && order.region && order.bookingType ? `${order.bookableService.nameEn}${option ? ` — ${option}` : ""} × ${order.quantity} · ${order.region.nameEn} · ${order.bookingType.nameEn}` : null}
           lines={lines}
           consentAt={order.consentAcceptedAt ? stamp(order.consentAcceptedAt) : null}
           policyVersion={order.visitFeePolicy?.version ?? null}
