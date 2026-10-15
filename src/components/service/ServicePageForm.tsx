@@ -33,8 +33,6 @@ const emptyService: ServicePageFormInput = {
   published: true,
 };
 
-const textareaClassName = `${inputClassName} min-h-[140px] resize-y`;
-
 export function ServicePageForm({
   mode = "create",
   editId,

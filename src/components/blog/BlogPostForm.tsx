@@ -36,8 +36,6 @@ const emptyPost: BlogPostFormInput = {
   published: false,
 };
 
-const textareaClassName = `${inputClassName} min-h-[140px] resize-y`;
-
 export function BlogPostForm({
   mode = "create",
   editId,
