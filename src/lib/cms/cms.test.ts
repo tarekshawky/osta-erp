@@ -21,8 +21,18 @@ describe("block registry", () => {
     b.props.imageUrl = "data:image/svg+xml;base64,AAAA";
     expect(parseBlocks([b]).ok).toBe(false);
     const faq = createBlock("faq");
-    faq.props.items = Array.from({ length: 31 }, () => ({ question: { en: "q", ar: "q" }, answer: { en: "a", ar: "a" } }));
+    faq.props.items = Array.from({ length: 201 }, () => ({ question: { en: "q", ar: "q" }, answer: { en: "a", ar: "a" } }));
     expect(parseBlocks([faq]).ok).toBe(false);
+  });
+  it("accepts very long text (no practical limit) and many FAQ items", () => {
+    const rt = createBlock("richText");
+    rt.props.body = { en: "word ".repeat(30_000), ar: "كلمة ".repeat(30_000) }; // ~150,000 characters each
+    expect(parseBlocks([rt]).ok).toBe(true);
+    const faq = createBlock("faq");
+    faq.props.items = Array.from({ length: 100 }, () => ({ question: { en: "q", ar: "q" }, answer: { en: "a", ar: "a" } }));
+    expect(parseBlocks([faq]).ok).toBe(true);
+    rt.props.body = { en: "x".repeat(200_001), ar: "" };
+    expect(parseBlocks([rt]).ok).toBe(false); // only an absurd size is refused
   });
   it("rejects duplicate block ids", () => {
     const a = createBlock("richText");

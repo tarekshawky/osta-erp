@@ -3,7 +3,8 @@ import { hasUnsafeInlineLink } from "./inlineLinks";
 
 // ---- shared field schemas ----
 // Text may contain [link text](address){flags}; the address must be a site path, https://, tel: or mailto:.
-const text = z.string().max(4000).refine((v) => !hasUnsafeInlineLink(v), "A link in this text has an address that is not allowed. Use a site path (/…), https://, tel: or mailto:.");
+// No practical limit on how much text a field can hold (long articles are fine); this only guards against absurd input.
+const text = z.string().max(200_000).refine((v) => !hasUnsafeInlineLink(v), "A link in this text has an address that is not allowed. Use a site path (/…), https://, tel: or mailto:.");
 const bi = z.object({ en: text, ar: text });
 // Links: site paths, http(s), tel: and mailto: only -- never javascript: or data:.
 const link = z
@@ -48,7 +49,7 @@ const RAW_SCHEMAS = {
     imagePosition: z.enum(["end", "start"]),
     cta,
   }),
-  faq: z.object({ heading: bi, items: z.array(z.object({ question: bi, answer: bi })).max(30) }),
+  faq: z.object({ heading: bi, items: z.array(z.object({ question: bi, answer: bi })).max(200) }),
   stats: z.object({ heading: bi, items: z.array(z.object({ value: z.string().max(40), label: bi, icon: z.string().max(40).regex(/^[A-Za-z0-9]*$/).optional() })).max(8) }),
   cta: z.object({ heading: bi, subtitle: bi, button: cta }),
   form: z.object({ heading: bi, intro: bi, formSlug: z.string().max(60).regex(/^[a-z0-9-]*$/) }),
@@ -242,7 +243,7 @@ export const BLOCK_REGISTRY: Record<
         key: "items",
         label: "Questions",
         itemLabel: "Question",
-        max: 30,
+        max: 200,
         fields: [
           { kind: "bi-text", key: "question", label: "Question" },
           { kind: "bi-textarea", key: "answer", label: "Answer" },
@@ -345,7 +346,7 @@ const envelope = z.object({
 // Validates every block against its own schema. Never trusts client JSON.
 export function parseBlocks(input: unknown): { ok: true; blocks: Block[] } | { ok: false; error: string } {
   if (!Array.isArray(input)) return { ok: false, error: "Blocks must be a list." };
-  if (input.length > 80) return { ok: false, error: "A page can have at most 80 blocks." };
+  if (input.length > 200) return { ok: false, error: "A page can have at most 200 blocks." };
   const blocks: Block[] = [];
   const seen = new Set<string>();
   for (const [i, raw] of input.entries()) {

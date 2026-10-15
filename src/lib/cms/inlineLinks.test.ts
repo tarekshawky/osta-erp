@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildLinkToken, hasUnsafeInlineLink, isSafeLinkUrl, parseInline, stripInline } from "./inlineLinks";
+import { buildLinkToken, findPlainOccurrence, hasUnsafeInlineLink, isSafeLinkUrl, parseInline, stripInline } from "./inlineLinks";
 
 describe("inline links", () => {
   it("parses text, links and their style flags", () => {
@@ -37,5 +37,18 @@ describe("inline links", () => {
     expect(buildLinkToken({ text: "bad]", url: "/x" })).toBeNull();
     expect(buildLinkToken({ text: "x", url: "javascript:1" })).toBeNull();
     expect(buildLinkToken({ text: "x", url: "/a b" })).toBeNull();
+  });
+  it("finds words that are already in the text, outside any link", () => {
+    const text = "Osta Services is a brand. See [Osta Services](/about) or Osta Services again.";
+    expect(findPlainOccurrence(text, "Osta Services")).toEqual({ start: 0, end: 13 });
+    // the occurrence inside the existing link is skipped
+    expect(findPlainOccurrence("[Osta Services](/about) and Osta Services", "Osta Services")).toEqual({ start: 28, end: 41 });
+    expect(findPlainOccurrence("nothing here", "Osta")).toBeNull();
+    expect(findPlainOccurrence("abc", "  ")).toBeNull();
+  });
+  it("accepts long link words and long text", () => {
+    const long = "word ".repeat(300).trim();
+    expect(buildLinkToken({ text: long, url: "/x" })).toBe(`[${long}](/x)`);
+    expect(parseInline(`[${long}](/x)`)[0]).toMatchObject({ kind: "link", text: long });
   });
 });

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState } from "react";
 import { inputClassName } from "@/components/FormField";
-import { buildLinkToken } from "@/lib/cms/inlineLinks";
+import { buildLinkToken, findPlainOccurrence, parseInline } from "@/lib/cms/inlineLinks";
 
 export type LinkTarget = { group: string; label: string; url: string };
 
@@ -18,6 +18,7 @@ export function LinkInserter({ textareaRef, value, onValue }: Props) {
   const groups = [...new Set(targets.map((t) => t.group))];
   const [open, setOpen] = useState(false);
   const [range, setRange] = useState({ start: 0, end: 0 });
+  const [hadSelection, setHadSelection] = useState(false);
   const [text, setText] = useState("");
   const [url, setUrl] = useState("");
   const [bold, setBold] = useState(false);
@@ -31,6 +32,7 @@ export function LinkInserter({ textareaRef, value, onValue }: Props) {
     const start = el?.selectionStart ?? value.length;
     const end = el?.selectionEnd ?? start;
     setRange({ start, end });
+    setHadSelection(end > start);
     setText(value.slice(start, end));
     setUrl("");
     setBold(false);
@@ -44,7 +46,13 @@ export function LinkInserter({ textareaRef, value, onValue }: Props) {
   function insert() {
     const token = buildLinkToken({ text, url, bold, thin, underline, newTab });
     if (!token) return setError("Enter the link words and an address: a site path like /pricing, https://…, tel: or mailto:.");
-    onValue(value.slice(0, range.start) + token + value.slice(range.end));
+    let { start, end } = range;
+    // Nothing was selected: if these words are already in the text, link them there instead of adding them a second time.
+    if (start === end) {
+      const found = findPlainOccurrence(value, text);
+      if (found) ({ start, end } = found);
+    }
+    onValue(value.slice(0, start) + token + value.slice(end));
     setOpen(false);
   }
 
@@ -61,6 +69,11 @@ export function LinkInserter({ textareaRef, value, onValue }: Props) {
       <label className="flex flex-col gap-1">
         <span className="font-medium">Words to show</span>
         <input className={inputClassName} value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. our pricing page" />
+        <span className="text-slate-500">
+          {hadSelection
+            ? "The words you selected become the link."
+            : "Nothing selected: if these words are already in the text they become the link; otherwise they are added at the cursor."}
+        </span>
       </label>
       <label className="flex flex-col gap-1">
         <span className="font-medium">Choose a page</span>
@@ -89,5 +102,26 @@ export function LinkInserter({ textareaRef, value, onValue }: Props) {
         <button type="button" onClick={() => setOpen(false)} className="font-medium text-slate-500">Cancel</button>
       </div>
     </div>
+  );
+}
+
+// How the text will look on the site: links are shown with their bold / thin / underline style, so it is clear which
+// words are linked. Shown under a text box only when the text contains a link.
+export function LinkPreview({ text }: { text: string }) {
+  const parts = parseInline(text);
+  if (!parts.some((p) => p.kind === "link")) return null;
+  return (
+    <p className="whitespace-pre-line rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs leading-relaxed text-slate-600">
+      <span className="mr-1 font-semibold text-slate-400">Preview:</span>
+      {parts.map((p, i) =>
+        p.kind === "text" ? (
+          <span key={i}>{p.text}</span>
+        ) : (
+          <span key={i} title={p.url} className={`text-blue-600 ${p.bold ? "font-bold" : p.thin ? "font-light" : ""} ${p.underline ? "underline underline-offset-4" : ""}`}>
+            {p.text}{p.newTab ? " ↗" : ""}
+          </span>
+        )
+      )}
+    </p>
   );
 }
