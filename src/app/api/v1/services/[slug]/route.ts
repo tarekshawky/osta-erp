@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError, corsPreflight } from "@/lib/apiResponse";
+import { publicBlocks } from "@/lib/cms/publicBlocks";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -21,6 +22,7 @@ const serviceDetailSelect = {
   seoTitleAr: true,
   seoDescriptionEn: true,
   seoDescriptionAr: true,
+  blocks: true,
 } as const;
 
 export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
@@ -30,5 +32,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
     select: serviceDetailSelect,
   });
   if (!service) return apiError("not_found", "Service not found.", 404);
-  return apiSuccess(service);
+  return apiSuccess({ ...service, blocks: publicBlocks(service.blocks) });
 }

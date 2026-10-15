@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { ImageUploadField } from "@/components/ImageUploadField";
+import { BlocksEditor } from "@/components/cms/BlocksEditor";
+import type { LinkTarget } from "@/components/cms/LinkInserter";
 import { createServicePage, updateServicePage, type ServicePageFormInput } from "@/app/admin/services/actions";
 
 const emptyService: ServicePageFormInput = {
@@ -24,6 +26,7 @@ const emptyService: ServicePageFormInput = {
   seoDescriptionEn: "",
   seoDescriptionAr: "",
   displayOrder: "0",
+  blocks: [],
   published: true,
 };
 
@@ -33,10 +36,12 @@ export function ServicePageForm({
   mode = "create",
   editId,
   initial,
+  linkTargets,
 }: {
   mode?: "create" | "edit";
   editId?: string;
   initial?: ServicePageFormInput;
+  linkTargets?: LinkTarget[];
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -121,14 +126,14 @@ export function ServicePageForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Content (English) *">
+        <Field label="Plain text (English) — optional when you add blocks below">
           <textarea
             className={textareaClassName}
             value={service.contentEn}
             onChange={(e) => setService({ ...service, contentEn: e.target.value })}
           />
         </Field>
-        <Field label="المحتوى (Arabic) *" dir="rtl">
+        <Field label="النص العادي (Arabic) — اختياري عند إضافة أقسام" dir="rtl">
           <textarea
             className={textareaClassName}
             dir="rtl"
@@ -136,6 +141,14 @@ export function ServicePageForm({
             onChange={(e) => setService({ ...service, contentAr: e.target.value })}
           />
         </Field>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800">Service page content (blocks)</h3>
+          <p className="text-xs text-slate-500">Build the page from blocks: Text, Image + text, FAQ, Call to action, Hero and more. When there are blocks they are shown on the service page instead of the plain text above.</p>
+        </div>
+        <BlocksEditor blocks={service.blocks} onChange={(blocks) => setService({ ...service, blocks })} linkTargets={linkTargets} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

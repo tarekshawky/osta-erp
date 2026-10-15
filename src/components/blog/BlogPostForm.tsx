@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { ImageUploadField } from "@/components/ImageUploadField";
+import { BlocksEditor } from "@/components/cms/BlocksEditor";
+import type { LinkTarget } from "@/components/cms/LinkInserter";
 import { createBlogPost, updateBlogPost, type BlogPostFormInput } from "@/app/admin/blog/actions";
 
 const emptyPost: BlogPostFormInput = {
@@ -21,6 +23,7 @@ const emptyPost: BlogPostFormInput = {
   seoDescriptionEn: "",
   seoDescriptionAr: "",
   authorName: "",
+  blocks: [],
   published: false,
 };
 
@@ -30,10 +33,12 @@ export function BlogPostForm({
   mode = "create",
   editId,
   initial,
+  linkTargets,
 }: {
   mode?: "create" | "edit";
   editId?: string;
   initial?: BlogPostFormInput;
+  linkTargets?: LinkTarget[];
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -118,14 +123,14 @@ export function BlogPostForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Content (English) *">
+        <Field label="Plain text (English) — optional when you add blocks below">
           <textarea
             className={textareaClassName}
             value={post.contentEn}
             onChange={(e) => setPost({ ...post, contentEn: e.target.value })}
           />
         </Field>
-        <Field label="المحتوى (Arabic) *" dir="rtl">
+        <Field label="النص العادي (Arabic) — اختياري عند إضافة أقسام" dir="rtl">
           <textarea
             className={textareaClassName}
             dir="rtl"
@@ -133,6 +138,14 @@ export function BlogPostForm({
             onChange={(e) => setPost({ ...post, contentAr: e.target.value })}
           />
         </Field>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800">Article content (blocks)</h3>
+          <p className="text-xs text-slate-500">Build the article from blocks: Text, Image + text, FAQ, Call to action, Hero and more. When there are blocks they are shown on the article instead of the plain text above.</p>
+        </div>
+        <BlocksEditor blocks={post.blocks} onChange={(blocks) => setPost({ ...post, blocks })} linkTargets={linkTargets} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

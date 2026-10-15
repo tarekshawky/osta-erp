@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
+import { parseBlocks, type Block } from "@/lib/cms/blocks";
+import type { Prisma } from "@/generated/prisma";
 
 export type BlogPostFormInput = {
   slug: string;
@@ -20,6 +22,7 @@ export type BlogPostFormInput = {
   seoDescriptionEn: string;
   seoDescriptionAr: string;
   authorName: string;
+  blocks: Block[];
   published: boolean;
 };
 
@@ -30,8 +33,12 @@ function validate(input: BlogPostFormInput) {
   if (!input.titleAr.trim()) return "Arabic title is required.";
   if (!input.excerptEn.trim()) return "English excerpt is required.";
   if (!input.excerptAr.trim()) return "Arabic excerpt is required.";
-  if (!input.contentEn.trim()) return "English content is required.";
-  if (!input.contentAr.trim()) return "Arabic content is required.";
+  const parsed = parseBlocks(input.blocks ?? []);
+  if (!parsed.ok) return parsed.error;
+  // The article body is either the blocks or the plain text below; one of them must have content.
+  const hasBlocks = parsed.blocks.some((b) => !b.hidden);
+  if (!hasBlocks && !input.contentEn.trim()) return "Add English content, or at least one block.";
+  if (!hasBlocks && !input.contentAr.trim()) return "Add Arabic content, or at least one block.";
   if (!input.slug.trim()) return "Slug is required.";
   return null;
 }
@@ -63,6 +70,7 @@ export async function createBlogPost(input: BlogPostFormInput): Promise<BlogActi
       seoDescriptionEn: input.seoDescriptionEn.trim() || null,
       seoDescriptionAr: input.seoDescriptionAr.trim() || null,
       authorName: input.authorName.trim() || null,
+      blocks: (input.blocks ?? []) as unknown as Prisma.InputJsonValue,
       published: input.published,
       publishedAt: input.published ? new Date() : null,
       createdById: admin.id,
@@ -110,6 +118,7 @@ export async function updateBlogPost(id: string, input: BlogPostFormInput): Prom
       seoDescriptionEn: input.seoDescriptionEn.trim() || null,
       seoDescriptionAr: input.seoDescriptionAr.trim() || null,
       authorName: input.authorName.trim() || null,
+      blocks: (input.blocks ?? []) as unknown as Prisma.InputJsonValue,
       published: input.published,
       publishedAt: input.published ? (existing.publishedAt ?? new Date()) : existing.publishedAt,
       updatedById: admin.id,

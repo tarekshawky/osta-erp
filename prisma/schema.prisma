@@ -934,6 +934,8 @@ model BlogPost {
   seoDescriptionEn String?
   seoDescriptionAr String?
   authorName       String?
+  // Optional block-based body (same blocks as CMS pages). When it has blocks the public article shows them.
+  blocks           Json      @default("[]")
   published        Boolean   @default(false)
   publishedAt      DateTime?
   createdById      String?
@@ -968,6 +970,8 @@ model ServicePage {
   seoDescriptionEn   String?
   seoDescriptionAr   String?
   displayOrder       Int       @default(0)
+  // Optional block-based body (same blocks as CMS pages). When it has blocks the public service page shows them.
+  blocks             Json      @default("[]")
   published          Boolean   @default(true)
   createdById        String?
   createdBy          Employee? @relation("ServicePageCreatedBy", fields: [createdById], references: [id])

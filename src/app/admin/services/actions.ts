@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
+import { parseBlocks, type Block } from "@/lib/cms/blocks";
+import type { Prisma } from "@/generated/prisma";
 
 export type ServicePageFormInput = {
   slug: string;
@@ -23,6 +25,7 @@ export type ServicePageFormInput = {
   seoDescriptionEn: string;
   seoDescriptionAr: string;
   displayOrder: string;
+  blocks: Block[];
   published: boolean;
 };
 
@@ -33,8 +36,12 @@ function validate(input: ServicePageFormInput) {
   if (!input.nameAr.trim()) return "Arabic name is required.";
   if (!input.shortDescriptionEn.trim()) return "English short description is required.";
   if (!input.shortDescriptionAr.trim()) return "Arabic short description is required.";
-  if (!input.contentEn.trim()) return "English content is required.";
-  if (!input.contentAr.trim()) return "Arabic content is required.";
+  const parsed = parseBlocks(input.blocks ?? []);
+  if (!parsed.ok) return parsed.error;
+  // The page body is either the blocks or the plain text; one of them must have content.
+  const hasBlocks = parsed.blocks.some((b) => !b.hidden);
+  if (!hasBlocks && !input.contentEn.trim()) return "Add English content, or at least one block.";
+  if (!hasBlocks && !input.contentAr.trim()) return "Add Arabic content, or at least one block.";
   if (!input.slug.trim()) return "Slug is required.";
   if (input.priceFrom && Number.isNaN(Number(input.priceFrom))) return "Price must be a number.";
   return null;
@@ -57,6 +64,7 @@ function toData(input: ServicePageFormInput) {
     seoDescriptionEn: input.seoDescriptionEn.trim() || null,
     seoDescriptionAr: input.seoDescriptionAr.trim() || null,
     displayOrder: input.displayOrder ? parseInt(input.displayOrder, 10) || 0 : 0,
+    blocks: (input.blocks ?? []) as unknown as Prisma.InputJsonValue,
     published: input.published,
   };
 }

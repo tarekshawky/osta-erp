@@ -46,6 +46,9 @@ Every change is recorded in **Audit Log**.
 
 **Area (local) pages:** Website → Service Areas → *Create page*. Each area page needs its own content: a near-copy of another area page cannot be published.
 
+### Blog posts and service pages use the same blocks
+Website content like articles and service pages is built with the same blocks as pages. In **Blog** (new or edit) and **Website Services** (new or edit) scroll to **Article content (blocks)** / **Service page content (blocks)**: press **+ Add block** and choose Hero, Text, Image + text, FAQ, Call to action, Services grid, Latest blog posts, Contact cards or Price calculator. When a post or service has blocks, visitors see the blocks instead of the plain text fields above them (those stay as a fallback and are only required when there are no blocks).
+
 ### Links inside text
 Under every multi-line text box in a block (Text, Hero subtitle, FAQ answers…) there is **🔗 Add a link**. Select the words first if you like, press the button, choose a page (or type `/page`, `https://…`, `tel:…`, `mailto:…`) and tick the style: **Bold**, **Thin**, **Underline**. Links open in the **same tab**; tick **Open in a new tab** only when you want a new one. The editor stores the link as `[words](/page){b,u}` (b = bold, t = thin, u = underline, n = new tab); you can also type it by hand. Only site paths, https, tel and mailto addresses are accepted.
 
@@ -186,6 +189,9 @@ npm run build
 **الصفحة الرئيسية:** الموقع ← الصفحات ← *Create editable homepage* تنشئ **مسودة** نسخة من الرئيسية الحالية. عاينها وقارنها ثم انشرها. وإلغاء النشر يعيدك للصفحة الرئيسية المدمجة في أي وقت.
 
 **صفحات المناطق (السيو المحلي):** الموقع ← مناطق الخدمة ← *Create page*. كل صفحة منطقة تحتاج محتوى خاصاً بها؛ ولا يمكن نشر صفحة تكاد تكون نسخة من صفحة منطقة أخرى.
+
+### المقالات وصفحات الخدمات تستخدم نفس الأقسام
+تُبنى المقالات وصفحات الخدمات بنفس أقسام الصفحات. في **المدونة** (جديد أو تعديل) و**خدمات الموقع** (جديد أو تعديل) انزل إلى **Article content (blocks)** / **Service page content (blocks)**: اضغط **+ Add block** واختر Hero أو Text أو Image + text أو FAQ أو Call to action أو Services grid أو Latest blog posts أو Contact cards أو Price calculator. عندما يحتوي المقال أو الخدمة على أقسام يرى الزوار الأقسام بدلاً من حقول النص العادي أعلاها (وتبقى تلك الحقول احتياطية ولا تكون مطلوبة إلا عند عدم وجود أقسام).
 
 ### الروابط داخل النص
 تحت كل مربع نص متعدد الأسطر في أي قسم (النص، عنوان فرعي البطل، إجابات الأسئلة الشائعة…) يوجد زر **🔗 Add a link**. حدّد الكلمات أولاً إن أردت، اضغط الزر، اختر صفحة (أو اكتب `/page` أو `https://…` أو `tel:…` أو `mailto:…`) وحدد النمط: **عريض** أو **رفيع** أو **تسطير**. تُفتح الروابط في **نفس التبويب**؛ فعّل **Open in a new tab** فقط عندما تريد تبويباً جديداً. يُخزَّن الرابط بصيغة `[الكلمات](/page){b,u}` (b عريض، t رفيع، u تسطير، n تبويب جديد) ويمكنك كتابته يدوياً. تُقبل فقط عناوين مسارات الموقع وhttps وtel وmailto.

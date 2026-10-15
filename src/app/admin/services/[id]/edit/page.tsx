@@ -3,6 +3,8 @@ import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { ServicePageForm } from "@/components/service/ServicePageForm";
+import { loadLinkTargets } from "@/lib/cms/linkTargets";
+import { parseBlocks } from "@/lib/cms/blocks";
 import { deleteServicePage, type ServicePageFormInput } from "@/app/admin/services/actions";
 
 export default async function EditServicePagePage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,6 +31,7 @@ export default async function EditServicePagePage({ params }: { params: Promise<
     seoDescriptionEn: service.seoDescriptionEn ?? "",
     seoDescriptionAr: service.seoDescriptionAr ?? "",
     displayOrder: String(service.displayOrder),
+    blocks: (() => { const p = parseBlocks(service.blocks); return p.ok ? p.blocks : []; })(),
     published: service.published,
   };
 
@@ -44,7 +47,7 @@ export default async function EditServicePagePage({ params }: { params: Promise<
             </button>
           </form>
         </div>
-        <ServicePageForm mode="edit" editId={id} initial={initial} />
+        <ServicePageForm mode="edit" editId={id} initial={initial} linkTargets={await loadLinkTargets()} />
       </div>
     </div>
   );

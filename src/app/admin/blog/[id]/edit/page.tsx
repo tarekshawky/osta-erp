@@ -3,6 +3,8 @@ import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { BlogPostForm } from "@/components/blog/BlogPostForm";
+import { loadLinkTargets } from "@/lib/cms/linkTargets";
+import { parseBlocks } from "@/lib/cms/blocks";
 import { deleteBlogPost, type BlogPostFormInput } from "@/app/admin/blog/actions";
 
 export default async function EditBlogPostPage({ params }: { params: Promise<{ id: string }> }) {
@@ -26,6 +28,7 @@ export default async function EditBlogPostPage({ params }: { params: Promise<{ i
     seoDescriptionEn: post.seoDescriptionEn ?? "",
     seoDescriptionAr: post.seoDescriptionAr ?? "",
     authorName: post.authorName ?? "",
+    blocks: (() => { const p = parseBlocks(post.blocks); return p.ok ? p.blocks : []; })(),
     published: post.published,
   };
 
@@ -41,7 +44,7 @@ export default async function EditBlogPostPage({ params }: { params: Promise<{ i
             </button>
           </form>
         </div>
-        <BlogPostForm mode="edit" editId={id} initial={initial} />
+        <BlogPostForm mode="edit" editId={id} initial={initial} linkTargets={await loadLinkTargets()} />
       </div>
     </div>
   );
