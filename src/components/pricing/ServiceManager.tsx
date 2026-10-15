@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { saveService, type ServiceInput } from "@/app/admin/pricing/actions";
+import { SERVICE_NOTE_MAX } from "@/lib/pricing/serviceNote";
 
 export type ServiceRow = ServiceInput & { id: string; slug: string };
 
@@ -16,6 +17,8 @@ const empty: ServiceInput = {
   active: true,
   discountRuleSetId: "",
   pricesIncludeVat: "",
+  noteEn: "",
+  noteAr: "",
 };
 
 function ServiceForm({
@@ -87,6 +90,15 @@ function ServiceForm({
           </select>
         </Field>
       </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Note for customers (English), optional">
+          <textarea className={`${inputClassName} min-h-20`} maxLength={SERVICE_NOTE_MAX} value={v.noteEn} onChange={(e) => setV({ ...v, noteEn: e.target.value })} placeholder="e.g. Repair only. Spare parts are not included." />
+        </Field>
+        <Field label="ملاحظة للعملاء (Arabic) - اختياري" dir="rtl">
+          <textarea className={`${inputClassName} min-h-20`} dir="rtl" maxLength={SERVICE_NOTE_MAX} value={v.noteAr} onChange={(e) => setV({ ...v, noteAr: e.target.value })} placeholder="مثال: الإصلاح فقط، ولا يشمل قطع الغيار." />
+        </Field>
+        <p className="text-xs text-slate-500 sm:col-span-2">Shown with the service on the price calculator and in the booking summary, so customers see what the price covers. Leave empty for no note.</p>
+      </div>
       <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
         <input type="checkbox" checked={v.active} onChange={(e) => setV({ ...v, active: e.target.checked })} />
         Active (bookable)
@@ -120,6 +132,7 @@ export function ServiceManager({ services, ruleSets }: { services: ServiceRow[];
                 {s.discountRuleSetId ? ` · ${ruleSets.find((r) => r.id === s.discountRuleSetId)?.name ?? "discount"}` : ""}
               </span>
               {!s.active && <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">inactive</span>}
+              {(s.noteEn || s.noteAr) && <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700" title={s.noteEn || s.noteAr}>note</span>}
             </div>
             <button type="button" onClick={() => setEditing(s.id)} className="font-medium text-blue-600">
               Edit

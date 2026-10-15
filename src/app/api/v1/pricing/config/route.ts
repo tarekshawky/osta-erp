@@ -40,6 +40,8 @@ export async function GET() {
       pricingUnit: s.pricingUnit,
       minQuantity: s.minQuantity,
       pricesIncludeVat: s.pricesIncludeVat,
+      noteEn: s.noteEn,
+      noteAr: s.noteAr,
       prices: s.prices,
       tiers: s.discountRuleSet?.active
         ? s.discountRuleSet.tiers.map((t) => ({ minQty: t.minQty, maxQty: t.maxQty, percent: t.percent, startsAt: t.startsAt, endsAt: t.endsAt }))

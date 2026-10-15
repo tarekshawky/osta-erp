@@ -45,6 +45,8 @@ export default async function PricingPage() {
             active: s.active,
             discountRuleSetId: s.discountRuleSetId ?? "",
             pricesIncludeVat: s.pricesIncludeVat === null ? "" : s.pricesIncludeVat ? "true" : "false",
+            noteEn: s.noteEn,
+            noteAr: s.noteAr,
           }))}
         />
       </section>

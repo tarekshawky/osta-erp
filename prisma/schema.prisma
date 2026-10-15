@@ -1089,6 +1089,9 @@ model BookableService {
   active            Boolean                  @default(true)
   sortOrder         Int                      @default(0)
   pricesIncludeVat  Boolean? // null = use global TaxSetting
+  // Optional customer-facing note about what the price covers, e.g. "Repair only, spare parts not included".
+  noteEn            String                   @default("")
+  noteAr            String                   @default("")
   discountRuleSetId String?
   discountRuleSet   DiscountRuleSet?         @relation(fields: [discountRuleSetId], references: [id])
   prices            ServicePrice[]

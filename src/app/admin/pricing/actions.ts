@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
+import { SERVICE_NOTE_MAX } from "@/lib/pricing/serviceNote";
 import { aedToFils } from "@/lib/pricing/money";
 import { validateTiers } from "@/lib/pricing/priceQuote";
 
@@ -72,7 +73,11 @@ export type ServiceInput = {
   active: boolean;
   discountRuleSetId: string;
   pricesIncludeVat: "" | "true" | "false";
+  // Optional note shown to customers next to the service (what the price does or does not include).
+  noteEn: string;
+  noteAr: string;
 };
+
 
 const UNITS = ["AC_UNIT", "UNIT", "ROOM", "AREA_SQM", "VISIT", "FIXED"];
 
@@ -81,6 +86,7 @@ function validateService(i: ServiceInput): string | null {
   if (!UNITS.includes(i.pricingUnit)) return "Invalid pricing unit.";
   const min = Number(i.minQuantity);
   if (!Number.isInteger(min) || min < 1) return "Minimum quantity must be a whole number of 1 or more.";
+  if (i.noteEn.length > SERVICE_NOTE_MAX || i.noteAr.length > SERVICE_NOTE_MAX) return `The note can be up to ${SERVICE_NOTE_MAX} characters in each language.`;
   return null;
 }
 
@@ -103,6 +109,8 @@ export async function saveService(id: string | null, input: ServiceInput): Promi
     active: input.active,
     discountRuleSetId: input.discountRuleSetId || null,
     pricesIncludeVat: input.pricesIncludeVat === "" ? null : input.pricesIncludeVat === "true",
+    noteEn: input.noteEn.trim(),
+    noteAr: input.noteAr.trim(),
   };
 
   if (id) {
