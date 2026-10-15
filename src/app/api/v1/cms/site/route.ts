@@ -83,6 +83,6 @@ export async function GET() {
     serviceAreas: areaRows.map((a) => ({ slug: a.slug, nameEn: a.nameEn, nameAr: a.nameAr, pageSlug: a.pages[0]?.publishedVersion?.slug ?? null })),
     social: social.map((s) => ({ platform: s.platform, label: s.label, url: s.url })),
     // Public by nature (they appear in page source). Nothing secret lives here.
-    integrations: integrations ? { ga4Id: integrations.ga4Id, gtmId: integrations.gtmId, metaPixelId: integrations.metaPixelId, searchConsoleToken: integrations.searchConsoleToken, bingToken: integrations.bingToken, requireConsent: integrations.requireConsent, consentTextEn: integrations.consentTextEn, consentTextAr: integrations.consentTextAr, privacyUrl: integrations.privacyUrl } : null,
+    integrations: integrations ? { ga4Id: integrations.ga4Id, gtmId: integrations.gtmId, metaPixelId: integrations.metaPixelId, searchConsoleToken: integrations.searchConsoleToken, bingToken: integrations.bingToken, requireConsent: integrations.requireConsent, consentTextEn: integrations.consentTextEn, consentTextAr: integrations.consentTextAr, privacyUrl: integrations.privacyUrl, headCode: integrations.headCode, headCodeConsent: integrations.headCodeConsent, bodyCode: integrations.bodyCode, bodyCodeConsent: integrations.bodyCodeConsent } : null,
   });
 }

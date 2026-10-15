@@ -12,12 +12,14 @@ export type PublicPage = {
   jsonLd: Record<string, unknown>[];
   showLastUpdated: boolean;
   updatedAt: string;
+  // Custom code for this page (public pages only, never in previews). Absent when the page has none.
+  code?: { headCode: string; headCodeConsent: string; bodyCode: string; bodyCodeConsent: string };
 };
 
 // Shapes a stored snapshot for the public site: re-validates the blocks and drops hidden ones,
 // so a hand-edited or stale row can never reach visitors as malformed or hidden content.
 export function toPublicPage(
-  page: { id: string; type: string; updatedAt: Date; showLastUpdated?: boolean },
+  page: { id: string; type: string; updatedAt: Date; showLastUpdated?: boolean; headCode?: string; headCodeConsent?: string; bodyCode?: string; bodyCodeConsent?: string },
   snapshot: { slug: string; titleEn: string; titleAr: string; blocks: unknown; seo: unknown },
   includeHidden = false,
   site?: JsonLdSite & { publishedAt?: Date; area?: JsonLdArea | null }
@@ -49,5 +51,8 @@ export function toPublicPage(
     jsonLd,
     showLastUpdated: !!page.showLastUpdated,
     updatedAt: page.updatedAt.toISOString(),
+    ...(!includeHidden && (page.headCode || page.bodyCode)
+      ? { code: { headCode: page.headCode ?? "", headCodeConsent: page.headCodeConsent ?? "analytics", bodyCode: page.bodyCode ?? "", bodyCodeConsent: page.bodyCodeConsent ?? "analytics" } }
+      : {}),
   };
 }

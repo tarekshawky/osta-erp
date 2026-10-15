@@ -1289,6 +1289,11 @@ model CmsPage {
   titleEn            String
   titleAr            String
   showInMenus        Boolean          @default(true)
+  // Custom code for this page only (raw HTML). Owner only; applies while the page is published.
+  headCode           String           @default("")
+  headCodeConsent    String           @default("analytics")
+  bodyCode           String           @default("")
+  bodyCodeConsent    String           @default("analytics")
   menuParent         String           @default("") // "" = top level of the header | "areas" = inside Areas We Cover | a header MenuItem id
   showInSitemap      Boolean          @default(true)
   translationGroupId String?
@@ -1524,7 +1529,21 @@ model IntegrationSettings {
   consentTextEn      String   @default("")
   consentTextAr      String   @default("")
   privacyUrl         String   @default("")
+  // Custom code for every page: raw HTML (scripts, pixels, verification tags). Owner only; see CodeInjection.
+  headCode           String   @default("")
+  headCodeConsent    String   @default("analytics") // always | analytics | marketing: what the visitor must allow first
+  bodyCode           String   @default("")
+  bodyCodeConsent    String   @default("analytics")
   updatedAt          DateTime @default(now()) @updatedAt
+}
+
+// Plain-text files served by the public site: robots.txt additions, llms.txt, ads.txt and security.txt.
+// `ai-crawlers` is not a file: its content is the AI crawler policy ("allow" | "block-training" | "block-all").
+model TechnicalFile {
+  key       String   @id
+  enabled   Boolean  @default(false)
+  content   String   @default("")
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 // ===== Backlinks (tracking only: nothing here creates links) =====

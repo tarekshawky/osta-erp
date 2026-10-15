@@ -46,6 +46,15 @@ Every change is recorded in **Audit Log**.
 
 **Area (local) pages:** Website → Service Areas → *Create page*. Each area page needs its own content: a near-copy of another area page cannot be published.
 
+### The sidebar
+The sidebar is grouped into modules: **Dashboard**, **Orders & Bookings**, **HR & Employees**, **Finance & Accounting**, **Reports & Analytics**, **Marketing & Blog**, **Website Management**, **Fleet & Vehicles**, **Inventory & Services** and **System Administration**. Click a module to open its pages; the module and the page you are on stay highlighted and open. A page that belongs to two modules (for example Work Reports) is the same page, shown in both. Use the search box (or **Ctrl/Cmd + K**) to jump to any page. The arrow at the top collapses the sidebar to icons (click a module icon to open it again); the sidebar remembers whether you collapsed it and which modules you opened. On a phone the same menu opens as a drawer. You only see the modules and pages your role allows, and the server checks access on every page too.
+
+### Technical files & AI (Website → Technical Files & AI)
+Edit the files served from the root of the website: **robots.txt** (your extra rules; the standard rules and sitemap are added for you), the **AI crawler policy** (allow, block training only, or block all AI crawlers), **llms.txt** (a guide for AI assistants; *Generate from my site* writes a first draft), **ads.txt** and **security.txt** (Owner only). Each file shows its address so you can check it live.
+
+### Header & footer code (Website → Header & Footer Code, and Page Code)
+Paste a snippet (tracking tag, pixel, chat widget, verification tag) to be added to the header or the end of the page on **every page**, or on **one page** in *Page Code*. For each box choose when it loads: always, after the visitor allows Analytics cookies, or after they allow Marketing cookies (the default is Analytics). Owner only; changes are recorded in the Audit Log. Only paste code you trust.
+
 ### Blog categories (Blog → Categories)
 The blog is organised in categories ("sections"). Twenty default categories (English and Arabic) are created for you; add, rename, reorder (▲▼), deactivate or delete as many as you like in **Blog → Categories**. Each has English and Arabic names and descriptions, a slug, SEO title and meta description, and an optional cover image. When you write an article, **choose its category** (required) and optionally tick extra categories under *Also show in*; **+ Create New Category** inside the article form creates one on the spot and selects it. Tick **Featured article** to show it in the blog's Featured section.
 
@@ -194,6 +203,15 @@ npm run build
 **الصفحة الرئيسية:** الموقع ← الصفحات ← *Create editable homepage* تنشئ **مسودة** نسخة من الرئيسية الحالية. عاينها وقارنها ثم انشرها. وإلغاء النشر يعيدك للصفحة الرئيسية المدمجة في أي وقت.
 
 **صفحات المناطق (السيو المحلي):** الموقع ← مناطق الخدمة ← *Create page*. كل صفحة منطقة تحتاج محتوى خاصاً بها؛ ولا يمكن نشر صفحة تكاد تكون نسخة من صفحة منطقة أخرى.
+
+### الشريط الجانبي
+يُقسَّم الشريط الجانبي إلى وحدات: **لوحة التحكم**، **الطلبات والحجوزات**، **الموارد البشرية والموظفون**، **المالية والمحاسبة**، **التقارير والتحليلات**، **التسويق والمدونة**، **إدارة الموقع**، **الأسطول والمركبات**، **المخزون والخدمات**، و**إدارة النظام**. اضغط على الوحدة لفتح صفحاتها؛ وتبقى الوحدة والصفحة الحالية مظللتين ومفتوحتين. الصفحة التي تتبع وحدتين (مثل Work Reports) هي نفس الصفحة وتظهر في الاثنتين. استخدم مربع البحث (أو **Ctrl/Cmd + K**) للانتقال إلى أي صفحة. السهم في الأعلى يطوي الشريط إلى أيقونات (اضغط أيقونة الوحدة لفتحه مجدداً)، ويتذكر الشريط حالة الطي والوحدات التي فتحتها. على الهاتف تُفتح نفس القائمة كدرج. لا ترى إلا الوحدات والصفحات التي يسمح بها دورك، ويتحقق الخادم من الصلاحية في كل صفحة أيضاً.
+
+### الملفات التقنية والذكاء الاصطناعي (الموقع ← Technical Files & AI)
+عدّل الملفات التي تُقدَّم من جذر الموقع: **robots.txt** (قواعدك الإضافية؛ وتُضاف القواعد القياسية وخريطة الموقع تلقائياً)، و**سياسة زواحف الذكاء الاصطناعي** (السماح، أو منع التدريب فقط، أو منع الكل)، و**llms.txt** (دليل لمساعدي الذكاء الاصطناعي؛ والزر *Generate from my site* يكتب مسودة أولى)، و**ads.txt** و**security.txt** (للمالك فقط). يعرض كل ملف عنوانه لتتحقق منه مباشرة.
+
+### كود الهيدر والفوتر (الموقع ← Header & Footer Code وPage Code)
+الصق مقتطفاً (وسم تتبع، أو بكسل، أو أداة دردشة، أو وسم تحقق) لإضافته إلى الهيدر أو نهاية الصفحة في **كل الصفحات**، أو في **صفحة واحدة** من *Page Code*. لكل مربع اختر وقت التحميل: دائماً، أو بعد سماح الزائر بملفات التحليلات، أو بعد سماحه بملفات التسويق (الافتراضي التحليلات). للمالك فقط، وتُسجَّل التغييرات في سجل التدقيق. لا تلصق إلا كوداً تثق به.
 
 ### أقسام المدونة (المدونة ← الأقسام)
 تُنظَّم المدونة في أقسام. تم إنشاء عشرين قسماً افتراضياً (بالعربية والإنجليزية)، ويمكنك إضافة أي عدد من الأقسام أو تعديل أسمائها أو إعادة ترتيبها (▲▼) أو إيقافها أو حذفها من **Blog → Categories**. لكل قسم اسم ووصف بالعربية والإنجليزية، ورابط (slug)، وعنوان ووصف للسيو، وصورة غلاف اختيارية. عند كتابة مقال **اختر قسمه** (إلزامي) ويمكنك تحديد أقسام إضافية تحت *Also show in*؛ والخيار **+ Create New Category** داخل نموذج المقال ينشئ قسماً فوراً ويختاره. فعّل **Featured article** ليظهر المقال في قسم المقالات المميزة.
