@@ -25,6 +25,8 @@ const emptyService: ServicePageFormInput = {
   seoTitleAr: "",
   seoDescriptionEn: "",
   seoDescriptionAr: "",
+  seoKeywordsEn: "",
+  seoKeywordsAr: "",
   displayOrder: "0",
   blocks: [],
   published: true,
@@ -222,6 +224,27 @@ export function ServicePageForm({
                 value={service.seoDescriptionAr}
                 onChange={(e) => setService({ ...service, seoDescriptionAr: e.target.value })}
               />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Keywords (English)">
+              <textarea
+                className={`${inputClassName} min-h-16`}
+                placeholder="e.g. painting services uae, villa painting, apartment painting"
+                value={service.seoKeywordsEn}
+                onChange={(e) => setService({ ...service, seoKeywordsEn: e.target.value })}
+              />
+              <span className="mt-1 block text-xs text-slate-500">Separate keywords with commas.</span>
+            </Field>
+            <Field label="الكلمات المفتاحية (Arabic)" dir="rtl">
+              <textarea
+                className={`${inputClassName} min-h-16`}
+                dir="rtl"
+                placeholder="مثال: دهانات الإمارات، دهان فلل، دهان شقق"
+                value={service.seoKeywordsAr}
+                onChange={(e) => setService({ ...service, seoKeywordsAr: e.target.value })}
+              />
+              <span className="mt-1 block text-xs text-slate-500">افصل بين الكلمات بفاصلة (، أو ,)</span>
             </Field>
           </div>
         </div>

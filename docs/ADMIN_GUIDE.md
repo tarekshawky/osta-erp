@@ -77,6 +77,8 @@ Under every multi-line text box in a block (Text, Hero subtitle, FAQ answers…)
 * Structured data (page, breadcrumbs, FAQ, service, local business) is generated automatically and **checked before publishing**.
 * **Redirects & Sitemap** shows exactly what `/sitemap.xml` lists. Pages hidden from search engines are left out.
 
+**Keywords.** Under the SEO description in blog articles, service pages and blog categories there are two fields: “Keywords (English)” and “الكلمات المفتاحية (Arabic)”. Type the keywords separated by commas (`,` or `،`) — duplicates and extra spaces are cleaned automatically (up to 30 keywords, each under 80 characters). They are published as the `meta keywords` tag in the visitor’s language. Pages built in the page builder keep their “Focus keyword” and “Other keywords” in the SEO panel.
+
 ## 5. Media (Website → Media)
 
 Upload images (JPG, PNG, WebP, GIF, AVIF; up to 10 MB). They are converted to WebP in several sizes. Add alt text (EN + AR). An image used on a live page can't be deleted until replaced; the library shows where each image is used.
@@ -238,6 +240,8 @@ npm run build
 * **قائمة محركات الإجابة** (إجابة مباشرة، عناوين على شكل أسئلة، أسئلة شائعة، تاريخ آخر تحديث). لا توجد أداة تضمن الظهور في إجابات جوجل بالذكاء الاصطناعي أو ChatGPT.
 * البيانات المنظمة (الصفحة، مسار التنقل، الأسئلة الشائعة، الخدمة، النشاط المحلي) **تُنشأ تلقائياً وتُفحص قبل النشر**.
 * **التحويلات وخريطة الموقع** تعرض بدقة ما يظهر في `/sitemap.xml`. الصفحات المخفية عن محركات البحث لا تظهر فيها.
+
+**الكلمات المفتاحية.** تحت وصف السيو في نماذج المقالات وصفحات الخدمات وأقسام المدونة يوجد حقلان: «Keywords (English)» و«الكلمات المفتاحية (Arabic)». اكتب الكلمات مفصولة بفاصلة (, أو ،) — يُنظَّف التكرار والمسافات تلقائياً (حد أقصى ٣٠ كلمة، وكل كلمة أقل من ٨٠ حرفاً). تظهر في وسم `meta keywords` بلغة الزائر. صفحات منشئ الصفحات لها «Focus keyword» و«Other keywords» داخل لوحة السيو.
 
 ## ٥. الوسائط (الموقع ← الوسائط)
 

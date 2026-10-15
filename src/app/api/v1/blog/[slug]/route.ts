@@ -21,6 +21,8 @@ const blogDetailSelect = {
   seoTitleAr: true,
   seoDescriptionEn: true,
   seoDescriptionAr: true,
+  seoKeywordsEn: true,
+  seoKeywordsAr: true,
   authorName: true,
   publishedAt: true,
   blocks: true,

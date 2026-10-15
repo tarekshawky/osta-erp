@@ -19,7 +19,7 @@ export default async function BlogCategoriesPage() {
   const byId = new Map(counts);
   const rows: CategoryRow[] = cats.map((c) => ({
     id: c.id, slug: c.slug, nameEn: c.nameEn, nameAr: c.nameAr, descriptionEn: c.descriptionEn, descriptionAr: c.descriptionAr,
-    seoTitleEn: c.seoTitleEn ?? "", seoTitleAr: c.seoTitleAr ?? "", seoDescriptionEn: c.seoDescriptionEn ?? "", seoDescriptionAr: c.seoDescriptionAr ?? "",
+    seoTitleEn: c.seoTitleEn ?? "", seoTitleAr: c.seoTitleAr ?? "", seoDescriptionEn: c.seoDescriptionEn ?? "", seoDescriptionAr: c.seoDescriptionAr ?? "", seoKeywordsEn: c.seoKeywordsEn ?? "", seoKeywordsAr: c.seoKeywordsAr ?? "",
     coverImageUrl: c.coverImageUrl ?? "", active: c.active, published: byId.get(c.id)?.published ?? 0, total: byId.get(c.id)?.total ?? 0,
   }));
 

@@ -16,7 +16,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
   if (count === 0) return apiError("not_found", "Category not found.", 404);
   return apiSuccess({
     slug: c.slug, nameEn: c.nameEn, nameAr: c.nameAr, descriptionEn: c.descriptionEn, descriptionAr: c.descriptionAr,
-    seoTitleEn: c.seoTitleEn, seoTitleAr: c.seoTitleAr, seoDescriptionEn: c.seoDescriptionEn, seoDescriptionAr: c.seoDescriptionAr,
+    seoTitleEn: c.seoTitleEn, seoTitleAr: c.seoTitleAr, seoDescriptionEn: c.seoDescriptionEn, seoDescriptionAr: c.seoDescriptionAr, seoKeywordsEn: c.seoKeywordsEn, seoKeywordsAr: c.seoKeywordsAr,
     coverImageUrl: c.coverImageUrl, count, indexable: count >= MIN_ARTICLES_FOR_INDEX,
   });
 }

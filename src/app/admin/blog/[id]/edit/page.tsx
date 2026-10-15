@@ -27,6 +27,8 @@ export default async function EditBlogPostPage({ params }: { params: Promise<{ i
     seoTitleAr: post.seoTitleAr ?? "",
     seoDescriptionEn: post.seoDescriptionEn ?? "",
     seoDescriptionAr: post.seoDescriptionAr ?? "",
+    seoKeywordsEn: post.seoKeywordsEn ?? "",
+    seoKeywordsAr: post.seoKeywordsAr ?? "",
     authorName: post.authorName ?? "",
     blocks: (() => { const p = parseBlocks(post.blocks); return p.ok ? p.blocks : []; })(),
     categoryId: post.categoryId ?? "",

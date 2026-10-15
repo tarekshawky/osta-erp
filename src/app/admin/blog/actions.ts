@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
+import { keywordsProblem, normalizeKeywords } from "@/lib/seo/keywords";
 import { parseBlocks, type Block } from "@/lib/cms/blocks";
 import { RESERVED_BLOG_SLUGS } from "@/lib/blog/categoryRules";
 import { revalidateSite } from "@/lib/cms/publish";
@@ -23,6 +24,8 @@ export type BlogPostFormInput = {
   seoTitleAr: string;
   seoDescriptionEn: string;
   seoDescriptionAr: string;
+  seoKeywordsEn: string;
+  seoKeywordsAr: string;
   authorName: string;
   blocks: Block[];
   categoryId: string;
@@ -53,6 +56,8 @@ function validate(input: BlogPostFormInput) {
   if (!hasBlocks && !input.contentEn.trim()) return "Add English content, or at least one block.";
   if (!hasBlocks && !input.contentAr.trim()) return "Add Arabic content, or at least one block.";
   if (!input.slug.trim()) return "Slug is required.";
+  const kw = keywordsProblem(input.seoKeywordsEn, "English keywords") ?? keywordsProblem(input.seoKeywordsAr, "Arabic keywords");
+  if (kw) return kw;
   if (RESERVED_BLOG_SLUGS.includes(slugify(input.slug))) return `"${slugify(input.slug)}" is reserved for the blog category pages. Choose another slug.`;
   return null;
 }
@@ -83,6 +88,8 @@ export async function createBlogPost(input: BlogPostFormInput): Promise<BlogActi
       seoTitleAr: input.seoTitleAr.trim() || null,
       seoDescriptionEn: input.seoDescriptionEn.trim() || null,
       seoDescriptionAr: input.seoDescriptionAr.trim() || null,
+      seoKeywordsEn: normalizeKeywords(input.seoKeywordsEn),
+      seoKeywordsAr: normalizeKeywords(input.seoKeywordsAr),
       authorName: input.authorName.trim() || null,
       blocks: (input.blocks ?? []) as unknown as Prisma.InputJsonValue,
       categoryId: input.categoryId,
@@ -135,6 +142,8 @@ export async function updateBlogPost(id: string, input: BlogPostFormInput): Prom
       seoTitleAr: input.seoTitleAr.trim() || null,
       seoDescriptionEn: input.seoDescriptionEn.trim() || null,
       seoDescriptionAr: input.seoDescriptionAr.trim() || null,
+      seoKeywordsEn: normalizeKeywords(input.seoKeywordsEn),
+      seoKeywordsAr: normalizeKeywords(input.seoKeywordsAr),
       authorName: input.authorName.trim() || null,
       blocks: (input.blocks ?? []) as unknown as Prisma.InputJsonValue,
       categoryId: input.categoryId,

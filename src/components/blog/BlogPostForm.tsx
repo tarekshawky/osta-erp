@@ -25,6 +25,8 @@ const emptyPost: BlogPostFormInput = {
   seoTitleAr: "",
   seoDescriptionEn: "",
   seoDescriptionAr: "",
+  seoKeywordsEn: "",
+  seoKeywordsAr: "",
   authorName: "",
   blocks: [],
   categoryId: "",
@@ -267,6 +269,27 @@ export function BlogPostForm({
                 value={post.seoDescriptionAr}
                 onChange={(e) => setPost({ ...post, seoDescriptionAr: e.target.value })}
               />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Keywords (English)">
+              <textarea
+                className={`${inputClassName} min-h-16`}
+                placeholder="e.g. painting services uae, villa painting, apartment painting"
+                value={post.seoKeywordsEn}
+                onChange={(e) => setPost({ ...post, seoKeywordsEn: e.target.value })}
+              />
+              <span className="mt-1 block text-xs text-slate-500">Separate keywords with commas.</span>
+            </Field>
+            <Field label="الكلمات المفتاحية (Arabic)" dir="rtl">
+              <textarea
+                className={`${inputClassName} min-h-16`}
+                dir="rtl"
+                placeholder="مثال: دهانات الإمارات، دهان فلل، دهان شقق"
+                value={post.seoKeywordsAr}
+                onChange={(e) => setPost({ ...post, seoKeywordsAr: e.target.value })}
+              />
+              <span className="mt-1 block text-xs text-slate-500">افصل بين الكلمات بفاصلة (، أو ,)</span>
             </Field>
           </div>
         </div>

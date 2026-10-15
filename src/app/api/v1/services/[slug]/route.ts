@@ -22,6 +22,8 @@ const serviceDetailSelect = {
   seoTitleAr: true,
   seoDescriptionEn: true,
   seoDescriptionAr: true,
+  seoKeywordsEn: true,
+  seoKeywordsAr: true,
   blocks: true,
 } as const;
 

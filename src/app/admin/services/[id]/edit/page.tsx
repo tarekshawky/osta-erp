@@ -30,6 +30,8 @@ export default async function EditServicePagePage({ params }: { params: Promise<
     seoTitleAr: service.seoTitleAr ?? "",
     seoDescriptionEn: service.seoDescriptionEn ?? "",
     seoDescriptionAr: service.seoDescriptionAr ?? "",
+    seoKeywordsEn: service.seoKeywordsEn ?? "",
+    seoKeywordsAr: service.seoKeywordsAr ?? "",
     displayOrder: String(service.displayOrder),
     blocks: (() => { const p = parseBlocks(service.blocks); return p.ok ? p.blocks : []; })(),
     published: service.published,

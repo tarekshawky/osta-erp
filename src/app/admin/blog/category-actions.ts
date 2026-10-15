@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
+import { normalizeKeywords } from "@/lib/seo/keywords";
 import { revalidateSite } from "@/lib/cms/publish";
 import { categoryProblem, uniqueSlug, type CategoryInput } from "@/lib/blog/categoryRules";
 
@@ -36,6 +37,8 @@ export async function saveBlogCategory(id: string | null, input: CategoryInput):
     seoTitleAr: input.seoTitleAr.trim() || null,
     seoDescriptionEn: input.seoDescriptionEn.trim() || null,
     seoDescriptionAr: input.seoDescriptionAr.trim() || null,
+    seoKeywordsEn: normalizeKeywords(input.seoKeywordsEn),
+    seoKeywordsAr: normalizeKeywords(input.seoKeywordsAr),
     coverImageUrl: input.coverImageUrl.trim() || null,
     active: input.active,
   };

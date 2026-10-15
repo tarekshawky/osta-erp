@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { categoryProblem, uniqueSlug, MIN_ARTICLES_FOR_INDEX, RESERVED_BLOG_SLUGS, type CategoryInput } from "./categoryRules";
 import { DEFAULT_BLOG_CATEGORIES } from "./defaultCategories";
 
-const ok: CategoryInput = { slug: "ac-tips", nameEn: "AC tips", nameAr: "نصائح", descriptionEn: "", descriptionAr: "", seoTitleEn: "", seoTitleAr: "", seoDescriptionEn: "", seoDescriptionAr: "", coverImageUrl: "", active: true };
+const ok: CategoryInput = { slug: "ac-tips", nameEn: "AC tips", nameAr: "نصائح", descriptionEn: "", descriptionAr: "", seoTitleEn: "", seoTitleAr: "", seoDescriptionEn: "", seoDescriptionAr: "", seoKeywordsEn: "", seoKeywordsAr: "", coverImageUrl: "", active: true };
 
 describe("blog category rules", () => {
   it("accepts a normal category", () => expect(categoryProblem(ok)).toBeNull());

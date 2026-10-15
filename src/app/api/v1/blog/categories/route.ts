@@ -12,7 +12,7 @@ export async function GET() {
   return apiSuccess(
     list.map(({ c, count }) => ({
       slug: c.slug, nameEn: c.nameEn, nameAr: c.nameAr, descriptionEn: c.descriptionEn, descriptionAr: c.descriptionAr,
-      seoTitleEn: c.seoTitleEn, seoTitleAr: c.seoTitleAr, seoDescriptionEn: c.seoDescriptionEn, seoDescriptionAr: c.seoDescriptionAr,
+      seoTitleEn: c.seoTitleEn, seoTitleAr: c.seoTitleAr, seoDescriptionEn: c.seoDescriptionEn, seoDescriptionAr: c.seoDescriptionAr, seoKeywordsEn: c.seoKeywordsEn, seoKeywordsAr: c.seoKeywordsAr,
       coverImageUrl: c.coverImageUrl, count, indexable: count >= MIN_ARTICLES_FOR_INDEX,
     }))
   );

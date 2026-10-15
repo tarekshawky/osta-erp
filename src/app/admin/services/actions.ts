@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
+import { keywordsProblem, normalizeKeywords } from "@/lib/seo/keywords";
 import { parseBlocks, type Block } from "@/lib/cms/blocks";
 import type { Prisma } from "@/generated/prisma";
 
@@ -24,6 +25,8 @@ export type ServicePageFormInput = {
   seoTitleAr: string;
   seoDescriptionEn: string;
   seoDescriptionAr: string;
+  seoKeywordsEn: string;
+  seoKeywordsAr: string;
   displayOrder: string;
   blocks: Block[];
   published: boolean;
@@ -43,6 +46,8 @@ function validate(input: ServicePageFormInput) {
   if (!hasBlocks && !input.contentEn.trim()) return "Add English content, or at least one block.";
   if (!hasBlocks && !input.contentAr.trim()) return "Add Arabic content, or at least one block.";
   if (!input.slug.trim()) return "Slug is required.";
+  const kw = keywordsProblem(input.seoKeywordsEn, "English keywords") ?? keywordsProblem(input.seoKeywordsAr, "Arabic keywords");
+  if (kw) return kw;
   if (input.priceFrom && Number.isNaN(Number(input.priceFrom))) return "Price must be a number.";
   return null;
 }
@@ -63,6 +68,8 @@ function toData(input: ServicePageFormInput) {
     seoTitleAr: input.seoTitleAr.trim() || null,
     seoDescriptionEn: input.seoDescriptionEn.trim() || null,
     seoDescriptionAr: input.seoDescriptionAr.trim() || null,
+    seoKeywordsEn: normalizeKeywords(input.seoKeywordsEn),
+    seoKeywordsAr: normalizeKeywords(input.seoKeywordsAr),
     displayOrder: input.displayOrder ? parseInt(input.displayOrder, 10) || 0 : 0,
     blocks: (input.blocks ?? []) as unknown as Prisma.InputJsonValue,
     published: input.published,

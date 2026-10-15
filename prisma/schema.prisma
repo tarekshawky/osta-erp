@@ -933,6 +933,9 @@ model BlogPost {
   seoTitleAr          String?
   seoDescriptionEn    String?
   seoDescriptionAr    String?
+  // Comma-separated SEO keywords (cleaned by normalizeKeywords).
+  seoKeywordsEn       String?
+  seoKeywordsAr       String?
   authorName          String?
   // Primary category (required in the editor; older posts may have none) plus optional secondary categories.
   categoryId          String?
@@ -966,6 +969,8 @@ model BlogCategory {
   seoTitleAr       String?
   seoDescriptionEn String?
   seoDescriptionAr String?
+  seoKeywordsEn    String?
+  seoKeywordsAr    String?
   coverImageUrl    String?
   active           Boolean    @default(true)
   sortOrder        Int        @default(0)
@@ -998,6 +1003,8 @@ model ServicePage {
   seoTitleAr         String?
   seoDescriptionEn   String?
   seoDescriptionAr   String?
+  seoKeywordsEn      String?
+  seoKeywordsAr      String?
   displayOrder       Int       @default(0)
   // Optional block-based body (same blocks as CMS pages). When it has blocks the public service page shows them.
   blocks             Json      @default("[]")

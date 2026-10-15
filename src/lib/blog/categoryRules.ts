@@ -1,4 +1,5 @@
 import { slugify } from "@/lib/slug";
+import { keywordsProblem } from "@/lib/seo/keywords";
 
 // A category page is only offered to search engines when it holds enough articles to be useful on its own; below this it
 // is still reachable for visitors but kept out of the index and the sitemap (thin-page protection).
@@ -10,6 +11,7 @@ export const RESERVED_BLOG_SLUGS = ["category", "categories", "page"];
 export type CategoryInput = {
   slug: string; nameEn: string; nameAr: string; descriptionEn: string; descriptionAr: string;
   seoTitleEn: string; seoTitleAr: string; seoDescriptionEn: string; seoDescriptionAr: string;
+  seoKeywordsEn: string; seoKeywordsAr: string;
   coverImageUrl: string; active: boolean;
 };
 
@@ -21,6 +23,8 @@ export function categoryProblem(input: CategoryInput): string | null {
   if (RESERVED_BLOG_SLUGS.includes(slug)) return `"${slug}" is reserved. Choose another slug.`;
   if (input.seoTitleEn.length > 120 || input.seoTitleAr.length > 120) return "SEO titles should be under 120 characters.";
   if (input.seoDescriptionEn.length > 320 || input.seoDescriptionAr.length > 320) return "Meta descriptions should be under 320 characters.";
+  const kw = keywordsProblem(input.seoKeywordsEn, "English keywords") || keywordsProblem(input.seoKeywordsAr, "Arabic keywords");
+  if (kw) return kw;
   if (input.coverImageUrl && !/^(\/|https:\/\/)/.test(input.coverImageUrl)) return "The cover image must be an uploaded image or an https:// address.";
   return null;
 }

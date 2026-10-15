@@ -9,7 +9,7 @@ import { deleteBlogCategory, moveBlogCategory, saveBlogCategory, setBlogCategory
 import type { CategoryInput } from "@/lib/blog/categoryRules";
 
 export type CategoryRow = CategoryInput & { id: string; published: number; total: number };
-const empty: CategoryInput = { slug: "", nameEn: "", nameAr: "", descriptionEn: "", descriptionAr: "", seoTitleEn: "", seoTitleAr: "", seoDescriptionEn: "", seoDescriptionAr: "", coverImageUrl: "", active: true };
+const empty: CategoryInput = { slug: "", nameEn: "", nameAr: "", descriptionEn: "", descriptionAr: "", seoTitleEn: "", seoTitleAr: "", seoDescriptionEn: "", seoDescriptionAr: "", seoKeywordsEn: "", seoKeywordsAr: "", coverImageUrl: "", active: true };
 const toSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 export function BlogCategoryManager({ rows, minIndex }: { rows: CategoryRow[]; minIndex: number }) {
@@ -90,6 +90,12 @@ export function BlogCategoryManager({ rows, minIndex }: { rows: CategoryRow[]; m
             <Field label="وصف السيو (Arabic)" dir="rtl">
               <textarea className={`${inputClassName} min-h-16`} dir="rtl" value={editing.data.seoDescriptionAr} onChange={(e) => set({ seoDescriptionAr: e.target.value })} />
             </Field>
+            <Field label="Keywords (English, comma separated)">
+              <textarea className={`${inputClassName} min-h-16`} value={editing.data.seoKeywordsEn} onChange={(e) => set({ seoKeywordsEn: e.target.value })} placeholder="ac repair, ac maintenance, …" />
+            </Field>
+            <Field label="الكلمات المفتاحية (Arabic، افصل بينها بفاصلة)" dir="rtl">
+              <textarea className={`${inputClassName} min-h-16`} dir="rtl" value={editing.data.seoKeywordsAr} onChange={(e) => set({ seoKeywordsAr: e.target.value })} placeholder="صيانة مكيفات، تصليح مكيفات" />
+            </Field>
           </div>
           <ImageUploadField label="Cover image (optional)" value={editing.data.coverImageUrl} onChange={(coverImageUrl) => set({ coverImageUrl })} />
           <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -139,7 +145,7 @@ export function BlogCategoryManager({ rows, minIndex }: { rows: CategoryRow[]; m
                 </td>
                 <td className="px-3 py-3 text-right">
                   <div className="flex justify-end gap-3 text-xs font-medium">
-                    <button type="button" onClick={() => { setEditing({ id: c.id, data: { slug: c.slug, nameEn: c.nameEn, nameAr: c.nameAr, descriptionEn: c.descriptionEn, descriptionAr: c.descriptionAr, seoTitleEn: c.seoTitleEn, seoTitleAr: c.seoTitleAr, seoDescriptionEn: c.seoDescriptionEn, seoDescriptionAr: c.seoDescriptionAr, coverImageUrl: c.coverImageUrl, active: c.active } }); setSlugTouched(true); setError(null); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="text-blue-600">Edit</button>
+                    <button type="button" onClick={() => { setEditing({ id: c.id, data: { slug: c.slug, nameEn: c.nameEn, nameAr: c.nameAr, descriptionEn: c.descriptionEn, descriptionAr: c.descriptionAr, seoTitleEn: c.seoTitleEn, seoTitleAr: c.seoTitleAr, seoDescriptionEn: c.seoDescriptionEn, seoDescriptionAr: c.seoDescriptionAr, seoKeywordsEn: c.seoKeywordsEn, seoKeywordsAr: c.seoKeywordsAr, coverImageUrl: c.coverImageUrl, active: c.active } }); setSlugTouched(true); setError(null); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="text-blue-600">Edit</button>
                     <button type="button" disabled={pending} onClick={() => run(() => setBlogCategoryActive(c.id, !c.active), c.active ? "Category deactivated." : "Category activated.")} className="text-slate-600">{c.active ? "Deactivate" : "Activate"}</button>
                     <button type="button" disabled={pending} onClick={() => { if (confirm(`Delete “${c.nameEn}”? This can't be undone.`)) run(() => deleteBlogCategory(c.id), "Category deleted."); }} className="text-red-600">Delete</button>
                   </div>
