@@ -101,6 +101,8 @@ Google Tag Manager, GA4, Meta Pixel, Search Console and Bing verification, and t
 * **Orders:** the order page shows the exact price breakdown the customer saw, a timeline (mark *Team dispatched*, etc.) and the visit-fee form. A visit fee is allowed only after dispatch and never when the company cancels or the team doesn't show up.
 * Changing a price **never** changes existing orders.
 
+**Example: AC Maintenance with Cleaning / Repair / Gas refill / Inspection, or Electrical with Change lights / Internal fault / External fault.** Create one service for the group, add each choice as an option, set a **question** (e.g. “What do you need?”) and an optional **note** under each option (e.g. “Labour only, parts extra”). `scripts/seedServiceOptions.ts` creates both examples, switched off and unpriced.
+
 **Service options.** When the price depends on a choice (a gas refill by weight: ¼ kg, ½ kg, 1 kg), open the service (**Edit**) and add **Options** (English and Arabic names). Then enter each option's price per emirate in **Prices by emirate**: the options appear as ↳ rows under the service. The customer must pick one option, and its price is the unit price (the service itself then has no price of its own). An option with no price in an emirate is not offered there. Orders keep the option's name. **Service note:** the optional note on a service (for example “Repair only, spare parts not included”) is shown to customers next to the service and in the price summary.
 
 ## 10. Backup (Website → Backup)

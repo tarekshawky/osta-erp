@@ -1093,6 +1093,9 @@ model BookableService {
   // Optional customer-facing note about what the price covers, e.g. "Repair only, spare parts not included".
   noteEn            String                   @default("")
   noteAr            String                   @default("")
+  // The question above the options, e.g. "What do you need?" (empty = the standard "Choose an option").
+  optionLabelEn     String                   @default("")
+  optionLabelAr     String                   @default("")
   discountRuleSetId String?
   discountRuleSet   DiscountRuleSet?         @relation(fields: [discountRuleSetId], references: [id])
   prices            ServicePrice[]
@@ -1125,6 +1128,9 @@ model ServiceOption {
   service   BookableService      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   nameEn    String
   nameAr    String
+  // Optional line under the option explaining what it includes, e.g. "Labour only, parts extra".
+  noteEn    String               @default("")
+  noteAr    String               @default("")
   sortOrder Int                  @default(0)
   active    Boolean              @default(true)
   prices    ServiceOptionPrice[]

@@ -76,6 +76,8 @@ export type ServiceInput = {
   // Optional note shown to customers next to the service (what the price does or does not include).
   noteEn: string;
   noteAr: string;
+  optionLabelEn: string;
+  optionLabelAr: string;
 };
 
 
@@ -87,6 +89,7 @@ function validateService(i: ServiceInput): string | null {
   const min = Number(i.minQuantity);
   if (!Number.isInteger(min) || min < 1) return "Minimum quantity must be a whole number of 1 or more.";
   if (i.noteEn.length > SERVICE_NOTE_MAX || i.noteAr.length > SERVICE_NOTE_MAX) return `The note can be up to ${SERVICE_NOTE_MAX} characters in each language.`;
+  if (i.optionLabelEn.length > 80 || i.optionLabelAr.length > 80) return "The question above the options can be up to 80 characters.";
   return null;
 }
 
@@ -111,6 +114,8 @@ export async function saveService(id: string | null, input: ServiceInput): Promi
     pricesIncludeVat: input.pricesIncludeVat === "" ? null : input.pricesIncludeVat === "true",
     noteEn: input.noteEn.trim(),
     noteAr: input.noteAr.trim(),
+    optionLabelEn: input.optionLabelEn.trim(),
+    optionLabelAr: input.optionLabelAr.trim(),
   };
 
   if (id) {
@@ -348,16 +353,17 @@ export async function reviewVisitFeeCharge(id: string, decision: "APPROVED" | "R
 
 // ---------- Service options (e.g. gas weight: quarter kg / half kg / 1 kg) ----------
 
-export type OptionInput = { nameEn: string; nameAr: string; active: boolean };
+export type OptionInput = { nameEn: string; nameAr: string; active: boolean; noteEn: string; noteAr: string };
 
 export async function saveOption(serviceId: string, id: string | null, input: OptionInput): Promise<ActionResult> {
   const g = await guardPermission("pricing.edit");
   if (!g.ok) return fail(g.error);
   if (!input.nameEn.trim() || !input.nameAr.trim()) return fail("Both English and Arabic names are required.");
   if (input.nameEn.length > 80 || input.nameAr.length > 80) return fail("Option names can be up to 80 characters.");
+  if (input.noteEn.length > SERVICE_NOTE_MAX || input.noteAr.length > SERVICE_NOTE_MAX) return fail(`An option note can be up to ${SERVICE_NOTE_MAX} characters.`);
   const service = await prisma.bookableService.findUnique({ where: { id: serviceId }, select: { id: true } });
   if (!service) return fail("Service not found.");
-  const data = { nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), active: input.active };
+  const data = { nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), active: input.active, noteEn: input.noteEn.trim(), noteAr: input.noteAr.trim() };
   if (id) {
     const before = await prisma.serviceOption.findFirst({ where: { id, serviceId } });
     if (!before) return fail("Option not found.");

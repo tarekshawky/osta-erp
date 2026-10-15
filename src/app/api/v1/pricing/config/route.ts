@@ -48,7 +48,9 @@ export async function GET() {
       noteEn: s.noteEn,
       noteAr: s.noteAr,
       prices: s.prices,
-      options: s.options.map((o) => ({ id: o.id, nameEn: o.nameEn, nameAr: o.nameAr, prices: o.prices })),
+      optionLabelEn: s.optionLabelEn,
+      optionLabelAr: s.optionLabelAr,
+      options: s.options.map((o) => ({ id: o.id, nameEn: o.nameEn, nameAr: o.nameAr, noteEn: o.noteEn, noteAr: o.noteAr, prices: o.prices })),
       tiers: s.discountRuleSet?.active
         ? s.discountRuleSet.tiers.map((t) => ({ minQty: t.minQty, maxQty: t.maxQty, percent: t.percent, startsAt: t.startsAt, endsAt: t.endsAt }))
         : [],

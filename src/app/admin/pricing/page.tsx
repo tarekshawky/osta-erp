@@ -48,7 +48,9 @@ export default async function PricingPage() {
             pricesIncludeVat: s.pricesIncludeVat === null ? "" : s.pricesIncludeVat ? "true" : "false",
             noteEn: s.noteEn,
             noteAr: s.noteAr,
-            options: s.options.map((o) => ({ id: o.id, nameEn: o.nameEn, nameAr: o.nameAr, active: o.active })),
+            optionLabelEn: s.optionLabelEn,
+            optionLabelAr: s.optionLabelAr,
+            options: s.options.map((o) => ({ id: o.id, nameEn: o.nameEn, nameAr: o.nameAr, active: o.active, noteEn: o.noteEn, noteAr: o.noteAr })),
           }))}
         />
       </section>

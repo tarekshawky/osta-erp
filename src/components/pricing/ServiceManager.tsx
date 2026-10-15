@@ -20,6 +20,8 @@ const empty: ServiceInput = {
   pricesIncludeVat: "",
   noteEn: "",
   noteAr: "",
+  optionLabelEn: "",
+  optionLabelAr: "",
 };
 
 function ServiceForm({
@@ -106,6 +108,17 @@ function ServiceForm({
         <input type="checkbox" checked={v.active} onChange={(e) => setV({ ...v, active: e.target.checked })} />
         Active (bookable)
       </label>
+      {id && options.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Question above the options (English), optional">
+            <input className={inputClassName} maxLength={80} value={v.optionLabelEn} onChange={(e) => setV({ ...v, optionLabelEn: e.target.value })} placeholder="e.g. What do you need?  (default: Choose an option)" />
+          </Field>
+          <Field label="السؤال فوق الخيارات (Arabic) - اختياري" dir="rtl">
+            <input className={inputClassName} dir="rtl" maxLength={80} value={v.optionLabelAr} onChange={(e) => setV({ ...v, optionLabelAr: e.target.value })} placeholder="مثال: ماذا تحتاج؟" />
+          </Field>
+          <p className="text-xs text-slate-500 sm:col-span-2">Saved with the Save button below.</p>
+        </div>
+      )}
       {id ? <OptionsEditor serviceId={id} options={options} /> : <p className="text-xs text-slate-400">Save the service first, then you can add options (for example weights for a gas refill).</p>}
       <div className="flex gap-3">
         <button type="button" disabled={pending} onClick={submit} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
