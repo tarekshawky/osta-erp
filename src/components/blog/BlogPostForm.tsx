@@ -6,7 +6,8 @@ import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import { BlocksEditor } from "@/components/cms/BlocksEditor";
-import type { LinkTarget } from "@/components/cms/LinkInserter";
+import { LinkTargetsContext, type LinkTarget } from "@/components/cms/LinkInserter";
+import { RichTextEditor } from "@/components/cms/RichTextEditor";
 import { createBlogPost, updateBlogPost, type BlogPostFormInput } from "@/app/admin/blog/actions";
 import { createBlogCategoryQuick } from "@/app/admin/blog/category-actions";
 
@@ -193,23 +194,13 @@ export function BlogPostForm({
         </Field>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Plain text (English) — optional when you add blocks below">
-          <textarea
-            className={textareaClassName}
-            value={post.contentEn}
-            onChange={(e) => setPost({ ...post, contentEn: e.target.value })}
-          />
-        </Field>
-        <Field label="النص العادي (Arabic) — اختياري عند إضافة أقسام" dir="rtl">
-          <textarea
-            className={textareaClassName}
-            dir="rtl"
-            value={post.contentAr}
-            onChange={(e) => setPost({ ...post, contentAr: e.target.value })}
-          />
-        </Field>
-      </div>
+      <LinkTargetsContext.Provider value={linkTargets ?? []}>
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-slate-600">Main text — optional when you add blocks below / النص الرئيسي — اختياري عند إضافة أقسام</span>
+          <RichTextEditor value={post.contentEn} onChange={(v) => setPost({ ...post, contentEn: v })} placeholder="Write in English…" />
+          <RichTextEditor dir="rtl" value={post.contentAr} onChange={(v) => setPost({ ...post, contentAr: v })} placeholder="اكتب بالعربية…" />
+        </div>
+      </LinkTargetsContext.Provider>
 
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
         <div>

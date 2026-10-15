@@ -137,7 +137,7 @@ export const BLOCK_REGISTRY: Record<
     fields: [
       { kind: "bi-text", key: "eyebrow", label: "Small label above heading" },
       { kind: "bi-text", key: "heading", label: "Heading (H1)" },
-      { kind: "bi-textarea", key: "subtitle", label: "Subtitle" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
       { kind: "image", key: "backgroundImage", label: "Background image (fills the whole hero, under a dark overlay)" },
       { kind: "image", key: "imageUrl", label: "Side image (beside the text)" },
       {
@@ -183,7 +183,7 @@ export const BLOCK_REGISTRY: Record<
     description: "Cards for your website services, pulled automatically.",
     fields: [
       { kind: "bi-text", key: "heading", label: "Heading" },
-      { kind: "bi-textarea", key: "subtitle", label: "Subtitle" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
       { kind: "number", key: "limit", label: "Max services to show" },
       { kind: "bi-text", key: "eyebrow", label: "Small label above heading (optional)" },
       { kind: "bi-text", key: "viewAllLabel", label: "“View all” link text (optional)" },
@@ -284,7 +284,7 @@ export const BLOCK_REGISTRY: Record<
     description: "A lead form from Website → Forms (contact, quote request…).",
     fields: [
       { kind: "bi-text", key: "heading", label: "Heading" },
-      { kind: "bi-textarea", key: "intro", label: "Intro text" },
+      { kind: "bi-textarea", key: "intro", label: "Intro text", rich: true },
       { kind: "form-select", key: "formSlug", label: "Which form" },
     ],
     defaults: () => ({ heading: biEmpty(), intro: biEmpty(), formSlug: "" }),
@@ -294,7 +294,7 @@ export const BLOCK_REGISTRY: Record<
     description: "A heading and a booking/contact button.",
     fields: [
       { kind: "bi-text", key: "heading", label: "Heading" },
-      { kind: "bi-textarea", key: "subtitle", label: "Subtitle" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
       { kind: "group", key: "button", label: "Button", fields: ctaFields },
     ],
     defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), button: ctaEmpty() }),
@@ -304,7 +304,7 @@ export const BLOCK_REGISTRY: Record<
     description: "WhatsApp, phone and email cards plus address and hours. The details come from Website → Site & Contact.",
     fields: [
       { kind: "bi-text", key: "heading", label: "Heading" },
-      { kind: "bi-textarea", key: "subtitle", label: "Subtitle" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
       { kind: "bi-text", key: "whatsappButtonLabel", label: "WhatsApp button text (leave empty to hide the button)" },
     ],
     defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), whatsappButtonLabel: biEmpty() }),
@@ -314,7 +314,7 @@ export const BLOCK_REGISTRY: Record<
     description: "The live calculator: emirate, service, quantity, booking type, price summary, agreement and a Book button. Prices come from Dynamic Pricing.",
     fields: [
       { kind: "bi-text", key: "heading", label: "Heading" },
-      { kind: "bi-textarea", key: "subtitle", label: "Subtitle" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
     ],
     defaults: () => ({ heading: biEmpty(), subtitle: biEmpty() }),
   },

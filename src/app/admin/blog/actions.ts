@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
+import { cleanRichValue } from "@/lib/cms/richText";
 import { keywordsProblem, normalizeKeywords } from "@/lib/seo/keywords";
 import { parseBlocks, type Block } from "@/lib/cms/blocks";
 import { RESERVED_BLOG_SLUGS } from "@/lib/blog/categoryRules";
@@ -81,8 +82,8 @@ export async function createBlogPost(input: BlogPostFormInput): Promise<BlogActi
       titleAr: input.titleAr.trim(),
       excerptEn: input.excerptEn.trim(),
       excerptAr: input.excerptAr.trim(),
-      contentEn: input.contentEn,
-      contentAr: input.contentAr,
+      contentEn: cleanRichValue(input.contentEn),
+      contentAr: cleanRichValue(input.contentAr),
       coverImageUrl: input.coverImageUrl.trim() || null,
       seoTitleEn: input.seoTitleEn.trim() || null,
       seoTitleAr: input.seoTitleAr.trim() || null,
@@ -135,8 +136,8 @@ export async function updateBlogPost(id: string, input: BlogPostFormInput): Prom
       titleAr: input.titleAr.trim(),
       excerptEn: input.excerptEn.trim(),
       excerptAr: input.excerptAr.trim(),
-      contentEn: input.contentEn,
-      contentAr: input.contentAr,
+      contentEn: cleanRichValue(input.contentEn),
+      contentAr: cleanRichValue(input.contentAr),
       coverImageUrl: input.coverImageUrl.trim() || null,
       seoTitleEn: input.seoTitleEn.trim() || null,
       seoTitleAr: input.seoTitleAr.trim() || null,

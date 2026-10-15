@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { cleanRichValue } from "@/lib/cms/richText";
 import { apiSuccess, apiError, corsPreflight } from "@/lib/apiResponse";
 import { publicBlocks } from "@/lib/cms/publicBlocks";
 
@@ -34,5 +35,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
     select: serviceDetailSelect,
   });
   if (!service) return apiError("not_found", "Service not found.", 404);
-  return apiSuccess({ ...service, blocks: publicBlocks(service.blocks) });
+  return apiSuccess({ ...service, contentEn: cleanRichValue(service.contentEn), contentAr: cleanRichValue(service.contentAr), blocks: publicBlocks(service.blocks) });
 }

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { cleanRichValue } from "@/lib/cms/richText";
 import { apiSuccess, apiError, corsPreflight } from "@/lib/apiResponse";
 import { publicCoverUrl } from "@/lib/blogCover";
 import { publicBlocks } from "@/lib/cms/publicBlocks";
@@ -48,6 +49,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
 
   return apiSuccess({
     ...post,
+    contentEn: cleanRichValue(post.contentEn),
+    contentAr: cleanRichValue(post.contentAr),
     blocks: publicBlocks(post.blocks),
     category: publicCategory(post.category),
     secondaryCategories: post.secondaryCategories.map((c) => publicCategory(c)).filter((c) => c !== null),

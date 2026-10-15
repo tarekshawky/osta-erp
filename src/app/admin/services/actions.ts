@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
+import { cleanRichValue } from "@/lib/cms/richText";
 import { keywordsProblem, normalizeKeywords } from "@/lib/seo/keywords";
 import { parseBlocks, type Block } from "@/lib/cms/blocks";
 import type { Prisma } from "@/generated/prisma";
@@ -58,8 +59,8 @@ function toData(input: ServicePageFormInput) {
     nameAr: input.nameAr.trim(),
     shortDescriptionEn: input.shortDescriptionEn.trim(),
     shortDescriptionAr: input.shortDescriptionAr.trim(),
-    contentEn: input.contentEn,
-    contentAr: input.contentAr,
+    contentEn: cleanRichValue(input.contentEn),
+    contentAr: cleanRichValue(input.contentAr),
     iconName: input.iconName.trim() || null,
     coverImageUrl: input.coverImageUrl.trim() || null,
     priceFrom: input.priceFrom ? Number(input.priceFrom) : null,
