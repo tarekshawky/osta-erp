@@ -4,6 +4,7 @@ import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { seoReport } from "@/lib/seo/report";
+import { isBuiltInSlug } from "@/lib/cms/pageRules";
 import { StructureScreen } from "./StructureScreen";
 import type { TreePage } from "@/components/cms/PageTreeManager";
 
@@ -13,7 +14,7 @@ export default async function PageStructurePage() {
     prisma.cmsPage.findMany({
       where: { deletedAt: null },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-      select: { id: true, parentId: true, sortOrder: true, titleEn: true, titleAr: true, slug: true, status: true, type: true, isHomepage: true, publishedVersion: { select: { slug: true } } },
+      select: { id: true, parentId: true, sortOrder: true, titleEn: true, titleAr: true, slug: true, status: true, type: true, isHomepage: true, updatedAt: true, publishedVersion: { select: { slug: true } } },
     }),
     prisma.menuItem.findMany({ select: { menu: true, url: true } }),
     seoReport().then((r) => new Map(r.map((x) => [x.id, x.score]))),
@@ -29,7 +30,7 @@ export default async function PageStructurePage() {
   const rows: TreePage[] = pages.map((p) => {
     const slug = p.publishedVersion?.slug ?? p.slug;
     const url = p.isHomepage ? "/" : `/${slug}`;
-    return { id: p.id, parentId: p.parentId, sortOrder: p.sortOrder, titleEn: p.titleEn, titleAr: p.titleAr, slug, status: p.status, type: p.type, isHomepage: p.isHomepage, score: scores.get(p.id) ?? 0, menus: [...(menusByUrl.get(url) ?? [])] };
+    return { id: p.id, parentId: p.parentId, sortOrder: p.sortOrder, titleEn: p.titleEn, titleAr: p.titleAr, slug, status: p.status, type: p.type, isHomepage: p.isHomepage, builtIn: isBuiltInSlug(p.slug), updatedAt: p.updatedAt.toISOString(), score: scores.get(p.id) ?? 0, menus: [...(menusByUrl.get(url) ?? [])] };
   });
 
   return (

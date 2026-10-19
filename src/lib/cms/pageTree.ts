@@ -250,3 +250,10 @@ export function nextSortOrder(items: readonly TreeItem[], parentId: string | nul
   const list = siblings(items, parentId);
   return list.length ? Math.max(...list.map((i) => i.sortOrder)) + 1 : 0;
 }
+
+// Moves a page (with its sub-pages) to be the last child of `parentId` (null = top level).
+export function moveToParent<T extends TreeItem>(items: readonly T[], id: string, parentId: string | null): T[] {
+  const me = items.find((i) => i.id === id);
+  if (!me || (me.parentId ?? null) === parentId) return [...items];
+  return place(items, id, parentId, Number.MAX_SAFE_INTEGER);
+}

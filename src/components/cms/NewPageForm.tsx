@@ -9,7 +9,7 @@ import { slugify } from "@/lib/cms/pageRules";
 export type ParentOption = { id: string; label: string };
 
 // "+ New page". `parents` lists the pages a new page can be placed under (in tree order); `defaultParentId` preselects one.
-export function NewPageForm({ parents = [], defaultParentId = "", startOpen = false, onCancel }: { parents?: ParentOption[]; defaultParentId?: string; startOpen?: boolean; onCancel?: () => void }) {
+export function NewPageForm({ parents = [], defaultParentId = "", startOpen = false, defaultType = "page", onCancel }: { parents?: ParentOption[]; defaultParentId?: string; startOpen?: boolean; defaultType?: string; onCancel?: () => void }) {
   const router = useRouter();
   const [open, setOpen] = useState(startOpen);
   const [parentId, setParentId] = useState(defaultParentId);
@@ -17,7 +17,7 @@ export function NewPageForm({ parents = [], defaultParentId = "", startOpen = fa
   const [titleAr, setTitleAr] = useState("");
   const [slug, setSlug] = useState("");
   const [touched, setTouched] = useState(false);
-  const [type, setType] = useState("page");
+  const [type, setType] = useState(defaultType);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 

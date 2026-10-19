@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyMove, canIndent, changedRows, descendantIds, flatten, getProjection, indent, layoutProblem, moveDown, moveUp, nextSortOrder, normalize, outdent, parentOptions } from "./pageTree";
+import { applyMove, canIndent, moveToParent, changedRows, descendantIds, flatten, getProjection, indent, layoutProblem, moveDown, moveUp, nextSortOrder, normalize, outdent, parentOptions } from "./pageTree";
 
 type P = { id: string; parentId: string | null; sortOrder: number; titleEn: string };
 const p = (id: string, parentId: string | null, sortOrder: number): P => ({ id, parentId, sortOrder, titleEn: id.toUpperCase() });
@@ -112,5 +112,15 @@ describe("saving", () => {
     expect(nextSortOrder(sample(), "services")).toBe(2);
     expect(nextSortOrder(sample(), "home")).toBe(0);
     expect(parentOptions(sample(), "services").map((o) => o.label)).toEqual(["HOME", "LOCATIONS", "— AJMAN"]);
+  });
+});
+
+describe("moveToParent", () => {
+  it("puts the page last under its new parent and keeps its sub-pages", () => {
+    expect(order(moveToParent(sample(), "locations", "services"))).toEqual(["home", "services", "-ac-repair", "-ac-clean", "-locations", "--ajman"]);
+    expect(order(moveToParent(sample(), "ac-repair", null))).toEqual(["home", "services", "-ac-clean", "locations", "-ajman", "ac-repair"]);
+  });
+  it("does nothing when the parent is unchanged", () => {
+    expect(order(moveToParent(sample(), "ac-repair", "services"))).toEqual(order(sample()));
   });
 });
