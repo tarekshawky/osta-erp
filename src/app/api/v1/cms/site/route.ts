@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
-import { AREAS_MENU_URL } from "@/lib/site/siteRules";
+import { AREAS_MENU_URL, MENUS } from "@/lib/site/siteRules";
 import { hideUnpublishedLinks } from "@/lib/site/menuLinks";
 
 export function OPTIONS() {
@@ -34,7 +34,7 @@ export async function GET() {
   const shape = (m: (typeof menuRows)[number]) => ({
     labelEn: m.labelEn, labelAr: m.labelAr, url: m.url, newTab: m.newTab, showDesktop: m.showDesktop, showMobile: m.showMobile,
   });
-  const menus: Record<string, unknown[]> = { header: [], footer: [] };
+  const menus: Record<string, unknown[]> = Object.fromEntries(MENUS.map((m) => [m, []]));
   for (const key of Object.keys(menus)) {
     const top = menuRows.filter((m) => m.menu === key && m.parentId === null);
     menus[key] = top.map((t) => ({ ...shape(t), children: menuRows.filter((c) => c.parentId === t.id).map((c) => ({ ...shape(c), children: [] })) }));
@@ -48,15 +48,17 @@ export async function GET() {
 
   // "Areas We Cover" appears only when the admin has added that item to the header menu (link "#areas"). It then lists the
   // active service areas (linked when the area has a published page); pages placed inside it follow.
+  const areaLeaves = () => areaRows.map((a) => leaf(a.nameEn, a.nameAr, a.pages[0]?.publishedVersion ? `/${a.pages[0].publishedVersion.slug}` : ""));
+  const expandAreas = (m: NavItem) => {
+    m.url = "";
+    m.children = [...areaLeaves(), ...m.children];
+  };
   const areasMenu = header.find((m) => m.url === AREAS_MENU_URL) ?? null;
-  if (areasMenu) {
-    areasMenu.url = "";
-    const manual = areasMenu.children;
-    areasMenu.children = [...areaRows.map((a) => leaf(a.nameEn, a.nameAr, a.pages[0]?.publishedVersion ? `/${a.pages[0].publishedVersion.slug}` : "")), ...manual];
-  }
-  // The footer has no dropdowns, so the special item means nothing there.
-  menus.footer = (menus.footer as NavItem[]).filter((m) => m.url !== AREAS_MENU_URL);
-
+  if (areasMenu) expandAreas(areasMenu);
+  // The phone menu can have its own "Areas We Cover" dropdown too.
+  (menus.mobile as NavItem[]).filter((m) => m.url === AREAS_MENU_URL).forEach(expandAreas);
+  // The other menus are plain link lists, so the special item means nothing there.
+  for (const key of ["footer", "services", "locations"]) menus[key] = (menus[key] as NavItem[]).filter((m) => m.url !== AREAS_MENU_URL);
 
   for (const { publishedVersion: v, menuParent, type } of menuPages) {
     if (!v) continue;
@@ -72,8 +74,7 @@ export async function GET() {
   // Never link visitors to a page that is still a draft (it would be "page not found").
   const liveSlugs = new Set(allPages.flatMap((p) => (p.publishedVersion ? [p.publishedVersion.slug] : [])));
   const draftSlugs = new Set(allPages.filter((p) => !p.publishedVersion && !liveSlugs.has(p.slug)).map((p) => p.slug));
-  menus.header = hideUnpublishedLinks(menus.header as NavItem[], draftSlugs);
-  menus.footer = hideUnpublishedLinks(menus.footer as NavItem[], draftSlugs);
+  for (const key of MENUS) menus[key] = hideUnpublishedLinks(menus[key] as NavItem[], draftSlugs);
   const { updatedAt: _updatedAt, id: _id, ...publicSettings } = settings;
   void _updatedAt;
   void _id;

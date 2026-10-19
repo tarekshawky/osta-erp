@@ -66,6 +66,17 @@ On the website each category has its own page (`/blog/category/<slug>`). A categ
 ### Blog posts and service pages use the same blocks
 Website content like articles and service pages is built with the same blocks as pages. In **Blog** (new or edit) and **Website Services** (new or edit) scroll to **Article content (blocks)** / **Service page content (blocks)**: press **+ Add block** and choose Hero, Text, Image + text, FAQ, Call to action, Services grid, Latest blog posts, Contact cards or Price calculator. When a post or service has blocks, visitors see the blocks instead of the plain text fields above them (those stay as a fallback and are only required when there are no blocks).
 
+### Page structure (Website → Page Structure)
+Pages can be organised as a **tree**: a page can have a parent and sub-pages (for example *Services → AC Repair, AC Cleaning*; *Join Us → Current Vacancies*).
+* **Expand / collapse** a parent with the arrow, or use **Expand all / Collapse all** (the choice is remembered in your browser). Search by name or address, or filter by status (a search shows a flat list; clear it to rearrange).
+* **Drag ⋮⋮** to reorder. Drag **sideways** to move a page inside the one above (or out again); its sub-pages travel with it. The arrows **↑ ↓ ⇤ ⇥** do the same with the keyboard or on a phone. **Every change is saved at once** to the database (you see “Structure saved”); if something can't be saved (for example a page inside its own sub-page) it is rejected and put back.
+* **Parent page** is chosen when you create a page (**+ New page**, or **+ Sub-page** on a row) and can be changed any time in the page builder's settings. A page can be nested up to 6 levels deep.
+* Each row shows the status (**Draft / Published / Scheduled**), the address, the SEO score, and has **Edit**, **Preview**, **Publish / Unpublish** and **+ Sub-page**. **Menus ▾** adds or removes the page in any of the navigation menus below.
+* **The tree only organises your pages.** Moving a page never changes its address (URL), content, SEO or history, and existing pages simply start at the top level. When a page's address *is* changed (its slug) the old address redirects to the new one automatically, and older redirects are updated so they never chain or loop. When you **delete** a page, its sub-pages move up to its parent and, if the page was live and its parent is live, visitors of the old address are redirected to the parent.
+
+### Navigation menus (Website → Navigation Menus)
+Five independent menus; changing one never changes another: **Header** (top bar), **Mobile** (optional: when it has items, phones use it instead of the Header menu), **Services** (a “Services” link column in the footer), **Locations** (a “Locations” column in the footer, replacing the plain list of areas) and **Footer quick links**. Each menu supports two levels, labels in both languages, and show/hide on desktop or mobile. Links to pages that are still drafts are hidden on the website until the page is published.
+
 ### Visual text editor (every description, subtitle and main text)
 Every multi-line text in the blocks (Hero subtitle, Text, Image + text, FAQ answers, section subtitles, form intro…) and the **Main text** of blog articles and service pages use a visual editor (what you see is what visitors get), in English and Arabic. The toolbar has: Undo / Redo, **Paragraph / Heading 2–4**, **font size**, **line height**, **Bold, Italic, Underline, Strikethrough**, **text colour** and **highlight**, **alignment** (start, centre, end, justify), **bulleted and numbered lists**, **quote**, **link** (choose a page, or type `/page`, `https://…`, `tel:…`, `mailto:…`; tick *Open in a new tab* for a new tab) and **Unlink**, **image** (from the Media library, with an alt text), a **divider line**, **Clear formatting** (Tx) and **`</>` HTML source** (only safe formatting is kept: scripts, unknown tags and unsafe links are removed). There is no practical limit on how much you can write. Pick colours that read well on both the light and the dark site theme.
 Text written before this editor existed is shown converted (paragraphs and links keep working) and is left untouched until you edit it. Single-line fields (headings, button labels) and the short description / excerpt of a service or article stay plain text, because they also appear in cards and search results.
@@ -89,7 +100,7 @@ Upload images (JPG, PNG, WebP, GIF, AVIF; up to 10 MB). They are converted to We
 
 ## 6. Menus, contact details, social (Website → …)
 
-* **Menus:** drag to reorder, add dropdown sub-items, show/hide on desktop or mobile.
+* **Menus:** five independent menus (Header, Mobile, Services, Locations, Footer); drag to reorder, add dropdown sub-items, show/hide on desktop or mobile. See *Navigation menus* above.
 * **Site & Contact:** name, logo, phone, WhatsApp (with a pre-filled message), email, address, hours, header button, footer areas, default language, and the **search-engine indexing** switch. These details are used everywhere.
 * **Social links:** shown in the footer and in business data for search engines.
 
@@ -234,6 +245,17 @@ npm run build
 ### المقالات وصفحات الخدمات تستخدم نفس الأقسام
 تُبنى المقالات وصفحات الخدمات بنفس أقسام الصفحات. في **المدونة** (جديد أو تعديل) و**خدمات الموقع** (جديد أو تعديل) انزل إلى **Article content (blocks)** / **Service page content (blocks)**: اضغط **+ Add block** واختر Hero أو Text أو Image + text أو FAQ أو Call to action أو Services grid أو Latest blog posts أو Contact cards أو Price calculator. عندما يحتوي المقال أو الخدمة على أقسام يرى الزوار الأقسام بدلاً من حقول النص العادي أعلاها (وتبقى تلك الحقول احتياطية ولا تكون مطلوبة إلا عند عدم وجود أقسام).
 
+### هيكل الصفحات (الموقع ← Page Structure)
+يمكن تنظيم الصفحات على شكل **شجرة**: لكل صفحة صفحة أم وصفحات فرعية (مثل *الخدمات ← صيانة المكيفات، تنظيف المكيفات*؛ *انضم إلينا ← الوظائف المتاحة*).
+* **افتح / اطوِ** الصفحة الأم بالسهم، أو استخدم **Expand all / Collapse all** (يُحفظ اختيارك في المتصفح). ابحث بالاسم أو العنوان أو صفِّ بالحالة (البحث يعرض قائمة مسطحة؛ امسحه لإعادة الترتيب).
+* **اسحب ⋮⋮** لإعادة الترتيب. اسحب **جانباً** لوضع الصفحة داخل الصفحة التي فوقها (أو إخراجها)؛ وتنتقل معها صفحاتها الفرعية. الأسهم **↑ ↓ ⇤ ⇥** تفعل نفس الشيء بلوحة المفاتيح أو على الجوال. **كل تغيير يُحفظ فوراً** في قاعدة البيانات (تظهر رسالة “Structure saved”)؛ وإن تعذّر الحفظ (مثل وضع صفحة داخل صفحتها الفرعية) يُرفض ويعود كما كان.
+* **الصفحة الأم** تُختار عند إنشاء الصفحة (**+ New page** أو **+ Sub-page** على الصف) ويمكن تغييرها في أي وقت من إعدادات منشئ الصفحات. أقصى عمق للتداخل 6 مستويات.
+* كل صف يعرض الحالة (**Draft / Published / Scheduled**) والعنوان ودرجة السيو، وفيه **Edit** و**Preview** و**Publish / Unpublish** و**+ Sub-page**. زر **Menus ▾** يضيف الصفحة أو يزيلها من أي قائمة تنقل من القوائم أدناه.
+* **الشجرة تنظّم صفحاتك فقط.** نقل الصفحة لا يغيّر عنوانها (الرابط) ولا محتواها ولا السيو ولا سجل نسخها، والصفحات الحالية تبدأ في المستوى الأعلى. وعند تغيير عنوان الصفحة (slug) يُحوَّل العنوان القديم تلقائياً إلى الجديد، وتُحدَّث التحويلات القديمة فلا تتسلسل ولا تدور. وعند **حذف** صفحة تنتقل صفحاتها الفرعية إلى أمها، وإذا كانت الصفحة منشورة وأمها منشورة يُحوَّل زوار العنوان القديم إلى الأم.
+
+### قوائم التنقل (الموقع ← Navigation Menus)
+خمس قوائم مستقلة؛ تغيير أي واحدة لا يغيّر الأخرى: **Header** (الشريط العلوي)، **Mobile** (اختيارية: إن كان فيها عناصر يستخدمها الجوال بدل قائمة Header)، **Services** (عمود روابط «الخدمات» في الفوتر)، **Locations** (عمود «المواقع» في الفوتر بدل قائمة المناطق النصية)، و**Footer quick links** (الروابط السريعة). كل قائمة بمستويين وتسميات بالعربية والإنجليزية وإظهار/إخفاء للكمبيوتر أو الجوال. روابط الصفحات التي ما زالت مسودة تُخفى من الموقع حتى تُنشر الصفحة.
+
 ### محرر النصوص المرئي (كل الأوصاف والعناوين الفرعية والنص الرئيسي)
 كل نص متعدد الأسطر في البلوكات (عنوان فرعي البطل، النص، صورة + نص، إجابات الأسئلة، عناوين الأقسام الفرعية، مقدمة النموذج…) و**النص الرئيسي** للمقالات وصفحات الخدمات تُكتب في محرر مرئي (ما تراه هو ما يراه الزائر) بالإنجليزية والعربية. شريط الأدوات فيه: تراجع/إعادة، **فقرة / عنوان 2–4**، **حجم الخط**، **ارتفاع السطر**، **عريض ومائل وتسطير وشطب**، **لون النص** و**التمييز**، **المحاذاة** (البداية، الوسط، النهاية، ضبط)، **قوائم نقطية ورقمية**، **اقتباس**، **رابط** (اختر صفحة أو اكتب `/page` أو `https://…` أو `tel:…` أو `mailto:…`؛ فعّل *Open in a new tab* لتبويب جديد) و**Unlink**، **صورة** (من مكتبة الوسائط مع نص بديل)، **خط فاصل**، **مسح التنسيق** (Tx)، و**`</>` كود HTML** (يبقى التنسيق الآمن فقط: تُحذف السكربتات والوسوم غير المعروفة والروابط غير الآمنة). لا يوجد حد عملي لطول الكتابة. اختر ألواناً تظهر جيداً على الوضعين الفاتح والداكن.
 النصوص القديمة تظهر محوَّلة (الفقرات والروابط تعمل) وتبقى كما هي حتى تعدّلها. الحقول ذات السطر الواحد (العناوين وأسماء الأزرار) والوصف القصير للخدمة أو مقتطف المقال تبقى نصاً عادياً لأنها تظهر أيضاً في البطاقات ونتائج البحث.
@@ -257,7 +279,7 @@ npm run build
 
 ## ٦. القوائم وبيانات التواصل والتواصل الاجتماعي
 
-* **القوائم:** اسحب لإعادة الترتيب، أضف عناصر فرعية منسدلة، أظهر/أخفِ حسب الكمبيوتر أو الجوال.
+* **القوائم:** خمس قوائم مستقلة (Header وMobile وServices وLocations وFooter)؛ اسحب لإعادة الترتيب، أضف عناصر فرعية منسدلة، أظهر/أخفِ حسب الكمبيوتر أو الجوال. راجع *قوائم التنقل* أعلاه.
 * **الموقع والتواصل:** الاسم والشعار والهاتف وواتساب (مع رسالة جاهزة) والبريد والعنوان وساعات العمل وزر الهيدر ومناطق الفوتر واللغة الافتراضية ومفتاح **السماح بالفهرسة**. تُستخدم هذه البيانات في كل مكان.
 * **التواصل الاجتماعي:** يظهر في الفوتر وفي بيانات النشاط لمحركات البحث.
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
@@ -37,9 +38,12 @@ export default async function MenusPage() {
       <AdminTopBar title="Website · Menus" />
       <div className="px-6 py-6">
         <WebsiteTabs />
-        <p className="mb-5 max-w-2xl text-sm text-slate-500">Drag items to reorder. To show the “Areas We Cover” dropdown in the header, add an item and choose it under Special. Sub-items appear as a dropdown. The log-in / dashboard button and language switch are part of the site and always shown.</p>
+        <p className="mb-5 max-w-2xl text-sm text-slate-500">Five independent menus: changing one never changes another. Drag items to reorder. To show the “Areas We Cover” dropdown in the header or mobile menu, add an item and choose it under Special. Sub-items appear as a dropdown. The log-in / dashboard button and language switch are part of the site and always shown. You can also add a page to a menu from <Link href="/admin/website/structure" className="font-medium text-blue-600">Page structure</Link>.</p>
         <div className="flex max-w-4xl flex-col gap-6">
           <MenuEditor menu="header" title="Header menu" initial={tree(rows, "header")} pages={pages} />
+          <MenuEditor menu="mobile" title="Mobile menu (optional: when empty, phones use the Header menu)" initial={tree(rows, "mobile")} pages={pages} />
+          <MenuEditor menu="services" title="Services menu (footer column “Services”)" initial={tree(rows, "services")} pages={pages} />
+          <MenuEditor menu="locations" title="Locations menu (footer column “Locations”)" initial={tree(rows, "locations")} pages={pages} />
           <MenuEditor menu="footer" title="Footer quick links" initial={tree(rows, "footer")} pages={pages} />
         </div>
       </div>

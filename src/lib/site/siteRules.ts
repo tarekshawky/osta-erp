@@ -3,7 +3,9 @@ const SAFE_LINK = /^(\/|https?:\/\/|tel:|mailto:)/;
 const SAFE_IMAGE = /^(\/|https?:\/\/|data:image\/(png|jpe?g|webp|gif|x-icon|vnd\.microsoft\.icon);base64,)/;
 
 export const SOCIAL_PLATFORMS = ["facebook", "instagram", "linkedin", "tiktok", "youtube", "x", "whatsapp", "custom"] as const;
-export const MENUS = ["header", "footer"] as const;
+// Independent navigation menus. "header" is the top bar; "mobile" (when it has items) replaces the header menu on phones;
+// "services" and "locations" are footer link columns; "footer" is the quick links.
+export const MENUS = ["header", "services", "locations", "mobile", "footer"] as const;
 export type MenuKey = (typeof MENUS)[number];
 
 export const isSafeLink = (v: string) => SAFE_LINK.test(v.trim());

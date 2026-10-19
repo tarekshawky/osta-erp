@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { redirectAddress } from "@/lib/cms/pageTreeDb";
 
 // Best-effort: ask the public site to refresh its cached copy. Never blocks or fails an edit.
 export async function revalidateSite(slugs: string[]) {
@@ -34,11 +35,7 @@ export async function promoteDueScheduledPages(now = new Date()): Promise<string
     if (clash) continue; // another page took this URL; leave scheduled for an admin to resolve
     const oldSlug = page.publishedVersion?.slug;
     if (oldSlug && oldSlug !== version.slug) {
-      await prisma.cmsRedirect.upsert({
-        where: { fromPath: `/${oldSlug}` },
-        update: { toPath: `/${version.slug}` },
-        create: { fromPath: `/${oldSlug}`, toPath: `/${version.slug}` },
-      });
+      await redirectAddress(prisma, `/${oldSlug}`, `/${version.slug}`);
     }
     await prisma.cmsPage.update({
       where: { id: page.id },

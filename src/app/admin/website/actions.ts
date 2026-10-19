@@ -12,6 +12,7 @@ import { analyzePage, type AeoItem, type SeoIssue } from "@/lib/seo/analyze";
 import { loadSeoContext } from "@/lib/seo/context";
 import { homepageBlocks } from "@/lib/cms/homepageSeed";
 import { computePublishProblems } from "@/lib/cms/publishGate";
+import { nextChildOrder, redirectAddress, reparentChildren } from "@/lib/cms/pageTreeDb";
 import type { Prisma } from "@/generated/prisma";
 
 export type ActionResult = { ok: boolean; error?: string; id?: string; url?: string };
@@ -48,7 +49,7 @@ async function nextVersion(tx: Prisma.TransactionClient, pageId: string) {
   return (last?.version ?? 0) + 1;
 }
 
-export async function createPage(input: { titleEn: string; titleAr: string; slug: string; type: string }): Promise<ActionResult> {
+export async function createPage(input: { titleEn: string; titleAr: string; slug: string; type: string; parentId?: string | null }): Promise<ActionResult> {
   const g = await guardPermission("pages.create");
   if (!g.ok) return fail(g.error);
   const slug = slugify(input.slug || input.titleEn);
@@ -58,10 +59,12 @@ export async function createPage(input: { titleEn: string; titleAr: string; slug
   if (!PAGE_TYPES.includes(input.type)) return fail("Unknown page type.");
   if (await prisma.cmsPage.findUnique({ where: { slug } })) return fail("A page with this slug already exists.");
 
+  const parentId = input.parentId || null;
+  if (parentId && !(await prisma.cmsPage.findFirst({ where: { id: parentId, deletedAt: null }, select: { id: true } }))) return fail("The chosen parent page no longer exists.");
   const page = await prisma.cmsPage.create({
-    data: { slug, type: input.type, titleEn: input.titleEn.trim(), titleAr: input.titleAr.trim(), createdById: g.admin.id, updatedById: g.admin.id },
+    data: { slug, type: input.type, titleEn: input.titleEn.trim(), titleAr: input.titleAr.trim(), parentId, sortOrder: await nextChildOrder(parentId), createdById: g.admin.id, updatedById: g.admin.id },
   });
-  await writeAudit(g.admin, "cms.page.create", "CmsPage", page.id, null, { slug, type: input.type });
+  await writeAudit(g.admin, "cms.page.create", "CmsPage", page.id, null, { slug, type: input.type, parentId });
   return done(page.id);
 }
 
@@ -161,15 +164,10 @@ export async function publishPage(id: string, publishAtIso: string | null): Prom
   });
 
   const oldSlug = page.publishedVersion?.slug;
-  if (!publishAt && oldSlug && oldSlug !== page.slug) {
-    await prisma.cmsRedirect.upsert({
-      where: { fromPath: `/${oldSlug}` },
-      update: { toPath: `/${page.slug}` },
-      create: { fromPath: `/${oldSlug}`, toPath: `/${page.slug}` },
-    });
-  }
-  // A page can come back to a URL it used to redirect from -- that redirect must stop firing.
-  await prisma.cmsRedirect.deleteMany({ where: { fromPath: `/${page.slug}` } });
+  // The old address redirects to the new one; older redirects are pointed straight at the new address (no chains, no loops),
+  // and a page that comes back to an address it used to redirect from stops that redirect.
+  if (!publishAt && oldSlug && oldSlug !== page.slug) await redirectAddress(prisma, `/${oldSlug}`, `/${page.slug}`);
+  else await prisma.cmsRedirect.deleteMany({ where: { fromPath: `/${page.slug}` } });
 
   await writeAudit(g.admin, publishAt ? "cms.page.schedule" : "cms.page.publish", "CmsPage", id, null, { slug: page.slug, version: version.version, publishAt });
   if (!publishAt) await revalidateSite([page.isHomepage ? "" : page.slug, ...(oldSlug && oldSlug !== page.slug ? [oldSlug] : [])]);
@@ -226,7 +224,7 @@ export async function duplicatePage(id: string): Promise<ActionResult> {
   const blocks = (Array.isArray(src.draftBlocks) ? (src.draftBlocks as unknown as Block[]) : []).map((b) => ({ ...b, id: `blk_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}` }));
   const copy = await prisma.cmsPage.create({
     data: {
-      slug, type: src.type, titleEn: `${src.titleEn} (copy)`, titleAr: `${src.titleAr} (نسخة)`, showInMenus: src.showInMenus, menuParent: src.menuParent, showInSitemap: src.showInSitemap,
+      slug, type: src.type, parentId: src.parentId, sortOrder: await nextChildOrder(src.parentId), titleEn: `${src.titleEn} (copy)`, titleAr: `${src.titleAr} (نسخة)`, showInMenus: src.showInMenus, menuParent: src.menuParent, showInSitemap: src.showInSitemap,
       draftBlocks: blocks as unknown as Prisma.InputJsonValue, draftSeo: src.draftSeo as Prisma.InputJsonValue, createdById: g.admin.id, updatedById: g.admin.id,
     },
   });
@@ -241,12 +239,21 @@ export async function deletePage(id: string): Promise<ActionResult> {
   const page = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null }, include: { publishedVersion: { select: { slug: true } } } });
   if (!page) return fail("Page not found.");
   if (page.isHomepage) return fail("The homepage can't be deleted. Unpublish it to go back to the built-in homepage.");
+  // Sub-pages move up to this page's parent (never orphaned). If the deleted page was live and its parent is live, visitors
+  // of the old address are sent to the parent instead of a "not found" page.
+  const parent = page.parentId ? await prisma.cmsPage.findFirst({ where: { id: page.parentId, deletedAt: null }, select: { publishedVersion: { select: { slug: true } } } }) : null;
+  const parentSlug = parent?.publishedVersion?.slug ?? null;
+  let moved = 0;
   // Free the slug so a new page can use it; keep the original in the audit trail.
-  await prisma.cmsPage.update({
-    where: { id },
-    data: { deletedAt: new Date(), status: "ARCHIVED", publishedVersionId: null, scheduledVersionId: null, slug: `${page.slug}--deleted-${Date.now()}` },
+  await prisma.$transaction(async (tx) => {
+    moved = await reparentChildren(tx, id, page.parentId);
+    await tx.cmsPage.update({
+      where: { id },
+      data: { deletedAt: new Date(), status: "ARCHIVED", publishedVersionId: null, scheduledVersionId: null, parentId: null, slug: `${page.slug}--deleted-${Date.now()}` },
+    });
+    if (page.publishedVersion && parentSlug) await redirectAddress(tx, `/${page.publishedVersion.slug}`, `/${parentSlug}`);
   });
-  await writeAudit(g.admin, "cms.page.delete", "CmsPage", id, { slug: page.slug, title: page.titleEn }, null);
+  await writeAudit(g.admin, "cms.page.delete", "CmsPage", id, { slug: page.slug, title: page.titleEn }, { subPagesMoved: moved, redirectedTo: page.publishedVersion && parentSlug ? `/${parentSlug}` : null });
   if (page.publishedVersion) await revalidateSite([page.publishedVersion.slug]);
   return done();
 }

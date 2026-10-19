@@ -9,6 +9,7 @@ import { SetupBuiltInPages } from "@/components/cms/SetupBuiltInPages";
 import { BUILT_IN_PAGES } from "@/lib/cms/pageRules";
 import { seoReport } from "@/lib/seo/report";
 import { scoreStyle } from "@/lib/seo/scoreStyle";
+import { parentOptions } from "@/lib/cms/pageTree";
 
 const STATUS_STYLE: Record<string, string> = {
   PUBLISHED: "bg-emerald-50 text-emerald-700",
@@ -25,6 +26,8 @@ export default async function CmsPagesPage() {
     orderBy: { updatedAt: "desc" },
     include: { publishedVersion: { select: { slug: true } } },
   });
+  const parents = parentOptions(pages.map((p) => ({ id: p.id, parentId: p.parentId, sortOrder: p.sortOrder, titleEn: p.titleEn })));
+  const titleOf = new Map(pages.map((p) => [p.id, p.titleEn]));
 
   return (
     <div className="pb-10">
@@ -36,9 +39,12 @@ export default async function CmsPagesPage() {
             <h2 className="text-2xl font-bold text-slate-900">Pages</h2>
             <p className="mt-1 text-sm text-slate-500">Build pages from blocks. Nothing goes live until you publish.</p>
           </div>
-          <Link href="/admin/website" className="text-sm font-medium text-blue-600">
-            ← Website
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/admin/website/structure" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Page structure (tree)</Link>
+            <Link href="/admin/website" className="text-sm font-medium text-blue-600">
+              ← Website
+            </Link>
+          </div>
         </div>
 
         {!pages.some((p) => p.isHomepage) && <SetupHomepage />}
@@ -48,7 +54,7 @@ export default async function CmsPagesPage() {
             return { slug, label: { about: "About Us", contact: "Contact Us", services: "Services list", blog: "Blog list", pricing: "Pricing & booking" }[slug], pageId: p?.id ?? null, status: p?.status ?? null };
           })}
         />
-        <NewPageForm />
+        <NewPageForm parents={parents} />
 
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
@@ -73,7 +79,7 @@ export default async function CmsPagesPage() {
               )}
               {pages.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-900">{p.titleEn}{p.isHomepage && <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">Homepage</span>}</td>
+                  <td className="px-4 py-3 font-medium text-slate-900">{p.titleEn}{p.parentId && titleOf.get(p.parentId) && <span className="ml-2 text-xs font-normal text-slate-400">in {titleOf.get(p.parentId)}</span>}{p.isHomepage && <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">Homepage</span>}</td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-500">{p.isHomepage ? "/" : `/${p.publishedVersion?.slug ?? p.slug}`}</td>
                   <td className="px-4 py-3 text-slate-500">{p.type}</td>
                   <td className="px-4 py-3">

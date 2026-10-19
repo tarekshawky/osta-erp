@@ -8,6 +8,7 @@ import { BlocksEditor } from "@/components/cms/BlocksEditor";
 import type { Block } from "@/lib/cms/blocks";
 import { SeoPanel, type Analysis } from "@/components/cms/SeoPanel";
 import { LinkTargetsContext, type LinkTarget } from "@/components/cms/LinkInserter";
+import { ParentPicker } from "@/components/cms/ParentPicker";
 import { analyzeDraft, createPreviewUrl, deletePage, duplicatePage, publishPage, restoreVersion, saveDraft, unpublishPage, type SeoInput } from "@/app/admin/website/actions";
 
 export type VersionRow = { id: string; version: number; kind: string; by: string; at: string };
@@ -26,6 +27,7 @@ export type BuilderPage = {
   showLastUpdated: boolean;
   areaName: string | null;
   isHomepage: boolean;
+  parentId: string;
   builtIn: boolean;
   blocks: Block[];
   seo: SeoInput;
@@ -35,7 +37,7 @@ type Draft = Pick<BuilderPage, "titleEn" | "titleAr" | "slug" | "type" | "showIn
 type SaveState = "saved" | "dirty" | "saving" | "error";
 
 
-export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasMenu, linkTargets }: { page: BuilderPage; versions: VersionRow[]; siteOrigin: string; hasAreasMenu: boolean; linkTargets: LinkTarget[]; menuParents: { id: string; label: string }[] }) {
+export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasMenu, linkTargets, parentChoices }: { parentChoices: { id: string; label: string }[]; page: BuilderPage; versions: VersionRow[]; siteOrigin: string; hasAreasMenu: boolean; linkTargets: LinkTarget[]; menuParents: { id: string; label: string }[] }) {
   const { showToast } = useToast();
   const [draft, setDraft] = useState<Draft>({
     titleEn: page.titleEn, titleAr: page.titleAr, slug: page.slug, type: page.type, showInMenus: page.showInMenus, menuParent: page.menuParent,
@@ -201,6 +203,7 @@ export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasM
                   ))}
                 </select>
               </Field>
+              <ParentPicker pageId={page.id} initial={page.parentId} choices={parentChoices} />
               <label className="flex flex-col gap-1 text-sm text-slate-700">
                 <span>Navigation bar</span>
                 <select

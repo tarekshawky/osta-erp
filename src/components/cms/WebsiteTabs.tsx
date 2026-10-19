@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/admin/website", label: "Overview" },
   { href: "/admin/website/pages", label: "Pages" },
+  { href: "/admin/website/structure", label: "Page Structure" },
   { href: "/admin/website/forms", label: "Forms & Leads" },
   { href: "/admin/website/integrations", label: "Integrations" },
   { href: "/admin/website/backup", label: "Backup" },
@@ -18,7 +19,7 @@ const TABS = [
   { href: "/admin/website/areas", label: "Service Areas" },
   { href: "/admin/website/redirects", label: "Redirects & Sitemap" },
   { href: "/admin/website/media", label: "Media" },
-  { href: "/admin/website/menus", label: "Header & Footer Menus" },
+  { href: "/admin/website/menus", label: "Navigation Menus" },
   { href: "/admin/website/site", label: "Site & Contact" },
   { href: "/admin/website/social", label: "Social Links" },
 ];

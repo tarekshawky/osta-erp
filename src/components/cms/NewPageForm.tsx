@@ -6,9 +6,13 @@ import { Field, inputClassName } from "@/components/FormField";
 import { createPage } from "@/app/admin/website/actions";
 import { slugify } from "@/lib/cms/pageRules";
 
-export function NewPageForm() {
+export type ParentOption = { id: string; label: string };
+
+// "+ New page". `parents` lists the pages a new page can be placed under (in tree order); `defaultParentId` preselects one.
+export function NewPageForm({ parents = [], defaultParentId = "", startOpen = false, onCancel }: { parents?: ParentOption[]; defaultParentId?: string; startOpen?: boolean; onCancel?: () => void }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
+  const [parentId, setParentId] = useState(defaultParentId);
   const [titleEn, setTitleEn] = useState("");
   const [titleAr, setTitleAr] = useState("");
   const [slug, setSlug] = useState("");
@@ -44,6 +48,12 @@ export function NewPageForm() {
         <Field label="Slug (URL) *">
           <input className={inputClassName} dir="ltr" value={slug} onChange={(e) => { setTouched(true); setSlug(e.target.value); }} />
         </Field>
+        <Field label="Parent page">
+          <select className={inputClassName} value={parentId} onChange={(e) => setParentId(e.target.value)}>
+            <option value="">— None (top level) —</option>
+            {parents.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
+        </Field>
         <Field label="Type">
           <select className={inputClassName} value={type} onChange={(e) => setType(e.target.value)}>
             {["page", "service", "area", "article", "landing"].map((t) => (
@@ -60,7 +70,7 @@ export function NewPageForm() {
           onClick={() =>
             startTransition(async () => {
               setError(null);
-              const res = await createPage({ titleEn, titleAr, slug, type });
+              const res = await createPage({ titleEn, titleAr, slug, type, parentId: parentId || null });
               if (res.ok && res.id) router.push(`/admin/website/pages/${res.id}`);
               else setError(res.error ?? "Could not create the page.");
             })
@@ -69,7 +79,7 @@ export function NewPageForm() {
         >
           {pending ? "Creating…" : "Create and edit"}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600">
+        <button type="button" onClick={() => { setOpen(false); onCancel?.(); }} className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600">
           Cancel
         </button>
       </div>

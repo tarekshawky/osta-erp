@@ -1342,6 +1342,11 @@ model CmsPage {
   bodyCode           String           @default("")
   bodyCodeConsent    String           @default("analytics")
   menuParent         String           @default("") // "" = top level of the header | "areas" = inside Areas We Cover | a header MenuItem id
+  // Page hierarchy (Website → Structure): organises pages as a tree. It does not change any URL; navigation menus are managed separately.
+  parentId           String?
+  parent             CmsPage?         @relation("PageTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children           CmsPage[]        @relation("PageTree")
+  sortOrder          Int              @default(0)
   showInSitemap      Boolean          @default(true)
   translationGroupId String?
   isHomepage         Boolean          @default(false)
@@ -1361,6 +1366,7 @@ model CmsPage {
   updatedAt          DateTime         @default(now()) @updatedAt
 
   @@index([status, deletedAt])
+  @@index([parentId, sortOrder])
 }
 
 // Immutable snapshot (content + SEO) created on every manual save, publish and restore.
