@@ -55,6 +55,29 @@ const RAW_SCHEMAS = {
     imagePosition: z.enum(["end", "start"]),
     cta,
   }),
+  // A picture on its own: with an optional caption and link, in three widths and several shapes.
+  image: z.object({
+    imageUrl: image,
+    imageAlt: bi,
+    caption: bi,
+    link,
+    size: z.enum(["content", "wide", "full"]),
+    ratio: z.enum(["auto", "16:9", "3:2", "1:1", "21:9"]),
+    rounded: z.enum(["yes", "no"]),
+    align: z.enum(["start", "center", "end"]),
+  }),
+  // A flexible row of 1-3 columns; each column is either text (heading, formatted text, button) or an image.
+  columns: z.object({
+    heading: bi,
+    layout: z.enum(["equal", "wide-start", "wide-end"]),
+    valign: z.enum(["start", "center", "end"]),
+    reverseMobile: z.enum(["no", "yes"]),
+    gap: z.enum(["sm", "md", "lg"]),
+    columns: z
+      .array(z.object({ kind: z.enum(["text", "image"]), heading: bi, body: bi, cta, imageUrl: image, imageAlt: bi }))
+      .min(1)
+      .max(3),
+  }),
   faq: z.object({ heading: bi, items: z.array(z.object({ question: bi, answer: bi })).max(200) }),
   stats: z.object({ heading: bi, items: z.array(z.object({ value: z.string().max(40), label: bi, icon: z.string().max(40).regex(/^[A-Za-z0-9]*$/).optional() })).max(8) }),
   cta: z.object({ heading: bi, subtitle: bi, button: cta }),
@@ -82,6 +105,8 @@ export const BLOCK_SCHEMAS = {
   homeSections: withStyle(RAW_SCHEMAS.homeSections),
   richText: withStyle(RAW_SCHEMAS.richText),
   imageText: withStyle(RAW_SCHEMAS.imageText),
+  image: withStyle(RAW_SCHEMAS.image),
+  columns: withStyle(RAW_SCHEMAS.columns),
   faq: withStyle(RAW_SCHEMAS.faq),
   stats: withStyle(RAW_SCHEMAS.stats),
   cta: withStyle(RAW_SCHEMAS.cta),
@@ -102,7 +127,9 @@ export type Block = {
 };
 
 // ---- editor field definitions (drive the generic block form) ----
-export type FieldDef =
+export type ShowIf = { key: string; equals: string };
+export type FieldDef = FieldDefBase & { showIf?: ShowIf }; // showIf: only show this field when a sibling field has this value
+type FieldDefBase =
   // rich: edited in the visual editor (headings, colours, lists, links, images) instead of a plain text box.
   | { kind: "bi-text" | "bi-textarea"; key: string; label: string; rich?: boolean }
   | { kind: "text" | "textarea" | "url" | "image" | "number" | "color"; key: string; label: string }
@@ -239,6 +266,59 @@ export const BLOCK_REGISTRY: Record<
       { kind: "group", key: "cta", label: "Button (optional)", fields: ctaFields },
     ],
     defaults: () => ({ heading: biEmpty(), body: biEmpty(), imageUrl: "", imageAlt: biEmpty(), imagePosition: "end", cta: ctaEmpty() }),
+  },
+  image: {
+    label: "Image",
+    description: "A picture on its own: choose its width and shape, add a caption or a link. For a picture BEHIND text, use “Section background” on any block.",
+    fields: [
+      { kind: "image", key: "imageUrl", label: "Image" },
+      { kind: "bi-text", key: "imageAlt", label: "Image description (alt text)" },
+      { kind: "bi-text", key: "caption", label: "Caption (optional)" },
+      { kind: "url", key: "link", label: "Link when the image is clicked (optional)" },
+      {
+        kind: "select", key: "size", label: "Width",
+        options: [{ value: "content", label: "Narrow (article width)" }, { value: "wide", label: "Wide (page width)" }, { value: "full", label: "Full screen width" }],
+      },
+      {
+        kind: "select", key: "ratio", label: "Shape",
+        options: [{ value: "auto", label: "Original shape" }, { value: "16:9", label: "Wide 16:9" }, { value: "3:2", label: "Photo 3:2" }, { value: "21:9", label: "Banner 21:9" }, { value: "1:1", label: "Square" }],
+      },
+      { kind: "select", key: "rounded", label: "Rounded corners", options: [{ value: "yes", label: "Yes" }, { value: "no", label: "No" }] },
+      { kind: "select", key: "align", label: "Position (narrow and wide widths)", options: [{ value: "center", label: "Centre" }, { value: "start", label: "Start" }, { value: "end", label: "End" }] },
+    ],
+    defaults: () => ({ imageUrl: "", imageAlt: biEmpty(), caption: biEmpty(), link: "", size: "wide", ratio: "auto", rounded: "yes", align: "center" }),
+  },
+  columns: {
+    label: "Columns (flex layout)",
+    description: "Put things side by side: for example a heading and text in one column and a picture in the next. Each column is text or an image. Stacks on phones.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading above the columns (optional)" },
+      {
+        kind: "select", key: "layout", label: "Column widths (2 columns)",
+        options: [{ value: "equal", label: "Equal" }, { value: "wide-start", label: "First column wider" }, { value: "wide-end", label: "Second column wider" }],
+      },
+      { kind: "select", key: "valign", label: "Vertical alignment", options: [{ value: "center", label: "Middle" }, { value: "start", label: "Top" }, { value: "end", label: "Bottom" }] },
+      { kind: "select", key: "gap", label: "Space between columns", options: [{ value: "md", label: "Medium" }, { value: "sm", label: "Small" }, { value: "lg", label: "Large" }] },
+      { kind: "select", key: "reverseMobile", label: "On phones", options: [{ value: "no", label: "Keep the column order" }, { value: "yes", label: "Show the last column first" }] },
+      {
+        kind: "list", key: "columns", label: "Columns", itemLabel: "Column", max: 3,
+        fields: [
+          { kind: "select", key: "kind", label: "This column is", options: [{ value: "text", label: "Text" }, { value: "image", label: "An image" }] },
+          { kind: "bi-text", key: "heading", label: "Heading", showIf: { key: "kind", equals: "text" } },
+          { kind: "bi-textarea", key: "body", label: "Text", rich: true, showIf: { key: "kind", equals: "text" } },
+          { kind: "group", key: "cta", label: "Button (optional)", fields: ctaFields, showIf: { key: "kind", equals: "text" } },
+          { kind: "image", key: "imageUrl", label: "Image", showIf: { key: "kind", equals: "image" } },
+          { kind: "bi-text", key: "imageAlt", label: "Image description (alt text)", showIf: { key: "kind", equals: "image" } },
+        ],
+      },
+    ],
+    defaults: () => ({
+      heading: biEmpty(), layout: "equal", valign: "center", gap: "md", reverseMobile: "no",
+      columns: [
+        { kind: "text", heading: biEmpty(), body: biEmpty(), cta: ctaEmpty(), imageUrl: "", imageAlt: biEmpty() },
+        { kind: "image", heading: biEmpty(), body: biEmpty(), cta: ctaEmpty(), imageUrl: "", imageAlt: biEmpty() },
+      ],
+    }),
   },
   faq: {
     label: "FAQ",

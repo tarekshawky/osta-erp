@@ -110,9 +110,13 @@ export function analyzePage(page: SeoPageInput, ctx: SeoContext): { score: numbe
 
   // --- images ---
   for (const b of blocks) {
-    if (b.type === "imageText" && b.props.imageUrl) {
+    if ((b.type === "imageText" || b.type === "image") && b.props.imageUrl) {
       const alt = bi(b.props.imageAlt);
-      if (!alt.en.trim() || !alt.ar.trim()) add(`alt-missing-${b.id}`, "warn", "An Image + text block has an image without alt text in both languages.");
+      if (!alt.en.trim() || !alt.ar.trim()) add(`alt-missing-${b.id}`, "warn", `${b.type === "image" ? "An Image" : "An Image + text"} block has an image without alt text in both languages.`);
+    }
+    if (b.type === "columns") {
+      const imgs = ((b.props.columns as { kind?: string; imageUrl?: string; imageAlt?: unknown }[]) ?? []).filter((c) => c.kind === "image" && c.imageUrl);
+      if (imgs.some((c) => { const alt = bi(c.imageAlt); return !alt.en.trim() || !alt.ar.trim(); })) add(`alt-missing-${b.id}`, "warn", "A Columns block has an image without alt text in both languages.");
     }
   }
   if (!seo.ogImage.trim()) add("og-image", "info", "No social share image: links shared on WhatsApp/Facebook show without a picture.");

@@ -35,7 +35,7 @@ Every change is recorded in **Audit Log**.
 ## 3. Pages and the page builder (Website → Pages)
 
 1. **New page** → English and Arabic title and a URL (slug). Slugs like `about` or `blog` are reserved by the site.
-2. **Add block** (Hero, Services grid, Text, Image + text, FAQ, Statistics, Call to action, Form, Latest blog posts, Homepage sections). Every text has English and Arabic boxes.
+2. **Add block** (Hero, Services grid, Text, Image + text, **Image**, **Columns (flex layout)**, FAQ, Statistics, Call to action, Form, Latest blog posts, Homepage sections). Every text has English and Arabic boxes.
 3. **Drag ⠿** to reorder. **Hide** keeps a block but removes it from the site. **Duplicate / Delete** as needed. Each block can be shown on desktop, mobile, or both.
 4. Work saves automatically as a **draft**; **Save** also records a version in **History** (you can restore any version).
 5. **Preview** shows the draft at desktop/tablet/mobile size (link expires in 15 minutes).
@@ -65,6 +65,11 @@ On the website each category has its own page (`/blog/category/<slug>`). A categ
 
 ### Blog posts and service pages use the same blocks
 Website content like articles and service pages is built with the same blocks as pages. In **Blog** (new or edit) and **Website Services** (new or edit) scroll to **Article content (blocks)** / **Service page content (blocks)**: press **+ Add block** and choose Hero, Text, Image + text, FAQ, Call to action, Services grid, Latest blog posts, Contact cards or Price calculator. When a post or service has blocks, visitors see the blocks instead of the plain text fields above them (those stay as a fallback and are only required when there are no blocks).
+
+### Images and layout: background, Image block, Columns
+* **Picture behind a section:** every block (except the Hero, which has its own background controls) has **Section background (optional)** at the bottom of its form: a background image with an overlay strength and colour, or a plain colour. The block's heading and text sit on top of it.
+* **Image block:** a picture on its own: choose the width (narrow, wide, full screen), the shape (original, 16:9, 3:2, 21:9, square), rounded corners, position, a caption and a link.
+* **Columns (flex layout):** 1–3 columns side by side. Each column is **text** (heading, formatted text, optional button) or **an image**; for example a heading and paragraph in the first column and a picture in the second. Choose equal or wider-first / wider-second columns, the vertical alignment, the space between columns, and whether the last column shows first on phones. Columns stack on phones. Give every image an alt text in both languages.
 
 ### Page structure (Website → Page Structure)
 Pages can be organised as a **tree**: a page can have a parent and sub-pages (for example *Services → AC Repair, AC Cleaning*; *Join Us → Current Vacancies*).
@@ -217,7 +222,7 @@ npm run build
 ## ٣. الصفحات ومنشئ الصفحات (الموقع ← الصفحات)
 
 ١. **صفحة جديدة** ← العنوان بالعربية والإنجليزية ورابط الصفحة (slug). بعض الروابط مثل `about` و`blog` محجوزة للموقع.
-٢. **إضافة بلوك** (الواجهة، شبكة الخدمات، نص، صورة ونص، الأسئلة الشائعة، إحصائيات، دعوة لاتخاذ إجراء، نموذج، أحدث المقالات، أقسام الرئيسية). كل نص له خانة بالعربية وأخرى بالإنجليزية.
+٢. **إضافة بلوك** (الواجهة، شبكة الخدمات، نص، صورة ونص، **صورة**، **أعمدة (Columns)**، الأسئلة الشائعة، إحصائيات، دعوة لاتخاذ إجراء، نموذج، أحدث المقالات، أقسام الرئيسية). كل نص له خانة بالعربية وأخرى بالإنجليزية.
 ٣. **اسحب ⠿** لإعادة الترتيب. **إخفاء** يُبقي البلوك لكن يزيله من الموقع. يمكن النسخ أو الحذف. ويمكن إظهار كل بلوك على الكمبيوتر أو الجوال أو كليهما.
 ٤. يُحفظ العمل تلقائياً كـ **مسودة**؛ زر **حفظ** يسجّل أيضاً نسخة في **السجل** ويمكنك استعادة أي نسخة.
 ٥. **معاينة** تعرض المسودة بحجم الكمبيوتر أو التابلت أو الجوال (الرابط ينتهي بعد ١٥ دقيقة).
@@ -244,6 +249,11 @@ npm run build
 
 ### المقالات وصفحات الخدمات تستخدم نفس الأقسام
 تُبنى المقالات وصفحات الخدمات بنفس أقسام الصفحات. في **المدونة** (جديد أو تعديل) و**خدمات الموقع** (جديد أو تعديل) انزل إلى **Article content (blocks)** / **Service page content (blocks)**: اضغط **+ Add block** واختر Hero أو Text أو Image + text أو FAQ أو Call to action أو Services grid أو Latest blog posts أو Contact cards أو Price calculator. عندما يحتوي المقال أو الخدمة على أقسام يرى الزوار الأقسام بدلاً من حقول النص العادي أعلاها (وتبقى تلك الحقول احتياطية ولا تكون مطلوبة إلا عند عدم وجود أقسام).
+
+### الصور والتخطيط: الخلفية وبلوك الصورة والأعمدة
+* **صورة خلف القسم:** كل بلوك (عدا Hero الذي له إعدادات خلفية خاصة) فيه في آخر نموذجه **Section background (optional)**: صورة خلفية مع قوة وتلوين الطبقة فوقها، أو لون ثابت. يظهر عنوان البلوك ونصه فوقها.
+* **بلوك Image:** صورة وحدها: اختر العرض (ضيق، واسع، كامل الشاشة) والشكل (الأصلي، 16:9، 3:2، 21:9، مربع) والزوايا الدائرية والموضع وتعليقاً ورابطاً.
+* **Columns (flex layout):** من 1 إلى 3 أعمدة بجانب بعضها. كل عمود **نص** (عنوان ونص منسق وزر اختياري) أو **صورة**؛ مثلاً عنوان وفقرة في العمود الأول وصورة في الثاني. اختر أعمدة متساوية أو الأول/الثاني أعرض، والمحاذاة العمودية، والمسافة بين الأعمدة، وهل يظهر العمود الأخير أولاً على الجوال. تتراص الأعمدة على الجوال. أعطِ كل صورة نصاً بديلاً بالعربية والإنجليزية.
 
 ### هيكل الصفحات (الموقع ← Page Structure)
 يمكن تنظيم الصفحات على شكل **شجرة**: لكل صفحة صفحة أم وصفحات فرعية (مثل *الخدمات ← صيانة المكيفات، تنظيف المكيفات*؛ *انضم إلينا ← الوظائف المتاحة*).

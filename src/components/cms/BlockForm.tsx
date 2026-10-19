@@ -84,12 +84,17 @@ function FormPicker({ label, value, onChange }: { label: string; value: string; 
 }
 
 // Generic editor driven by the block registry's field definitions -- no per-block form code.
+// An empty value for a field, so a newly added list item is valid right away (groups are filled in recursively).
+const blankValue = (f: FieldDef): unknown =>
+  f.kind.startsWith("bi-") ? { en: "", ar: "" } : f.kind === "number" ? 0 : f.kind === "group" ? blankObject(f.fields) : f.kind === "select" ? f.options[0].value : f.kind === "list" ? [] : "";
+const blankObject = (fields: FieldDef[]): Obj => Object.fromEntries(fields.map((x) => [x.key, blankValue(x)]));
+
 export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; value: Obj; onChange: (v: Obj) => void }) {
   const set = (key: string, v: unknown) => onChange({ ...value, [key]: v });
 
   return (
     <div className="flex flex-col gap-4">
-      {fields.map((f) => {
+      {fields.filter((f) => !f.showIf || (value[f.showIf.key] ?? "") === f.showIf.equals).map((f) => {
         const v = value[f.key];
         switch (f.kind) {
           case "bi-text":
@@ -156,7 +161,7 @@ export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; v
             );
           case "list": {
             const items = (Array.isArray(v) ? v : []) as Obj[];
-            const blank = (): Obj => Object.fromEntries(f.fields.map((x) => [x.key, x.kind.startsWith("bi-") ? { en: "", ar: "" } : x.kind === "number" ? 0 : x.kind === "group" ? {} : x.kind === "select" ? x.options[0].value : ""]));
+            const blank = (): Obj => blankObject(f.fields);
             return (
               <div key={f.key} className="rounded-lg border border-slate-200 p-3">
                 <div className="mb-2 flex items-center justify-between">
