@@ -8,8 +8,8 @@ import { DownloadPdfButton } from "@/components/invoice/DownloadPdfButton";
 import { getEmployeeLang, pickLang } from "@/lib/employeeLang";
 
 const T = {
-  ar: { downloadPdf: "تحميل PDF" },
-  en: { downloadPdf: "Download PDF" },
+  ar: { downloadPdf: "تحميل PDF", paymentLink: "رابط الدفع", unpaidNote: "الفاتورة غير مدفوعة حتى يتم تأكيد استلام الدفع." },
+  en: { downloadPdf: "Download PDF", paymentLink: "Payment Link", unpaidNote: "This invoice stays Unpaid until the payment is confirmed." },
 } as const;
 
 export default async function EmployeeInvoiceDetailPage({
@@ -49,6 +49,22 @@ export default async function EmployeeInvoiceDetailPage({
           />
         </div>
       </div>
+
+      {invoice.paymentLink && (
+        <div className="mx-5 mb-4 rounded-xl border border-slate-200 bg-white p-4" dir={lang === "ar" ? "rtl" : "ltr"}>
+          <h3 className="text-xs font-semibold text-slate-500 mb-1.5">{s.paymentLink}</h3>
+          <a
+            href={invoice.paymentLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 break-all"
+            dir="ltr"
+          >
+            {invoice.paymentLink}
+          </a>
+          {invoice.status === "Unpaid" && <p className="mt-1.5 text-xs text-slate-400">{s.unpaidNote}</p>}
+        </div>
+      )}
 
       <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-slate-100 py-6 px-2 sm:px-4 lg:px-10">
         <div id="invoice-preview" className="max-w-3xl lg:max-w-6xl mx-auto">
