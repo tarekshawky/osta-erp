@@ -28,6 +28,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       bookableService: true,
       bookingType: true,
       visitFeePolicy: true,
+      review: true,
       events: { orderBy: { createdAt: "asc" } },
       visitFeeCharges: { orderBy: { createdAt: "asc" }, include: { policy: true } },
     },
@@ -60,6 +61,18 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       <AdminTopBar title="Order Details" />
       <div className="px-5 py-4 max-w-xl">
         <OrderDetail order={order} basePath="/admin" />
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+          <h3 className="text-sm font-semibold text-slate-900">Customer rating</h3>
+          {order.review ? (
+            <>
+              <p className="mt-1 text-lg tracking-wider text-amber-500" aria-label={`${order.review.rating} out of 5 stars`}>{"★".repeat(order.review.rating)}<span className="text-slate-300">{"★".repeat(5 - order.review.rating)}</span></p>
+              {order.review.comment && <p className="mt-1 whitespace-pre-line text-sm text-slate-700">{order.review.comment}</p>}
+              <p className="mt-1 text-xs text-slate-400">{stamp(order.review.createdAt)}</p>
+            </>
+          ) : (
+            <p className="mt-1 text-sm text-slate-500">{order.status === "Done" ? "Not rated yet. The customer is asked to rate before paying." : "Asked once the job is done."}</p>
+          )}
+        </div>
         <OrderPricingPanel
           orderId={order.id}
           summary={q && order.bookableService && order.region && order.bookingType ? `${order.bookableService.nameEn}${option ? ` — ${option}` : ""} × ${order.quantity} · ${order.region.nameEn} · ${order.bookingType.nameEn}` : null}

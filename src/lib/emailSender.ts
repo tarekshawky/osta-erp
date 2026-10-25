@@ -42,6 +42,9 @@ class ResendEmailSender implements EmailSender {
 
 const hasResendConfig = !!process.env.RESEND_API_KEY && !!process.env.ADMIN_NOTIFICATION_EMAIL;
 
+// True when emails are really delivered (otherwise they are only logged on the server).
+export const emailDeliveryConfigured = hasResendConfig;
+
 export const emailSender: EmailSender = hasResendConfig ? new ResendEmailSender() : new ConsoleEmailSender();
 
 function escapeHtml(value: string) {

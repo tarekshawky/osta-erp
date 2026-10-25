@@ -117,6 +117,13 @@ Build a form (field types: text, email, phone, long text, dropdown, checkbox), p
 
 Google Tag Manager, GA4, Meta Pixel, Search Console and Bing verification, and the cookie banner. Each card lists what you need. Analytics and marketing scripts load **only after the visitor agrees**. If you use Tag Manager, set GA4 inside it (the direct GA4 ID is ignored then).
 
+## 8b. Customer app: rating, payment, invoice and accounts
+
+* **After a job is Done the customer sees three steps in order:** **1. Rate the service** (1–5 stars and an optional comment; required before paying), **2. Pay** (the amount and a **Pay now** button that opens the invoice's payment link; before the rating the amount is shown but the button is locked), **3. Invoice** (shown only once the invoice is **Paid**). An unpaid invoice is never shown to the customer. To let the customer pay, create the invoice for the order and put the payment link on it; mark it **Paid** when the money arrives and the invoice then appears in the app.
+* **Ratings** show on each order (Orders → open the order → **Customer rating**).
+* **Customer accounts and forgotten passwords:** Customers → the **App account** column shows who can log in (*Has account*, *No password*, *No email*). Open a customer and use **Customer app account**: **Send password reset** (emails the link when email delivery is set up on the server) or **Create link only**, then **Copy link** or **Send on WhatsApp**. The link works once, expires in 48 hours, and a new link cancels older ones. The customer opens it and chooses a new password. The customer must have an email (the app logs in with it).
+* **Booking time:** the customer picks a date and then a time from a list inside the booking type's hours (every 30 minutes). Hours that pass midnight, such as 10:00–01:00, are supported.
+
 ## 9. Dynamic Pricing
 
 * **Prices & Services:** type a price in AED per emirate; an empty cell means “not available there”.
@@ -300,6 +307,13 @@ npm run build
 ## ٨. التكاملات (الموقع ← التكاملات — للمالك فقط)
 
 Google Tag Manager وGA4 وبكسل ميتا وتحقق Search Console وBing ولافتة ملفات الارتباط. كل بطاقة توضح ما تحتاجه. تُحمَّل أدوات التحليل والتسويق **فقط بعد موافقة الزائر**. إن استخدمت Tag Manager فاضبط GA4 داخله (يُتجاهل معرّف GA4 المباشر حينها).
+
+## ٨ب. تطبيق العميل: التقييم والدفع والفاتورة والحسابات
+
+* **بعد أن تصبح المهمة Done يرى العميل ثلاث خطوات بالترتيب:** **١. تقييم الخدمة** (من 1 إلى 5 نجوم وتعليق اختياري؛ مطلوب قبل الدفع)، **٢. الدفع** (المبلغ وزر **Pay now** يفتح رابط الدفع في الفاتورة؛ قبل التقييم يظهر المبلغ والزر مقفل)، **٣. الفاتورة** (لا تظهر إلا بعد أن تصبح **Paid**). الفاتورة غير المدفوعة لا تظهر للعميل أبداً. ليتمكن العميل من الدفع أنشئ الفاتورة للطلب وضع عليها رابط الدفع، وعند وصول المبلغ اجعلها **Paid** فتظهر الفاتورة في التطبيق.
+* **التقييمات** تظهر في كل طلب (الطلبات ← افتح الطلب ← **Customer rating**).
+* **حسابات العملاء ونسيان كلمة المرور:** في العملاء يبيّن عمود **App account** من يستطيع الدخول (*Has account* أو *No password* أو *No email*). افتح العميل واستخدم **Customer app account**: **Send password reset** (يرسل الرابط بالبريد إذا كان إرسال البريد مفعّلاً على الخادم) أو **Create link only**، ثم **Copy link** أو **Send on WhatsApp**. الرابط يعمل مرة واحدة وينتهي بعد 48 ساعة، والرابط الجديد يلغي القديم. يفتحه العميل ويختار كلمة مرور جديدة. يجب أن يكون للعميل بريد إلكتروني (يدخل التطبيق به).
+* **وقت الحجز:** يختار العميل التاريخ ثم الوقت من قائمة ضمن ساعات نوع الحجز (كل 30 دقيقة). الساعات التي تتجاوز منتصف الليل مثل 10:00–01:00 مدعومة.
 
 ## ٩. التسعير الديناميكي
 

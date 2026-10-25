@@ -22,6 +22,7 @@ import {
 } from "@/lib/rentalData";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { CustomerProfileTabs } from "@/components/customer/CustomerProfileTabs";
+import { CustomerAccountCard } from "@/components/customer/CustomerAccountCard";
 import { CustomerStatusControl } from "@/components/customer/CustomerStatusControl";
 import { DeleteCustomerButton } from "@/components/customer/DeleteCustomerButton";
 
@@ -159,6 +160,8 @@ export default async function AdminCustomerProfilePage({ params }: { params: Pro
             Warning: This customer is currently blocked. Only authorized users should create new orders for them.
           </div>
         )}
+
+        <CustomerAccountCard customerId={customer.id} email={customer.email} hasPassword={!!customer.passwordHash} />
 
         <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
           <h3 className="text-sm font-semibold text-slate-900 mb-3">Customer Information</h3>

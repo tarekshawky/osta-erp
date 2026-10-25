@@ -208,6 +208,7 @@ export default async function AdminCustomersPage({
                 <th className="px-4 py-3 font-medium text-right">Outstanding</th>
                 <th className="px-4 py-3 font-medium">Last Order</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">App account</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -244,6 +245,15 @@ export default async function AdminCustomersPage({
                         {c.status}
                       </span>
                     </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <Link
+                        href={`/admin/customers/${c.id}`}
+                        title="Open the profile to send a password reset link"
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${!c.email ? "bg-slate-100 text-slate-500" : c.passwordHash ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
+                      >
+                        {!c.email ? "No email" : c.passwordHash ? "Has account" : "No password"}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3">
                       <CustomerRowActions customerId={c.id} status={c.status} />
                     </td>
@@ -252,7 +262,7 @@ export default async function AdminCustomersPage({
               })}
               {pageCustomers.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
                     No customers match your filters.
                   </td>
                 </tr>

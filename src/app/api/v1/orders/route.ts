@@ -6,6 +6,7 @@ import { ORDER_TYPES, CUSTOMER_LANGUAGES, generateOrderNumber, parseUaeDateTimeL
 import { notifyAdminOfBooking } from "@/lib/emailSender";
 import { z } from "zod";
 import { resolveQuote } from "@/lib/pricing/resolve";
+import { isPaid } from "@/lib/orders/customerFlow";
 import { QuoteError } from "@/lib/pricing/priceQuote";
 
 export function OPTIONS() {
@@ -26,6 +27,7 @@ const orderSelect = {
   team: { select: { name: true } },
   assignedTo: { select: { name: true } },
   invoiceId: true,
+  invoice: { select: { status: true, amount: true } },
   totalFils: true,
   doneAt: true,
   cancelledAt: true,
@@ -49,7 +51,9 @@ export async function GET(request: NextRequest) {
     prisma.order.count({ where }),
   ]);
 
-  return apiSuccess(orders, { meta: { page, pageSize, total } });
+  // An unpaid invoice is not shown to the customer yet (rate, pay, then the invoice appears).
+  const shaped = orders.map(({ invoice, invoiceId, ...o }) => ({ ...o, invoiceId: invoice && isPaid(invoice.status) ? invoiceId : null, paymentDue: invoice && !isPaid(invoice.status) ? invoice.amount : null }));
+  return apiSuccess(shaped, { meta: { page, pageSize, total } });
 }
 
 type BookOrderBody = {

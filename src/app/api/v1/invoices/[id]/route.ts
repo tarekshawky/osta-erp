@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   const { id } = await context.params;
 
   const invoice = await prisma.invoice.findFirst({
-    where: { id, customerId: customer.id },
+    where: { id, customerId: customer.id, status: { equals: "Paid", mode: "insensitive" } },
     select: {
       id: true,
       number: true,

@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
   const { customer } = auth;
 
   const { page, pageSize, skip, take } = parsePagination(request.nextUrl.searchParams);
-  const where = { customerId: customer.id };
+  // Customers see an invoice only after it is paid.
+  const where = { customerId: customer.id, status: { equals: "Paid", mode: "insensitive" as const } };
 
   const [invoices, total] = await Promise.all([
     prisma.invoice.findMany({ where, select: invoiceSelect, orderBy: { createdAt: "desc" }, skip, take }),

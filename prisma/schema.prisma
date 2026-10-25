@@ -178,6 +178,8 @@ model Customer {
   createdBy        Employee?         @relation("CustomerCreatedBy", fields: [createdById], references: [id])
   updatedById      String?
   updatedBy        Employee?         @relation("CustomerUpdatedBy", fields: [updatedById], references: [id])
+  passwordResets   PasswordResetToken[]
+  reviews          OrderReview[]
   updatedAt        DateTime          @default(now()) @updatedAt
   invoices         Invoice[]
   orders           Order[]
@@ -329,6 +331,7 @@ model Order {
   createdBy        Employee? @relation("OrderCreatedBy", fields: [createdById], references: [id])
   invoiceId        String?   @unique
   invoice          Invoice?  @relation(fields: [invoiceId], references: [id])
+  review           OrderReview?
 
   acceptedAt    DateTime?
   departedAt    DateTime?
@@ -1627,4 +1630,33 @@ model Backlink {
 
   @@index([status, discoveredAt])
   @@index([targetUrl])
+}
+
+// The customer's rating of a finished job (asked before payment). One per order.
+model OrderReview {
+  id         String   @id @default(cuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  rating     Int // 1-5
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  @@index([customerId])
+  @@index([rating])
+}
+
+// One-time link an admin sends to a customer who forgot their password. Only a hash of the token is stored.
+model PasswordResetToken {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdById String?
+  createdAt   DateTime  @default(now())
+
+  @@index([customerId])
 }
