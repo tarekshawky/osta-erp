@@ -4,19 +4,9 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { visitFeeEligibility } from "@/lib/pricing/visitFee";
+import { ORDER_EVENT_TYPES } from "@/lib/orderEvents";
 
 export type ActionResult = { ok: boolean; error?: string };
-
-export const ORDER_EVENT_TYPES = [
-  "CONFIRMED",
-  "DISPATCHED",
-  "ARRIVED",
-  "COMPLETED",
-  "NO_ANSWER",
-  "CANCELLED_BY_CUSTOMER",
-  "CANCELLED_BY_COMPANY",
-  "TEAM_NO_SHOW",
-] as const;
 
 export async function addOrderEvent(orderId: string, type: string, note: string): Promise<ActionResult> {
   const g = await guardPermission("orders.manage");

@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useToast } from "@/components/Toast";
 import { inputClassName } from "@/components/FormField";
-import { addOrderEvent, raiseVisitFeeCharge, ORDER_EVENT_TYPES } from "@/app/admin/orders/pricing-actions";
+import { addOrderEvent, raiseVisitFeeCharge } from "@/app/admin/orders/pricing-actions";
+import { ORDER_EVENT_TYPES } from "@/lib/orderEvents";
 
 export type PricingLine = { label: string; value: string; strong?: boolean };
 export type EventRow = { id: string; type: string; note: string; actor: string; at: string };
