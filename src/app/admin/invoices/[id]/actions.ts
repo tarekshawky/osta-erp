@@ -56,6 +56,14 @@ export async function deleteInvoice(id: string) {
     await reverseInventoryUsage(tx, id, "Invoice Deleted", session.employeeId);
     await tx.invoice.delete({ where: { id } });
   });
+  // Every page that sums invoices -- same set the Paid/Unpaid toggle refreshes --
+  // so no revenue figure can keep showing a deleted invoice.
+  revalidatePath("/admin");
+  revalidatePath("/admin/invoices");
+  revalidatePath("/admin/reports");
+  revalidatePath("/admin/marketing");
+  revalidatePath("/admin/customers");
+  revalidatePath("/admin/financial-reports", "layout");
   revalidatePath("/admin/wallets");
   revalidatePath("/admin/inventory");
   revalidatePath("/admin/inventory/warehouse");
@@ -89,6 +97,11 @@ export async function processRefund(
 
   revalidatePath(`/admin/invoices/${id}`);
   revalidatePath("/admin/invoices");
+  revalidatePath("/admin");
+  revalidatePath("/admin/reports");
+  revalidatePath("/admin/marketing");
+  revalidatePath("/admin/customers");
+  revalidatePath("/admin/financial-reports", "layout");
   revalidatePath("/admin/wallets");
   return { ok: true };
 }

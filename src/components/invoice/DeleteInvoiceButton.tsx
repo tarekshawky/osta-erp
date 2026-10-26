@@ -18,7 +18,7 @@ export function DeleteInvoiceButton({ invoiceId, className }: { invoiceId: strin
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6h12z" strokeLinejoin="round" />
       </svg>
-      Delete
+      {isPending ? "Deleting..." : "Delete"}
     </button>
   );
 }
