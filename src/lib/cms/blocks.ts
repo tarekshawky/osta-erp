@@ -45,6 +45,8 @@ const RAW_SCHEMAS = {
   }),
   servicesGrid: z.object({ heading: bi, subtitle: bi, limit: z.number().int().min(1).max(24), eyebrow: bi.optional(), viewAllLabel: bi.optional(), viewAllUrl: link.optional() }),
   blogPreview: z.object({ eyebrow: bi, heading: bi, limit: z.number().int().min(1).max(12), viewAllLabel: bi, viewAllUrl: link }),
+  // Open jobs from Jobs & Workforce, pulled automatically; each card opens the job's application page.
+  jobsList: z.object({ eyebrow: bi, heading: bi, subtitle: bi, limit: z.number().int().min(1).max(24), jobType: z.enum(["all", "DAILY", "PERMANENT"]), emptyText: bi, viewAllLabel: bi }),
   homeSections: z.object({}),
   richText: z.object({ heading: bi, body: bi, align: z.enum(["start", "center"]) }),
   imageText: z.object({
@@ -102,6 +104,7 @@ export const BLOCK_SCHEMAS = {
   hero: withStyle(RAW_SCHEMAS.hero),
   servicesGrid: withStyle(RAW_SCHEMAS.servicesGrid),
   blogPreview: withStyle(RAW_SCHEMAS.blogPreview),
+  jobsList: withStyle(RAW_SCHEMAS.jobsList),
   homeSections: withStyle(RAW_SCHEMAS.homeSections),
   richText: withStyle(RAW_SCHEMAS.richText),
   imageText: withStyle(RAW_SCHEMAS.imageText),
@@ -229,6 +232,23 @@ export const BLOCK_REGISTRY: Record<
       { kind: "url", key: "viewAllUrl", label: "“View all” link" },
     ],
     defaults: () => ({ eyebrow: biEmpty(), heading: biEmpty(), limit: 3, viewAllLabel: biEmpty(), viewAllUrl: "/blog" }),
+  },
+  jobsList: {
+    label: "Open jobs",
+    description: "The jobs that are open for applications (from Jobs & Workforce), pulled automatically. Each card opens the job page where people apply.",
+    fields: [
+      { kind: "bi-text", key: "eyebrow", label: "Small label above heading" },
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-text", key: "subtitle", label: "Text under the heading" },
+      { kind: "number", key: "limit", label: "How many jobs (1–24)" },
+      { kind: "select", key: "jobType", label: "Show", options: [{ value: "all", label: "All open jobs" }, { value: "DAILY", label: "Daily work only" }, { value: "PERMANENT", label: "Permanent jobs only" }] },
+      { kind: "bi-text", key: "emptyText", label: "Message when there are no open jobs" },
+      { kind: "bi-text", key: "viewAllLabel", label: "“See all jobs” button text" },
+    ],
+    defaults: () => ({
+      eyebrow: biEmpty(), heading: { en: "Open positions", ar: "الفرص المتاحة" }, subtitle: biEmpty(), limit: 6, jobType: "all",
+      emptyText: { en: "No open positions right now. Please check back soon.", ar: "لا توجد فرص متاحة حالياً. تابعنا قريباً." }, viewAllLabel: { en: "See all jobs", ar: "عرض كل الوظائف" },
+    }),
   },
   homeSections: {
     label: "Homepage sections",

@@ -35,7 +35,7 @@ Every change is recorded in **Audit Log**.
 ## 3. Pages and the page builder (Website → Pages)
 
 1. **New page** → English and Arabic title and a URL (slug). Slugs like `about` or `blog` are reserved by the site.
-2. **Add block** (Hero, Services grid, Text, Image + text, **Image**, **Columns (flex layout)**, FAQ, Statistics, Call to action, Form, Latest blog posts, Homepage sections). Every text has English and Arabic boxes.
+2. **Add block** (Hero, Services grid, Text, Image + text, **Image**, **Columns (flex layout)**, FAQ, Statistics, Call to action, Form, Latest blog posts, **Open jobs**, Homepage sections). Every text has English and Arabic boxes.
 3. **Drag ⠿** to reorder. **Hide** keeps a block but removes it from the site. **Duplicate / Delete** as needed. Each block can be shown on desktop, mobile, or both.
 4. Work saves automatically as a **draft**; **Save** also records a version in **History** (you can restore any version).
 5. **Preview** shows the draft at desktop/tablet/mobile size (link expires in 15 minutes).
@@ -70,6 +70,7 @@ Website content like articles and service pages is built with the same blocks as
 * **Picture behind a section:** every block (except the Hero, which has its own background controls) has **Section background (optional)** at the bottom of its form: a background image with an overlay strength and colour, or a plain colour. The block's heading and text sit on top of it.
 * **Image block:** a picture on its own: choose the width (narrow, wide, full screen), the shape (original, 16:9, 3:2, 21:9, square), rounded corners, position, a caption and a link.
 * **Columns (flex layout):** 1–3 columns side by side. Each column is **text** (heading, formatted text, optional button) or **an image**; for example a heading and paragraph in the first column and a picture in the second. Choose equal or wider-first / wider-second columns, the vertical alignment, the space between columns, and whether the last column shows first on phones. Columns stack on phones. Give every image an alt text in both languages.
+* **Open jobs:** shows the jobs you published in **Jobs & Workforce** (only jobs that are open for applications) as cards on any page, for example *Join OSTA Team*. Choose how many to show (1–24), all jobs or only daily / permanent ones, the heading, subtitle, empty-state message and the "See all jobs" button. Each card links to the job page, where the applicant fills the form. The list refreshes within a minute of publishing, closing or filling a job.
 
 ### Page structure (Website → Page Structure)
 Pages can be organised as a **tree**: a page can have a parent and sub-pages (for example *Services → AC Repair, AC Cleaning*; *Join Us → Current Vacancies*).
@@ -242,7 +243,7 @@ npm run build
 ## ٣. الصفحات ومنشئ الصفحات (الموقع ← الصفحات)
 
 ١. **صفحة جديدة** ← العنوان بالعربية والإنجليزية ورابط الصفحة (slug). بعض الروابط مثل `about` و`blog` محجوزة للموقع.
-٢. **إضافة بلوك** (الواجهة، شبكة الخدمات، نص، صورة ونص، **صورة**، **أعمدة (Columns)**، الأسئلة الشائعة، إحصائيات، دعوة لاتخاذ إجراء، نموذج، أحدث المقالات، أقسام الرئيسية). كل نص له خانة بالعربية وأخرى بالإنجليزية.
+٢. **إضافة بلوك** (الواجهة، شبكة الخدمات، نص، صورة ونص، **صورة**، **أعمدة (Columns)**، الأسئلة الشائعة، إحصائيات، دعوة لاتخاذ إجراء، نموذج، أحدث المقالات، **الوظائف المتاحة**، أقسام الرئيسية). كل نص له خانة بالعربية وأخرى بالإنجليزية.
 ٣. **اسحب ⠿** لإعادة الترتيب. **إخفاء** يُبقي البلوك لكن يزيله من الموقع. يمكن النسخ أو الحذف. ويمكن إظهار كل بلوك على الكمبيوتر أو الجوال أو كليهما.
 ٤. يُحفظ العمل تلقائياً كـ **مسودة**؛ زر **حفظ** يسجّل أيضاً نسخة في **السجل** ويمكنك استعادة أي نسخة.
 ٥. **معاينة** تعرض المسودة بحجم الكمبيوتر أو التابلت أو الجوال (الرابط ينتهي بعد ١٥ دقيقة).
@@ -274,6 +275,7 @@ npm run build
 * **صورة خلف القسم:** كل بلوك (عدا Hero الذي له إعدادات خلفية خاصة) فيه في آخر نموذجه **Section background (optional)**: صورة خلفية مع قوة وتلوين الطبقة فوقها، أو لون ثابت. يظهر عنوان البلوك ونصه فوقها.
 * **بلوك Image:** صورة وحدها: اختر العرض (ضيق، واسع، كامل الشاشة) والشكل (الأصلي، 16:9، 3:2، 21:9، مربع) والزوايا الدائرية والموضع وتعليقاً ورابطاً.
 * **Columns (flex layout):** من 1 إلى 3 أعمدة بجانب بعضها. كل عمود **نص** (عنوان ونص منسق وزر اختياري) أو **صورة**؛ مثلاً عنوان وفقرة في العمود الأول وصورة في الثاني. اختر أعمدة متساوية أو الأول/الثاني أعرض، والمحاذاة العمودية، والمسافة بين الأعمدة، وهل يظهر العمود الأخير أولاً على الجوال. تتراص الأعمدة على الجوال. أعطِ كل صورة نصاً بديلاً بالعربية والإنجليزية.
+* **الوظائف المتاحة (Open jobs):** تعرض الوظائف التي نشرتها في **Jobs & Workforce** (المفتوحة للتقديم فقط) كبطاقات في أي صفحة، مثل صفحة *انضم لفريق أوستا*. اختر عدد الوظائف (1–24)، كل الوظائف أو اليومية/الدائمة فقط، والعنوان والعنوان الفرعي ورسالة عدم وجود وظائف وزر "عرض كل الوظائف". كل بطاقة تفتح صفحة الوظيفة حيث يملأ المتقدم النموذج. تتحدث القائمة خلال دقيقة من نشر الوظيفة أو إغلاقها.
 
 ### هيكل الصفحات (الموقع ← Page Structure)
 يمكن تنظيم الصفحات على شكل **شجرة**: لكل صفحة صفحة أم وصفحات فرعية (مثل *الخدمات ← صيانة المكيفات، تنظيف المكيفات*؛ *انضم إلينا ← الوظائف المتاحة*).
