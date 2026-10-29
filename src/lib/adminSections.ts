@@ -10,6 +10,7 @@ export const ADMIN_SECTIONS = [
   { key: "/admin/orders", label: "Orders" },
   { key: "/admin/expenses", label: "Expenses" },
   { key: "/admin/employees", label: "Employees" },
+  { key: "/admin/jobs", label: "Jobs & Workforce" },
   { key: "/admin/payroll", label: "Payroll" },
   { key: "/admin/work-reports", label: "Work Reports" },
   { key: "/admin/warranty-certificates", label: "Warranty Certificates" },

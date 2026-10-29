@@ -4,7 +4,7 @@ import { canAccessAdminSection } from "@/lib/adminSections";
 // Reports under Orders and under Reports); it is always the same page, never a second copy.
 
 export type NavIcon =
-  | "dashboard" | "orders" | "hr" | "finance" | "reports" | "marketing" | "website" | "fleet" | "inventory" | "system";
+  | "dashboard" | "orders" | "hr" | "jobs" | "finance" | "reports" | "marketing" | "website" | "fleet" | "inventory" | "system";
 
 export type NavLeaf = {
   href: string;
@@ -15,7 +15,7 @@ export type NavLeaf = {
   children?: { href: string; label: string }[];
 };
 
-export type NavGroup = { id: string; label: string; icon: NavIcon; items: NavLeaf[] };
+export type NavGroup = { id: string; label: string; labelAr?: string; icon: NavIcon; items: NavLeaf[] };
 
 export const DASHBOARD: NavLeaf = { href: "/admin", label: "Dashboard", keywords: "overview kpi key performance indicators business summary home" };
 
@@ -62,6 +62,18 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/employees", label: "Employees", keywords: "staff team technicians" },
       { href: "/admin/payroll", label: "Payroll", keywords: "salaries wages" },
+    ],
+  },
+  {
+    id: "jobs", label: "Jobs & Workforce", labelAr: "إدارة الوظائف والعمالة", icon: "jobs",
+    items: [
+      { href: "/admin/jobs", label: "Overview", keywords: "jobs workforce hiring dashboard" },
+      { href: "/admin/jobs/list", label: "All Jobs", keywords: "vacancies positions daily permanent وظائف" },
+      { href: "/admin/jobs/new", label: "Create Job", keywords: "new job post hire" },
+      { href: "/admin/jobs/applications", label: "Applications", keywords: "applicants candidates cv photos طلبات" },
+      { href: "/admin/jobs/workers", label: "Workers Database", keywords: "applicants technicians painters عمالة" },
+      { href: "/admin/jobs/reports", label: "Jobs Reports", keywords: "hiring statistics export" },
+      { href: "/admin/jobs/settings", label: "Jobs Settings", keywords: "categories skills upload retention notifications" },
     ],
   },
   {

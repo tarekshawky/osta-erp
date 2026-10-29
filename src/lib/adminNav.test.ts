@@ -16,9 +16,9 @@ describe("admin navigation", () => {
     const missing = [...new Set(all.map((l) => l.href))].filter((h) => !pageExists(h));
     expect(missing).toEqual([]);
   });
-  it("has the ten sections of the plan with unique ids", () => {
+  it("has the sections of the plan with unique ids", () => {
     expect(NAV_GROUPS.map((g) => g.label)).toEqual([
-      "Orders & Bookings", "HR & Employees", "Finance & Accounting", "Reports & Analytics", "Marketing & Blog",
+      "Orders & Bookings", "HR & Employees", "Jobs & Workforce", "Finance & Accounting", "Reports & Analytics", "Marketing & Blog",
       "Website Management", "Fleet & Vehicles", "Inventory & Services", "System Administration",
     ]);
     expect(new Set(NAV_GROUPS.map((g) => g.id)).size).toBe(NAV_GROUPS.length);

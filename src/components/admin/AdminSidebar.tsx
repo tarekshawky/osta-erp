@@ -46,6 +46,12 @@ const ICONS: Record<NavIcon, ReactNode> = {
       <path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" strokeLinecap="round" />
     </>
   ),
+  jobs: (
+    <>
+      <rect x="3" y="8" width="18" height="12" rx="2" />
+      <path d="M9 8V6a2 2 0 012-2h2a2 2 0 012 2v2M3 13h18" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
   fleet: (
     <>
       <path d="M4 16v-4l2-5a2 2 0 012-1h8a2 2 0 012 1l2 5v4" strokeLinecap="round" strokeLinejoin="round" />
@@ -278,7 +284,7 @@ export function AdminSidebar({
                     className={`${itemBase} w-full text-left ${narrow ? "md:justify-center md:px-0" : ""} ${isCurrent ? "bg-white/15 text-white" : "text-blue-100 hover:bg-white/10"}`}
                   >
                     <Icon name={g.icon} />
-                    <span className={`flex-1 ${narrow ? "md:hidden" : ""}`}>{g.label}</span>
+                    <span className={`flex-1 ${narrow ? "md:hidden" : ""}`}>{g.label}{g.labelAr && <span className="mt-0.5 block text-[11px] font-normal text-blue-200/80" dir="rtl" lang="ar">{g.labelAr}</span>}</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 transition-transform ${expanded ? "rotate-90" : ""} ${narrow ? "md:hidden" : ""}`} aria-hidden>
                       <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>

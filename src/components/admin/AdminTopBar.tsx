@@ -1,3 +1,4 @@
+import { JobsBell } from "@/components/jobs/JobsBell";
 import { DateFilter } from "./DateFilter";
 
 function currentMonthLabel() {
@@ -27,13 +28,12 @@ export function AdminTopBar({
             {currentMonthLabel()}
           </span>
         )}
-        <span className="relative shrink-0">
+        <JobsBell>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M6 8a6 6 0 0112 0c0 4 1.5 5.5 1.5 5.5H4.5S6 12 6 8z" strokeLinejoin="round" />
             <path d="M10 19a2 2 0 004 0" strokeLinecap="round" />
           </svg>
-          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-400" />
-        </span>
+        </JobsBell>
       </div>
     </header>
   );
