@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { CORS_HEADERS, corsPreflight } from "@/lib/apiResponse";
 import { looksLikeBot } from "@/lib/forms/forms";
 import { applicationSchema } from "@/lib/jobs/schema";
 import { clientIp, submitApplication } from "@/lib/jobs/applications";
@@ -7,7 +8,12 @@ import { verifyTurnstile } from "@/lib/jobs/turnstile";
 
 export const dynamic = "force-dynamic";
 
-const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
+const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store", ...CORS_HEADERS } });
+
+// The application form runs on the website (another address), so the browser asks first.
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 export async function POST(request: NextRequest) {
   const text = await request.text();

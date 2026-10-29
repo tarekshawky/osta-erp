@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { CORS_HEADERS, corsPreflight } from "@/lib/apiResponse";
 import { prisma } from "@/lib/prisma";
 import { hashIp } from "@/lib/forms/forms";
 import { clientIp, UPLOADS_PER_HOUR } from "@/lib/jobs/applications";
@@ -9,7 +10,12 @@ import { isOpenForApplications } from "@/lib/jobs/status";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
+const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store", ...CORS_HEADERS } });
+
+// The application form runs on the website (another address), so the browser asks first.
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 // One work photo, sent before the form: checked by its real bytes, resized, stripped of EXIF/GPS and stored privately.
 // Returns a short-lived token that the application form sends instead of the file.

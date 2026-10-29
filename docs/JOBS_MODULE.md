@@ -6,12 +6,12 @@ Public job pages, WhatsApp sharing, application form with work photos, admin rev
 
 | What | Address |
 |---|---|
-| Public list / job page | `/jobs`, `/jobs/[slug]` (same paths after the domain move) |
+| Public list / job page | On the customer website: `/join-osta-team/jobs`, `/join-osta-team/jobs/[slug]` (the website calls the ERP; the ERP also answers on the same paths and on `/jobs`). Env `PUBLIC_JOBS_PATH` changes the path. |
 | Admin | `/admin/jobs` (Overview, All Jobs, Create, Applications, Workers, Reports, Settings) |
 | Private photos (admins only) | `/api/admin/jobs/photos/[id]` |
-| Public APIs | `POST /api/jobs/uploads` (one photo), `POST /api/jobs/apply` |
+| Public APIs | `GET /api/v1/jobs` (open jobs), `GET /api/v1/jobs/[slug]` (one job + form settings), `POST /api/jobs/uploads` (one photo), `POST /api/jobs/apply`; all CORS-enabled for the website |
 | Cron | `GET /api/cron/jobs-reminders` (daily, `vercel.json`) |
-| Sitemap | `/sitemap.xml` (lists `/jobs` and open jobs) |
+| Sitemap | The website's `/sitemap.xml` lists the jobs list and open jobs (the dashboard has no sitemap) |
 
 Everything is protected by the `jobs.manage` permission (owners and admins have it; a role can be narrowed in Employees). The
 public pages and the two public APIs are open; the admin pages, the photo route and the CSV exports check the permission on the
@@ -21,13 +21,13 @@ server. Employee-PIN users have no access.
 
 | Variable | Example | Purpose |
 |---|---|---|
-| `PUBLIC_JOBS_BASE_URL` | `https://osta-invoices.vercel.app` (today), `https://www.ostaservices.com` (later) | The ONE place every absolute URL comes from: share links, WhatsApp text, canonical, Open Graph, sitemap, emails. |
+| `PUBLIC_JOBS_BASE_URL` | `https://osta-invoices.vercel.app` (today), `https://www.ostaservices.com` (later) | The ONE place every absolute URL comes from: share links, WhatsApp text, canonical, Open Graph, emails. Falls back to `SITE_URL` (the customer website) and then the Vercel URL. |
 | `LEGACY_JOBS_DOMAIN` | `osta-invoices.vercel.app` | Optional. While set (together with `PUBLIC_JOBS_BASE_URL` pointing at the NEW domain), `/jobs/*` on the old host is redirected (301) to the new one. Leave empty until the move. Read at build time: redeploy after changing it. |
 | `CRON_SECRET` | a long random string | Secures `/api/cron/jobs-reminders`. Vercel Cron sends it automatically as `Authorization: Bearer …`. |
 | `RESEND_API_KEY`, `ADMIN_NOTIFICATION_EMAIL` | (already used by forms) | Email notifications for new applications (Settings → Notifications). Without them emails are only logged. |
 | `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | from Cloudflare | Optional captcha on the application form. Off when not set (honeypot, timing check and rate limits still apply). |
 
-If `PUBLIC_JOBS_BASE_URL` is not set the module falls back to the Vercel URL of the deployment.
+If `PUBLIC_JOBS_BASE_URL` is not set the module uses `SITE_URL` (the customer website), then the Vercel URL of the deployment. Set `PUBLIC_JOBS_BASE_URL=https://osta-invoice-users.vercel.app` to be explicit.
 
 ## Moving to the final domain (`ostaservices.com`)
 
