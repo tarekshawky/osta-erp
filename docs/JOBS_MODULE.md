@@ -27,7 +27,7 @@ server. Employee-PIN users have no access.
 | `RESEND_API_KEY`, `ADMIN_NOTIFICATION_EMAIL` | (already used by forms) | Email notifications for new applications (Settings → Notifications). Without them emails are only logged. |
 | `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | from Cloudflare | Optional captcha on the application form. Off when not set (honeypot, timing check and rate limits still apply). |
 
-If `PUBLIC_JOBS_BASE_URL` is not set the module uses `SITE_URL` (the customer website), then the Vercel URL of the deployment. Set `PUBLIC_JOBS_BASE_URL=https://osta-invoice-users.vercel.app` to be explicit.
+If `PUBLIC_JOBS_BASE_URL` is not set the module uses `SITE_URL`, then (when deployed on Vercel) `https://osta-invoice-users.vercel.app` (built into `src/lib/jobs/urls.ts`). Set `PUBLIC_JOBS_BASE_URL` when the website moves to its final domain.
 
 ## Moving to the final domain (`ostaservices.com`)
 
