@@ -1,3 +1,4 @@
+import { buildMenuTree, nestedCreate } from "@/lib/site/menuTree";
 import { prisma } from "@/lib/prisma";
 import { parseBlocks } from "./blocks";
 import { BACKUP_VERSION, type Bundle } from "./backup";
@@ -19,8 +20,7 @@ export async function buildExport(): Promise<Bundle> {
   const item = (m: (typeof menuRows)[number]): Omit<MenuItemInput, "children"> => ({
     labelEn: m.labelEn, labelAr: m.labelAr, url: m.url, visible: m.visible, showDesktop: m.showDesktop, showMobile: m.showMobile, newTab: m.newTab,
   });
-  const tree = (menu: string): MenuItemInput[] =>
-    menuRows.filter((m) => m.menu === menu && m.parentId === null).map((t) => ({ ...item(t), children: menuRows.filter((c) => c.parentId === t.id).map((c) => ({ ...item(c), children: [] })) }));
+  const tree = (menu: string) => buildMenuTree(menuRows, menu, item) as MenuItemInput[];
 
   let site: SettingsInput | null = null;
   if (settings) {
@@ -104,7 +104,7 @@ export async function applyBundle(bundle: Bundle, admin: { id: string; name: str
         await tx.menuItem.deleteMany({ where: { menu } });
         for (const [i, top] of items.entries()) {
           const row = (m: MenuItemInput, o: number) => ({ menu, labelEn: m.labelEn, labelAr: m.labelAr, url: m.url, sortOrder: o, visible: m.visible, showDesktop: m.showDesktop, showMobile: m.showMobile, newTab: m.newTab });
-          await tx.menuItem.create({ data: { ...row(top, i), children: { create: top.children.map((c, j) => row(c, j)) } } });
+          await tx.menuItem.create({ data: nestedCreate(top, i, row) });
         }
         bump(report.updated, "menus");
       }

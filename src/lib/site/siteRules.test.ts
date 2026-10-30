@@ -41,11 +41,17 @@ describe("settingsProblem", () => {
 
 describe("menuProblem", () => {
   it("accepts a nested menu", () => expect(menuProblem([item({ children: [item()] })])).toBeNull());
-  it("rejects missing labels, bad links, and 3 levels", () => {
+  it("rejects missing labels, bad links, and 4 levels", () => {
     expect(menuProblem([item({ labelAr: "" })])).toMatch(/label/);
     expect(menuProblem([item({ url: "javascript:x" })])).toMatch(/valid link/);
     expect(menuProblem([item({ url: "" })])).toMatch(/needs a link/);
-    expect(menuProblem([item({ children: [item({ children: [item({ children: [item()] })] })] })])).toMatch(/two levels/);
+    expect(menuProblem([item({ children: [item({ children: [item({ children: [item()] })] })] })])).toMatch(/three levels/);
+  });
+  it("accepts sub-items inside sub-items (3 levels)", () => expect(menuProblem([item({ children: [item({ children: [item()] })] })])).toBeNull());
+  it("lets a sub-item be a heading only when it has sub-items", () => {
+    expect(menuProblem([item({ children: [item({ url: "", children: [item()] })] })])).toBeNull();
+    expect(menuProblem([item({ children: [item({ url: "" })] })])).toMatch(/needs a link/);
+    expect(menuProblem([item({ children: [item({ children: [item({ url: "", children: [] })] })] })])).toMatch(/needs a link/);
   });
   it("caps the size", () => expect(menuProblem(Array.from({ length: 41 }, () => item()))).toMatch(/40/));
 });

@@ -7,6 +7,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useToast } from "@/components/Toast";
 import { inputClassName } from "@/components/FormField";
 import { saveMenu } from "@/app/admin/website/site-actions";
+import { MENU_MAX_DEPTH } from "@/lib/site/menuTree";
 import type { MenuItemInput } from "@/lib/site/siteRules";
 
 type Item = Omit<MenuItemInput, "children"> & { uid: string; heading?: boolean; children: Item[] };
@@ -17,7 +18,9 @@ const blank = (): Item => ({ uid: uid(), heading: false, labelEn: "", labelAr: "
 export const toEditable = (items: MenuItemInput[]): Item[] => items.map((i) => ({ ...i, uid: uid(), heading: i.url === "", children: toEditable(i.children) as Item[] }));
 const strip = (items: Item[]): MenuItemInput[] => items.map(({ uid: _u, heading: _h, children, ...rest }) => { void _u; void _h; return { ...rest, url: _h ? "" : rest.url, children: strip(children) }; });
 
-function Row({ item, onChange, onRemove, extra, pages, top }: { item: Item; onChange: (i: Item) => void; onRemove: () => void; extra?: React.ReactNode; pages: PageOption[]; top?: boolean }) {
+// depth 1 = top level, 2 = sub-item, 3 = sub-item of a sub-item. An item with sub-items (depth 1 or 2) may be a heading without a link.
+function Row({ item, onChange, onRemove, extra, pages, depth }: { item: Item; onChange: (i: Item) => void; onRemove: () => void; extra?: React.ReactNode; pages: PageOption[]; depth: number }) {
+  const top = depth < MENU_MAX_DEPTH;
   const groups = [...new Set(pages.map((p) => p.group))];
   return (
     <div className="flex flex-col gap-2">
@@ -65,34 +68,45 @@ function Row({ item, onChange, onRemove, extra, pages, top }: { item: Item; onCh
   );
 }
 
-function Sortable({ item, onChange, onRemove, pages }: { item: Item; onChange: (i: Item) => void; onRemove: () => void; pages: PageOption[] }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.uid });
+// The sub-items of an item (and, recursively, the sub-items of those): reorder with the arrows, add one more level while the
+// menu is shallower than three levels.
+function Children({ items, depth, pages, onChange }: { items: Item[]; depth: number; pages: PageOption[]; onChange: (next: Item[]) => void }) {
+  const set = (uidValue: string, next: Item) => onChange(items.map((x) => (x.uid === uidValue ? next : x)));
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
-    if (j < 0 || j >= item.children.length) return;
-    onChange({ ...item, children: arrayMove(item.children, i, j) });
+    if (j < 0 || j >= items.length) return;
+    onChange(arrayMove(items, i, j));
   };
+  return (
+    <div className="mt-3 flex flex-col gap-3 border-s-2 border-slate-100 ps-3">
+      {items.map((c, i) => (
+        <div key={c.uid} className="flex gap-2">
+          <div className="flex flex-col text-xs text-slate-400">
+            <button type="button" aria-label="Move up" onClick={() => move(i, -1)}>▲</button>
+            <button type="button" aria-label="Move down" onClick={() => move(i, 1)}>▼</button>
+          </div>
+          <div className="min-w-0 flex-1">
+            <Row
+              pages={pages} depth={depth} item={c} onChange={(nc) => set(c.uid, nc)} onRemove={() => onChange(items.filter((x) => x.uid !== c.uid))}
+              extra={depth < MENU_MAX_DEPTH ? <button type="button" onClick={() => set(c.uid, { ...c, children: [...c.children, blank()] })} className="font-medium text-blue-600">+ Sub-item</button> : undefined}
+            />
+            {c.children.length > 0 && <Children items={c.children} depth={depth + 1} pages={pages} onChange={(children) => set(c.uid, { ...c, children })} />}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Sortable({ item, onChange, onRemove, pages }: { item: Item; onChange: (i: Item) => void; onRemove: () => void; pages: PageOption[] }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.uid });
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }} className="rounded-xl border border-slate-200 bg-white p-3">
       <div className="flex gap-2">
         <button type="button" aria-label="Drag to reorder" className="cursor-grab touch-none px-1 text-slate-400" {...attributes} {...listeners}>⠿</button>
         <div className="min-w-0 flex-1">
-          <Row pages={pages} top item={item} onChange={onChange} onRemove={onRemove} extra={<button type="button" onClick={() => onChange({ ...item, children: [...item.children, blank()] })} className="font-medium text-blue-600">+ Sub-item</button>} />
-          {item.children.length > 0 && (
-            <div className="mt-3 flex flex-col gap-3 border-s-2 border-slate-100 ps-3">
-              {item.children.map((c, i) => (
-                <div key={c.uid} className="flex gap-2">
-                  <div className="flex flex-col text-xs text-slate-400">
-                    <button type="button" aria-label="Move up" onClick={() => move(i, -1)}>▲</button>
-                    <button type="button" aria-label="Move down" onClick={() => move(i, 1)}>▼</button>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Row pages={pages} item={c} onChange={(nc) => onChange({ ...item, children: item.children.map((x) => (x.uid === c.uid ? { ...nc, children: [] } : x)) })} onRemove={() => onChange({ ...item, children: item.children.filter((x) => x.uid !== c.uid) })} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <Row pages={pages} depth={1} item={item} onChange={onChange} onRemove={onRemove} extra={<button type="button" onClick={() => onChange({ ...item, children: [...item.children, blank()] })} className="font-medium text-blue-600">+ Sub-item</button>} />
+          {item.children.length > 0 && <Children items={item.children} depth={2} pages={pages} onChange={(children) => onChange({ ...item, children })} />}
         </div>
       </div>
     </div>

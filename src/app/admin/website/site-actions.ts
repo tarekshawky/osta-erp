@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { revalidateSite } from "@/lib/cms/publish";
+import { nestedCreate } from "@/lib/site/menuTree";
 import { menuProblem, settingsProblem, socialProblem, MENUS, type MenuItemInput, type SettingsInput } from "@/lib/site/siteRules";
 
 export type ActionResult = { ok: boolean; error?: string };
@@ -61,7 +62,7 @@ export async function saveMenu(menu: string, items: MenuItemInput[]): Promise<Ac
   await prisma.$transaction(async (tx) => {
     await tx.menuItem.deleteMany({ where: { menu } });
     for (const [i, top] of items.entries()) {
-      await tx.menuItem.create({ data: { ...row(top, i), children: { create: top.children.map((c, j) => row(c, j)) } } });
+      await tx.menuItem.create({ data: nestedCreate(top, i, row) });
     }
   });
   await writeAudit(g.admin, "site.menu.save", "MenuItem", menu, { items: before }, { items: items.length });

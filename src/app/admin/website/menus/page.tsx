@@ -4,6 +4,7 @@ import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { MenuEditor, type PageOption } from "@/components/cms/MenuEditor";
+import { buildMenuTree } from "@/lib/site/menuTree";
 import { AREAS_MENU_URL, type MenuItemInput } from "@/lib/site/siteRules";
 
 type Row = Awaited<ReturnType<typeof load>>[number];
@@ -13,7 +14,7 @@ function tree(rows: Row[], menu: string): MenuItemInput[] {
   const shape = (m: Row): Omit<MenuItemInput, "children"> => ({
     labelEn: m.labelEn, labelAr: m.labelAr, url: m.url, visible: m.visible, showDesktop: m.showDesktop, showMobile: m.showMobile, newTab: m.newTab,
   });
-  return rows.filter((m) => m.menu === menu && m.parentId === null).map((t) => ({ ...shape(t), children: rows.filter((c) => c.parentId === t.id).map((c) => ({ ...shape(c), children: [] })) }));
+  return buildMenuTree(rows, menu, shape) as MenuItemInput[];
 }
 
 export default async function MenusPage() {

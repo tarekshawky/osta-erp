@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
 import { AREAS_MENU_URL, MENUS } from "@/lib/site/siteRules";
+import { buildMenuTree } from "@/lib/site/menuTree";
 import { hideUnpublishedLinks } from "@/lib/site/menuLinks";
 
 export function OPTIONS() {
@@ -36,8 +37,7 @@ export async function GET() {
   });
   const menus: Record<string, unknown[]> = Object.fromEntries(MENUS.map((m) => [m, []]));
   for (const key of Object.keys(menus)) {
-    const top = menuRows.filter((m) => m.menu === key && m.parentId === null);
-    menus[key] = top.map((t) => ({ ...shape(t), children: menuRows.filter((c) => c.parentId === t.id).map((c) => ({ ...shape(c), children: [] })) }));
+    menus[key] = buildMenuTree(menuRows, key, shape);
   }
   type NavItem = { labelEn: string; labelAr: string; url: string; newTab: boolean; showDesktop: boolean; showMobile: boolean; children: NavItem[] };
   const header = menus.header as NavItem[];
