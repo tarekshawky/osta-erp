@@ -46,7 +46,7 @@ it.skipIf(process.env.JOBS_E2E !== "1")("jobs module end to end", { timeout: 540
   const dailyFull = await prisma.job.findUnique({ where: { id: daily.id }, include: { category: { include: { fields: true } } } });
   const share = shareTexts(dailyFull!)!;
   ok("12 share text AR has finish+wage+count", share.ar.includes("🎨 نوع الدهان: لوكس") && share.ar.includes("💰 الأجر اليومي: 150 درهم") && share.ar.includes("👷 العدد المطلوب: عاملان") && share.ar.includes(share.url) && !/undefined|null|\n\n\n/.test(share.ar), share.ar);
-  ok("12 share text EN", share.en.includes("🎨 Paint Finish: Luxury") && share.en.includes("💰 Daily Wage: AED 150") && share.url.startsWith("http://localhost:3001/jobs/"), share.en);
+  ok("12 share text EN", share.en.includes("🎨 Paint Finish: Luxury") && share.en.includes("💰 Daily Wage: AED 150") && /\/join-osta-team\/jobs\/[a-z0-9-]+$/.test(share.url), share.en);
   console.log("---- AR share text ----\n" + share.ar + "\n---- EN share text ----\n" + share.en);
 
   // 3 painting fields not kept for plumbing
@@ -170,7 +170,8 @@ it.skipIf(process.env.JOBS_E2E !== "1")("jobs module end to end", { timeout: 540
   const og = await fetch(`${BASE}/jobs/${dailySlug}/opengraph-image`);
   ok("SEO opengraph image", og.status === 200 && (og.headers.get("content-type") ?? "").includes("image/png"), og.status);
   const sm = await (await fetch(`${BASE}/sitemap.xml`)).text();
-  ok("SEO sitemap lists /jobs and the open job, not the completed one", sm.includes("/jobs</loc>") && sm.includes(dailySlug) && !sm.includes(plumbRow!.slug ?? "zzzz") , sm.slice(0, 200));
+  // The jobs sitemap lives on the website now (its /sitemap.xml lists the open jobs); the dashboard has none.
+  ok("dashboard has no sitemap of its own (the website lists the jobs)", !sm.includes("<urlset"), sm.slice(0, 120));
 
   // 16 access control (logged out)
   const adminPage = await page("/admin/jobs"); const photoUrl = await fetch(`${BASE}/api/admin/jobs/photos/${exposed!.id}`); const exp = await fetch(`${BASE}/api/admin/jobs/applications/export`); const prev = await page(`/jobs/preview/${daily.id}`); const cron = await fetch(`${BASE}/api/cron/jobs-reminders`);
