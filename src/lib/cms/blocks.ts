@@ -47,6 +47,9 @@ const RAW_SCHEMAS = {
   blogPreview: z.object({ eyebrow: bi, heading: bi, limit: z.number().int().min(1).max(12), viewAllLabel: bi, viewAllUrl: link }),
   // Open jobs from Jobs & Workforce, pulled automatically; each card opens the job's application page.
   jobsList: z.object({ eyebrow: bi, heading: bi, subtitle: bi, limit: z.number().int().min(1).max(24), jobType: z.enum(["all", "DAILY", "PERMANENT"]), emptyText: bi, viewAllLabel: bi }),
+  // Links to the published pages directly under this page in the page tree (Website → Page Structure): a category page lists its
+  // service pages, and a page appears here only once it is published.
+  subPages: z.object({ eyebrow: bi, heading: bi, subtitle: bi }),
   homeSections: z.object({}),
   richText: z.object({ heading: bi, body: bi, align: z.enum(["start", "center"]) }),
   imageText: z.object({
@@ -105,6 +108,7 @@ export const BLOCK_SCHEMAS = {
   servicesGrid: withStyle(RAW_SCHEMAS.servicesGrid),
   blogPreview: withStyle(RAW_SCHEMAS.blogPreview),
   jobsList: withStyle(RAW_SCHEMAS.jobsList),
+  subPages: withStyle(RAW_SCHEMAS.subPages),
   homeSections: withStyle(RAW_SCHEMAS.homeSections),
   richText: withStyle(RAW_SCHEMAS.richText),
   imageText: withStyle(RAW_SCHEMAS.imageText),
@@ -249,6 +253,16 @@ export const BLOCK_REGISTRY: Record<
       eyebrow: biEmpty(), heading: { en: "Open positions", ar: "الفرص المتاحة" }, subtitle: biEmpty(), limit: 6, jobType: "all",
       emptyText: { en: "No open positions right now. Please check back soon.", ar: "لا توجد فرص متاحة حالياً. تابعنا قريباً." }, viewAllLabel: { en: "See all jobs", ar: "عرض كل الوظائف" },
     }),
+  },
+  subPages: {
+    label: "Sub-pages list",
+    description: "Links to the published pages directly under this page in Website → Page Structure (for example a category page listing its services). A page shows here once it is published.",
+    fields: [
+      { kind: "bi-text", key: "eyebrow", label: "Small label above heading" },
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-text", key: "subtitle", label: "Text under the heading" },
+    ],
+    defaults: () => ({ eyebrow: biEmpty(), heading: { en: "Our services", ar: "خدماتنا" }, subtitle: biEmpty() }),
   },
   homeSections: {
     label: "Homepage sections",

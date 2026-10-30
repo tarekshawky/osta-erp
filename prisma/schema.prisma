@@ -1355,6 +1355,9 @@ model CmsPage {
   showInSitemap      Boolean          @default(true)
   translationGroupId String?
   isHomepage         Boolean          @default(false)
+  // Set when the page was created from the Service Catalogue ("Create website pages"), so it is never created twice.
+  catalogCategoryId  String?          @unique
+  catalogServiceId   String?          @unique
   areaId             String?
   area               ServiceArea?     @relation(fields: [areaId], references: [id], onDelete: SetNull)
   showLastUpdated    Boolean          @default(false)

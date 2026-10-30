@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
 import { promoteDueScheduledPages } from "@/lib/cms/publish";
-import { toPublicPage } from "@/lib/cms/publicPage";
+import { hasSubPagesBlock, loadSubPages, toPublicPage } from "@/lib/cms/publicPage";
 import { loadJsonLdArea, loadJsonLdSite } from "@/lib/seo/context";
 
 export function OPTIONS() {
@@ -20,7 +20,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
   if (page?.publishedVersion) {
     const [site, area] = await Promise.all([loadJsonLdSite(), loadJsonLdArea(page.areaId)]);
     const publicPage = toPublicPage(page, page.publishedVersion, false, { ...site, area, publishedAt: page.publishedVersion.createdAt });
-    if (publicPage) return apiSuccess(publicPage);
+    if (publicPage) return apiSuccess(hasSubPagesBlock(publicPage.blocks) ? { ...publicPage, subPages: await loadSubPages(prisma, page.id, true) } : publicPage);
   }
 
   const redirect = await prisma.cmsRedirect.findUnique({ where: { fromPath: `/${slug}` } });

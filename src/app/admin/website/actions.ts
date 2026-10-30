@@ -86,9 +86,9 @@ export async function saveDraft(id: string, input: DraftInput, autosave: boolean
   if (problem) return fail(problem);
   if (slug !== page.slug && (await prisma.cmsPage.findUnique({ where: { slug } }))) return fail("A page with this slug already exists.");
 
-  // The navigation parent must be the top level, the Areas We Cover dropdown, or a real top-level header item.
+  // The navigation parent must be the top level, the Areas We Cover dropdown, a real top-level header item, or "parent" (nested under the entry of its parent page).
   const menuParent = input.menuParent ?? "";
-  if (menuParent !== "" && menuParent !== "areas" && !(await prisma.menuItem.findFirst({ where: { id: menuParent, menu: "header", parentId: null } }))) return fail("Choose a valid navigation placement.");
+  if (menuParent !== "" && menuParent !== "areas" && menuParent !== "parent" && !(await prisma.menuItem.findFirst({ where: { id: menuParent, menu: "header", parentId: null } }))) return fail("Choose a valid navigation placement.");
 
   const parsed = parseBlocks(input.blocks);
   if (!parsed.ok) return fail(parsed.error);

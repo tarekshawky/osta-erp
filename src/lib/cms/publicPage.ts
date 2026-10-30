@@ -12,6 +12,8 @@ export type PublicPage = {
   jsonLd: Record<string, unknown>[];
   showLastUpdated: boolean;
   updatedAt: string;
+  // For a "Sub-pages list" block: the pages directly under this one in the page tree (published only on the live site).
+  subPages?: { slug: string; titleEn: string; titleAr: string }[];
   // Custom code for this page (public pages only, never in previews). Absent when the page has none.
   code?: { headCode: string; headCodeConsent: string; bodyCode: string; bodyCodeConsent: string };
 };
@@ -56,3 +58,16 @@ export function toPublicPage(
       : {}),
   };
 }
+
+// The pages directly under `pageId` in the page tree, in tree order, for a "Sub-pages list" block. `live` = published pages only
+// (what visitors see); previews pass false to show drafts too.
+export async function loadSubPages(db: { cmsPage: { findMany: (args: never) => Promise<unknown> } }, pageId: string, live: boolean) {
+  const rows = (await db.cmsPage.findMany({
+    where: { parentId: pageId, deletedAt: null, ...(live ? { status: "PUBLISHED", publishedVersion: { isNot: null } } : {}) },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    select: { slug: true, titleEn: true, titleAr: true, publishedVersion: { select: { slug: true, titleEn: true, titleAr: true } } },
+  } as never)) as { slug: string; titleEn: string; titleAr: string; publishedVersion: { slug: string; titleEn: string; titleAr: string } | null }[];
+  return rows.map((r) => (live && r.publishedVersion ? r.publishedVersion : { slug: r.slug, titleEn: r.titleEn, titleAr: r.titleAr })).map((r) => ({ slug: r.slug, titleEn: r.titleEn, titleAr: r.titleAr }));
+}
+
+export const hasSubPagesBlock = (blocks: { type: string; hidden?: boolean }[]) => blocks.some((b) => b.type === "subPages" && !b.hidden);

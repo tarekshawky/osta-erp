@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
 import { normalizeKeywords } from "@/lib/seo/keywords";
+import { createCatalogPages, type CreatePagesResult } from "@/lib/catalog/pages";
 import { runServicesImport, type ImportSummary } from "@/lib/catalog/importer";
 import { categoryProblem, serviceProblem, uniqueSlug, type CategoryInput, type ServiceInput } from "@/lib/catalog/rules";
 
@@ -205,4 +206,18 @@ export async function importCatalogServicesCsv(text: string): Promise<ImportResu
   if (r.ok) await writeAudit(g.admin, "catalogService.import", "CatalogService", "csv", null, { created: r.created, updated: r.updated, skipped: r.issues.length });
   refresh();
   return r;
+}
+
+// ---- website pages ----
+
+// One draft page per category and per service, nested in the page tree (Website → Page Structure). Safe to repeat: only what is
+// missing is created. Nothing is visible to visitors until the pages are published.
+export async function createCatalogWebsitePages(): Promise<{ ok: boolean; error?: string; result?: CreatePagesResult }> {
+  const g = await guardPermission("pages.create");
+  if (!g.ok) return { ok: false, error: g.error };
+  const result = await createCatalogPages();
+  await writeAudit(g.admin, "catalogPages.create", "CmsPage", "catalog", null, { ...result });
+  revalidatePath("/admin/website", "layout");
+  refresh();
+  return { ok: true, result };
 }

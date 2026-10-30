@@ -35,7 +35,7 @@ Every change is recorded in **Audit Log**.
 ## 3. Pages and the page builder (Website → Pages)
 
 1. **New page** → English and Arabic title and a URL (slug). Slugs like `about` or `blog` are reserved by the site.
-2. **Add block** (Hero, Services grid, Text, Image + text, **Image**, **Columns (flex layout)**, FAQ, Statistics, Call to action, Form, Latest blog posts, **Open jobs**, Homepage sections). Every text has English and Arabic boxes.
+2. **Add block** (Hero, Services grid, Text, Image + text, **Image**, **Columns (flex layout)**, FAQ, Statistics, Call to action, Form, Latest blog posts, **Open jobs**, **Sub-pages list**, Homepage sections). Every text has English and Arabic boxes.
 3. **Drag ⠿** to reorder. **Hide** keeps a block but removes it from the site. **Duplicate / Delete** as needed. Each block can be shown on desktop, mobile, or both.
 4. Work saves automatically as a **draft**; **Save** also records a version in **History** (you can restore any version).
 5. **Preview** shows the draft at desktop/tablet/mobile size (link expires in 15 minutes).
@@ -71,6 +71,7 @@ Website content like articles and service pages is built with the same blocks as
 * **Image block:** a picture on its own: choose the width (narrow, wide, full screen), the shape (original, 16:9, 3:2, 21:9, square), rounded corners, position, a caption and a link.
 * **Columns (flex layout):** 1–3 columns side by side. Each column is **text** (heading, formatted text, optional button) or **an image**; for example a heading and paragraph in the first column and a picture in the second. Choose equal or wider-first / wider-second columns, the vertical alignment, the space between columns, and whether the last column shows first on phones. Columns stack on phones. Give every image an alt text in both languages.
 * **Open jobs:** shows the jobs you published in **Jobs & Workforce** (only jobs that are open for applications) as cards on any page, for example *Join OSTA Team*. Choose how many to show (1–24), all jobs or only daily / permanent ones, the heading, subtitle, empty-state message and the "See all jobs" button. Each card links to the job page, where the applicant fills the form. The list refreshes within a minute of publishing, closing or filling a job.
+* **Sub-pages list:** links to the **published pages directly under this page** in Website → Page Structure, for example a category page listing its services. It updates by itself as you publish or unpublish pages under it.
 
 ### Service Catalogue (Inventory & Services → Service Catalogue)
 The master list of your service **categories** and the **services** in each (31 categories and 718 services were loaded from the master catalogue document, all **inactive**). Everything is in English and Arabic, with SEO fields per category and per service. It is a separate list from *Website Services* and *Dynamic Pricing*: nothing on the public website or in booking changes until a later step links them.
@@ -78,6 +79,8 @@ The master list of your service **categories** and the **services** in each (31 
 * **Services:** **+ Add service**, filter the list, reorder with ▲▼, click **Active/Inactive** to switch one on or off, **Activate all / Deactivate all** for the whole category, **Duplicate** (the copy is inactive), **Delete**. A service form has names, slug, short and full description, sub-heading inside the category (for example "Elevator Services"), icon, image, a **gallery** of up to 20 images, SEO fields, and **Categories**: tick several to show the same service in more than one category.
 * **Search:** the box at the top of the page searches every service by English name, Arabic name or slug.
 * **Import / Export (CSV):** **Export services (CSV)** downloads every service. Edit the file in Excel (save as *CSV UTF-8*) and use **Import services (CSV)**: services are matched by *slug* (updated) or added when new; nothing is ever deleted. The `category` column holds one or more categories (slug, number or English name) separated by `|`, the first being the main one; an unknown category skips that row and is reported with its line number. Only `category`, `name_en` and `name_ar` are required.
+* **Create website pages:** the **Create website pages** button makes a **draft page for every category and every service that doesn't have one yet** (31 category pages and 718 service pages for the master catalogue), all in one go. Each category page sits at the top of the tree with its services beneath it (**Website → Page Structure**); a category page lists its published services automatically (a *Sub-pages list* block), and a service page has a title, a short bilingual text, a Book button and SEO taken from the catalogue (or generated). Nothing is visible to visitors until you **publish** a page, and you can edit any page first. Pressing the button again only adds what is missing. A service that is in several categories gets one page, under its first category. Page addresses are one word-chain like `/split-ac-cleaning` (the catalogue slug).
+* **In the menu:** once published, category pages appear inside the header **Services** menu, and each category's published services open beside it (a three-level menu: Services → AC & HVAC → Split AC Cleaning). A page's **Navigation bar** setting **Under its parent page's entry** does this for service pages. Only published pages show, so you can publish category by category.
 * Every change is recorded in the Audit Log.
 
 ### Page structure (Website → Page Structure)
@@ -253,7 +256,7 @@ npm run build
 ## ٣. الصفحات ومنشئ الصفحات (الموقع ← الصفحات)
 
 ١. **صفحة جديدة** ← العنوان بالعربية والإنجليزية ورابط الصفحة (slug). بعض الروابط مثل `about` و`blog` محجوزة للموقع.
-٢. **إضافة بلوك** (الواجهة، شبكة الخدمات، نص، صورة ونص، **صورة**، **أعمدة (Columns)**، الأسئلة الشائعة، إحصائيات، دعوة لاتخاذ إجراء، نموذج، أحدث المقالات، **الوظائف المتاحة**، أقسام الرئيسية). كل نص له خانة بالعربية وأخرى بالإنجليزية.
+٢. **إضافة بلوك** (الواجهة، شبكة الخدمات، نص، صورة ونص، **صورة**، **أعمدة (Columns)**، الأسئلة الشائعة، إحصائيات، دعوة لاتخاذ إجراء، نموذج، أحدث المقالات، **الوظائف المتاحة**، **قائمة الصفحات الفرعية**، أقسام الرئيسية). كل نص له خانة بالعربية وأخرى بالإنجليزية.
 ٣. **اسحب ⠿** لإعادة الترتيب. **إخفاء** يُبقي البلوك لكن يزيله من الموقع. يمكن النسخ أو الحذف. ويمكن إظهار كل بلوك على الكمبيوتر أو الجوال أو كليهما.
 ٤. يُحفظ العمل تلقائياً كـ **مسودة**؛ زر **حفظ** يسجّل أيضاً نسخة في **السجل** ويمكنك استعادة أي نسخة.
 ٥. **معاينة** تعرض المسودة بحجم الكمبيوتر أو التابلت أو الجوال (الرابط ينتهي بعد ١٥ دقيقة).
@@ -286,6 +289,7 @@ npm run build
 * **بلوك Image:** صورة وحدها: اختر العرض (ضيق، واسع، كامل الشاشة) والشكل (الأصلي، 16:9، 3:2، 21:9، مربع) والزوايا الدائرية والموضع وتعليقاً ورابطاً.
 * **Columns (flex layout):** من 1 إلى 3 أعمدة بجانب بعضها. كل عمود **نص** (عنوان ونص منسق وزر اختياري) أو **صورة**؛ مثلاً عنوان وفقرة في العمود الأول وصورة في الثاني. اختر أعمدة متساوية أو الأول/الثاني أعرض، والمحاذاة العمودية، والمسافة بين الأعمدة، وهل يظهر العمود الأخير أولاً على الجوال. تتراص الأعمدة على الجوال. أعطِ كل صورة نصاً بديلاً بالعربية والإنجليزية.
 * **الوظائف المتاحة (Open jobs):** تعرض الوظائف التي نشرتها في **Jobs & Workforce** (المفتوحة للتقديم فقط) كبطاقات في أي صفحة، مثل صفحة *انضم لفريق أوستا*. اختر عدد الوظائف (1–24)، كل الوظائف أو اليومية/الدائمة فقط، والعنوان والعنوان الفرعي ورسالة عدم وجود وظائف وزر "عرض كل الوظائف". كل بطاقة تفتح صفحة الوظيفة حيث يملأ المتقدم النموذج. تتحدث القائمة خلال دقيقة من نشر الوظيفة أو إغلاقها.
+* **قائمة الصفحات الفرعية (Sub-pages list):** روابط **الصفحات المنشورة التي تحت هذه الصفحة مباشرة** في Website ← Page Structure، مثل صفحة قسم تعرض خدماتها. تتحدث تلقائياً كلما نشرت أو أخفيت صفحة تحتها.
 
 ### دليل الخدمات (Inventory & Services ← Service Catalogue)
 القائمة الرئيسية لـ**أقسام** الخدمات و**الخدمات** داخل كل قسم (تم تحميل 31 قسماً و718 خدمة من ملف الدليل الرئيسي، كلها **غير مفعّلة**). كل شيء بالعربية والإنجليزية مع حقول SEO لكل قسم ولكل خدمة. هذه قائمة منفصلة عن *Website Services* و*Dynamic Pricing*: لا يتغير شيء في الموقع العام أو الحجز حتى يتم ربطها في خطوة لاحقة.
@@ -293,6 +297,8 @@ npm run build
 * **الخدمات:** **+ Add service**، فلترة القائمة، الترتيب بالأسهم، الضغط على **Active/Inactive** لتفعيل خدمة أو إيقافها، **Activate all / Deactivate all** لكل القسم، **Duplicate** (النسخة غير مفعّلة)، **Delete**. نموذج الخدمة فيه الأسماء والرابط والوصف المختصر والكامل وعنوان فرعي داخل القسم (مثل «خدمات المصاعد») والأيقونة والصورة و**معرض صور** حتى 20 صورة وحقول SEO و**الأقسام**: حدّد أكثر من قسم لتظهر نفس الخدمة في أكثر من قسم.
 * **البحث:** مربع البحث أعلى الصفحة يبحث في كل الخدمات بالاسم الإنجليزي أو العربي أو الرابط.
 * **استيراد وتصدير (CSV):** **Export services (CSV)** ينزّل كل الخدمات. عدّل الملف في Excel (احفظه *CSV UTF-8*) ثم **Import services (CSV)**: تُطابَق الخدمات بالـ*slug* (تُحدَّث) أو تُضاف إن كانت جديدة، ولا يُحذف شيء أبداً. عمود `category` يحمل قسماً أو أكثر (الرابط أو الرقم أو الاسم الإنجليزي) مفصولة بـ `|` والأول هو الأساسي؛ القسم غير المعروف يتجاوز السطر ويظهر في التقرير برقم السطر. المطلوب فقط `category` و`name_en` و`name_ar`.
+* **إنشاء صفحات الموقع:** زر **Create website pages** يعمل **صفحة مسودة لكل قسم ولكل خدمة ليس لها صفحة** (31 صفحة قسم و718 صفحة خدمة للدليل الرئيسي) دفعة واحدة. صفحة القسم في أعلى الشجرة وتحتها خدماته (**Website ← Page Structure**)؛ وصفحة القسم تعرض خدماتها المنشورة تلقائياً (بلوك *Sub-pages list*)، وصفحة الخدمة فيها العنوان ونص قصير باللغتين وزر الحجز وبيانات SEO من الدليل (أو مولّدة). لا يرى الزوار أي شيء قبل **نشر** الصفحة، ويمكنك تعديل أي صفحة أولاً. الضغط على الزر مرة أخرى يضيف الناقص فقط. الخدمة الموجودة في عدة أقسام لها صفحة واحدة تحت أول قسم. عنوان الصفحة كلمة واحدة متصلة مثل `/split-ac-cleaning` (رابط الدليل).
+* **في القائمة:** بعد النشر تظهر صفحات الأقسام داخل قائمة **Services** في الشريط العلوي، وتفتح خدمات كل قسم المنشورة بجانبه (قائمة بثلاثة مستويات: الخدمات ← التكييف ← تنظيف مكيفات السبليت). إعداد **Navigation bar** في الصفحة بخيار **Under its parent page's entry** هو ما يفعل ذلك لصفحات الخدمات. تظهر الصفحات المنشورة فقط، فيمكنك النشر قسماً قسماً.
 * كل تغيير يُسجَّل في Audit Log.
 
 ### هيكل الصفحات (الموقع ← Page Structure)

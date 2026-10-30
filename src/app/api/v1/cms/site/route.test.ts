@@ -22,6 +22,12 @@ vi.mock("@/lib/prisma", () => ({
         { type: "page", menuParent: "", areaId: null, publishedVersion: { slug: "about-us", titleEn: "About", titleAr: "ع" } },
         { type: "page", menuParent: "h3", areaId: null, publishedVersion: { slug: "extras", titleEn: "Extras", titleAr: "ع" } },
         { type: "page", menuParent: "", areaId: null, publishedVersion: { slug: "services-in-dubai", titleEn: "Dubai", titleAr: "ع" } }, // already linked by hand
+        // A category page inside the Services dropdown, with its service pages nested below it (sorted by sortOrder), one orphan and one draft.
+        { id: "p1", type: "service", menuParent: "h3", parentId: null, sortOrder: 0, areaId: null, publishedVersion: { slug: "ac-hvac", titleEn: "AC & HVAC", titleAr: "ع" } },
+        { id: "p2", type: "service", menuParent: "parent", parentId: "p1", sortOrder: 1, areaId: null, publishedVersion: { slug: "ac-repair", titleEn: "AC Repair", titleAr: "ع" } },
+        { id: "p3", type: "service", menuParent: "parent", parentId: "p1", sortOrder: 0, areaId: null, publishedVersion: { slug: "ac-cleaning", titleEn: "AC Cleaning", titleAr: "ع" } },
+        { id: "p4", type: "service", menuParent: "parent", parentId: "p1", sortOrder: 2, areaId: null, publishedVersion: null },
+        { id: "p5", type: "service", menuParent: "parent", parentId: "not-in-menu", sortOrder: 0, areaId: null, publishedVersion: { slug: "orphan-page", titleEn: "Orphan", titleAr: "ع" } },
       ],
     },
     serviceArea: { findMany: async () => [{ slug: "dubai", nameEn: "Dubai", nameAr: "د", pages: [{ publishedVersion: { slug: "services-in-dubai" } }] }] },
@@ -38,7 +44,12 @@ describe("GET /api/v1/cms/site", () => {
     expect(areas.url).toBe("");
     expect(areas.children.map((c) => c.url)).toContain("/services-in-dubai");
     expect(areas.children.filter((c) => c.url === "/services-in-dubai")).toHaveLength(2); // area + the hand-added one: both kept, they are explicit
-    expect(header.find((m) => m.labelEn === "Services")!.children.map((c) => c.url)).toEqual(["/extras"]);
+    const services = header.find((m) => m.labelEn === "Services")!;
+    expect(services.children.map((c) => c.url)).toEqual(["/extras", "/ac-hvac"]);
+    // three levels: Services → category page → its published service pages, in tree order; drafts and orphans are left out
+    const category = services.children.find((c) => c.url === "/ac-hvac") as unknown as { children: { url: string }[] };
+    expect(category.children.map((c) => c.url)).toEqual(["/ac-cleaning", "/ac-repair"]);
+    expect(JSON.stringify(header)).not.toContain("orphan-page");
     expect(header.some((m) => m.url === "/about-us")).toBe(true);
     expect(header.some((m) => m.url === "/services-in-sharjah")).toBe(false); // a link to a draft page is hidden
     expect(header.filter((m) => m.url === "/services-in-dubai")).toHaveLength(0); // not duplicated at top level

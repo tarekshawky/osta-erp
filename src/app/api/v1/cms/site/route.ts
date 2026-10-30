@@ -19,7 +19,7 @@ export async function GET() {
     prisma.cmsPage.findMany({
       where: { status: "PUBLISHED", deletedAt: null, isHomepage: false, showInMenus: true, publishedVersion: { isNot: null } },
       orderBy: { createdAt: "asc" },
-      select: { type: true, menuParent: true, areaId: true, publishedVersion: { select: { slug: true, titleEn: true, titleAr: true } } },
+      select: { id: true, type: true, menuParent: true, parentId: true, sortOrder: true, areaId: true, publishedVersion: { select: { slug: true, titleEn: true, titleAr: true } } },
     }),
     // "Areas We Cover" follows the Service Areas screen: active areas show, inactive or deleted ones do not.
     prisma.serviceArea.findMany({
@@ -60,15 +60,41 @@ export async function GET() {
   // The other menus are plain link lists, so the special item means nothing there.
   for (const key of ["footer", "services", "locations"]) menus[key] = (menus[key] as NavItem[]).filter((m) => m.url !== AREAS_MENU_URL);
 
-  for (const { publishedVersion: v, menuParent, type } of menuPages) {
+  // Pages placed "under their parent page" (menuParent "parent") nest below the navigation entry of their parent page, so a category
+  // page's service pages form a third level. A page whose parent has no entry yet waits until it does (parents are handled first).
+  const entryByPage = new Map<string, NavItem>();
+  const nested: typeof menuPages = [];
+  for (const row of menuPages) {
+    const { publishedVersion: v, menuParent, type } = row;
     if (!v) continue;
+    if (menuParent === "parent") { nested.push(row); continue; }
     const url = `/${v.slug}`;
     if (hasUrl(header, url)) continue; // already linked by hand (or as an area), never twice
+    const entry = leaf(v.titleEn, v.titleAr, url);
     if (menuParent === "") {
-      if (type === "page") header.push(leaf(v.titleEn, v.titleAr, url));
+      if (type !== "page" && type !== "service") continue;
+      header.push(entry);
     } else {
       const parent = menuParent === "areas" ? areasMenu : headerById.get(menuParent);
-      parent?.children.push(leaf(v.titleEn, v.titleAr, url));
+      if (!parent) continue;
+      parent.children.push(entry);
+    }
+    entryByPage.set(row.id, entry);
+  }
+  nested.sort((x, y) => x.sortOrder - y.sortOrder);
+  for (let progress = true; progress && nested.length; ) {
+    progress = false;
+    for (let i = 0; i < nested.length; i++) {
+      const row = nested[i];
+      const parentEntry = row.parentId ? entryByPage.get(row.parentId) : undefined;
+      if (!parentEntry) continue;
+      nested.splice(i--, 1);
+      progress = true;
+      const url = `/${row.publishedVersion!.slug}`;
+      if (hasUrl(header, url)) continue;
+      const entry = leaf(row.publishedVersion!.titleEn, row.publishedVersion!.titleAr, url);
+      parentEntry.children.push(entry);
+      entryByPage.set(row.id, entry);
     }
   }
   // Never link visitors to a page that is still a draft (it would be "page not found").
