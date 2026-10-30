@@ -1945,3 +1945,73 @@ model JobSettings {
   areas            Json     @default("[]")
   updatedAt        DateTime @default(now()) @updatedAt
 }
+
+// Service Catalogue (the master list of service categories and the services in them). Bilingual, SEO per item, and a service
+// can belong to several categories. Admin-managed; independent of the bookable services/pricing until they are linked.
+model CatalogCategory {
+  id                 String                   @id @default(cuid())
+  code               String?
+  slug               String                   @unique
+  nameEn             String
+  nameAr             String
+  shortDescriptionEn String                   @default("")
+  shortDescriptionAr String                   @default("")
+  descriptionEn      String                   @default("")
+  descriptionAr      String                   @default("")
+  iconName           String?
+  imageUrl           String?
+  sortOrder          Int                      @default(0)
+  active             Boolean                  @default(false)
+  seoTitleEn         String?
+  seoTitleAr         String?
+  seoDescriptionEn   String?
+  seoDescriptionAr   String?
+  seoKeywordsEn      String?
+  seoKeywordsAr      String?
+  canonicalUrl       String?
+  services           CatalogCategoryService[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @default(now()) @updatedAt
+
+  @@index([sortOrder])
+}
+
+model CatalogService {
+  id                 String                   @id @default(cuid())
+  slug               String                   @unique
+  nameEn             String
+  nameAr             String
+  shortDescriptionEn String                   @default("")
+  shortDescriptionAr String                   @default("")
+  descriptionEn      String                   @default("")
+  descriptionAr      String                   @default("")
+  // A sub-heading inside its category (for example "A. Elevator Services").
+  groupEn            String?
+  groupAr            String?
+  iconName           String?
+  imageUrl           String?
+  gallery            Json                     @default("[]")
+  active             Boolean                  @default(false)
+  seoTitleEn         String?
+  seoTitleAr         String?
+  seoDescriptionEn   String?
+  seoDescriptionAr   String?
+  seoKeywordsEn      String?
+  seoKeywordsAr      String?
+  canonicalUrl       String?
+  categories         CatalogCategoryService[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @default(now()) @updatedAt
+}
+
+model CatalogCategoryService {
+  categoryId String
+  category   CatalogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  serviceId  String
+  service    CatalogService  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  sortOrder  Int             @default(0)
+
+  @@id([categoryId, serviceId])
+  @@index([categoryId, sortOrder])
+  @@index([serviceId])
+}

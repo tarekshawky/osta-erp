@@ -19,6 +19,7 @@ export const ADMIN_SECTIONS = [
   { key: "/admin/marketing", label: "Marketing" },
   { key: "/admin/blog", label: "Blog" },
   { key: "/admin/services", label: "Website Services" },
+  { key: "/admin/catalog", label: "Service Catalogue" },
   { key: "/admin/website", label: "Website" },
   { key: "/admin/home-sections", label: "Homepage Sections" },
   { key: "/admin/pricing", label: "Dynamic Pricing" },

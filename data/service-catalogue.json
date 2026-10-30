@@ -1,0 +1,5416 @@
+[
+ {
+  "code": "01",
+  "nameEn": "Air Conditioning & HVAC Services",
+  "nameAr": "خدمات التكييف والتبريد",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Split AC Cleaning",
+    "nameAr": "تنظيف مكيفات السبليت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Duct AC Cleaning",
+    "nameAr": "تنظيف مكيفات الدكت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Central AC Cleaning",
+    "nameAr": "تنظيف المكيفات المركزية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "AC Filter Cleaning",
+    "nameAr": "تنظيف فلاتر المكيفات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Indoor AC Unit Cleaning",
+    "nameAr": "تنظيف الوحدة الداخلية للمكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Outdoor AC Unit Cleaning",
+    "nameAr": "تنظيف الوحدة الخارجية للمكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Evaporator Coil Cleaning",
+    "nameAr": "تنظيف كويل الوحدة الداخلية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Condenser Coil Cleaning",
+    "nameAr": "تنظيف كويل الوحدة الخارجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "AC Vent Cleaning",
+    "nameAr": "تنظيف فتحات ومخارج الهواء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Air Duct Cleaning",
+    "nameAr": "تنظيف مجاري الهواء والدكت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Air Duct Sanitization",
+    "nameAr": "تعقيم مجاري الهواء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "AC Drain Pan Cleaning",
+    "nameAr": "تنظيف صواني تصريف المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "AC Drain Line Cleaning",
+    "nameAr": "تنظيف خطوط تصريف مياه المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "AC Preventive Maintenance",
+    "nameAr": "الصيانة الوقائية للمكيفات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "AC Performance Inspection",
+    "nameAr": "فحص كفاءة وأداء المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "AC Pre-Summer Maintenance",
+    "nameAr": "صيانة المكيفات قبل الصيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Split AC Repair",
+    "nameAr": "إصلاح مكيفات السبليت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Duct AC Repair",
+    "nameAr": "إصلاح مكيفات الدكت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Central AC Repair",
+    "nameAr": "إصلاح المكيفات المركزية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "AC Not Cooling Repair",
+    "nameAr": "إصلاح ضعف تبريد المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "AC Not Working Repair",
+    "nameAr": "إصلاح توقف المكيف عن العمل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "AC Water Leakage Repair",
+    "nameAr": "إصلاح تنقيط وتسريب مياه المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "AC Noise & Vibration Repair",
+    "nameAr": "إصلاح أصوات واهتزازات المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "AC Freezing Problem Repair",
+    "nameAr": "إصلاح مشكلة تجمد المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 25,
+    "nameEn": "AC Weak Airflow Repair",
+    "nameAr": "إصلاح ضعف تدفق الهواء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 26,
+    "nameEn": "AC Thermostat Repair",
+    "nameAr": "إصلاح الثرموستات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 27,
+    "nameEn": "AC PCB Board Repair",
+    "nameAr": "إصلاح كارتة المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 28,
+    "nameEn": "AC PCB Board Replacement",
+    "nameAr": "تغيير كارتة المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 29,
+    "nameEn": "AC Compressor Replacement",
+    "nameAr": "تغيير كمبروسر المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 30,
+    "nameEn": "AC Fan Motor Repair",
+    "nameAr": "إصلاح موتور مروحة المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 31,
+    "nameEn": "AC Fan Motor Replacement",
+    "nameAr": "تغيير موتور المروحة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 32,
+    "nameEn": "AC Temperature Sensor Repair",
+    "nameAr": "إصلاح حساس الحرارة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 33,
+    "nameEn": "AC Remote Control Repair",
+    "nameAr": "إصلاح مشاكل الريموت والتحكم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 34,
+    "nameEn": "AC Electrical Fault Repair",
+    "nameAr": "إصلاح أعطال كهرباء المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 35,
+    "nameEn": "AC Refrigerant Leak Detection",
+    "nameAr": "كشف تسريب غاز التبريد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 36,
+    "nameEn": "AC Refrigerant Gas Refilling",
+    "nameAr": "تعبئة غاز المكيف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 37,
+    "nameEn": "R22 Gas Refilling",
+    "nameAr": "تعبئة غاز R22",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 38,
+    "nameEn": "R410A Gas Refilling",
+    "nameAr": "تعبئة غاز R410A",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 39,
+    "nameEn": "R32 Gas Refilling",
+    "nameAr": "تعبئة غاز R32",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 40,
+    "nameEn": "Split AC Installation",
+    "nameAr": "تركيب مكيفات السبليت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 41,
+    "nameEn": "Duct AC Installation",
+    "nameAr": "تركيب مكيفات الدكت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 42,
+    "nameEn": "Central AC Installation",
+    "nameAr": "تركيب المكيفات المركزية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 43,
+    "nameEn": "AC Dismantling & Reinstallation",
+    "nameAr": "فك ونقل وإعادة تركيب المكيفات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 44,
+    "nameEn": "Old AC Replacement",
+    "nameAr": "استبدال المكيفات القديمة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 45,
+    "nameEn": "Copper Pipe Installation",
+    "nameAr": "تمديد مواسير النحاس",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 46,
+    "nameEn": "AC Copper Pipe Insulation",
+    "nameAr": "عزل مواسير التكييف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 47,
+    "nameEn": "AC Drain Pump Installation",
+    "nameAr": "تركيب مضخات تصريف المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 48,
+    "nameEn": "Smart Thermostat Installation",
+    "nameAr": "تركيب ثرموستات ذكي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 49,
+    "nameEn": "AC Control System Installation",
+    "nameAr": "تركيب أنظمة التحكم بالمكيفات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 50,
+    "nameEn": "Airflow Balancing",
+    "nameAr": "موازنة تدفق الهواء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 51,
+    "nameEn": "Refrigerant Pressure Testing",
+    "nameAr": "فحص ضغط غاز التبريد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 52,
+    "nameEn": "Package Unit Maintenance",
+    "nameAr": "صيانة وحدات الباكج",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 53,
+    "nameEn": "VRF & VRV System Maintenance",
+    "nameAr": "صيانة أنظمة VRF وVRV",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 54,
+    "nameEn": "AHU & FAHU Maintenance",
+    "nameAr": "صيانة وحدات AHU وFAHU",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 55,
+    "nameEn": "Ventilation Fan Maintenance",
+    "nameAr": "صيانة مراوح التهوية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 56,
+    "nameEn": "Exhaust Fan Installation",
+    "nameAr": "تركيب مراوح الشفط",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 57,
+    "nameEn": "Ventilation System Installation",
+    "nameAr": "تركيب أنظمة التهوية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 58,
+    "nameEn": "Commercial Refrigeration Maintenance",
+    "nameAr": "صيانة أنظمة التبريد التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 59,
+    "nameEn": "Annual AC Maintenance Contracts",
+    "nameAr": "عقود صيانة التكييف السنوية",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "02",
+  "nameEn": "Plumbing & Sanitary Services",
+  "nameAr": "خدمات السباكة والصحي",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Water Tank Cleaning",
+    "nameAr": "تنظيف وغسيل خزانات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Water Tank Disinfection",
+    "nameAr": "تعقيم خزانات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Water Tank Inspection",
+    "nameAr": "فحص خزانات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Water Tank Leakage Repair",
+    "nameAr": "إصلاح تسريب خزانات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Water Tank Installation",
+    "nameAr": "تركيب خزانات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Water Tank Float Valve Replacement",
+    "nameAr": "تغيير عوامة الخزان",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Water Float Valve Repair",
+    "nameAr": "إصلاح عوامات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Underground & Rooftop Tank Cleaning",
+    "nameAr": "تنظيف خزانات السطح والأرضية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Electric Water Heater Repair",
+    "nameAr": "إصلاح السخانات الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Water Heater Installation",
+    "nameAr": "تركيب سخانات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Water Heater Replacement",
+    "nameAr": "تغيير سخانات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Central Water Heater Maintenance",
+    "nameAr": "صيانة السخانات المركزية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Water Heater Thermostat Replacement",
+    "nameAr": "تغيير ثرموستات السخان",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Water Heater Heating Element Replacement",
+    "nameAr": "تغيير هيتر السخان",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Water Heater Leakage Repair",
+    "nameAr": "إصلاح تسريب السخان",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Water Heater Not Heating Repair",
+    "nameAr": "إصلاح ضعف تسخين المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Hot Water Supply Repair",
+    "nameAr": "إصلاح انقطاع المياه الساخنة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Kitchen Sink Unblocking",
+    "nameAr": "تسليك أحواض المطبخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Bathroom Sink Unblocking",
+    "nameAr": "تسليك أحواض الحمام",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Floor Drain Unblocking",
+    "nameAr": "تسليك البالوعات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Sewer Pipe Unblocking",
+    "nameAr": "تسليك مواسير الصرف الصحي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Toilet Unblocking",
+    "nameAr": "تسليك انسداد المراحيض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "Bathroom Odor Removal",
+    "nameAr": "إزالة الروائح الكريهة من الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "Sewer Odor Detection",
+    "nameAr": "كشف أسباب روائح الصرف الصحي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 25,
+    "nameEn": "Water Pipe Leakage Repair",
+    "nameAr": "إصلاح تسريب مواسير المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 26,
+    "nameEn": "Water Leak Detection",
+    "nameAr": "كشف تسربات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 27,
+    "nameEn": "Non-Destructive Leak Detection",
+    "nameAr": "كشف التسربات بدون تكسير",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 28,
+    "nameEn": "Damaged Water Pipe Replacement",
+    "nameAr": "تغيير مواسير المياه التالفة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 29,
+    "nameEn": "New Water Pipeline Installation",
+    "nameAr": "تمديد خطوط المياه الجديدة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 30,
+    "nameEn": "Drainage Pipe Leakage Repair",
+    "nameAr": "إصلاح تسريب مواسير الصرف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 31,
+    "nameEn": "Water Mixer Installation",
+    "nameAr": "تركيب خلاطات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 32,
+    "nameEn": "Basin Mixer Replacement",
+    "nameAr": "تغيير خلاطات الأحواض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 33,
+    "nameEn": "Shower Installation",
+    "nameAr": "تركيب الدش",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 34,
+    "nameEn": "Bidet Sprayer Installation",
+    "nameAr": "تركيب الشطافات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 35,
+    "nameEn": "Bathroom Accessories Installation",
+    "nameAr": "تركيب إكسسوارات الحمام",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 36,
+    "nameEn": "Kitchen Accessories Installation",
+    "nameAr": "تركيب إكسسوارات المطبخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 37,
+    "nameEn": "Wash Basin Installation",
+    "nameAr": "تركيب أحواض الغسيل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 38,
+    "nameEn": "Bathroom Basin Replacement",
+    "nameAr": "تغيير أحواض الحمام",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 39,
+    "nameEn": "Kitchen Sink Replacement",
+    "nameAr": "تغيير أحواض المطبخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 40,
+    "nameEn": "Faucet Leakage Repair",
+    "nameAr": "إصلاح تسريب الحنفيات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 41,
+    "nameEn": "Water Valve Replacement",
+    "nameAr": "تغيير محابس المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 42,
+    "nameEn": "Main Water Valve Installation",
+    "nameAr": "تركيب المحابس الرئيسية والفرعية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 43,
+    "nameEn": "Water Filter Installation",
+    "nameAr": "تركيب فلاتر المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 44,
+    "nameEn": "Water Filter Maintenance",
+    "nameAr": "صيانة فلاتر المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 45,
+    "nameEn": "Water Purification System Installation",
+    "nameAr": "تركيب أنظمة تنقية المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 46,
+    "nameEn": "Low Water Pressure Repair",
+    "nameAr": "إصلاح ضعف ضغط المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 47,
+    "nameEn": "Water Pump Installation",
+    "nameAr": "تركيب مضخات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 48,
+    "nameEn": "Water Pump Repair",
+    "nameAr": "إصلاح مضخات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 49,
+    "nameEn": "Water Pump Replacement",
+    "nameAr": "تغيير مضخات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 50,
+    "nameEn": "Water Pressure Booster Installation",
+    "nameAr": "تركيب مضخات تقوية الضغط",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 51,
+    "nameEn": "Sewage Pump Maintenance",
+    "nameAr": "صيانة مضخات الصرف الصحي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 52,
+    "nameEn": "Toilet Flush Tank Repair",
+    "nameAr": "إصلاح عوامة وسيفون المرحاض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 53,
+    "nameEn": "Toilet Flush Mechanism Replacement",
+    "nameAr": "تغيير نظام طرد المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 54,
+    "nameEn": "Toilet Installation & Replacement",
+    "nameAr": "تركيب وتغيير المراحيض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 55,
+    "nameEn": "Handheld Bidet Installation",
+    "nameAr": "تركيب شطاف يدوي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 56,
+    "nameEn": "Bathtub Installation",
+    "nameAr": "تركيب البانيوهات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 57,
+    "nameEn": "Shower Cabin Installation",
+    "nameAr": "تركيب كبائن الشاور",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 58,
+    "nameEn": "Floor Drain Installation",
+    "nameAr": "تركيب مصارف الأرضيات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 59,
+    "nameEn": "Drain Cover Replacement",
+    "nameAr": "تغيير أغطية البالوعات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 60,
+    "nameEn": "Bathroom & Ceiling Water Leakage Repair",
+    "nameAr": "إصلاح تسريب المياه من الحمام والسقف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 61,
+    "nameEn": "Plumbing-Related Dampness Treatment",
+    "nameAr": "معالجة الرطوبة الناتجة عن السباكة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 62,
+    "nameEn": "Building Water & Drainage Network Maintenance",
+    "nameAr": "صيانة شبكات المياه والصرف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 63,
+    "nameEn": "Annual Plumbing Maintenance Contracts",
+    "nameAr": "عقود صيانة السباكة",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "03",
+  "nameEn": "Electrical Services",
+  "nameAr": "خدمات الكهرباء",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Residential Electrical Repair",
+    "nameAr": "إصلاح الأعطال الكهربائية المنزلية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Electrical Fault Detection",
+    "nameAr": "كشف الأعطال الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Power Outage Repair",
+    "nameAr": "إصلاح انقطاع الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Circuit Breaker Repair",
+    "nameAr": "إصلاح القواطع الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "MCB Replacement",
+    "nameAr": "تغيير قواطع الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "RCCB & ELCB Installation",
+    "nameAr": "تركيب قواطع الحماية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Electrical Distribution Board Repair",
+    "nameAr": "إصلاح لوحات توزيع الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Electrical Panel Installation",
+    "nameAr": "تركيب لوحات الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "DB Panel Maintenance",
+    "nameAr": "صيانة لوحات الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Electrical Load Inspection",
+    "nameAr": "فحص الأحمال الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Electrical Short Circuit Repair",
+    "nameAr": "إصلاح التماس الكهربائي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Electrical Leakage Detection",
+    "nameAr": "كشف تسريب الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Electrical Earthing Inspection",
+    "nameAr": "فحص نظام التأريض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Earthing System Repair",
+    "nameAr": "إصلاح نظام التأريض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Electrical Wiring Installation",
+    "nameAr": "تمديد الأسلاك الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Damaged Wiring Replacement",
+    "nameAr": "تغيير الأسلاك التالفة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "New Electrical Installation",
+    "nameAr": "تأسيس الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Socket Installation",
+    "nameAr": "تركيب الأفياش والمقابس",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Electrical Switch Replacement",
+    "nameAr": "تغيير مفاتيح الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Smart Switch Installation",
+    "nameAr": "تركيب المفاتيح الذكية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Indoor Lighting Installation",
+    "nameAr": "تركيب الإضاءة الداخلية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Outdoor Lighting Installation",
+    "nameAr": "تركيب الإضاءة الخارجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "Spot Light Installation",
+    "nameAr": "تركيب السبوت لايت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "LED Lighting Installation",
+    "nameAr": "تركيب إضاءة LED",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 25,
+    "nameEn": "Chandelier Installation",
+    "nameAr": "تركيب الثريات والنجف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 26,
+    "nameEn": "Concealed Lighting Installation",
+    "nameAr": "تركيب الإضاءة المخفية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 27,
+    "nameEn": "Lighting Fault Repair",
+    "nameAr": "إصلاح أعطال الإنارة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 28,
+    "nameEn": "Electric Fan Repair",
+    "nameAr": "إصلاح المراوح الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 29,
+    "nameEn": "Ceiling Fan Installation",
+    "nameAr": "تركيب مراوح السقف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 30,
+    "nameEn": "Wall Fan Installation",
+    "nameAr": "تركيب مراوح الحائط",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 31,
+    "nameEn": "Exhaust Fan Installation",
+    "nameAr": "تركيب شفاطات الهواء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 32,
+    "nameEn": "Motion Sensor Installation",
+    "nameAr": "تركيب حساسات الحركة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 33,
+    "nameEn": "Lighting Sensor Installation",
+    "nameAr": "تركيب حساسات الإضاءة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 34,
+    "nameEn": "Electrical Timer Installation",
+    "nameAr": "تركيب مؤقتات الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 35,
+    "nameEn": "Water Heater Electrical Repair",
+    "nameAr": "إصلاح أعطال كهرباء السخانات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 36,
+    "nameEn": "Heavy-Duty Power Socket Installation",
+    "nameAr": "تركيب مقابس الأجهزة الثقيلة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 37,
+    "nameEn": "AC Electrical Wiring",
+    "nameAr": "تمديد كهرباء المكيفات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 38,
+    "nameEn": "AC Isolator Switch Installation",
+    "nameAr": "تركيب مفاتيح عزل المكيفات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 39,
+    "nameEn": "UPS System Installation",
+    "nameAr": "تركيب أنظمة UPS",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 40,
+    "nameEn": "Commercial Electrical Maintenance",
+    "nameAr": "صيانة كهرباء المكاتب والمحلات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 41,
+    "nameEn": "Building Electrical Maintenance",
+    "nameAr": "صيانة الأنظمة الكهربائية للمباني",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 42,
+    "nameEn": "Annual Electrical Maintenance Contracts",
+    "nameAr": "عقود الصيانة الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "04",
+  "nameEn": "Painting Services",
+  "nameAr": "خدمات الدهانات",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Apartment Painting",
+    "nameAr": "دهان الشقق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Villa Painting",
+    "nameAr": "دهان الفلل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Office Painting",
+    "nameAr": "دهان المكاتب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Shop Painting",
+    "nameAr": "دهان المحلات التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Restaurant Painting",
+    "nameAr": "دهان المطاعم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Interior Wall Painting",
+    "nameAr": "دهان الجدران الداخلية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Exterior Wall Painting",
+    "nameAr": "دهان الواجهات الخارجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Ceiling Painting",
+    "nameAr": "دهان الأسقف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Wooden Door Painting",
+    "nameAr": "دهان الأبواب الخشبية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Metal Door Painting",
+    "nameAr": "دهان الأبواب المعدنية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Metal & Fence Painting",
+    "nameAr": "دهان الحديد والسياج",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Epoxy Floor Coating",
+    "nameAr": "دهان الإيبوكسي للأرضيات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Decorative Painting",
+    "nameAr": "الدهانات الديكورية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Decorative Texture Painting",
+    "nameAr": "دهانات التأثيرات الديكورية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Spray Painting",
+    "nameAr": "الدهان بالرش",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Move-In & Move-Out Painting",
+    "nameAr": "دهان الشقق قبل التسليم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Rental Property Repainting",
+    "nameAr": "إعادة دهان الشقق بعد الإخلاء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Wall Paint Peeling Repair",
+    "nameAr": "إصلاح تقشير الدهان",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Wall Crack Repair",
+    "nameAr": "معالجة تشققات الجدران",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Ceiling Crack Repair",
+    "nameAr": "معالجة شروخ الأسقف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Dampness Treatment Before Painting",
+    "nameAr": "معالجة الرطوبة قبل الدهان",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Old Paint Removal",
+    "nameAr": "إزالة الدهان القديم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "Wall Preparation & Surface Treatment",
+    "nameAr": "تجهيز الجدران للدهان",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "Wall Putty & Sanding",
+    "nameAr": "معجون وصنفرة الجدران",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 25,
+    "nameEn": "Moisture-Resistant Painting",
+    "nameAr": "دهانات مقاومة للرطوبة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 26,
+    "nameEn": "Heat-Resistant Painting",
+    "nameAr": "دهانات مقاومة للحرارة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 27,
+    "nameEn": "Apartment & Villa Repainting",
+    "nameAr": "تجديد دهانات الشقق والفلل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 28,
+    "nameEn": "Periodic Painting Maintenance",
+    "nameAr": "صيانة وتجديد الدهانات",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "05",
+  "nameEn": "Gypsum Board & Ceiling Services",
+  "nameAr": "خدمات الجبس بورد والأسقف",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Gypsum Board Ceiling Installation",
+    "nameAr": "تركيب أسقف جبس بورد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Decorative Gypsum Board Installation",
+    "nameAr": "تركيب ديكورات جبس بورد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Gypsum Board Partition Installation",
+    "nameAr": "تركيب قواطع جبس بورد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Gypsum Room Partitioning",
+    "nameAr": "تقسيم الغرف بالجبس بورد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Suspended Ceiling Installation",
+    "nameAr": "تركيب أسقف مستعارة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "False Ceiling Installation",
+    "nameAr": "تركيب أسقف معلقة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Gypsum Board Repair",
+    "nameAr": "إصلاح الجبس بورد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Gypsum Crack Repair",
+    "nameAr": "إصلاح تشققات الجبس",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Ceiling Access Panel Installation",
+    "nameAr": "تركيب فتحات الصيانة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "AC Diffuser Opening Installation",
+    "nameAr": "تجهيز فتحات التكييف بالجبس",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Hidden Lighting Cove Installation",
+    "nameAr": "تركيب فتحات الإضاءة المخفية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Decorative Ceiling Design & Installation",
+    "nameAr": "تصميم وتنفيذ ديكورات الأسقف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Gypsum Cornice Installation",
+    "nameAr": "تركيب كورنيش جبس",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Decorative Wall Mouldings",
+    "nameAr": "تركيب ديكورات جدارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Gypsum Ceiling Insulation",
+    "nameAr": "عزل الأسقف الجبسية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Damaged Gypsum Board Replacement",
+    "nameAr": "تغيير ألواح الجبس التالفة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Gypsum Board Painting & Finishing",
+    "nameAr": "دهان وتشطيب الجبس بورد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Suspended Ceiling Maintenance",
+    "nameAr": "صيانة الأسقف المستعارة",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "06",
+  "nameEn": "Carpentry & Doors Services",
+  "nameAr": "خدمات النجارة والأبواب",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Wooden Door Repair",
+    "nameAr": "إصلاح الأبواب الخشبية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Wooden Door Installation",
+    "nameAr": "تركيب الأبواب الخشبية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Door Hinge Replacement",
+    "nameAr": "تغيير مفصلات الأبواب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Door Lock Repair",
+    "nameAr": "إصلاح أقفال الأبواب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Door Lock Installation",
+    "nameAr": "تركيب أقفال جديدة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Door Handle Replacement",
+    "nameAr": "تغيير مقابض الأبواب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Bathroom Door Repair",
+    "nameAr": "إصلاح أبواب الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Kitchen Door Repair",
+    "nameAr": "إصلاح أبواب المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Sliding Door Repair",
+    "nameAr": "إصلاح الأبواب المنزلقة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Sliding Door Installation",
+    "nameAr": "تركيب أبواب السحب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Door Frame Installation",
+    "nameAr": "تركيب إطارات الأبواب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Misaligned Door Adjustment",
+    "nameAr": "ضبط الأبواب التي لا تغلق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Wardrobe Repair",
+    "nameAr": "إصلاح الدواليب والخزائن",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Wardrobe Installation",
+    "nameAr": "تركيب خزائن الملابس",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Wooden Kitchen Installation",
+    "nameAr": "تركيب المطابخ الخشبية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Kitchen Cabinet Modification",
+    "nameAr": "تعديل وحدات المطبخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Kitchen Drawer Repair",
+    "nameAr": "إصلاح أدراج المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Cabinet Hinge Replacement",
+    "nameAr": "تغيير مفصلات الخزائن",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Wooden Shelf Installation",
+    "nameAr": "تركيب أرفف خشبية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "TV Unit Installation",
+    "nameAr": "تركيب وحدات التلفزيون",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Furniture Assembly",
+    "nameAr": "تجميع الأثاث الجاهز",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Furniture Repair",
+    "nameAr": "إصلاح الأثاث المنزلي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "Table & Chair Repair",
+    "nameAr": "إصلاح الطاولات والكراسي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "Curtain & Curtain Rod Installation",
+    "nameAr": "تركيب الستائر وقضبانها",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 25,
+    "nameEn": "Storage Unit Installation",
+    "nameAr": "تركيب وحدات التخزين",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 26,
+    "nameEn": "Wooden Work Maintenance",
+    "nameAr": "صيانة الأعمال الخشبية",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "07",
+  "nameEn": "Tiling & Flooring Services",
+  "nameAr": "خدمات البلاط والسيراميك والأرضيات",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Ceramic Tile Installation",
+    "nameAr": "تركيب السيراميك",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Porcelain Tile Installation",
+    "nameAr": "تركيب البورسلان",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Marble Installation",
+    "nameAr": "تركيب الرخام",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Granite Installation",
+    "nameAr": "تركيب الجرانيت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Damaged Tile Replacement",
+    "nameAr": "تغيير البلاط التالف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Loose Tile Repair",
+    "nameAr": "إصلاح البلاط المفكوك",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Tile Crack Repair",
+    "nameAr": "إصلاح تشققات السيراميك",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Tile Grouting",
+    "nameAr": "تعبئة فواصل البلاط",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Tile Grout Cleaning",
+    "nameAr": "تنظيف فواصل البلاط",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Silicone Joint Replacement",
+    "nameAr": "تغيير فواصل السيليكون",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Vinyl Flooring Installation",
+    "nameAr": "تركيب أرضيات الفينيل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "SPC Flooring Installation",
+    "nameAr": "تركيب أرضيات SPC",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Parquet Flooring Installation",
+    "nameAr": "تركيب أرضيات الباركيه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Laminate Flooring Installation",
+    "nameAr": "تركيب أرضيات اللامينيت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Epoxy Flooring Installation",
+    "nameAr": "تركيب أرضيات الإيبوكسي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Marble Polishing",
+    "nameAr": "تلميع الأرضيات الرخامية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Marble Grinding",
+    "nameAr": "جلي الرخام",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Granite Polishing",
+    "nameAr": "تلميع الجرانيت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Floor Edge Repair",
+    "nameAr": "إصلاح حواف الأرضيات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Floor Skirting Installation",
+    "nameAr": "تركيب وزرات الأرضيات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Floor Leveling",
+    "nameAr": "تسوية الأرضيات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Sunken Tile Repair",
+    "nameAr": "إصلاح هبوط البلاط",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "Bathroom Floor Waterproofing",
+    "nameAr": "عزل أرضيات الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "Kitchen Floor Waterproofing",
+    "nameAr": "عزل أرضيات المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 25,
+    "nameEn": "Under-Tile Water Leakage Repair",
+    "nameAr": "إصلاح تسرب المياه أسفل البلاط",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "08",
+  "nameEn": "Waterproofing & Leak Detection Services",
+  "nameAr": "خدمات العزل وكشف التسربات",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Roof Waterproofing",
+    "nameAr": "عزل أسطح المباني ضد المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Villa Roof Waterproofing",
+    "nameAr": "عزل أسطح الفلل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Commercial Roof Waterproofing",
+    "nameAr": "عزل أسطح المباني التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Bathroom Waterproofing",
+    "nameAr": "عزل الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Kitchen Waterproofing",
+    "nameAr": "عزل المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Water Tank Waterproofing",
+    "nameAr": "عزل خزانات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Swimming Pool Waterproofing",
+    "nameAr": "عزل المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Balcony Waterproofing",
+    "nameAr": "عزل الشرفات والبلكونات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "External Wall Waterproofing",
+    "nameAr": "عزل الجدران الخارجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Foundation Waterproofing",
+    "nameAr": "عزل الأساسات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Roof Thermal Insulation",
+    "nameAr": "العزل الحراري للأسطح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Thermal Insulation Board Installation",
+    "nameAr": "تركيب ألواح العزل الحراري",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Water Pipe Insulation",
+    "nameAr": "عزل مواسير المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "AC Pipe Insulation",
+    "nameAr": "عزل مواسير التكييف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Air Duct Insulation",
+    "nameAr": "عزل الدكت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Water Leakage Detection",
+    "nameAr": "كشف تسربات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Electronic Leak Detection",
+    "nameAr": "كشف التسربات باستخدام الأجهزة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Thermal Leak Detection",
+    "nameAr": "كشف التسربات الحرارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Roof Leakage Detection",
+    "nameAr": "كشف تسربات الأسطح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Bathroom Leakage Detection",
+    "nameAr": "كشف تسربات الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Kitchen Leakage Detection",
+    "nameAr": "كشف تسربات المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Water Leakage Repair",
+    "nameAr": "إصلاح تسربات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "Ceiling Leakage Repair",
+    "nameAr": "إصلاح تسربات الأسقف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "Dampness & Mold Treatment",
+    "nameAr": "معالجة الرطوبة والعفن",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 25,
+    "nameEn": "Wall Leakage Repair",
+    "nameAr": "معالجة تسربات الجدران",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 26,
+    "nameEn": "Expansion Joint Repair",
+    "nameAr": "إصلاح فواصل التمدد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 27,
+    "nameEn": "Crack Sealing & Waterproofing",
+    "nameAr": "عزل الفواصل والشروخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 28,
+    "nameEn": "Old Waterproofing Replacement",
+    "nameAr": "إعادة عزل الأسطح القديمة",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "09",
+  "nameEn": "Cleaning Services",
+  "nameAr": "خدمات التنظيف",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Apartment Cleaning",
+    "nameAr": "تنظيف الشقق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Villa Cleaning",
+    "nameAr": "تنظيف الفلل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "House Cleaning",
+    "nameAr": "تنظيف المنازل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Office Cleaning",
+    "nameAr": "تنظيف المكاتب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Shop Cleaning",
+    "nameAr": "تنظيف المحلات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Restaurant Cleaning",
+    "nameAr": "تنظيف المطاعم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Commercial Building Cleaning",
+    "nameAr": "تنظيف المباني التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Deep Cleaning",
+    "nameAr": "التنظيف العميق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Move-In Cleaning",
+    "nameAr": "تنظيف قبل الانتقال للسكن",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Move-Out Cleaning",
+    "nameAr": "تنظيف بعد الإخلاء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Post-Construction Cleaning",
+    "nameAr": "تنظيف بعد التشطيب والبناء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Post-Renovation Cleaning",
+    "nameAr": "تنظيف بعد التجديدات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Pre-Handover Cleaning",
+    "nameAr": "تنظيف قبل تسليم العقار",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Kitchen Cleaning",
+    "nameAr": "تنظيف المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Bathroom Cleaning",
+    "nameAr": "تنظيف الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Floor Cleaning",
+    "nameAr": "تنظيف الأرضيات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Wall Cleaning",
+    "nameAr": "تنظيف الجدران",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Window & Glass Cleaning",
+    "nameAr": "تنظيف النوافذ والزجاج",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Glass Facade Cleaning",
+    "nameAr": "تنظيف الواجهات الزجاجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Door Cleaning",
+    "nameAr": "تنظيف الأبواب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Balcony Cleaning",
+    "nameAr": "تنظيف الشرفات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Corridor Cleaning",
+    "nameAr": "تنظيف الممرات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "Staircase Cleaning",
+    "nameAr": "تنظيف السلالم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "Elevator Interior Cleaning",
+    "nameAr": "تنظيف المصاعد من الداخل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 25,
+    "nameEn": "Furniture Cleaning",
+    "nameAr": "تنظيف الأثاث",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 26,
+    "nameEn": "Sofa & Upholstery Cleaning",
+    "nameAr": "تنظيف الكنب والمجالس",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 27,
+    "nameEn": "Mattress Cleaning",
+    "nameAr": "تنظيف المراتب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 28,
+    "nameEn": "Carpet Cleaning",
+    "nameAr": "تنظيف السجاد والموكيت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 29,
+    "nameEn": "Curtain Cleaning",
+    "nameAr": "تنظيف الستائر",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 30,
+    "nameEn": "Steam Cleaning",
+    "nameAr": "التنظيف بالبخار",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 31,
+    "nameEn": "Stain Removal",
+    "nameAr": "إزالة البقع الصعبة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 32,
+    "nameEn": "Furniture Odor Removal",
+    "nameAr": "إزالة الروائح من الأثاث",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 33,
+    "nameEn": "Grease & Kitchen Deep Cleaning",
+    "nameAr": "تنظيف المطابخ الدهنية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 34,
+    "nameEn": "Restaurant Hood Cleaning",
+    "nameAr": "تنظيف شفاطات المطاعم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 35,
+    "nameEn": "Water Tank Cleaning",
+    "nameAr": "تنظيف خزانات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 36,
+    "nameEn": "Swimming Pool Cleaning",
+    "nameAr": "تنظيف المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 37,
+    "nameEn": "Parking Area Cleaning",
+    "nameAr": "تنظيف مواقف السيارات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 38,
+    "nameEn": "Warehouse Cleaning",
+    "nameAr": "تنظيف المستودعات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 39,
+    "nameEn": "Building Periodic Cleaning",
+    "nameAr": "التنظيف الدوري للمباني",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 40,
+    "nameEn": "Hourly Cleaning Staff",
+    "nameAr": "توفير عمال نظافة بالساعة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 41,
+    "nameEn": "Monthly Cleaning Contracts",
+    "nameAr": "عقود التنظيف الشهرية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 42,
+    "nameEn": "Annual Cleaning Contracts",
+    "nameAr": "عقود التنظيف السنوية",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "10",
+  "nameEn": "Pest Control Services",
+  "nameAr": "خدمات مكافحة الحشرات والآفات",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Cockroach Control",
+    "nameAr": "مكافحة الصراصير",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Ant Control",
+    "nameAr": "مكافحة النمل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Termite Control",
+    "nameAr": "مكافحة النمل الأبيض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Bed Bug Control",
+    "nameAr": "مكافحة بق الفراش",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Flea Control",
+    "nameAr": "مكافحة البراغيث",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Mosquito Control",
+    "nameAr": "مكافحة البعوض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Fly Control",
+    "nameAr": "مكافحة الذباب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Rodent Control",
+    "nameAr": "مكافحة الفئران والقوارض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Spider Control",
+    "nameAr": "مكافحة العناكب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Flying Insect Control",
+    "nameAr": "مكافحة الحشرات الطائرة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Crawling Insect Control",
+    "nameAr": "مكافحة الحشرات الزاحفة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Residential Pest Spraying",
+    "nameAr": "رش المبيدات للمنازل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Villa Pest Control",
+    "nameAr": "مكافحة الحشرات للفلل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Office Pest Control",
+    "nameAr": "مكافحة الآفات للمكاتب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Restaurant Pest Control",
+    "nameAr": "مكافحة الآفات للمطاعم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Warehouse Pest Control",
+    "nameAr": "مكافحة آفات المستودعات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Wood Treatment Against Termites",
+    "nameAr": "معالجة الأخشاب ضد النمل الأبيض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Insect Trap Installation",
+    "nameAr": "تركيب مصائد الحشرات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Periodic Pest Control Programs",
+    "nameAr": "برامج مكافحة الآفات الدورية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Commercial Pest Control Contracts",
+    "nameAr": "عقود مكافحة الحشرات للمباني",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "11",
+  "nameEn": "Kitchen Maintenance Services",
+  "nameAr": "خدمات صيانة المطابخ",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Kitchen Cabinet Installation",
+    "nameAr": "تركيب وحدات المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Kitchen Cabinet Repair",
+    "nameAr": "إصلاح خزائن المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Kitchen Hinge Replacement",
+    "nameAr": "تغيير مفصلات الخزائن",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Kitchen Drawer Repair",
+    "nameAr": "إصلاح أدراج المطبخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Kitchen Countertop Installation",
+    "nameAr": "تركيب أسطح العمل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Marble Countertop Replacement",
+    "nameAr": "تغيير أسطح الرخام",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Kitchen Sink Installation",
+    "nameAr": "تركيب أحواض المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Kitchen Mixer Installation",
+    "nameAr": "تركيب خلاطات المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Kitchen Sink Unblocking",
+    "nameAr": "تسليك أحواض المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Kitchen Leakage Repair",
+    "nameAr": "إصلاح تسربات المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Kitchen Water Filter Installation",
+    "nameAr": "تركيب فلاتر المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Kitchen Hood Installation",
+    "nameAr": "تركيب شفاطات المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Kitchen Hood Cleaning",
+    "nameAr": "تنظيف شفاط المطبخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Kitchen Shelf Installation",
+    "nameAr": "تركيب أرفف المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Kitchen Lighting Installation",
+    "nameAr": "تركيب إضاءة المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Kitchen Renovation",
+    "nameAr": "تجديد المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Kitchen Silicone Replacement",
+    "nameAr": "تغيير سيليكون أسطح المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Kitchen Tile Installation",
+    "nameAr": "تركيب بلاط المطبخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Kitchen Tile Repair",
+    "nameAr": "إصلاح بلاط المطبخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Commercial Kitchen Maintenance",
+    "nameAr": "صيانة المطابخ التجارية",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "12",
+  "nameEn": "Bathroom Maintenance Services",
+  "nameAr": "خدمات صيانة الحمامات",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Bathroom Renovation",
+    "nameAr": "تجديد الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Bathroom Fixture Installation",
+    "nameAr": "تركيب أطقم الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Toilet Installation",
+    "nameAr": "تركيب المراحيض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Toilet Repair",
+    "nameAr": "إصلاح المراحيض",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Bathroom Basin Installation",
+    "nameAr": "تركيب أحواض الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Shower Cabin Installation",
+    "nameAr": "تركيب كبائن الشاور",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Shower Door Installation",
+    "nameAr": "تركيب أبواب الشاور",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Shower Mixer Installation",
+    "nameAr": "تركيب خلاطات الدش",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Bathroom Accessories Installation",
+    "nameAr": "تركيب إكسسوارات الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Bathroom Water Leakage Repair",
+    "nameAr": "إصلاح تسربات الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Bathroom Drain Unblocking",
+    "nameAr": "تسليك صرف الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Bathroom Odor Removal",
+    "nameAr": "إزالة الروائح الكريهة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Bathroom Silicone Replacement",
+    "nameAr": "تغيير سيليكون الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Bathroom Waterproofing",
+    "nameAr": "عزل الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Bathroom Tile Replacement",
+    "nameAr": "تغيير السيراميك",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Bathroom Mirror Installation",
+    "nameAr": "تركيب مرايا الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Bathroom Vanity Installation",
+    "nameAr": "تركيب وحدات مغاسل الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Bathroom Water Heater Installation",
+    "nameAr": "تركيب سخانات الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Bathroom Water Pressure Repair",
+    "nameAr": "إصلاح ضغط المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Complete Bathroom Maintenance",
+    "nameAr": "صيانة الحمامات بالكامل",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "13",
+  "nameEn": "Home Appliances Repair Services",
+  "nameAr": "خدمات صيانة الأجهزة المنزلية",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Washing Machine Repair",
+    "nameAr": "إصلاح الغسالات الأوتوماتيك",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Clothes Washer Repair",
+    "nameAr": "إصلاح غسالات الملابس",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Clothes Dryer Repair",
+    "nameAr": "إصلاح النشافات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Dishwasher Repair",
+    "nameAr": "إصلاح غسالات الصحون",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Refrigerator Repair",
+    "nameAr": "إصلاح الثلاجات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Freezer Repair",
+    "nameAr": "إصلاح الفريزرات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Deep Freezer Repair",
+    "nameAr": "إصلاح الديب فريزر",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Gas Oven Repair",
+    "nameAr": "إصلاح أفران الغاز",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Electric Oven Repair",
+    "nameAr": "إصلاح الأفران الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Microwave Repair",
+    "nameAr": "إصلاح الميكروويف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Gas Cooker Repair",
+    "nameAr": "إصلاح البوتاجازات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Kitchen Hood Repair",
+    "nameAr": "إصلاح الشفاطات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Water Dispenser Repair",
+    "nameAr": "إصلاح مبردات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Ice Maker Repair",
+    "nameAr": "إصلاح أجهزة صنع الثلج",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Vacuum Cleaner Repair",
+    "nameAr": "إصلاح المكانس الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Home Appliance Pump Repair",
+    "nameAr": "إصلاح مضخات الأجهزة المنزلية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Home Appliance Installation",
+    "nameAr": "تركيب الأجهزة المنزلية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Washing Machine Installation",
+    "nameAr": "تركيب الغسالات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Dishwasher Installation",
+    "nameAr": "تركيب غسالات الصحون",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Oven Installation",
+    "nameAr": "تركيب الأفران",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Refrigerator Installation",
+    "nameAr": "تركيب الثلاجات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Home Appliance Preventive Maintenance",
+    "nameAr": "صيانة الأجهزة المنزلية الدورية",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "14",
+  "nameEn": "Aluminum & Glass Services",
+  "nameAr": "خدمات الألمنيوم والزجاج",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Aluminum Window Installation",
+    "nameAr": "تركيب نوافذ الألمنيوم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Aluminum Window Repair",
+    "nameAr": "إصلاح نوافذ الألمنيوم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Window Hardware Replacement",
+    "nameAr": "تغيير إكسسوارات النوافذ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Sliding Window Repair",
+    "nameAr": "إصلاح النوافذ المنزلقة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Aluminum Door Installation",
+    "nameAr": "تركيب أبواب الألمنيوم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Aluminum Door Repair",
+    "nameAr": "إصلاح أبواب الألمنيوم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Glass Facade Installation",
+    "nameAr": "تركيب واجهات زجاجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Broken Glass Replacement",
+    "nameAr": "تغيير الزجاج المكسور",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Window Glass Installation",
+    "nameAr": "تركيب زجاج النوافذ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Mirror Installation",
+    "nameAr": "تركيب المرايا",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Glass Partition Installation",
+    "nameAr": "تركيب فواصل زجاجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Glass Shower Cabin Installation",
+    "nameAr": "تركيب كبائن شاور زجاجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Glass Door Installation",
+    "nameAr": "تركيب أبواب زجاجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Window Air Leakage Repair",
+    "nameAr": "إصلاح تسرب الهواء من النوافذ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Window Rubber Seal Replacement",
+    "nameAr": "تغيير ربل النوافذ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Insect Screen Installation",
+    "nameAr": "تركيب شبك الحشرات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Window Screen Repair",
+    "nameAr": "إصلاح شبك النوافذ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Aluminum Canopy Installation",
+    "nameAr": "تركيب مظلات الألمنيوم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Shopfront Glass Maintenance",
+    "nameAr": "صيانة واجهات المحلات الزجاجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Glass Silicone Sealing",
+    "nameAr": "تركيب سيليكون وعزل الزجاج",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "15",
+  "nameEn": "Roof, Exterior & Canopy Services",
+  "nameAr": "خدمات الأسطح والواجهات والمظلات",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Building Roof Maintenance",
+    "nameAr": "صيانة أسطح المباني",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Roof Crack Repair",
+    "nameAr": "إصلاح تشققات الأسطح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Roof Waterproofing",
+    "nameAr": "عزل الأسطح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Car Parking Shade Installation",
+    "nameAr": "تركيب مظلات السيارات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Garden Shade Installation",
+    "nameAr": "تركيب مظلات الحدائق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Villa Entrance Canopy Installation",
+    "nameAr": "تركيب مظلات مداخل الفلل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Pergola Installation",
+    "nameAr": "تركيب البرجولات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Privacy Screen Installation",
+    "nameAr": "تركيب السواتر",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Canopy Repair",
+    "nameAr": "إصلاح المظلات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Roof Cleaning",
+    "nameAr": "تنظيف الأسطح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Rain Gutter Cleaning",
+    "nameAr": "تنظيف مزاريب مياه الأمطار",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Rain Gutter Repair",
+    "nameAr": "إصلاح مزاريب الأسطح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Rain Gutter Installation",
+    "nameAr": "تركيب مزاريب جديدة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Building Facade Repair",
+    "nameAr": "إصلاح واجهات المباني",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Exterior Facade Painting",
+    "nameAr": "دهان الواجهات الخارجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Exterior Crack Repair",
+    "nameAr": "إصلاح التشققات الخارجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Facade Cladding Installation",
+    "nameAr": "تركيب كسوة الواجهات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Commercial Facade Maintenance",
+    "nameAr": "صيانة الواجهات التجارية",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "16",
+  "nameEn": "Automatic Doors & Metal Doors",
+  "nameAr": "خدمات الأبواب الأوتوماتيكية والمعدنية",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Garage Door Installation",
+    "nameAr": "تركيب أبواب الجراج",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Garage Door Repair",
+    "nameAr": "إصلاح أبواب الجراج",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Automatic Garage Door Maintenance",
+    "nameAr": "صيانة أبواب الجراج الأوتوماتيكية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Door Motor Installation",
+    "nameAr": "تركيب محركات الأبواب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Door Motor Repair",
+    "nameAr": "إصلاح محركات الأبواب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Sliding Automatic Door Maintenance",
+    "nameAr": "صيانة الأبواب المنزلقة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Electric Gate Installation",
+    "nameAr": "تركيب بوابات كهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Electric Gate Repair",
+    "nameAr": "إصلاح البوابات الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Shop Door Maintenance",
+    "nameAr": "صيانة أبواب المحلات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Emergency Door Repair",
+    "nameAr": "إصلاح أبواب الطوارئ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Hydraulic Door Closer Installation",
+    "nameAr": "تركيب مفصلات هيدروليكية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Door Closing System Repair",
+    "nameAr": "إصلاح أنظمة إغلاق الأبواب",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "17",
+  "nameEn": "Landscaping & Irrigation Services",
+  "nameAr": "خدمات الحدائق والري",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Garden Landscaping",
+    "nameAr": "تنسيق الحدائق المنزلية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Garden Maintenance",
+    "nameAr": "صيانة الحدائق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Tree Trimming",
+    "nameAr": "قص وتقليم الأشجار",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Shrub Trimming",
+    "nameAr": "تقليم الشجيرات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Planting Services",
+    "nameAr": "زراعة النباتات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Natural Grass Installation",
+    "nameAr": "تركيب العشب الطبيعي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Artificial Grass Installation",
+    "nameAr": "تركيب العشب الصناعي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Irrigation System Installation",
+    "nameAr": "تركيب أنظمة الري",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Irrigation System Repair",
+    "nameAr": "إصلاح أنظمة الري",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Irrigation Pump Maintenance",
+    "nameAr": "صيانة مضخات الري",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Irrigation Network Cleaning",
+    "nameAr": "تنظيف شبكات الري",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Irrigation Timer Installation",
+    "nameAr": "تركيب مؤقتات الري",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Plant Pest Control",
+    "nameAr": "مكافحة آفات النباتات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Garden Cleaning",
+    "nameAr": "تنظيف الحدائق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Outdoor Pathway Cleaning",
+    "nameAr": "تنظيف الممرات الخارجية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Planter Box Installation",
+    "nameAr": "تركيب أحواض الزراعة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Commercial Landscaping",
+    "nameAr": "صيانة الحدائق التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Green Area Maintenance",
+    "nameAr": "صيانة المساحات الخضراء",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "18",
+  "nameEn": "Swimming Pool Services",
+  "nameAr": "خدمات المسابح",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Swimming Pool Cleaning",
+    "nameAr": "تنظيف المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Swimming Pool Water Disinfection",
+    "nameAr": "تعقيم مياه المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Swimming Pool Water Testing",
+    "nameAr": "فحص جودة مياه المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Chlorine & pH Balancing",
+    "nameAr": "موازنة مستويات الكلور ودرجة الحموضة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Pool Filter Cleaning",
+    "nameAr": "تنظيف فلاتر المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Pool Pump Maintenance",
+    "nameAr": "صيانة مضخات المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Pool Leakage Repair",
+    "nameAr": "إصلاح تسربات المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Swimming Pool Waterproofing",
+    "nameAr": "عزل المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Swimming Pool Tile Replacement",
+    "nameAr": "تغيير بلاط المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Pool Filtration System Installation",
+    "nameAr": "تركيب أنظمة فلترة المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Pool Heater Maintenance",
+    "nameAr": "صيانة سخانات المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Pool Water Circulation Maintenance",
+    "nameAr": "صيانة أنظمة تدوير المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Underwater Pool Lighting Maintenance",
+    "nameAr": "صيانة الإضاءة تحت الماء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Swimming Pool Maintenance Contracts",
+    "nameAr": "عقود صيانة المسابح",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "19",
+  "nameEn": "Fire & Safety Services",
+  "nameAr": "خدمات أنظمة السلامة والحريق",
+  "notice": "All fire and life safety services must be performed by appropriately licensed and approved providers in accordance with UAE Civil Defence requirements.",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Fire Extinguisher Inspection",
+    "nameAr": "فحص طفايات الحريق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Fire Extinguisher Maintenance",
+    "nameAr": "صيانة طفايات الحريق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Fire Extinguisher Installation",
+    "nameAr": "تركيب طفايات الحريق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Fire Hose Inspection",
+    "nameAr": "فحص خراطيم الحريق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Fire Pump Maintenance",
+    "nameAr": "صيانة مضخات الحريق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Fire Alarm System Maintenance",
+    "nameAr": "صيانة أنظمة الإنذار",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Smoke Detector Inspection",
+    "nameAr": "فحص كواشف الدخان",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Smoke Detector Installation",
+    "nameAr": "تركيب كواشف الدخان",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Fire Suppression System Maintenance",
+    "nameAr": "صيانة أنظمة الإطفاء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Emergency System Inspection",
+    "nameAr": "فحص أنظمة الطوارئ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Emergency Lighting Maintenance",
+    "nameAr": "صيانة إنارة الطوارئ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Emergency Exit Door Inspection",
+    "nameAr": "فحص أبواب مخارج الطوارئ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Building Fire Safety Maintenance",
+    "nameAr": "صيانة أنظمة السلامة للمباني",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "20",
+  "nameEn": "Smart Home, CCTV & Security Systems",
+  "nameAr": "خدمات المنزل الذكي وكاميرات المراقبة",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "CCTV Camera Installation",
+    "nameAr": "تركيب كاميرات المراقبة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "CCTV Camera Maintenance",
+    "nameAr": "صيانة كاميرات المراقبة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "CCTV Camera Repair",
+    "nameAr": "إصلاح كاميرات المراقبة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "DVR & NVR Installation",
+    "nameAr": "تركيب أجهزة تسجيل DVR وNVR",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "IP Camera Installation",
+    "nameAr": "تركيب كاميرات IP",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "CCTV Cable Installation",
+    "nameAr": "تمديد كابلات الكاميرات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Smart Doorbell Installation",
+    "nameAr": "تركيب أجراس الأبواب الذكية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Smart Door Lock Installation",
+    "nameAr": "تركيب أقفال الأبواب الذكية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Smart Home System Installation",
+    "nameAr": "تركيب أنظمة المنزل الذكي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Smart Lighting Switch Installation",
+    "nameAr": "تركيب مفاتيح الإضاءة الذكية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Smart Thermostat Installation",
+    "nameAr": "تركيب الثرموستات الذكي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Motion Sensor Installation",
+    "nameAr": "تركيب حساسات الحركة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Water Leakage Sensor Installation",
+    "nameAr": "تركيب حساسات تسرب المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Smart Lighting Control",
+    "nameAr": "تركيب أنظمة التحكم بالإضاءة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Smart AC Control",
+    "nameAr": "تركيب أنظمة التحكم بالتكييف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Remote Home Automation Setup",
+    "nameAr": "إعداد أنظمة التحكم عن بعد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Smart Home System Maintenance",
+    "nameAr": "صيانة أنظمة المنزل الذكي",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "21",
+  "nameEn": "Handyman & General Maintenance",
+  "nameAr": "خدمات الهاندي مان والصيانة العامة",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Furniture Assembly",
+    "nameAr": "تجميع الأثاث",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Ready-Made Furniture Installation",
+    "nameAr": "تركيب الأثاث الجاهز",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "TV Wall Mounting",
+    "nameAr": "تعليق التلفزيونات على الحائط",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "TV Bracket Installation",
+    "nameAr": "تركيب حوامل التلفزيون",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Wall Shelf Installation",
+    "nameAr": "تركيب الرفوف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Picture & Mirror Hanging",
+    "nameAr": "تركيب اللوحات والمرايا",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Curtain Installation",
+    "nameAr": "تركيب الستائر",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Curtain Rod Installation",
+    "nameAr": "تركيب قضبان الستائر",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Storage Unit Installation",
+    "nameAr": "تركيب وحدات التخزين",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Furniture Wall Anchoring",
+    "nameAr": "تثبيت الأثاث بالحائط",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Door Repair",
+    "nameAr": "إصلاح الأبواب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Door Handle & Lock Repair",
+    "nameAr": "إصلاح المقابض والأقفال",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Drawer Repair",
+    "nameAr": "إصلاح الأدراج",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Home Accessories Installation",
+    "nameAr": "تركيب إكسسوارات المنزل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Minor Wall Repair",
+    "nameAr": "إصلاح الجدران البسيطة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Wall Hole Repair",
+    "nameAr": "إصلاح ثقوب الجدران",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Silicone Repair & Replacement",
+    "nameAr": "إصلاح وتغيير السيليكون",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Furniture Hinge Repair",
+    "nameAr": "إصلاح مفصلات الأثاث",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Light Fixture Installation",
+    "nameAr": "تركيب وحدات الإضاءة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Small Home Appliance Installation",
+    "nameAr": "تركيب الأجهزة المنزلية البسيطة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Minor Home Repairs",
+    "nameAr": "إصلاح مشاكل المنزل البسيطة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Hourly Handyman Services",
+    "nameAr": "خدمات الصيانة بالساعة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "On-Demand Home Technician",
+    "nameAr": "فني صيانة منزلي بالطلب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "Rental Property Maintenance",
+    "nameAr": "صيانة الشقق قبل التأجير",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 25,
+    "nameEn": "Property Handover Maintenance",
+    "nameAr": "صيانة الشقق قبل التسليم",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "22",
+  "nameEn": "Moving, Dismantling & Installation Services",
+  "nameAr": "خدمات النقل والفك والتركيب",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Furniture Dismantling",
+    "nameAr": "فك الأثاث",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Furniture Reassembly",
+    "nameAr": "تركيب الأثاث بعد النقل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Bedroom Furniture Dismantling & Assembly",
+    "nameAr": "فك وتركيب غرف النوم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Kitchen Dismantling & Assembly",
+    "nameAr": "فك وتركيب المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Curtain Dismantling & Installation",
+    "nameAr": "فك وتركيب الستائر",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "AC Dismantling & Reinstallation",
+    "nameAr": "فك وتركيب المكيفات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Home Appliance Relocation",
+    "nameAr": "نقل الأجهزة المنزلية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Appliance Installation at New Location",
+    "nameAr": "تركيب الأجهزة في الموقع الجديد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Move-In Home Preparation",
+    "nameAr": "تجهيز المنزل للسكن",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Rental Property Preparation",
+    "nameAr": "تجهيز العقارات للتأجير",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Move-Out Property Preparation",
+    "nameAr": "تجهيز العقارات بعد الإخلاء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "AC Unit Relocation",
+    "nameAr": "نقل وحدات التكييف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Moving-Related Maintenance",
+    "nameAr": "خدمات الصيانة عند الانتقال",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "23",
+  "nameEn": "Property Maintenance & Facility Management",
+  "nameAr": "خدمات صيانة العقارات وإدارة المرافق",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Apartment Maintenance",
+    "nameAr": "صيانة الشقق السكنية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Villa Maintenance",
+    "nameAr": "صيانة الفلل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Residential Building Maintenance",
+    "nameAr": "صيانة المباني السكنية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Office Maintenance",
+    "nameAr": "صيانة المكاتب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Commercial Shop Maintenance",
+    "nameAr": "صيانة المحلات التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Restaurant Maintenance",
+    "nameAr": "صيانة المطاعم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Warehouse Maintenance",
+    "nameAr": "صيانة المستودعات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Administrative Building Maintenance",
+    "nameAr": "صيانة المباني الإدارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Property Pre-Handover Maintenance",
+    "nameAr": "صيانة العقارات قبل التسليم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Property Pre-Rental Maintenance",
+    "nameAr": "صيانة العقارات قبل التأجير",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Post-Tenant Maintenance",
+    "nameAr": "صيانة العقارات بعد الإخلاء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Property Inspection Before Handover",
+    "nameAr": "فحص العقار قبل الاستلام",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Property Inspection Before Purchase",
+    "nameAr": "فحص العقار قبل الشراء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Property Defect Rectification",
+    "nameAr": "معالجة العيوب الفنية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Preventive Maintenance",
+    "nameAr": "الصيانة الوقائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Corrective Maintenance",
+    "nameAr": "الصيانة التصحيحية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Emergency Maintenance",
+    "nameAr": "الصيانة الطارئة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Maintenance Work Management",
+    "nameAr": "إدارة أعمال الصيانة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Monthly Property Maintenance Contracts",
+    "nameAr": "عقود الصيانة الشهرية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Annual Property Maintenance Contracts",
+    "nameAr": "عقود الصيانة السنوية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Facility Management",
+    "nameAr": "إدارة مرافق المباني",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Emergency Response Services",
+    "nameAr": "خدمات الاستجابة للطوارئ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "Periodic Property Inspection",
+    "nameAr": "زيارات التفتيش الدورية",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "24",
+  "nameEn": "Commercial & Industrial Maintenance",
+  "nameAr": "خدمات المباني التجارية والصناعية",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Restaurant Maintenance",
+    "nameAr": "صيانة المطاعم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Cafe Maintenance",
+    "nameAr": "صيانة الكافيهات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Hotel Maintenance",
+    "nameAr": "صيانة الفنادق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Office Building Maintenance",
+    "nameAr": "صيانة المباني الإدارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Retail Shop Maintenance",
+    "nameAr": "صيانة المحلات التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Warehouse & Factory Maintenance",
+    "nameAr": "صيانة المستودعات والمصانع",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Multi-Storey Building Maintenance",
+    "nameAr": "صيانة المباني متعددة الطوابق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Corporate Branch Maintenance",
+    "nameAr": "صيانة فروع الشركات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Commercial HVAC Maintenance",
+    "nameAr": "صيانة التكييف التجاري",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Commercial Exhaust System Cleaning",
+    "nameAr": "تنظيف أنظمة الشفط التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Restaurant Hood Cleaning",
+    "nameAr": "تنظيف هود المطاعم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Exhaust Filter Cleaning",
+    "nameAr": "تنظيف فلاتر الشفاطات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Commercial Ventilation Maintenance",
+    "nameAr": "صيانة أنظمة التهوية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Cold Room Maintenance",
+    "nameAr": "صيانة غرف التبريد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Commercial Refrigerator Maintenance",
+    "nameAr": "صيانة الثلاجات التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Commercial Freezer Maintenance",
+    "nameAr": "صيانة الفريزرات التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Commercial Kitchen Equipment Maintenance",
+    "nameAr": "صيانة معدات المطابخ التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Commercial Drainage Maintenance",
+    "nameAr": "صيانة أنظمة الصرف التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Commercial Electrical Panel Maintenance",
+    "nameAr": "صيانة لوحات الكهرباء التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Preventive Building Maintenance",
+    "nameAr": "الصيانة الوقائية للمباني",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Corporate Maintenance Request Management",
+    "nameAr": "إدارة طلبات الصيانة للشركات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Multi-Branch Maintenance Contracts",
+    "nameAr": "عقود الصيانة متعددة الفروع",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "Contract-Based Technical Manpower",
+    "nameAr": "توفير الفنيين بنظام التعاقد",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "Monthly Technical Manpower Supply",
+    "nameAr": "توفير فنيين بعقود شهرية",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "25",
+  "nameEn": "Water Systems & Treatment",
+  "nameAr": "خدمات أنظمة المياه ومعالجة المياه",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Central Water Filter Installation",
+    "nameAr": "تركيب فلاتر المياه المركزية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Drinking Water Filter Installation",
+    "nameAr": "تركيب فلاتر مياه الشرب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Water Filter Cartridge Replacement",
+    "nameAr": "تغيير شمعات الفلاتر",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "RO System Installation & Maintenance",
+    "nameAr": "تركيب وصيانة أنظمة التناضح العكسي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Water Treatment System Installation",
+    "nameAr": "تركيب أنظمة معالجة المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Water Treatment Unit Maintenance",
+    "nameAr": "صيانة وحدات معالجة المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Water Quality Testing",
+    "nameAr": "فحص جودة المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Water Laboratory Analysis",
+    "nameAr": "تحليل المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Water Network Disinfection",
+    "nameAr": "تعقيم شبكات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Water Pipeline Cleaning",
+    "nameAr": "تنظيف خطوط المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Central Water Tank Cleaning",
+    "nameAr": "تنظيف خزانات المياه المركزية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Water Pumping System Installation",
+    "nameAr": "تركيب أنظمة ضخ المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Water Level Control System Installation",
+    "nameAr": "تركيب أنظمة التحكم بمستوى المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Water Circulation System Maintenance",
+    "nameAr": "صيانة أنظمة تدوير المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Limescale Removal & Treatment",
+    "nameAr": "معالجة الترسبات الكلسية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Commercial Water System Maintenance",
+    "nameAr": "صيانة أنظمة المياه للمباني التجارية",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "26",
+  "nameEn": "Solar & Energy Services",
+  "nameAr": "خدمات الطاقة الشمسية والطاقة البديلة",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Solar Panel Installation",
+    "nameAr": "تركيب ألواح الطاقة الشمسية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Solar Panel Cleaning",
+    "nameAr": "تنظيف الألواح الشمسية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Solar System Maintenance",
+    "nameAr": "صيانة أنظمة الطاقة الشمسية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Solar Panel Efficiency Inspection",
+    "nameAr": "فحص كفاءة الألواح الشمسية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Solar Electrical Connection Inspection",
+    "nameAr": "فحص التوصيلات الكهربائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Solar Inverter Maintenance",
+    "nameAr": "صيانة محولات الطاقة الشمسية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Energy Storage Battery Maintenance",
+    "nameAr": "صيانة بطاريات تخزين الطاقة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Solar Water Heater Installation",
+    "nameAr": "تركيب سخانات المياه الشمسية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Solar Water Heater Maintenance",
+    "nameAr": "صيانة سخانات المياه الشمسية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Building Energy Consumption Inspection",
+    "nameAr": "فحص استهلاك الطاقة للمباني",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Energy Efficiency Improvement",
+    "nameAr": "تحسين كفاءة استهلاك الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Energy Consumption Control Systems",
+    "nameAr": "تركيب أنظمة التحكم باستهلاك الطاقة",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "27",
+  "nameEn": "IT, Networking & Communication Systems",
+  "nameAr": "خدمات تقنية المعلومات والشبكات والاتصالات",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Internet Cable Installation",
+    "nameAr": "تمديد كابلات الإنترنت",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Network Point Installation",
+    "nameAr": "تركيب نقاط الشبكة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Router Installation",
+    "nameAr": "تركيب أجهزة الراوتر",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Wi-Fi Extender Installation",
+    "nameAr": "تركيب أجهزة تقوية الواي فاي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Home Network Setup",
+    "nameAr": "إعداد شبكات المنازل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Office Network Setup",
+    "nameAr": "إعداد شبكات المكاتب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "LAN Network Installation",
+    "nameAr": "تركيب شبكات LAN",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Network Cable Management",
+    "nameAr": "تنظيم كابلات الشبكات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Network Rack Installation",
+    "nameAr": "تركيب خزائن الشبكات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Telephone Point Installation",
+    "nameAr": "تركيب نقاط الهاتف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Intercom System Installation",
+    "nameAr": "تركيب أنظمة الاتصال الداخلي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Intercom System Maintenance",
+    "nameAr": "صيانة أنظمة الاتصال الداخلي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Access Control System Installation",
+    "nameAr": "تركيب أنظمة التحكم بالدخول",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Biometric Attendance System Installation",
+    "nameAr": "تركيب أجهزة البصمة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Access & Exit Control Maintenance",
+    "nameAr": "صيانة أنظمة الدخول والخروج",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Video Intercom Installation",
+    "nameAr": "تركيب أنظمة الاتصال المرئي",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "28",
+  "nameEn": "Interior Renovation & Fit-Out",
+  "nameAr": "خدمات الديكور والتجديد والتشطيبات",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Complete Apartment Renovation",
+    "nameAr": "تجديد الشقق بالكامل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Complete Villa Renovation",
+    "nameAr": "تجديد الفلل بالكامل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Office Renovation",
+    "nameAr": "تجديد المكاتب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Commercial Shop Renovation",
+    "nameAr": "تجديد المحلات التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Restaurant & Cafe Renovation",
+    "nameAr": "تجديد المطاعم والكافيهات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Kitchen Renovation",
+    "nameAr": "تجديد المطابخ",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Bathroom Renovation",
+    "nameAr": "تجديد الحمامات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Interior Space Reconfiguration",
+    "nameAr": "تعديل تقسيمات الغرف",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Interior Partition Installation",
+    "nameAr": "تنفيذ القواطع الداخلية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Wallpaper Installation",
+    "nameAr": "تركيب ورق الحائط",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Decorative Wall Panel Installation",
+    "nameAr": "تركيب الديكورات الجدارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Wood Alternative Panel Installation",
+    "nameAr": "تركيب ألواح بديل الخشب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Marble Alternative Panel Installation",
+    "nameAr": "تركيب ألواح بديل الرخام",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "PVC Decorative Panel Installation",
+    "nameAr": "تركيب ديكورات PVC",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "WPC Panel Installation",
+    "nameAr": "تركيب ديكورات WPC",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Stone Alternative Installation",
+    "nameAr": "تركيب بديل الحجر",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Decorative Woodwork",
+    "nameAr": "تنفيذ الديكورات الخشبية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Decorative TV Unit Installation",
+    "nameAr": "تركيب وحدات التلفزيون الديكورية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Entrance Decoration",
+    "nameAr": "تنفيذ ديكورات المداخل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Decorative Lighting Installation",
+    "nameAr": "تركيب الإضاءة الديكورية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 21,
+    "nameEn": "Interior Finishing Works",
+    "nameAr": "تنفيذ أعمال التشطيب الداخلي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 22,
+    "nameEn": "Old Property Renovation",
+    "nameAr": "تجديد العقارات القديمة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 23,
+    "nameEn": "Rental Property Fit-Out",
+    "nameAr": "تجهيز العقارات للتأجير",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 24,
+    "nameEn": "Post-Fit-Out Maintenance",
+    "nameAr": "صيانة الأعمال بعد التشطيب",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "29",
+  "nameEn": "Emergency Maintenance Services",
+  "nameAr": "خدمات الصيانة الطارئة",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Emergency AC Repair",
+    "nameAr": "إصلاح أعطال التكييف الطارئة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "Emergency Water Leakage Repair",
+    "nameAr": "إصلاح تسربات المياه الطارئة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Burst Water Pipe Repair",
+    "nameAr": "التعامل مع انفجار مواسير المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Emergency Electrical Repair",
+    "nameAr": "إصلاح أعطال الكهرباء الطارئة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Emergency Power Outage Repair",
+    "nameAr": "التعامل مع انقطاع الكهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Emergency Sewer Blockage Removal",
+    "nameAr": "إصلاح انسداد الصرف الصحي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Emergency Water Heater Leakage Repair",
+    "nameAr": "إصلاح تسربات السخانات الطارئة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Emergency Water Pump Repair",
+    "nameAr": "إصلاح أعطال مضخات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Emergency Door & Lock Repair",
+    "nameAr": "إصلاح أعطال الأبواب والأقفال",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Emergency Villa Maintenance",
+    "nameAr": "خدمات الصيانة العاجلة للفلل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Emergency Commercial Maintenance",
+    "nameAr": "خدمات الصيانة العاجلة للشركات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "After-Hours Emergency Maintenance",
+    "nameAr": "خدمات الطوارئ خارج أوقات العمل",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "30",
+  "nameEn": "AMC & Annual Maintenance Plans",
+  "nameAr": "عقود الصيانة والباقات السنوية",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Annual AC Maintenance Contract",
+    "nameAr": "عقد صيانة تكييف سنوي",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 2,
+    "nameEn": "AC Cleaning Contract",
+    "nameAr": "عقد تنظيف المكيفات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 3,
+    "nameEn": "Plumbing Maintenance Contract",
+    "nameAr": "عقد صيانة سباكة",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 4,
+    "nameEn": "Electrical Maintenance Contract",
+    "nameAr": "عقد صيانة كهرباء",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 5,
+    "nameEn": "Complete Home Maintenance Contract",
+    "nameAr": "عقد صيانة شاملة للمنازل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 6,
+    "nameEn": "Villa Maintenance Contract",
+    "nameAr": "عقد صيانة الفلل",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 7,
+    "nameEn": "Apartment Maintenance Contract",
+    "nameAr": "عقد صيانة الشقق",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 8,
+    "nameEn": "Office Maintenance Contract",
+    "nameAr": "عقد صيانة المكاتب",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 9,
+    "nameEn": "Restaurant Maintenance Contract",
+    "nameAr": "عقد صيانة المطاعم",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 10,
+    "nameEn": "Retail Shop Maintenance Contract",
+    "nameAr": "عقد صيانة المحلات التجارية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 11,
+    "nameEn": "Building Cleaning Contract",
+    "nameAr": "عقد تنظيف المباني",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 12,
+    "nameEn": "Water Tank Cleaning Contract",
+    "nameAr": "عقد تنظيف خزانات المياه",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 13,
+    "nameEn": "Pest Control Contract",
+    "nameAr": "عقد مكافحة الحشرات",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 14,
+    "nameEn": "Swimming Pool Maintenance Contract",
+    "nameAr": "عقد صيانة المسابح",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 15,
+    "nameEn": "Ventilation System Maintenance Contract",
+    "nameAr": "عقد صيانة أنظمة التهوية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 16,
+    "nameEn": "Multi-Branch Maintenance Contract",
+    "nameAr": "عقود الصيانة متعددة الفروع",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 17,
+    "nameEn": "Preventive Maintenance Contract",
+    "nameAr": "عقد الصيانة الوقائية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 18,
+    "nameEn": "Corrective Maintenance Contract",
+    "nameAr": "عقد الصيانة التصحيحية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 19,
+    "nameEn": "Residential Annual Maintenance Plans",
+    "nameAr": "باقات الصيانة المنزلية السنوية",
+    "groupEn": null,
+    "groupAr": null
+   },
+   {
+    "n": 20,
+    "nameEn": "Corporate Maintenance Plans",
+    "nameAr": "باقات الصيانة للشركات والمؤسسات",
+    "groupEn": null,
+    "groupAr": null
+   }
+  ]
+ },
+ {
+  "code": "31",
+  "nameEn": "Additional & Future Services",
+  "nameAr": "خدمات إضافية وتوسعات مستقبلية",
+  "notice": "",
+  "services": [
+   {
+    "n": 1,
+    "nameEn": "Elevator Maintenance",
+    "nameAr": "صيانة المصاعد",
+    "groupEn": "Elevator Services",
+    "groupAr": "خدمات المصاعد"
+   },
+   {
+    "n": 2,
+    "nameEn": "Elevator Inspection",
+    "nameAr": "فحص المصاعد",
+    "groupEn": "Elevator Services",
+    "groupAr": "خدمات المصاعد"
+   },
+   {
+    "n": 3,
+    "nameEn": "Elevator Door Maintenance",
+    "nameAr": "صيانة أبواب المصاعد",
+    "groupEn": "Elevator Services",
+    "groupAr": "خدمات المصاعد"
+   },
+   {
+    "n": 4,
+    "nameEn": "Elevator Control System Repair",
+    "nameAr": "إصلاح أنظمة التحكم",
+    "groupEn": "Elevator Services",
+    "groupAr": "خدمات المصاعد"
+   },
+   {
+    "n": 5,
+    "nameEn": "Elevator Maintenance Contracts",
+    "nameAr": "عقود صيانة المصاعد",
+    "groupEn": "Elevator Services",
+    "groupAr": "خدمات المصاعد"
+   },
+   {
+    "n": 1,
+    "nameEn": "Generator Maintenance",
+    "nameAr": "صيانة المولدات الكهربائية",
+    "groupEn": "Generator Services",
+    "groupAr": "خدمات المولدات"
+   },
+   {
+    "n": 2,
+    "nameEn": "Generator Oil & Filter Replacement",
+    "nameAr": "تغيير فلاتر وزيوت المولدات",
+    "groupEn": "Generator Services",
+    "groupAr": "خدمات المولدات"
+   },
+   {
+    "n": 3,
+    "nameEn": "Generator Battery Inspection",
+    "nameAr": "فحص بطاريات المولدات",
+    "groupEn": "Generator Services",
+    "groupAr": "خدمات المولدات"
+   },
+   {
+    "n": 4,
+    "nameEn": "Generator Starting System Repair",
+    "nameAr": "إصلاح أعطال التشغيل",
+    "groupEn": "Generator Services",
+    "groupAr": "خدمات المولدات"
+   },
+   {
+    "n": 5,
+    "nameEn": "Generator Preventive Maintenance",
+    "nameAr": "الصيانة الدورية للمولدات",
+    "groupEn": "Generator Services",
+    "groupAr": "خدمات المولدات"
+   },
+   {
+    "n": 1,
+    "nameEn": "Sewer Odor Removal",
+    "nameAr": "إزالة روائح الصرف الصحي",
+    "groupEn": "Odor Control Services",
+    "groupAr": "خدمات مكافحة وإزالة الروائح"
+   },
+   {
+    "n": 2,
+    "nameEn": "Kitchen Odor Removal",
+    "nameAr": "إزالة روائح المطابخ",
+    "groupEn": "Odor Control Services",
+    "groupAr": "خدمات مكافحة وإزالة الروائح"
+   },
+   {
+    "n": 3,
+    "nameEn": "AC Odor Removal",
+    "nameAr": "إزالة روائح المكيفات",
+    "groupEn": "Odor Control Services",
+    "groupAr": "خدمات مكافحة وإزالة الروائح"
+   },
+   {
+    "n": 4,
+    "nameEn": "Carpet & Furniture Odor Removal",
+    "nameAr": "إزالة روائح السجاد والأثاث",
+    "groupEn": "Odor Control Services",
+    "groupAr": "خدمات مكافحة وإزالة الروائح"
+   },
+   {
+    "n": 5,
+    "nameEn": "Dampness Odor Treatment",
+    "nameAr": "معالجة الروائح الناتجة عن الرطوبة",
+    "groupEn": "Odor Control Services",
+    "groupAr": "خدمات مكافحة وإزالة الروائح"
+   },
+   {
+    "n": 6,
+    "nameEn": "Indoor Space Sanitization",
+    "nameAr": "تعقيم الأماكن المغلقة",
+    "groupEn": "Odor Control Services",
+    "groupAr": "خدمات مكافحة وإزالة الروائح"
+   },
+   {
+    "n": 1,
+    "nameEn": "Sofa Cleaning",
+    "nameAr": "تنظيف الكنب",
+    "groupEn": "Upholstery & Curtains",
+    "groupAr": "خدمات التنجيد والستائر"
+   },
+   {
+    "n": 2,
+    "nameEn": "Mattress Cleaning",
+    "nameAr": "تنظيف المراتب",
+    "groupEn": "Upholstery & Curtains",
+    "groupAr": "خدمات التنجيد والستائر"
+   },
+   {
+    "n": 3,
+    "nameEn": "Curtain Cleaning",
+    "nameAr": "تنظيف الستائر",
+    "groupEn": "Upholstery & Curtains",
+    "groupAr": "خدمات التنجيد والستائر"
+   },
+   {
+    "n": 4,
+    "nameEn": "Sofa Repair",
+    "nameAr": "إصلاح الكنب",
+    "groupEn": "Upholstery & Curtains",
+    "groupAr": "خدمات التنجيد والستائر"
+   },
+   {
+    "n": 5,
+    "nameEn": "Furniture Upholstery",
+    "nameAr": "تنجيد الأثاث",
+    "groupEn": "Upholstery & Curtains",
+    "groupAr": "خدمات التنجيد والستائر"
+   },
+   {
+    "n": 6,
+    "nameEn": "Furniture Fabric Replacement",
+    "nameAr": "تغيير أقمشة الأثاث",
+    "groupEn": "Upholstery & Curtains",
+    "groupAr": "خدمات التنجيد والستائر"
+   },
+   {
+    "n": 7,
+    "nameEn": "Motorized Curtain Installation",
+    "nameAr": "تركيب الستائر الكهربائية",
+    "groupEn": "Upholstery & Curtains",
+    "groupAr": "خدمات التنجيد والستائر"
+   },
+   {
+    "n": 1,
+    "nameEn": "Pressure Tank Maintenance",
+    "nameAr": "صيانة خزانات الضغط",
+    "groupEn": "Specialized Water Tanks & Pumps",
+    "groupAr": "خدمات الخزانات والمضخات المتخصصة"
+   },
+   {
+    "n": 2,
+    "nameEn": "Expansion Tank Maintenance",
+    "nameAr": "صيانة خزانات التمدد",
+    "groupEn": "Specialized Water Tanks & Pumps",
+    "groupAr": "خدمات الخزانات والمضخات المتخصصة"
+   },
+   {
+    "n": 3,
+    "nameEn": "Fire Pump Maintenance",
+    "nameAr": "صيانة مضخات الحريق",
+    "groupEn": "Specialized Water Tanks & Pumps",
+    "groupAr": "خدمات الخزانات والمضخات المتخصصة"
+   },
+   {
+    "n": 4,
+    "nameEn": "Submersible Water Pump Maintenance",
+    "nameAr": "صيانة مضخات المياه الغاطسة",
+    "groupEn": "Specialized Water Tanks & Pumps",
+    "groupAr": "خدمات الخزانات والمضخات المتخصصة"
+   },
+   {
+    "n": 5,
+    "nameEn": "Sewage Lifting System Maintenance",
+    "nameAr": "صيانة أنظمة الصرف والرفع",
+    "groupEn": "Specialized Water Tanks & Pumps",
+    "groupAr": "خدمات الخزانات والمضخات المتخصصة"
+   }
+  ]
+ }
+]

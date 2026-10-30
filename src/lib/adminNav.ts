@@ -41,6 +41,7 @@ const WORK_REPORTS: NavLeaf = { href: "/admin/work-reports", label: "Work Report
 const FINANCIAL_REPORTS: NavLeaf = { href: "/admin/financial-reports", label: "Financial Reports", keywords: "profit loss balance" };
 const VEHICLE_EXPENSES: NavLeaf = { href: "/admin/vehicles/expense-report", label: "Vehicle Expense Report", keywords: "fuel car costs" };
 const RENTAL_EXPENSES: NavLeaf = { href: "/admin/rental-expenses", label: "Rental Expenses", keywords: "rent" };
+const SERVICE_CATALOG: NavLeaf = { href: "/admin/catalog", label: "Service Catalogue", keywords: "services categories master list دليل الخدمات الأقسام import export csv" };
 const WEBSITE_SERVICES: NavLeaf = { href: "/admin/services", label: "Website Services", keywords: "service pages" };
 const BLOG: NavLeaf = { href: "/admin/blog", label: "Blog Management", keywords: "articles posts" };
 const BLOG_CATEGORIES: NavLeaf = { href: "/admin/blog/categories", label: "Blog Categories", keywords: "sections topics" };
@@ -95,6 +96,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/website/pages", label: "Pages & SEO Settings", keywords: "page builder seo" },
       { href: "/admin/website/structure", label: "Website Structure", keywords: "page tree hierarchy parent child sub pages drag drop navigation" },
       { href: "/admin/website/seo", label: "SEO & Technical Files", keywords: "sitemap schema score structured data" },
+      SERVICE_CATALOG,
       WEBSITE_SERVICES,
       { href: "/admin/home-sections", label: "Homepage Sections", keywords: "home" },
       BLOG,
@@ -110,7 +112,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     id: "inventory", label: "Inventory & Services", icon: "inventory",
-    items: [{ href: "/admin/inventory", label: "Inventory", keywords: "stock warehouse items", children: INVENTORY_PAGES }, WEBSITE_SERVICES, { href: "/admin/pricing", label: "Dynamic Pricing", keywords: "prices rates fees" }],
+    items: [{ href: "/admin/inventory", label: "Inventory", keywords: "stock warehouse items", children: INVENTORY_PAGES }, SERVICE_CATALOG, WEBSITE_SERVICES, { href: "/admin/pricing", label: "Dynamic Pricing", keywords: "prices rates fees" }],
   },
   {
     id: "system", label: "System Administration", icon: "system",
