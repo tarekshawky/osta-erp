@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
 
-const primaryGroup = (cats: { nameEn: string; nameAr: string; sortOrder: number }[]) => {
+const primaryGroup = (cats: { nameEn: string; nameAr: string; sortOrder: number; iconName: string | null }[]) => {
   const c = [...cats].sort((a, b) => a.sortOrder - b.sortOrder)[0];
-  return c ? { en: c.nameEn, ar: c.nameAr, order: c.sortOrder } : null;
+  return c ? { en: c.nameEn, ar: c.nameAr, order: c.sortOrder, icon: c.iconName ?? "" } : null;
 };
 
 export function OPTIONS() {
@@ -20,7 +20,7 @@ export async function GET() {
       orderBy: { sortOrder: "asc" },
       include: {
         // The catalogue category (the first one in catalogue order) the booking page groups the service under.
-        catalogService: { select: { categories: { select: { category: { select: { nameEn: true, nameAr: true, sortOrder: true } } } } } },
+        catalogService: { select: { categories: { select: { category: { select: { nameEn: true, nameAr: true, sortOrder: true, iconName: true } } } } } },
         prices: { where: { active: true }, select: { regionId: true, unitPriceFils: true } },
         options: {
           where: { active: true },
