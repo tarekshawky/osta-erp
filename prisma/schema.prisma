@@ -1098,6 +1098,12 @@ model BookableService {
   descriptionAr     String?
   imageUrl          String?
   pricingUnit       String                   @default("UNIT") // AC_UNIT | UNIT | ROOM | AREA_SQM | VISIT | FIXED
+  // PRICED = the price comes from the price table (per emirate). INSPECTION = "price after inspection": bookable in every active
+  // emirate with no price; the customer books a visit (plus any booking fee) and the admin sets the price after the inspection.
+  priceMode         String                   @default("PRICED") // PRICED | INSPECTION
+  // The Service Catalogue entry this bookable service was created from ("Add to booking"), so it is never added twice.
+  catalogServiceId  String?                  @unique
+  catalogService    CatalogService?          @relation(fields: [catalogServiceId], references: [id], onDelete: SetNull)
   minQuantity       Int                      @default(1)
   active            Boolean                  @default(true)
   sortOrder         Int                      @default(0)
@@ -2003,6 +2009,7 @@ model CatalogService {
   seoKeywordsAr      String?
   canonicalUrl       String?
   categories         CatalogCategoryService[]
+  bookable           BookableService?
   createdAt          DateTime                 @default(now())
   updatedAt          DateTime                 @default(now()) @updatedAt
 }

@@ -111,4 +111,33 @@ describe.skipIf(!run)("service catalogue actions (real database)", () => {
     expect(parsed.rows.length).toBe(await prisma.catalogService.count());
     expect(parsed.rows.some((r) => r.nameAr.length > 0 && r.categoryRefs.length > 0)).toBe(true);
   }, 60_000);
+
+  it("prices a \"price after inspection\" service with no price table, and leaves priced services alone", async () => {
+    const { resolveQuote } = await import("@/lib/pricing/resolve");
+    const ajman = await prisma.region.findFirstOrThrow({ where: { slug: "ajman" } });
+    const type = await prisma.bookingType.findFirstOrThrow({ where: { active: true }, orderBy: { sortOrder: "asc" } });
+    const svc = await prisma.bookableService.create({ data: { slug: "zz-test-inspection", nameEn: "ZZ TEST inspection", nameAr: "ز", pricingUnit: "VISIT", priceMode: "INSPECTION", minQuantity: 3 } });
+    try {
+      const r = await resolveQuote({ regionId: ajman.id, serviceId: svc.id, quantity: 5, bookingTypeId: type.id, addOnIds: ["nope"], optionId: "nope" });
+      expect(r.priceMode).toBe("INSPECTION");
+      expect(r.quote.unitPriceFils).toBe(0);
+      expect(r.quote.quantity).toBe(1);
+      expect(r.quote.subtotalFils).toBe(0);
+      expect(r.quote.totalFils).toBe(type.defaultFeeFils); // only the booking fee (0 for the standard type)
+      // every active emirate works, with no price rows at all
+      for (const region of await prisma.region.findMany({ where: { active: true } })) {
+        expect((await resolveQuote({ regionId: region.id, serviceId: svc.id, quantity: 1, bookingTypeId: type.id })).quote.subtotalFils).toBe(0);
+      }
+      // an emirate that doesn't exist (or is switched off) is still unavailable
+      await expect(resolveQuote({ regionId: "no-such-emirate", serviceId: svc.id, quantity: 1, bookingTypeId: type.id })).rejects.toMatchObject({ code: "service_unavailable" });
+    } finally {
+      await prisma.bookableService.delete({ where: { id: svc.id } });
+    }
+    // a normal priced service is unchanged: Split AC Cleaning in Ajman is 100 AED a unit
+    const priced = await prisma.bookableService.findFirstOrThrow({ where: { slug: "ac-cleaning" } });
+    const q = await resolveQuote({ regionId: ajman.id, serviceId: priced.id, quantity: 2, bookingTypeId: type.id });
+    expect(q.priceMode).toBe("PRICED");
+    expect(q.quote.subtotalFils).toBe(20000);
+    expect(q.quote.quantity).toBe(2);
+  }, 90_000);
 });

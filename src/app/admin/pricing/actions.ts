@@ -69,6 +69,8 @@ export type ServiceInput = {
   nameEn: string;
   nameAr: string;
   pricingUnit: string;
+  // PRICED = price per emirate from the price table; INSPECTION = "price after inspection" (bookable in every active emirate, no price).
+  priceMode: "PRICED" | "INSPECTION";
   minQuantity: string;
   active: boolean;
   discountRuleSetId: string;
@@ -86,6 +88,7 @@ const UNITS = ["AC_UNIT", "UNIT", "ROOM", "AREA_SQM", "VISIT", "FIXED"];
 function validateService(i: ServiceInput): string | null {
   if (!i.nameEn.trim() || !i.nameAr.trim()) return "Both English and Arabic names are required.";
   if (!UNITS.includes(i.pricingUnit)) return "Invalid pricing unit.";
+  if (i.priceMode !== "PRICED" && i.priceMode !== "INSPECTION") return "Invalid price mode.";
   const min = Number(i.minQuantity);
   if (!Number.isInteger(min) || min < 1) return "Minimum quantity must be a whole number of 1 or more.";
   if (i.noteEn.length > SERVICE_NOTE_MAX || i.noteAr.length > SERVICE_NOTE_MAX) return `The note can be up to ${SERVICE_NOTE_MAX} characters in each language.`;
@@ -108,6 +111,7 @@ export async function saveService(id: string | null, input: ServiceInput): Promi
     nameEn: input.nameEn.trim(),
     nameAr: input.nameAr.trim(),
     pricingUnit: input.pricingUnit,
+    priceMode: input.priceMode,
     minQuantity: Number(input.minQuantity),
     active: input.active,
     discountRuleSetId: input.discountRuleSetId || null,

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { priceQuote, type DiscountTier, type Quote } from "./priceQuote";
+import { priceQuote, QuoteError, type DiscountTier, type Quote } from "./priceQuote";
 import { chooseUnitPrice } from "./options";
 
 export type QuoteRequest = {
@@ -13,7 +13,7 @@ export type QuoteRequest = {
   at?: Date;
 };
 
-export type ResolvedQuote = { quote: Quote; policyId: string; ruleSetId: string | null; option: { id: string; nameEn: string; nameAr: string } | null };
+export type ResolvedQuote = { quote: Quote; policyId: string; ruleSetId: string | null; option: { id: string; nameEn: string; nameAr: string } | null; priceMode: string };
 
 // Loads every price input from the DB and runs the shared pure engine. This is the only
 // place a price is produced for an order -- client totals are never read.
@@ -39,6 +39,12 @@ export async function resolveQuote(req: QuoteRequest): Promise<ResolvedQuote> {
   if (!bookingType) throw new Error("booking_type_not_found");
   if (!policy) throw new Error("visit_fee_policy_missing");
 
+  // "Price after inspection": no price table, one visit, no options or add-ons. Bookable wherever the emirate is active.
+  const inspection = service.priceMode === "INSPECTION";
+  if (inspection && !(await prisma.region.findFirst({ where: { id: req.regionId, active: true }, select: { id: true } }))) {
+    throw new QuoteError("service_unavailable", "This service is not available in the selected emirate.");
+  }
+
   const override = await prisma.bookingTypeFeeOverride.findFirst({
     where: {
       bookingTypeId: bookingType.id,
@@ -51,12 +57,12 @@ export async function resolveQuote(req: QuoteRequest): Promise<ResolvedQuote> {
     orderBy: [{ serviceId: { sort: "desc", nulls: "last" } }, { regionId: { sort: "desc", nulls: "last" } }],
   });
 
-  const addOnRows = req.addOnIds?.length
+  const addOnRows = req.addOnIds?.length && !inspection
     ? await prisma.addOnPrice.findMany({
         where: { addOnId: { in: req.addOnIds }, regionId: req.regionId, active: true, addOn: { serviceId: service.id, active: true } },
       })
     : [];
-  if (addOnRows.length !== (req.addOnIds?.length ?? 0)) throw new Error("add_on_unavailable");
+  if (!inspection && addOnRows.length !== (req.addOnIds?.length ?? 0)) throw new Error("add_on_unavailable");
 
   const rs = service.discountRuleSet;
   const ruleActive = rs && rs.active && (!rs.startsAt || at >= rs.startsAt) && (!rs.endsAt || at <= rs.endsAt);
@@ -64,25 +70,27 @@ export async function resolveQuote(req: QuoteRequest): Promise<ResolvedQuote> {
     ? rs.tiers.map((t) => ({ minQty: t.minQty, maxQty: t.maxQty, percent: t.percent, startsAt: t.startsAt, endsAt: t.endsAt }))
     : [];
 
-  const unit = chooseUnitPrice({
-    basePriceFils: price?.unitPriceFils ?? null,
-    options: options.map((o) => ({ id: o.id, priceFils: o.prices[0]?.unitPriceFils ?? null })),
-    optionId: req.optionId,
-  });
+  const unit = inspection
+    ? { unitPriceFils: 0, optionId: null }
+    : chooseUnitPrice({
+        basePriceFils: price?.unitPriceFils ?? null,
+        options: options.map((o) => ({ id: o.id, priceFils: o.prices[0]?.unitPriceFils ?? null })),
+        optionId: req.optionId,
+      });
   const chosen = options.find((o) => o.id === unit.optionId) ?? null;
 
   const quote = priceQuote({
     unitPriceFils: unit.unitPriceFils,
-    quantity: req.quantity,
-    minQuantity: service.minQuantity,
-    tiers,
+    quantity: inspection ? 1 : req.quantity,
+    minQuantity: inspection ? 1 : service.minQuantity,
+    tiers: inspection ? [] : tiers,
     bookingFeeFils: override?.feeFils ?? bookingType.defaultFeeFils,
-    addOns: addOnRows.map((a) => ({ id: a.addOnId, priceFils: a.priceFils })),
+    addOns: (inspection ? [] : addOnRows).map((a) => ({ id: a.addOnId, priceFils: a.priceFils })),
     vat: {
       ratePercent: tax?.vatRatePercent ?? 5,
       pricesIncludeVat: service.pricesIncludeVat ?? tax?.pricesIncludeVat ?? true,
     },
     at,
   });
-  return { quote, policyId: policy.id, ruleSetId: rs?.id ?? null, option: chosen ? { id: chosen.id, nameEn: chosen.nameEn, nameAr: chosen.nameAr } : null };
+  return { quote, policyId: policy.id, ruleSetId: inspection ? null : rs?.id ?? null, option: chosen && !inspection ? { id: chosen.id, nameEn: chosen.nameEn, nameAr: chosen.nameAr } : null, priceMode: service.priceMode };
 }

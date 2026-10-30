@@ -14,6 +14,7 @@ const empty: ServiceInput = {
   nameEn: "",
   nameAr: "",
   pricingUnit: "UNIT",
+  priceMode: "PRICED",
   minQuantity: "1",
   active: true,
   discountRuleSetId: "",
@@ -68,6 +69,12 @@ function ServiceForm({
             {UNITS.map((u) => (
               <option key={u}>{u}</option>
             ))}
+          </select>
+        </Field>
+        <Field label="Price mode">
+          <select className={inputClassName} value={v.priceMode} onChange={(e) => setV({ ...v, priceMode: e.target.value as ServiceInput["priceMode"] })}>
+            <option value="PRICED">Priced: price per emirate (Prices by emirate table)</option>
+            <option value="INSPECTION">Price after inspection: bookable in every active emirate, no price</option>
           </select>
         </Field>
         <Field label="Minimum quantity">
@@ -134,9 +141,26 @@ function ServiceForm({
 
 export function ServiceManager({ services, ruleSets }: { services: ServiceRow[]; ruleSets: { id: string; name: string }[] }) {
   const [editing, setEditing] = useState<string | "new" | null>(null);
+  const [q, setQ] = useState("");
+  const [showInspection, setShowInspection] = useState(false);
+  const needle = q.trim().toLowerCase();
+  const inspectionCount = services.filter((s) => s.priceMode === "INSPECTION").length;
+  // Hundreds of "price after inspection" services would bury the priced ones, so they are listed on request or when searching.
+  const shown = services.filter((s) => (s.priceMode !== "INSPECTION" || showInspection || !!needle) && (!needle || `${s.nameEn} ${s.nameAr} ${s.slug}`.toLowerCase().includes(needle)));
   return (
     <div className="flex flex-col gap-3">
-      {services.map((s) =>
+      {services.length > 12 && (
+        <div className="flex flex-wrap items-center gap-3">
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search services…" className="w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" />
+          {inspectionCount > 0 && (
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" checked={showInspection} onChange={(e) => setShowInspection(e.target.checked)} /> Show the {inspectionCount} “price after inspection” services
+            </label>
+          )}
+          <span className="text-xs text-slate-400">{shown.length} shown</span>
+        </div>
+      )}
+      {shown.map((s) =>
         editing === s.id ? (
           <ServiceForm key={s.id} id={s.id} initial={s} ruleSets={ruleSets} options={s.options} onDone={() => setEditing(null)} />
         ) : (
@@ -148,6 +172,7 @@ export function ServiceManager({ services, ruleSets }: { services: ServiceRow[];
                 {s.pricingUnit} · min {s.minQuantity}{s.options.length ? ` · ${s.options.length} option${s.options.length === 1 ? "" : "s"}` : ""}
                 {s.discountRuleSetId ? ` · ${ruleSets.find((r) => r.id === s.discountRuleSetId)?.name ?? "discount"}` : ""}
               </span>
+              {s.priceMode === "INSPECTION" && <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700">price after inspection</span>}
               {!s.active && <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">inactive</span>}
               {(s.noteEn || s.noteAr) && <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700" title={s.noteEn || s.noteAr}>note</span>}
             </div>

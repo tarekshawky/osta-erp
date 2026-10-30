@@ -18,11 +18,11 @@ export default async function PricingPage() {
       <section>
         <h2 className="text-xl font-bold text-slate-900">Prices by emirate</h2>
         <p className="mb-4 mt-1 text-sm text-slate-500">
-          A service can only be booked in an emirate where it has a price. Changing a price never affects existing orders.
+          A service can only be booked in an emirate where it has a price (services set to “Price after inspection” need none and are listed under Services below). Changing a price never affects existing orders.
         </p>
         <PriceMatrix
           regions={regions}
-          services={services.map((s) => ({
+          services={services.filter((s) => s.priceMode !== "INSPECTION").map((s) => ({
             id: s.id,
             nameEn: s.nameEn,
             active: s.active,
@@ -42,6 +42,7 @@ export default async function PricingPage() {
             nameEn: s.nameEn,
             nameAr: s.nameAr,
             pricingUnit: s.pricingUnit,
+            priceMode: s.priceMode === "INSPECTION" ? "INSPECTION" : "PRICED",
             minQuantity: String(s.minQuantity),
             active: s.active,
             discountRuleSetId: s.discountRuleSetId ?? "",

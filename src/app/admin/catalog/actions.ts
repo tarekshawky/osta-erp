@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
 import { normalizeKeywords } from "@/lib/seo/keywords";
+import { addCatalogToBooking, type AddToBookingResult } from "@/lib/catalog/booking";
 import { createCatalogPages, type CreatePagesResult } from "@/lib/catalog/pages";
 import { runServicesImport, type ImportSummary } from "@/lib/catalog/importer";
 import { categoryProblem, serviceProblem, uniqueSlug, type CategoryInput, type ServiceInput } from "@/lib/catalog/rules";
@@ -218,6 +219,20 @@ export async function createCatalogWebsitePages(): Promise<{ ok: boolean; error?
   const result = await createCatalogPages();
   await writeAudit(g.admin, "catalogPages.create", "CmsPage", "catalog", null, { ...result });
   revalidatePath("/admin/website", "layout");
+  refresh();
+  return { ok: true, result };
+}
+
+// ---- booking ----
+
+// Every catalogue service becomes bookable with "price after inspection" in every active emirate (existing priced services are
+// linked, not duplicated). Safe to repeat.
+export async function addCatalogServicesToBooking(): Promise<{ ok: boolean; error?: string; result?: AddToBookingResult }> {
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return { ok: false, error: g.error };
+  const result = await addCatalogToBooking();
+  await writeAudit(g.admin, "catalogBooking.add", "BookableService", "catalog", null, { ...result });
+  revalidatePath("/admin/pricing", "layout");
   refresh();
   return { ok: true, result };
 }

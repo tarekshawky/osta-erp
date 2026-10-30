@@ -203,9 +203,9 @@ async function createPricedOrder(
         regionId: input.regionId,
         bookableServiceId: input.serviceId,
         bookingTypeId: input.bookingTypeId,
-        quantity: input.quantity,
+        quantity: resolved.quote.quantity,
         totalFils: resolved.quote.totalFils,
-        pricingSnapshot: { ...resolved.quote, ruleSetId: resolved.ruleSetId, addOnIds: input.addOnIds ?? [], option: resolved.option },
+        pricingSnapshot: { ...resolved.quote, ruleSetId: resolved.ruleSetId, addOnIds: resolved.priceMode === "INSPECTION" ? [] : input.addOnIds ?? [], option: resolved.option, priceMode: resolved.priceMode },
         visitFeePolicyId: resolved.policyId,
         consentAcceptedAt: now,
         idempotencyKey: input.idempotencyKey,
@@ -222,7 +222,7 @@ async function createPricedOrder(
       customerName: customer.name,
       phone: customer.phone,
       location: order.locationUrl || "Not specified",
-      service: `${input.quantity} x service (${(resolved.quote.totalFils / 100).toFixed(2)} AED)`,
+      service: resolved.priceMode === "INSPECTION" ? "Price after inspection (booking fee " + (resolved.quote.totalFils / 100).toFixed(2) + " AED)" : `${input.quantity} x service (${(resolved.quote.totalFils / 100).toFixed(2)} AED)`,
       scheduledAt: order.scheduledAt ? order.scheduledAt.toISOString() : "Not specified",
     });
   } catch (err) {

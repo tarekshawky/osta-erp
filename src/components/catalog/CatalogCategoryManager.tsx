@@ -7,7 +7,7 @@ import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import { SeoFields } from "@/components/catalog/SeoFields";
-import { createCatalogWebsitePages, deleteCatalogCategory, importCatalogServicesCsv, moveCatalogCategory, saveCatalogCategory, setCatalogCategoryActive, type ImportResult } from "@/app/admin/catalog/actions";
+import { addCatalogServicesToBooking, createCatalogWebsitePages, deleteCatalogCategory, importCatalogServicesCsv, moveCatalogCategory, saveCatalogCategory, setCatalogCategoryActive, type ImportResult } from "@/app/admin/catalog/actions";
 import { ICON_NAMES } from "@/lib/cms/icons";
 import type { CategoryInput } from "@/lib/catalog/rules";
 
@@ -74,6 +74,17 @@ export function CatalogCategoryManager({ rows, serviceCount }: { rows: CategoryR
     });
   }
 
+  function addToBooking() {
+    if (!confirm("Make every catalogue service bookable, with “Price after inspection”, in every emirate (Ajman, Sharjah, Dubai, Abu Dhabi, Umm Al Quwain, Ras Al Khaimah, Fujairah, Al Ain)?\n\nCustomers will see them on the booking page right away. Services you already price in Dynamic Pricing keep their prices. You can switch any service to a normal price later.")) return;
+    startTransition(async () => {
+      const r = await addCatalogServicesToBooking();
+      if (r.ok && r.result) {
+        showToast(`Added ${r.result.created} services to booking (${r.result.linked} existing ones linked).`);
+        router.refresh();
+      } else showToast(r.error ?? "Could not add the services.", "error");
+    });
+  }
+
   const set = (patch: Partial<CategoryInput>) => setEditing((e) => (e ? { ...e, data: { ...e.data, ...patch } } : e));
 
   return (
@@ -83,6 +94,7 @@ export function CatalogCategoryManager({ rows, serviceCount }: { rows: CategoryR
           <button type="button" onClick={() => { setEditing({ id: null, data: empty }); setSlugTouched(false); setError(null); }} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">+ New category</button>
           <a href="/api/admin/catalog/export" className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700">Export services (CSV)</a>
           <button type="button" disabled={pending} onClick={createPages} className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 disabled:opacity-50">Create website pages</button>
+          <button type="button" disabled={pending} onClick={addToBooking} className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 disabled:opacity-50">Add all to booking</button>
           <label className={`cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 ${pending ? "opacity-50" : ""}`}>
             {pending ? "Working…" : "Import services (CSV)"}
             <input type="file" accept=".csv,text/csv" className="sr-only" disabled={pending} onChange={(e) => { importFile(e.target.files?.[0]); e.target.value = ""; }} />

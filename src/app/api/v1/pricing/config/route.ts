@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
 
+const primaryGroup = (cats: { nameEn: string; nameAr: string; sortOrder: number }[]) => {
+  const c = [...cats].sort((a, b) => a.sortOrder - b.sortOrder)[0];
+  return c ? { en: c.nameEn, ar: c.nameAr, order: c.sortOrder } : null;
+};
+
 export function OPTIONS() {
   return corsPreflight();
 }
@@ -14,6 +19,8 @@ export async function GET() {
       where: { active: true },
       orderBy: { sortOrder: "asc" },
       include: {
+        // The catalogue category (the first one in catalogue order) the booking page groups the service under.
+        catalogService: { select: { categories: { select: { category: { select: { nameEn: true, nameAr: true, sortOrder: true } } } } } },
         prices: { where: { active: true }, select: { regionId: true, unitPriceFils: true } },
         options: {
           where: { active: true },
@@ -43,6 +50,8 @@ export async function GET() {
       descriptionAr: s.descriptionAr,
       imageUrl: s.imageUrl,
       pricingUnit: s.pricingUnit,
+      priceMode: s.priceMode,
+      group: primaryGroup(s.catalogService?.categories.map((c) => c.category) ?? []),
       minQuantity: s.minQuantity,
       pricesIncludeVat: s.pricesIncludeVat,
       noteEn: s.noteEn,
