@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCustomer } from "@/lib/customerAuth";
 import { apiSuccess, apiError, parseJsonBody, parsePagination, corsPreflight } from "@/lib/apiResponse";
-import { ORDER_TYPES, CUSTOMER_LANGUAGES, generateOrderNumber, parseUaeDateTimeLocal } from "@/lib/orderData";
+import { ORDER_TYPES, CUSTOMER_LANGUAGES, generateOrderNumber, generateOrderNumbers, parseUaeDateTimeLocal } from "@/lib/orderData";
 import { notifyAdminOfBooking } from "@/lib/emailSender";
 import { z } from "zod";
 import { resolveQuote } from "@/lib/pricing/resolve";
@@ -204,8 +204,7 @@ async function createPricedOrder(
   }
 
   const now = new Date();
-  const numbers: string[] = [];
-  for (let i = 0; i < lines.length; i++) numbers.push(await generateOrderNumber());
+  const numbers = await generateOrderNumbers(lines.length);
   const created = await prisma.$transaction(async (tx) => {
     const out = [];
     for (const [i, l] of lines.entries()) {

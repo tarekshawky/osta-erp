@@ -41,6 +41,14 @@ export async function generateOrderNumber(): Promise<string> {
   return `${numberPrefix}${String(lastSeq + 1).padStart(6, "0")}`;
 }
 
+// Consecutive numbers for several orders created together (the first is the next free one, the rest follow it).
+export async function generateOrderNumbers(count: number): Promise<string[]> {
+  const first = await generateOrderNumber();
+  const prefix = first.slice(0, first.lastIndexOf("-") + 1);
+  const start = parseInt(first.slice(prefix.length), 10);
+  return Array.from({ length: count }, (_, i) => `${prefix}${String(start + i).padStart(6, "0")}`);
+}
+
 export const ORDER_PHOTO_KINDS = ["Before", "After"] as const;
 export type OrderPhotoKind = (typeof ORDER_PHOTO_KINDS)[number];
 export const MAX_ORDER_PHOTOS_PER_KIND = 6;

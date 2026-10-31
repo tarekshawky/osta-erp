@@ -2,6 +2,9 @@
 // The admin login check is replaced, so this exercises the actions themselves, not the sign-in.
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
+const mockState = vi.hoisted(() => ({ customer: null as unknown }));
+vi.mock("@/lib/customerAuth", () => ({ requireCustomer: async () => ({ customer: mockState.customer }) }));
+vi.mock("@/lib/emailSender", () => ({ notifyAdminOfBooking: async () => {} }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {}, revalidateTag: () => {} }));
 vi.mock("@/lib/adminGuard", () => ({
   guardPermission: async () => ({ ok: true, admin: { id: null, name: "e2e" } }),
@@ -140,4 +143,46 @@ describe.skipIf(!run)("service catalogue actions (real database)", () => {
     expect(q.quote.subtotalFils).toBe(20000);
     expect(q.quote.quantity).toBe(2);
   }, 90_000);
+
+  it("books several services for one visit: one order each, booking fee once, retry-safe", async () => {
+    const { POST } = await import("@/app/api/v1/orders/route");
+    const { NextRequest } = await import("next/server");
+    const region = await prisma.region.findFirstOrThrow({ where: { slug: "ajman" } });
+    const priority = await prisma.bookingType.findFirstOrThrow({ where: { code: "PRIORITY" } });
+    const services = await prisma.bookableService.findMany({ where: { priceMode: "INSPECTION", active: true }, take: 3, orderBy: { sortOrder: "asc" } });
+    const customer = await prisma.customer.create({ data: { code: "ZZ-TEST-CUST", name: "ZZ TEST customer", phone: "+97150000ZZ99", emirate: "AJMAN" } });
+    mockState.customer = customer;
+    const key = `zz-test-key-${Date.now()}`;
+    const body = { serviceId: services[0].id, regionId: region.id, bookingTypeId: priority.id, quantity: 1, extraServices: [{ serviceId: services[1].id, quantity: 4 }, { serviceId: services[2].id, quantity: 1 }], scheduledAt: "2030-01-01T10:00", locationUrl: "https://maps.google.com/?q=1,1", consent: true, idempotencyKey: key };
+    const call = (b: unknown) => POST(new NextRequest("http://localhost/api/v1/orders", { method: "POST", body: JSON.stringify(b), headers: { "content-type": "application/json" } }));
+    try {
+      const res = await call(body);
+      const json = (await res.json()).data;
+      expect(res.status).toBe(201);
+      expect(json.extraOrders).toHaveLength(2);
+      const numbers = [json.number, ...json.extraOrders.map((o: { number: string }) => o.number)];
+      expect(new Set(numbers).size).toBe(3); // three different, consecutive order numbers
+      const orders = await prisma.order.findMany({ where: { customerId: customer.id }, orderBy: { number: "asc" } });
+      expect(orders).toHaveLength(3);
+      expect(orders[0].totalFils).toBe(priority.defaultFeeFils); // the fee on the first order only
+      expect(orders[1].totalFils).toBe(0);
+      expect(orders[2].totalFils).toBe(0);
+      expect(orders[1].quantity).toBe(1); // price-after-inspection services are always one visit
+      expect(orders[1].notes).toContain(`Booked together with ${orders[0].number}`);
+      // the same request again returns the same orders and creates nothing
+      const again = await call(body);
+      expect(again.status).toBe(200);
+      expect((await again.json()).data.extraOrders).toHaveLength(2);
+      expect(await prisma.order.count({ where: { customerId: customer.id } })).toBe(3);
+      // one unavailable service stops everything: nothing is created
+      const bad = await call({ ...body, idempotencyKey: `${key}-bad`, extraServices: [{ serviceId: "no-such-service", quantity: 1 }] });
+      expect(bad.status).toBe(422);
+      expect(await prisma.order.count({ where: { customerId: customer.id } })).toBe(3);
+    } finally {
+      const ids = (await prisma.order.findMany({ where: { customerId: customer.id }, select: { id: true } })).map((o) => o.id);
+      await prisma.orderEvent.deleteMany({ where: { orderId: { in: ids } } });
+      await prisma.order.deleteMany({ where: { id: { in: ids } } });
+      await prisma.customer.delete({ where: { id: customer.id } });
+    }
+  }, 120_000);
 });
