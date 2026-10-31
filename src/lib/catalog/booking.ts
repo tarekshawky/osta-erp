@@ -57,7 +57,8 @@ export async function addCatalogToBooking(): Promise<AddToBookingResult> {
     pricingUnit: "VISIT", priceMode: "INSPECTION", minQuantity: 1, active: true, sortOrder: 100 + n, catalogServiceId: s.id,
   }));
   for (const part of chunks(rows, 200)) await prisma.bookableService.createMany({ data: part });
-  // Offered for booking now, so the catalogue marks them active too.
+  // Offered for booking now, so the catalogue marks them (and their categories) active too.
   await prisma.catalogService.updateMany({ where: { active: false }, data: { active: true } });
+  await prisma.catalogCategory.updateMany({ where: { active: false }, data: { active: true } });
   return { created: rows.length, linked, switchedToInspection: switched, alreadyHad };
 }
