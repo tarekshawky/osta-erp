@@ -10,6 +10,8 @@ export type QuoteRequest = {
   addOnIds?: string[];
   // Required when the service has options (e.g. a gas weight).
   optionId?: string;
+  // The booking fee is charged once per visit: the other services booked together with the first one carry no fee.
+  waiveBookingFee?: boolean;
   at?: Date;
 };
 
@@ -84,7 +86,7 @@ export async function resolveQuote(req: QuoteRequest): Promise<ResolvedQuote> {
     quantity: inspection ? 1 : req.quantity,
     minQuantity: inspection ? 1 : service.minQuantity,
     tiers: inspection ? [] : tiers,
-    bookingFeeFils: override?.feeFils ?? bookingType.defaultFeeFils,
+    bookingFeeFils: req.waiveBookingFee ? 0 : override?.feeFils ?? bookingType.defaultFeeFils,
     addOns: (inspection ? [] : addOnRows).map((a) => ({ id: a.addOnId, priceFils: a.priceFils })),
     vat: {
       ratePercent: tax?.vatRatePercent ?? 5,

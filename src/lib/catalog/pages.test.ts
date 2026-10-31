@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseBlocks } from "@/lib/cms/blocks";
 import { publishProblems } from "@/lib/cms/pageRules";
-import { categoryBlocks, pageSeo, pageSlug, serviceBlocks } from "./pages";
+import { bookUrl, categoryBlocks, pageSeo, pageSlug, serviceBlocks } from "./pages";
 
 const cat = { nameEn: "Air Conditioning & HVAC Services", nameAr: "خدمات التكييف والتبريد", shortDescriptionEn: "", shortDescriptionAr: "", descriptionEn: "", descriptionAr: "" };
 const svc = { ...cat, nameEn: "Split AC Cleaning", nameAr: "تنظيف مكيفات السبليت", seoTitleEn: null, seoTitleAr: null, seoDescriptionEn: null, seoDescriptionAr: null };
@@ -13,6 +13,15 @@ describe("catalogue page generator", () => {
       expect(publishProblems({ slug: "split-ac-cleaning", titleEn: "x", titleAr: "ي", blocks })).toEqual([]);
     }
     expect(categoryBlocks(cat).some((b) => b.type === "subPages")).toBe(true);
+  });
+  it("sends the Book buttons to the booking service", () => {
+    expect(bookUrl("split-ac-cleaning")).toBe("/pricing?service=split-ac-cleaning");
+    expect(bookUrl(null)).toBe("/pricing");
+    const blocks = serviceBlocks(svc, cat, "split-ac-cleaning");
+    expect(parseBlocks(blocks).ok).toBe(true);
+    const json = JSON.stringify(blocks);
+    expect((json.match(/\/pricing\?service=split-ac-cleaning/g) ?? []).length).toBe(2); // hero button + bottom button
+    expect(JSON.stringify(serviceBlocks(svc, cat))).not.toContain("service=");
   });
   it("uses the catalogue's own text and SEO when present", () => {
     const blocks = serviceBlocks({ ...svc, descriptionEn: "Own text", descriptionAr: "نص خاص" }, cat);

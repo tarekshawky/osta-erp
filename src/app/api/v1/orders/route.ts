@@ -76,6 +76,11 @@ const pricedBookingSchema = z.object({
   locationUrl: z.string().max(2000).optional(),
   customerLanguage: z.string().optional(),
   notes: z.string().max(2000).optional(),
+  // More services for the same visit (same place, time and booking type): one order is created for each, the booking fee only once.
+  extraServices: z
+    .array(z.object({ serviceId: z.string().min(1), quantity: z.number().int().min(1).max(500), addOnIds: z.array(z.string()).max(20).optional(), optionId: z.string().min(1).optional() }))
+    .max(19)
+    .optional(),
   consent: z.literal(true),
   idempotencyKey: z.string().min(8).max(100),
 });
@@ -166,18 +171,30 @@ async function createPricedOrder(
     );
   }
   const input = parsed.data;
+  const extras = input.extraServices ?? [];
 
+  // Retrying the same request returns what was already created (the extra orders use "<key>#<n>").
   const existing = await prisma.order.findUnique({ where: { idempotencyKey: input.idempotencyKey }, select: orderSelect });
-  if (existing) return apiSuccess(existing, { status: 200 });
+  if (existing) {
+    const extraOrders = extras.length ? await prisma.order.findMany({ where: { idempotencyKey: { startsWith: `${input.idempotencyKey}#` } }, select: orderSelect, orderBy: { createdAt: "asc" } }) : [];
+    return apiSuccess({ ...existing, extraOrders }, { status: 200 });
+  }
 
   const scheduledAt = input.scheduledAt ? parseUaeDateTimeLocal(input.scheduledAt) : null;
   if (input.scheduledAt && !scheduledAt) {
     return apiError("invalid_request", "scheduledAt must be formatted as YYYY-MM-DDTHH:mm.", 400);
   }
 
-  let resolved;
+  // Price every service first: if any one is unavailable, nothing is created.
+  const lines = [
+    { serviceId: input.serviceId, quantity: input.quantity, addOnIds: input.addOnIds, optionId: input.optionId, waive: false },
+    ...extras.map((e) => ({ ...e, waive: true })),
+  ];
+  const resolvedLines: Awaited<ReturnType<typeof resolveQuote>>[] = [];
   try {
-    resolved = await resolveQuote(input);
+    for (const l of lines) {
+      resolvedLines.push(await resolveQuote({ regionId: input.regionId, serviceId: l.serviceId, quantity: l.quantity, bookingTypeId: input.bookingTypeId, addOnIds: l.addOnIds, optionId: l.optionId, waiveBookingFee: l.waive }));
+    }
   } catch (err) {
     if (err instanceof QuoteError) return apiError(err.code, err.message, 422);
     if (err instanceof Error && /not_found|unavailable|missing/.test(err.message)) {
@@ -186,48 +203,56 @@ async function createPricedOrder(
     throw err;
   }
 
-  const number = await generateOrderNumber();
   const now = new Date();
-  const order = await prisma.$transaction(async (tx) => {
-    const created = await tx.order.create({
-      data: {
-        number,
-        date: now,
-        scheduledAt,
-        customerId: customer.id,
-        locationUrl: input.locationUrl?.trim() || customer.locationUrl || null,
-        customerLanguage: input.customerLanguage ?? customer.language,
-        notes: input.notes?.trim() || null,
-        status: "Requested",
-        priceAgreed: (resolved.quote.totalFils / 100).toFixed(2),
-        regionId: input.regionId,
-        bookableServiceId: input.serviceId,
-        bookingTypeId: input.bookingTypeId,
-        quantity: resolved.quote.quantity,
-        totalFils: resolved.quote.totalFils,
-        pricingSnapshot: { ...resolved.quote, ruleSetId: resolved.ruleSetId, addOnIds: resolved.priceMode === "INSPECTION" ? [] : input.addOnIds ?? [], option: resolved.option, priceMode: resolved.priceMode },
-        visitFeePolicyId: resolved.policyId,
-        consentAcceptedAt: now,
-        idempotencyKey: input.idempotencyKey,
-      },
-      select: orderSelect,
-    });
-    await tx.orderEvent.create({ data: { orderId: created.id, type: "CREATED" } });
-    return created;
+  const numbers: string[] = [];
+  for (let i = 0; i < lines.length; i++) numbers.push(await generateOrderNumber());
+  const created = await prisma.$transaction(async (tx) => {
+    const out = [];
+    for (const [i, l] of lines.entries()) {
+      const resolved = resolvedLines[i];
+      const order = await tx.order.create({
+        data: {
+          number: numbers[i],
+          date: now,
+          scheduledAt,
+          customerId: customer.id,
+          locationUrl: input.locationUrl?.trim() || customer.locationUrl || null,
+          customerLanguage: input.customerLanguage ?? customer.language,
+          notes: [input.notes?.trim(), i > 0 ? `Booked together with ${numbers[0]}` : lines.length > 1 ? `Booked together with ${numbers.slice(1).join(", ")}` : ""].filter(Boolean).join("\n") || null,
+          status: "Requested",
+          priceAgreed: (resolved.quote.totalFils / 100).toFixed(2),
+          regionId: input.regionId,
+          bookableServiceId: l.serviceId,
+          bookingTypeId: input.bookingTypeId,
+          quantity: resolved.quote.quantity,
+          totalFils: resolved.quote.totalFils,
+          pricingSnapshot: { ...resolved.quote, ruleSetId: resolved.ruleSetId, addOnIds: resolved.priceMode === "INSPECTION" ? [] : l.addOnIds ?? [], option: resolved.option, priceMode: resolved.priceMode },
+          visitFeePolicyId: resolved.policyId,
+          consentAcceptedAt: now,
+          idempotencyKey: i === 0 ? input.idempotencyKey : `${input.idempotencyKey}#${i}`,
+        },
+        select: orderSelect,
+      });
+      await tx.orderEvent.create({ data: { orderId: order.id, type: "CREATED" } });
+      out.push(order);
+    }
+    return out;
   });
+  const [order, ...extraOrders] = created;
 
   try {
+    const first = resolvedLines[0];
     await notifyAdminOfBooking({
       orderNumber: order.number,
       customerName: customer.name,
       phone: customer.phone,
       location: order.locationUrl || "Not specified",
-      service: resolved.priceMode === "INSPECTION" ? "Price after inspection (booking fee " + (resolved.quote.totalFils / 100).toFixed(2) + " AED)" : `${input.quantity} x service (${(resolved.quote.totalFils / 100).toFixed(2)} AED)`,
+      service: lines.length > 1 ? `${lines.length} services booked together (${numbers.join(", ")})` : first.priceMode === "INSPECTION" ? "Price after inspection (booking fee " + (first.quote.totalFils / 100).toFixed(2) + " AED)" : `${input.quantity} x service (${(first.quote.totalFils / 100).toFixed(2)} AED)`,
       scheduledAt: order.scheduledAt ? order.scheduledAt.toISOString() : "Not specified",
     });
   } catch (err) {
     console.error("[orders] admin notification failed:", err);
   }
 
-  return apiSuccess({ ...order, totalFils: resolved.quote.totalFils, pricing: resolved.quote }, { status: 201 });
+  return apiSuccess({ ...order, totalFils: resolvedLines[0].quote.totalFils, pricing: resolvedLines[0].quote, extraOrders }, { status: 201 });
 }
