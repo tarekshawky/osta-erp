@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
+import { ClearFilters, FilterBar, FilterSelect, ResultCount, SearchField } from "./FilterControls";
 
 // Search and filter for EVERY table in the admin (8 rows or more): a search box over all the text of a row, and a dropdown for each
 // column that has only a few different values (Status, Type …). Not added where the page already has its own search, for tables
@@ -195,30 +196,14 @@ function TableTools({ table, search, pager, top, bottom }: { table: HTMLTableEle
   const filtering = query.trim() !== "" || Object.values(cols).some((v) => v !== "");
 
   const bar = search && (
-    <div className="osta-table-search mb-2 flex flex-wrap items-center gap-2 text-sm">
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => refilter(e.target.value, cols)}
-        placeholder="Search this table…"
-        aria-label="Search this table"
-        className="w-full max-w-xs rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+    <FilterBar>
+      <SearchField value={query} onChange={(v) => refilter(v, cols)} placeholder="Search this table…" label="Search this table" />
       {options.map((c) => (
-        <select
-          key={c.index}
-          value={cols[c.index] ?? ""}
-          onChange={(e) => refilter(query, { ...cols, [c.index]: e.target.value })}
-          aria-label={`Filter by ${c.label}`}
-          className="max-w-[12rem] rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm text-slate-700"
-        >
-          <option value="">All {c.label}</option>
-          {c.values.map((v) => <option key={v} value={v}>{v}</option>)}
-        </select>
+        <FilterSelect key={c.index} value={cols[c.index] ?? ""} onChange={(v) => refilter(query, { ...cols, [c.index]: v })} label={`Filter by ${c.label}`} allLabel={`All ${c.label}`} options={c.values.map((v) => ({ value: v, label: v }))} />
       ))}
-      {filtering && <button type="button" onClick={() => refilter("", {})} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 hover:bg-slate-50">Clear</button>}
-      {filtering && <span className="text-slate-500" role="status">{matches === 0 ? "No rows match." : `${matches} of ${total} rows`}</span>}
-    </div>
+      {filtering && <ClearFilters onClick={() => refilter("", {})} />}
+      {filtering && <ResultCount>{matches === 0 ? "No rows match." : `${matches} of ${total} rows`}</ResultCount>}
+    </FilterBar>
   );
 
   const controls = pager && (
