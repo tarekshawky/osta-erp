@@ -53,7 +53,7 @@ export function BalanceSheetPreview({ balanceSheet }: { balanceSheet: BalanceShe
         <div className="text-sm text-slate-600 mt-0.5">{formatAsAtTitle(current.asOfDate)}</div>
       </div>
 
-      <table className="w-full text-sm">
+      <table data-no-paginate className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-300 text-slate-500">
             <td className="py-1.5"></td>

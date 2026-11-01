@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AdminSidebar } from "./AdminSidebar";
+import { AutoTablePager } from "./AutoTablePager";
 
 export function AdminShell({
   adminName,
@@ -42,6 +43,7 @@ export function AdminShell({
           </svg>
         </button>
         {children}
+        <AutoTablePager />
       </div>
     </div>
   );

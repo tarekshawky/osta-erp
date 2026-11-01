@@ -23,6 +23,19 @@ body {
   }
 }
 
+/* Admin tables paged in the browser (AutoTablePager): the rows of other pages are only hidden, and printing shows all of them. */
+tr[data-osta-hidden] {
+  display: none;
+}
+@media print {
+  tr[data-osta-hidden] {
+    display: table-row !important;
+  }
+  [data-osta-pager-host] {
+    display: none !important;
+  }
+}
+
 /* Visual text editor (block forms): the editing surface and the content it produces. */
 .rich-editor .rich-editor-surface { min-height: 9rem; padding: 0.75rem 0.9rem; outline: none; font-size: 0.95rem; line-height: 1.6; color: #0f172a; }
 .rich-editor .rich-editor-surface > * + * { margin-top: 0.75em; }

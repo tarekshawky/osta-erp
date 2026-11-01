@@ -27,7 +27,7 @@ export function Pagination({
   const nextDisabled = page >= totalPages;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 text-sm">
+    <div data-osta-paged className="flex items-center justify-between px-4 py-3 border-t border-slate-100 text-sm">
       <span className="text-slate-500">
         Page {page} of {totalPages}
       </span>

@@ -263,7 +263,7 @@ export function InvoicePreviewCard({
 
       {/* Items table (sm and up) */}
       <div className="mt-6 hidden sm:block rounded-xl border border-gray-200 overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm">
+        <table data-no-paginate className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="text-white text-[10px] font-bold tracking-wide whitespace-nowrap" style={{ backgroundColor: NAVY }}>
               <th className="px-3 py-3 text-center w-8">#</th>

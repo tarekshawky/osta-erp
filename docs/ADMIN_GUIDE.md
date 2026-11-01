@@ -52,6 +52,9 @@ A floating WhatsApp button appears on every public page. Pressing it opens a sma
 ### The sidebar
 The sidebar is grouped into modules: **Dashboard**, **Orders & Bookings**, **HR & Employees**, **Finance & Accounting**, **Reports & Analytics**, **Marketing & Blog**, **Website Management**, **Fleet & Vehicles**, **Inventory & Services** and **System Administration**. Click a module to open its pages; the module and the page you are on stay highlighted and open. A page that belongs to two modules (for example Work Reports) is the same page, shown in both. Use the search box (or **Ctrl/Cmd + K**) to jump to any page. The arrow at the top collapses the sidebar to icons (click a module icon to open it again); the sidebar remembers whether you collapsed it and which modules you opened. On a phone the same menu opens as a drawer. You only see the modules and pages your role allows, and the server checks access on every page too.
 
+### Tables are paged
+Every long table in the dashboard (more than 25 rows) is paged: under the table you see **Showing 1–25 of 143**, **Previous / Next**, page numbers and **Rows** (25, 50, 100 or All; your choice is remembered). Tables that already page on the server (orders, invoices, customers…) keep their own pager. Documents such as invoice and quotation previews and the financial statements are never cut, and printing a page always prints every row.
+
 ### Technical files & AI (Website → Technical Files & AI)
 Edit the files served from the root of the website: **robots.txt** (your extra rules; the standard rules and sitemap are added for you), the **AI crawler policy** (allow, block training only, or block all AI crawlers), **llms.txt** (a guide for AI assistants; *Generate from my site* writes a first draft), **ads.txt** and **security.txt** (Owner only). Each file shows its address so you can check it live.
 
@@ -431,3 +434,6 @@ Google Tag Manager وGA4 وبكسل ميتا وتحقق Search Console وBing و
 * **نسخة يدوية:** `pg_dump "$DATABASE_URL" -Fc -f osta-$(date +%F).dump` والاستعادة بـ `pg_restore -d <رابط-قاعدة-جديدة> osta-….dump`. احفظ الملفات في مكان خاص فهي تحتوي بيانات العملاء.
 * **المحتوى فقط:** الموقع ← النسخ الاحتياطي (JSON). الصور مخزنة في قاعدة البيانات فنسخة القاعدة تشملها.
 * جرّب الاستعادة على فرع أو نسخة قبل أن تحتاجها.
+
+### الجداول بصفحات
+كل جدول طويل في لوحة التحكم (أكثر من 25 صفاً) صار بصفحات: تحت الجدول **Showing 1–25 of 143** و**Previous / Next** وأرقام الصفحات و**Rows** (25 أو 50 أو 100 أو All؛ ويُحفظ اختيارك). الجداول التي لها ترقيم من الخادم أصلاً (الطلبات والفواتير والعملاء…) تحتفظ بترقيمها. المستندات مثل معاينة الفاتورة وعرض السعر والقوائم المالية لا تُقطع أبداً، والطباعة تطبع كل الصفوف دائماً.
