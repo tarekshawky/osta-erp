@@ -78,7 +78,7 @@ function TypeCard({ row, services, regions }: { row: BookingTypeRow; services: O
         <Field label="الاسم (Arabic) *" dir="rtl">
           <input className={inputClassName} dir="rtl" value={v.nameAr} onChange={(e) => setV({ ...v, nameAr: e.target.value })} />
         </Field>
-        <Field label="Description (English)">
+        <Field label="Description (English) — write {service} where the service name should appear">
           <textarea className={`${inputClassName} min-h-16`} value={v.descriptionEn} onChange={(e) => setV({ ...v, descriptionEn: e.target.value })} />
         </Field>
         <Field label="الوصف (Arabic)" dir="rtl">

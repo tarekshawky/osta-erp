@@ -163,7 +163,7 @@ Hire daily and permanent workers: publish a job, share it on WhatsApp, review ap
 
 * **Prices & Services:** type a price in AED per emirate; an empty cell means “not available there”.
 * **Discounts:** tiers on the total quantity (one tier applies, never stacked). The preview table uses the same engine as real bookings.
-* **Booking Types:** Standard / Priority / Emergency fees, hours, per-service or per-emirate overrides.
+* **Booking Types:** Standard / Priority / Emergency fees, hours, per-service or per-emirate overrides. In a booking type's description write **{service}** where the service name should appear: the booking page replaces it with the service being booked (for example “Flea Control”), so one text fits every service.
 * **Tax & Visit Fee:** VAT, and the visit-fee policy (each save publishes a new numbered version).
 * **Orders:** the order page shows the exact price breakdown the customer saw, a timeline (mark *Team dispatched*, etc.) and the visit-fee form. A visit fee is allowed only after dispatch and never when the company cancels or the team doesn't show up.
 * Changing a price **never** changes existing orders.
@@ -388,7 +388,7 @@ Google Tag Manager وGA4 وبكسل ميتا وتحقق Search Console وBing و
 
 * **الأسعار والخدمات:** اكتب السعر بالدرهم لكل إمارة؛ الخانة الفارغة تعني «غير متاحة هناك».
 * **الخصومات:** شرائح على إجمالي الكمية (تُطبَّق شريحة واحدة ولا تتراكم). جدول المعاينة يستخدم نفس محرك الحجز الحقيقي.
-* **أنواع الحجز:** رسوم عادي / أولوية / طارئ والساعات واستثناءات لكل خدمة أو إمارة.
+* **أنواع الحجز:** رسوم عادي / أولوية / طارئ والساعات واستثناءات لكل خدمة أو إمارة. في وصف نوع الحجز اكتب **{service}** مكان اسم الخدمة: تستبدله صفحة الحجز باسم الخدمة المحجوزة (مثل «Flea Control») فيصلح نص واحد لكل الخدمات.
 * **الضريبة ورسوم الزيارة:** ضريبة القيمة المضافة وسياسة رسوم الزيارة (كل حفظ ينشر نسخة جديدة مرقّمة).
 * **الطلبات:** صفحة الطلب تعرض تفصيل السعر كما رآه العميل، وخطاً زمنياً (سجّل *وصول الفريق* وغيره) ونموذج رسوم الزيارة. لا تُفرض رسوم الزيارة إلا بعد تحرك الفريق، ولا تُفرض أبداً إذا ألغت الشركة أو لم يحضر الفريق.
 * تغيير السعر **لا يغيّر** الطلبات السابقة أبداً.
