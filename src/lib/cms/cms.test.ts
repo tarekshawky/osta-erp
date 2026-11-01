@@ -24,6 +24,22 @@ describe("block registry", () => {
     faq.props.items = Array.from({ length: 201 }, () => ({ question: { en: "q", ar: "q" }, answer: { en: "a", ar: "a" } }));
     expect(parseBlocks([faq]).ok).toBe(false);
   });
+  it("the Services grid takes any number of services and can show the whole catalogue", () => {
+    const grid = createBlock("servicesGrid");
+    expect(grid.props.source).toBe("website"); // existing behaviour is the default
+    for (const limit of [1, 24, 25, 718, 2000]) {
+      grid.props = { ...grid.props, limit, source: "catalogue", category: "Cleaning Services" };
+      expect(parseBlocks([grid]).ok).toBe(true);
+    }
+    grid.props = { ...grid.props, limit: 2001 };
+    expect(parseBlocks([grid]).ok).toBe(false);
+    grid.props = { ...grid.props, limit: 10, source: "everything" };
+    expect(parseBlocks([grid]).ok).toBe(false);
+    // a block saved before the new options existed still loads
+    const { source: _s, category: _c, ...old } = createBlock("servicesGrid").props;
+    void _s; void _c;
+    expect(parseBlocks([{ ...createBlock("servicesGrid"), props: old }]).ok).toBe(true);
+  });
   it("accepts very long text (no practical limit) and many FAQ items", () => {
     const rt = createBlock("richText");
     rt.props.body = { en: "word ".repeat(30_000), ar: "كلمة ".repeat(30_000) }; // ~150,000 characters each

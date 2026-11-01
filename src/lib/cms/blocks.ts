@@ -43,7 +43,12 @@ const RAW_SCHEMAS = {
     headingAccent: bi.optional(),
     badges: z.array(z.object({ icon: z.string().max(40).regex(/^[A-Za-z0-9]*$/), label: bi })).max(6).optional(),
   }),
-  servicesGrid: z.object({ heading: bi, subtitle: bi, limit: z.number().int().min(1).max(24), eyebrow: bi.optional(), viewAllLabel: bi.optional(), viewAllUrl: link.optional() }),
+  // source "website" = the website service pages (the default); "catalogue" = every service of the Service Catalogue, each with a Book
+  // button (optionally only one category, by its English name). The limit is whatever number you type (up to 2000).
+  servicesGrid: z.object({
+    heading: bi, subtitle: bi, limit: z.number().int().min(1).max(2000), eyebrow: bi.optional(), viewAllLabel: bi.optional(), viewAllUrl: link.optional(),
+    source: z.enum(["website", "catalogue"]).optional(), category: z.string().max(120).optional(),
+  }),
   blogPreview: z.object({ eyebrow: bi, heading: bi, limit: z.number().int().min(1).max(12), viewAllLabel: bi, viewAllUrl: link }),
   // Open jobs from Jobs & Workforce, pulled automatically; each card opens the job's application page.
   jobsList: z.object({ eyebrow: bi, heading: bi, subtitle: bi, limit: z.number().int().min(1).max(24), jobType: z.enum(["all", "DAILY", "PERMANENT"]), emptyText: bi, viewAllLabel: bi }),
@@ -214,16 +219,21 @@ export const BLOCK_REGISTRY: Record<
   },
   servicesGrid: {
     label: "Services grid",
-    description: "Cards for your website services, pulled automatically.",
+    description: "Cards for your services, pulled automatically: your website services, or every service of the Service Catalogue with a Book button on each.",
     fields: [
       { kind: "bi-text", key: "heading", label: "Heading" },
       { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
-      { kind: "number", key: "limit", label: "Max services to show" },
+      {
+        kind: "select", key: "source", label: "Which services",
+        options: [{ value: "website", label: "My website services (the service pages)" }, { value: "catalogue", label: "All services from the Service Catalogue (with Book buttons)" }],
+      },
+      { kind: "text", key: "category", label: "Only this catalogue category (optional: its English name, e.g. Cleaning Services; empty = all)", showIf: { key: "source", equals: "catalogue" } },
+      { kind: "number", key: "limit", label: "Max services to show (type any number, up to 2000)" },
       { kind: "bi-text", key: "eyebrow", label: "Small label above heading (optional)" },
       { kind: "bi-text", key: "viewAllLabel", label: "“View all” link text (optional)" },
       { kind: "url", key: "viewAllUrl", label: "“View all” link" },
     ],
-    defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), limit: 8, eyebrow: biEmpty(), viewAllLabel: biEmpty(), viewAllUrl: "" }),
+    defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), limit: 8, source: "website", category: "", eyebrow: biEmpty(), viewAllLabel: biEmpty(), viewAllUrl: "" }),
   },
   blogPreview: {
     label: "Latest blog posts",
