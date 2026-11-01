@@ -192,9 +192,13 @@ async function createPricedOrder(
   ];
   const resolvedLines: Awaited<ReturnType<typeof resolveQuote>>[] = [];
   try {
-    for (const l of lines) {
-      resolvedLines.push(await resolveQuote({ regionId: input.regionId, serviceId: l.serviceId, quantity: l.quantity, bookingTypeId: input.bookingTypeId, addOnIds: l.addOnIds, optionId: l.optionId, waiveBookingFee: l.waive }));
-    }
+    const request = (l: (typeof lines)[number], minimumOrder?: { otherLinesFils: number }) => ({ regionId: input.regionId, serviceId: l.serviceId, quantity: l.quantity, bookingTypeId: input.bookingTypeId, addOnIds: l.addOnIds, optionId: l.optionId, waiveBookingFee: l.waive, scheduledAt, minimumOrder });
+    for (const l of lines) resolvedLines.push(await resolveQuote(request(l)));
+    // Minimum order: the booking as a whole is topped up to it (once), on the first service that has a price.
+    const work = resolvedLines.map((r) => r.quote.serviceNetFils + r.quote.addOnsFils);
+    const total = work.reduce((a, b) => a + b, 0);
+    const first = work.findIndex((w) => w > 0);
+    if (first >= 0 && total > 0) resolvedLines[first] = await resolveQuote(request(lines[first], { otherLinesFils: total - work[first] }));
   } catch (err) {
     if (err instanceof QuoteError) return apiError(err.code, err.message, 422);
     if (err instanceof Error && /not_found|unavailable|missing/.test(err.message)) {

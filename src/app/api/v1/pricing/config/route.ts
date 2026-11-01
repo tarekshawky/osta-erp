@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
 import { regionalPriceFils } from "@/lib/pricing/regional";
+import { loadPricingRules } from "@/lib/pricing/resolve";
 
 const primaryGroup = (cats: { nameEn: string; nameAr: string; sortOrder: number; iconName: string | null }[]) => {
   const c = [...cats].sort((a, b) => a.sortOrder - b.sortOrder)[0];
@@ -14,7 +15,7 @@ export function OPTIONS() {
 // Everything the booking app needs for a live *preview*. Prices are for display only;
 // POST /orders re-prices on the server.
 export async function GET() {
-  const [regions, services, bookingTypes, tax, policy] = await Promise.all([
+  const [regions, services, bookingTypes, tax, policy, rules] = await Promise.all([
     prisma.region.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
     prisma.bookableService.findMany({
       where: { active: true },
@@ -38,9 +39,12 @@ export async function GET() {
     prisma.bookingType.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" }, include: { overrides: true } }),
     prisma.taxSetting.findUnique({ where: { id: "default" } }),
     prisma.visitFeePolicy.findFirst({ orderBy: { version: "desc" } }),
+    loadPricingRules(),
   ]);
 
   return apiSuccess({
+    // Minimum order and the emergency off-hours / holiday surcharges (for the live preview; the order is re-priced on the server).
+    rules,
     regions: regions.map((r) => ({ id: r.id, slug: r.slug, nameEn: r.nameEn, nameAr: r.nameAr })),
     services: services.map((s) => ({
       id: s.id,

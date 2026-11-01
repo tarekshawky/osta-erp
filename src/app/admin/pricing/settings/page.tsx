@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { filsToAed } from "@/lib/pricing/money";
-import { TaxForm, VisitFeeForm } from "@/components/pricing/SettingsForms";
+import { loadPricingRules } from "@/lib/pricing/resolve";
+import { RulesForm, TaxForm, VisitFeeForm } from "@/components/pricing/SettingsForms";
 
 export default async function PricingSettingsPage() {
   const [tax, policies] = await Promise.all([
@@ -8,12 +9,27 @@ export default async function PricingSettingsPage() {
     prisma.visitFeePolicy.findMany({ orderBy: { version: "desc" } }),
   ]);
   const latest = policies[0];
+  const rules = await loadPricingRules();
 
   return (
     <div className="flex flex-col gap-8">
       <section>
         <h2 className="mb-3 text-xl font-bold text-slate-900">Tax (VAT)</h2>
         <TaxForm rate={String(tax?.vatRatePercent ?? 5)} includeVat={tax?.pricesIncludeVat ?? true} />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-xl font-bold text-slate-900">Minimum order and surcharges</h2>
+        <RulesForm
+          initial={{
+            minimumAed: filsToAed(rules.minimumOrderFils),
+            offHoursPercent: String(rules.offHoursPercent),
+            holidayPercent: String(rules.holidayPercent),
+            normalStart: rules.normalStart,
+            normalEnd: rules.normalEnd,
+            holidays: rules.holidays.join("\n"),
+          }}
+        />
       </section>
 
       <section>

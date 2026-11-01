@@ -20,6 +20,12 @@ export type PriceQuoteInput = {
   bookingFeeFils: number;
   addOns?: QuoteAddOn[];
   vat: { ratePercent: number; pricesIncludeVat: boolean };
+  // Top the priced work (service after discount + add-ons) up to at least this amount. 0 / undefined = no minimum.
+  minimumOrderFils?: number;
+  // Priced work of the other services booked together with this one: it counts toward the minimum.
+  otherLinesFils?: number;
+  // Extra percent on the priced work (emergency off-hours, holidays).
+  surcharge?: { percent: number; kind: string } | null;
   at?: Date;
 };
 
@@ -32,6 +38,11 @@ export type Quote = {
   serviceNetFils: number;
   bookingFeeFils: number;
   addOnsFils: number;
+  // Pricing rules. Orders taken before they existed have none of these.
+  minimumTopUpFils?: number;
+  surchargeFils?: number;
+  surchargePercent?: number;
+  surchargeKind?: string | null;
   vatFils: number;
   pricesIncludeVat: boolean;
   vatRatePercent: number;
@@ -98,7 +109,15 @@ export function priceQuote(input: PriceQuoteInput): Quote {
     addOnsFils += addOn.priceFils * (addOn.qty ?? 1);
   }
 
-  const taxableFils = serviceNetFils + input.bookingFeeFils + addOnsFils;
+  // A booking below the minimum is topped up to it (only when there is priced work: "price after inspection" has none).
+  const workFils = serviceNetFils + addOnsFils;
+  const minimum = input.minimumOrderFils ?? 0;
+  assertFils(minimum, "minimumOrderFils");
+  const minimumTopUpFils = minimum > 0 && workFils > 0 ? Math.max(0, minimum - workFils - (input.otherLinesFils ?? 0)) : 0;
+  const surchargePercent = input.surcharge && workFils > 0 ? input.surcharge.percent : 0;
+  const surchargeFils = percentOf(workFils + minimumTopUpFils, surchargePercent);
+
+  const taxableFils = workFils + minimumTopUpFils + surchargeFils + input.bookingFeeFils;
   const { ratePercent, pricesIncludeVat } = input.vat;
   const rateBp = Math.round(ratePercent * 100);
   let vatFils: number;
@@ -121,6 +140,10 @@ export function priceQuote(input: PriceQuoteInput): Quote {
     serviceNetFils,
     bookingFeeFils: input.bookingFeeFils,
     addOnsFils,
+    minimumTopUpFils,
+    surchargeFils,
+    surchargePercent,
+    surchargeKind: surchargeFils > 0 || surchargePercent > 0 ? input.surcharge?.kind ?? null : null,
     vatFils,
     pricesIncludeVat,
     vatRatePercent: ratePercent,

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
-import { saveTax, publishVisitFeePolicy, type VisitFeeInput } from "@/app/admin/pricing/actions";
+import { saveTax, publishVisitFeePolicy, savePricingRules, type RulesInput, type VisitFeeInput } from "@/app/admin/pricing/actions";
 
 export function TaxForm({ rate, includeVat }: { rate: string; includeVat: boolean }) {
   const { showToast } = useToast();
@@ -111,6 +111,59 @@ export function VisitFeeForm({ initial, version }: { initial: VisitFeeInput; ver
         className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
       >
         {pending ? "Publishing…" : "Publish new version"}
+      </button>
+    </div>
+  );
+}
+
+export function RulesForm({ initial }: { initial: RulesInput }) {
+  const { showToast } = useToast();
+  const [v, setV] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const set = (k: keyof RulesInput) => (e: { target: { value: string } }) => setV((s) => ({ ...s, [k]: e.target.value }));
+
+  return (
+    <div className="max-w-2xl rounded-xl border border-slate-200 bg-white p-5">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Minimum order (AED, 0 = none)">
+          <input className={inputClassName} inputMode="decimal" value={v.minimumAed} onChange={set("minimumAed")} />
+        </Field>
+        <div />
+        <Field label="Emergency off-hours surcharge (%)">
+          <input className={inputClassName} inputMode="decimal" value={v.offHoursPercent} onChange={set("offHoursPercent")} />
+        </Field>
+        <Field label="Holiday surcharge (%)">
+          <input className={inputClassName} inputMode="decimal" value={v.holidayPercent} onChange={set("holidayPercent")} />
+        </Field>
+        <Field label="Normal hours start">
+          <input className={inputClassName} value={v.normalStart} onChange={set("normalStart")} placeholder="08:00" />
+        </Field>
+        <Field label="Normal hours end">
+          <input className={inputClassName} value={v.normalEnd} onChange={set("normalEnd")} placeholder="18:00" />
+        </Field>
+      </div>
+      <Field label="Holidays (one date per line, e.g. 2026-12-02)">
+        <textarea className={inputClassName} rows={4} value={v.holidays} onChange={set("holidays")} />
+      </Field>
+      <p className="mt-1 text-xs text-slate-400">
+        The minimum order tops the priced work of a booking (all its services together) up to this amount. The off-hours surcharge is added to an Emergency booking whose appointment is outside normal hours; the holiday surcharge to any booking on a holiday date. If both apply, the larger one is used. “Price after inspection” services are never topped up.
+      </p>
+      {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            setError(null);
+            const res = await savePricingRules(v);
+            if (res.ok) showToast("Pricing rules saved.");
+            else setError(res.error ?? "Could not save.");
+          })
+        }
+        className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+      >
+        {pending ? "Saving…" : "Save"}
       </button>
     </div>
   );

@@ -8,6 +8,7 @@ import { aedToFils } from "@/lib/pricing/money";
 import { validateTiers } from "@/lib/pricing/priceQuote";
 import { factorProblem } from "@/lib/pricing/regional";
 import { recalculateRegionalPrices } from "@/lib/pricing/priceList";
+import { rulesProblem } from "@/lib/pricing/rules";
 
 export type ActionResult = { ok: boolean; error?: string };
 const fail = (error: string): ActionResult => ({ ok: false, error });
@@ -333,6 +334,30 @@ export async function saveTax(vatRatePercent: string, pricesIncludeVat: boolean)
     create: { id: "default", vatRatePercent: rate, pricesIncludeVat },
   });
   await log("TaxSetting", "default", before, { vatRatePercent: rate, pricesIncludeVat }, admin.id);
+  return done();
+}
+
+export type RulesInput = { minimumAed: string; offHoursPercent: string; holidayPercent: string; normalStart: string; normalEnd: string; holidays: string };
+
+// Minimum order and the emergency off-hours / holiday surcharges. Holidays: one date per line (or separated by commas).
+export async function savePricingRules(input: RulesInput): Promise<ActionResult> {
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const minimumOrderFils = input.minimumAed.trim() === "" ? 0 : aedToFils(input.minimumAed);
+  if (minimumOrderFils === null) return fail("Enter the minimum order in AED (0 = none).");
+  const rules = {
+    minimumOrderFils,
+    offHoursPercent: Number(input.offHoursPercent),
+    holidayPercent: Number(input.holidayPercent),
+    normalStart: input.normalStart.trim(),
+    normalEnd: input.normalEnd.trim(),
+    holidays: [...new Set(input.holidays.split(/[\s,;]+/).map((h) => h.trim()).filter(Boolean))].sort(),
+  };
+  const problem = rulesProblem(rules);
+  if (problem) return fail(problem);
+  const before = await prisma.pricingRules.findUnique({ where: { id: "default" } });
+  await prisma.pricingRules.upsert({ where: { id: "default" }, update: rules, create: { id: "default", ...rules } });
+  await log("PricingRules", "default", before, rules, g.admin.id);
   return done();
 }
 

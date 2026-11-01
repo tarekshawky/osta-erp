@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { priceQuote, QuoteError, type DiscountTier, type Quote } from "./priceQuote";
 import { chooseUnitPrice } from "./options";
 import { regionalPriceFils } from "./regional";
+import { DEFAULT_RULES, surchargeFor, uaeLocal, type PricingRules } from "./rules";
 
 export type QuoteRequest = {
   regionId: string;
@@ -13,8 +14,17 @@ export type QuoteRequest = {
   optionId?: string;
   // The booking fee is charged once per visit: the other services booked together with the first one carry no fee.
   waiveBookingFee?: boolean;
+  // When the work is wanted (UAE wall-clock time): emergency off-hours and holiday surcharges depend on it.
+  scheduledAt?: Date | null;
+  // Set on the one service of a booking that carries the minimum-order top-up: the priced work of the others counts toward it.
+  minimumOrder?: { otherLinesFils: number };
   at?: Date;
 };
+
+export async function loadPricingRules(): Promise<PricingRules> {
+  const row = await prisma.pricingRules.findUnique({ where: { id: "default" } });
+  return row ? { minimumOrderFils: row.minimumOrderFils, offHoursPercent: row.offHoursPercent, holidayPercent: row.holidayPercent, normalStart: row.normalStart, normalEnd: row.normalEnd, holidays: row.holidays } : DEFAULT_RULES;
+}
 
 export type ResolvedQuote = { quote: Quote; policyId: string; ruleSetId: string | null; option: { id: string; nameEn: string; nameAr: string } | null; priceMode: string };
 
@@ -22,7 +32,7 @@ export type ResolvedQuote = { quote: Quote; policyId: string; ruleSetId: string 
 // place a price is produced for an order -- client totals are never read.
 export async function resolveQuote(req: QuoteRequest): Promise<ResolvedQuote> {
   const at = req.at ?? new Date();
-  const [service, price, options, bookingType, tax, policy] = await Promise.all([
+  const [service, price, options, bookingType, tax, policy, rules] = await Promise.all([
     prisma.bookableService.findFirst({
       where: { id: req.serviceId, active: true },
       include: { discountRuleSet: { include: { tiers: true } } },
@@ -37,6 +47,7 @@ export async function resolveQuote(req: QuoteRequest): Promise<ResolvedQuote> {
     prisma.bookingType.findFirst({ where: { id: req.bookingTypeId, active: true } }),
     prisma.taxSetting.findUnique({ where: { id: "default" } }),
     prisma.visitFeePolicy.findFirst({ orderBy: { version: "desc" } }),
+    loadPricingRules(),
   ]);
   if (!service) throw new Error("service_not_found");
   if (!bookingType) throw new Error("booking_type_not_found");
@@ -99,6 +110,9 @@ export async function resolveQuote(req: QuoteRequest): Promise<ResolvedQuote> {
       ratePercent: tax?.vatRatePercent ?? 5,
       pricesIncludeVat: service.pricesIncludeVat ?? tax?.pricesIncludeVat ?? true,
     },
+    minimumOrderFils: inspection || !req.minimumOrder ? 0 : rules.minimumOrderFils,
+    otherLinesFils: req.minimumOrder?.otherLinesFils ?? 0,
+    surcharge: inspection ? null : surchargeFor(rules, bookingType.code, req.scheduledAt ? uaeLocal(req.scheduledAt) : null),
     at,
   });
   return { quote, policyId: policy.id, ruleSetId: inspection ? null : rs?.id ?? null, option: chosen && !inspection ? { id: chosen.id, nameEn: chosen.nameEn, nameAr: chosen.nameAr } : null, priceMode: service.priceMode };

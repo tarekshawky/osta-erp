@@ -50,6 +50,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         { label: "After discount", value: aed(q.serviceNetFils) },
         { label: "Booking fee", value: aed(q.bookingFeeFils) },
         ...(q.addOnsFils > 0 ? [{ label: "Add-ons", value: aed(q.addOnsFils) }] : []),
+        ...((q.minimumTopUpFils ?? 0) > 0 ? [{ label: "Minimum order top-up", value: aed(q.minimumTopUpFils!) }] : []),
+        ...((q.surchargeFils ?? 0) > 0 ? [{ label: `${q.surchargeKind === "HOLIDAY" ? "Holiday" : "Emergency off-hours"} surcharge (${q.surchargePercent}%)`, value: aed(q.surchargeFils!) }] : []),
         { label: q.pricesIncludeVat ? `VAT included (${q.vatRatePercent}%)` : `VAT (${q.vatRatePercent}%)`, value: aed(q.vatFils) },
         { label: "Total", value: aed(q.totalFils), strong: true },
       ]

@@ -1261,6 +1261,18 @@ model TaxSetting {
 }
 
 // Versioned and immutable: every edit inserts a new row; orders point at the version accepted.
+// Pricing rules from the master price list (one row, id "default"): minimum order and the emergency / holiday surcharges.
+model PricingRules {
+  id               String   @id @default("default")
+  minimumOrderFils Int      @default(10000)
+  offHoursPercent  Float    @default(50)
+  holidayPercent   Float    @default(25)
+  normalStart      String   @default("08:00")
+  normalEnd        String   @default("18:00")
+  holidays         String[]
+  updatedAt        DateTime @updatedAt
+}
+
 model VisitFeePolicy {
   id                  String           @id @default(cuid())
   version             Int              @unique
