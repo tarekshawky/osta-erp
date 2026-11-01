@@ -60,7 +60,7 @@ export function PriceMatrix({ regions, services }: { regions: Region[]; services
       className="w-full max-w-sm rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
     />
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-      <table className="w-full text-sm">
+      <table data-no-filter className="w-full text-sm">
         <thead className="bg-slate-50 text-xs font-medium uppercase text-slate-500">
           <tr>
             <th className="sticky left-0 bg-slate-50 px-4 py-3 text-left">Service</th>

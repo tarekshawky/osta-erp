@@ -55,6 +55,8 @@ The sidebar is grouped into modules: **Dashboard**, **Orders & Bookings**, **HR 
 ### Tables are paged
 Every long table in the dashboard (more than 25 rows) is paged: under the table you see **Showing 1–25 of 143**, **Previous / Next**, page numbers and **Rows** (25, 50, 100 or All; your choice is remembered). Tables that already page on the server (orders, invoices, customers…) keep their own pager. Documents such as invoice and quotation previews and the financial statements are never cut, and printing a page always prints every row.
 
+**Search and filter on every table.** Any table with 8 rows or more has a **Search this table…** box above it (it looks at all the text of a row) and a dropdown for each column that has only a few different values, such as **Status** or **Type**. **Clear** resets them, and the pager below counts only the matching rows. It is not added where the page already has its own search, on tables with a select-all checkbox, or on documents. While a page is loading you see a spinner in the middle of the page.
+
 ### Technical files & AI (Website → Technical Files & AI)
 Edit the files served from the root of the website: **robots.txt** (your extra rules; the standard rules and sitemap are added for you), the **AI crawler policy** (allow, block training only, or block all AI crawlers), **llms.txt** (a guide for AI assistants; *Generate from my site* writes a first draft), **ads.txt** and **security.txt** (Owner only). Each file shows its address so you can check it live.
 
@@ -447,3 +449,5 @@ Google Tag Manager وGA4 وبكسل ميتا وتحقق Search Console وBing و
 
 ### الجداول بصفحات
 كل جدول طويل في لوحة التحكم (أكثر من 25 صفاً) صار بصفحات: تحت الجدول **Showing 1–25 of 143** و**Previous / Next** وأرقام الصفحات و**Rows** (25 أو 50 أو 100 أو All؛ ويُحفظ اختيارك). الجداول التي لها ترقيم من الخادم أصلاً (الطلبات والفواتير والعملاء…) تحتفظ بترقيمها. المستندات مثل معاينة الفاتورة وعرض السعر والقوائم المالية لا تُقطع أبداً، والطباعة تطبع كل الصفوف دائماً.
+
+**بحث وتصفية في كل جدول.** أي جدول فيه 8 صفوف أو أكثر يظهر فوقه مربع **Search this table…** (يبحث في كل نص الصف) وقائمة لكل عمود قيمه قليلة مثل **Status** أو **Type**. زر **Clear** يعيد الضبط، والترقيم تحته يحسب الصفوف المطابقة فقط. لا يُضاف حيث للصفحة بحثها الخاص، ولا للجداول التي فيها خانة تحديد الكل، ولا للمستندات. أثناء تحميل الصفحة يظهر مؤشر دائري في منتصف الصفحة.

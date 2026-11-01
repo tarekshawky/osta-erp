@@ -24,7 +24,8 @@ body {
 }
 
 /* Admin tables paged in the browser (AutoTablePager): the rows of other pages are only hidden, and printing shows all of them. */
-tr[data-osta-hidden] {
+tr[data-osta-hidden],
+tr[data-osta-filtered] {
   display: none;
 }
 @media print {
