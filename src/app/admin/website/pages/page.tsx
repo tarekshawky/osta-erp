@@ -10,6 +10,7 @@ import { BUILT_IN_PAGES } from "@/lib/cms/pageRules";
 import { seoReport } from "@/lib/seo/report";
 import { scoreStyle } from "@/lib/seo/scoreStyle";
 import { parentOptions } from "@/lib/cms/pageTree";
+import { PagesFilter } from "@/components/cms/PagesFilter";
 
 const STATUS_STYLE: Record<string, string> = {
   PUBLISHED: "bg-emerald-50 text-emerald-700",
@@ -18,8 +19,9 @@ const STATUS_STYLE: Record<string, string> = {
   ARCHIVED: "bg-slate-100 text-slate-400",
 };
 
-export default async function CmsPagesPage() {
+export default async function CmsPagesPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; type?: string; seo?: string }> }) {
   await requireEmployee("ADMIN");
+  const { q = "", status = "", type = "", seo = "" } = await searchParams;
   const scores = new Map((await seoReport()).map((r) => [r.id, r.score]));
   const pages = await prisma.cmsPage.findMany({
     where: { deletedAt: null },
@@ -30,6 +32,19 @@ export default async function CmsPagesPage() {
   });
   const parents = parentOptions(pages.map((p) => ({ id: p.id, parentId: p.parentId, sortOrder: p.sortOrder, titleEn: p.titleEn })));
   const titleOf = new Map(pages.map((p) => [p.id, p.titleEn]));
+
+  // Search and filters (from the address): title (either language), URL and the page it sits in; status, type and SEO score.
+  const needle = q.trim().toLowerCase();
+  const band = (score: number) => (score >= 80 ? "good" : score >= 55 ? "fair" : "low");
+  const shownPages = pages.filter((p) => {
+    if (status && p.status !== status) return false;
+    if (type && p.type !== type) return false;
+    if (seo && band(scores.get(p.id) ?? 0) !== seo) return false;
+    if (!needle) return true;
+    const hay = `${p.titleEn} ${p.titleAr} ${p.slug} ${p.publishedVersion?.slug ?? ""} ${p.parentId ? titleOf.get(p.parentId) ?? "" : ""}`.toLowerCase();
+    return needle.split(/\s+/).every((w) => hay.includes(w));
+  });
+  const types = [...new Set(pages.map((p) => p.type))].sort();
 
   return (
     <div className="pb-10">
@@ -58,6 +73,8 @@ export default async function CmsPagesPage() {
         />
         <NewPageForm parents={parents} />
 
+        <PagesFilter types={types} total={pages.length} shown={shownPages.length} />
+
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
@@ -72,14 +89,14 @@ export default async function CmsPagesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {pages.length === 0 && (
+              {shownPages.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                    No pages yet. Create your first one.
+                    {pages.length === 0 ? "No pages yet. Create your first one." : "No pages match this search or filter."}
                   </td>
                 </tr>
               )}
-              {pages.map((p) => (
+              {shownPages.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium text-slate-900">{p.titleEn}{p.parentId && titleOf.get(p.parentId) && <span className="ml-2 text-xs font-normal text-slate-400">in {titleOf.get(p.parentId)}</span>}{p.isHomepage && <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">Homepage</span>}</td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-500">{p.isHomepage ? "/" : `/${p.publishedVersion?.slug ?? p.slug}`}</td>
