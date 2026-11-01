@@ -56,7 +56,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
                     <span className="ms-2 text-xs text-slate-500" dir="rtl">{s.nameAr}</span>
                     <p className="truncate text-xs text-slate-400">{s.categories.map((c) => c.category.nameEn).join(" · ")}</p>
                   </div>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${s.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{s.active ? "Active" : "Inactive"}</span>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${s.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{s.active ? "Published" : "Hidden"}</span>
                 </li>
               ))}
             </ul>

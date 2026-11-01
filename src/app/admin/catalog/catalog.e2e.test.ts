@@ -5,6 +5,17 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 const mockState = vi.hoisted(() => ({ customer: null as unknown }));
 vi.mock("@/lib/customerAuth", () => ({ requireCustomer: async () => ({ customer: mockState.customer }) }));
 vi.mock("@/lib/emailSender", () => ({ notifyAdminOfBooking: async () => {} }));
+// Publishing/hiding touches live pages and booking, so these database tests only flip the flag; the switch itself is covered by
+// visibility.test.ts (in-memory database).
+vi.mock("@/lib/catalog/visibility", async () => {
+  const { prisma } = await import("@/lib/prisma");
+  const none = { changed: 0, pagesPublished: 0, pagesUnpublished: 0, problems: [] };
+  return {
+    setServicesPublished: async (ids: string[], published: boolean) => { await prisma.catalogService.updateMany({ where: { id: { in: ids } }, data: { active: published } }); return none; },
+    setCategoriesPublished: async (ids: string[], published: boolean) => { await prisma.catalogCategory.updateMany({ where: { id: { in: ids } }, data: { active: published } }); return none; },
+    reconcileCatalogVisibility: async () => none,
+  };
+});
 vi.mock("next/cache", () => ({ revalidatePath: () => {}, revalidateTag: () => {} }));
 vi.mock("@/lib/adminGuard", () => ({
   guardPermission: async () => ({ ok: true, admin: { id: null, name: "e2e" } }),

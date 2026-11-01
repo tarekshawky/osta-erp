@@ -5,12 +5,13 @@ import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { slugify } from "@/lib/slug";
 import { normalizeKeywords } from "@/lib/seo/keywords";
+import { reconcileCatalogVisibility, setCategoriesPublished, setServicesPublished, type VisibilityResult } from "@/lib/catalog/visibility";
 import { addCatalogToBooking, type AddToBookingResult } from "@/lib/catalog/booking";
 import { createCatalogPages, type CreatePagesResult } from "@/lib/catalog/pages";
 import { runServicesImport, type ImportSummary } from "@/lib/catalog/importer";
 import { categoryProblem, serviceProblem, uniqueSlug, type CategoryInput, type ServiceInput } from "@/lib/catalog/rules";
 
-export type CatalogResult = { ok: boolean; error?: string; id?: string };
+export type CatalogResult = { ok: boolean; error?: string; id?: string; visibility?: VisibilityResult };
 export type ImportResult = ImportSummary;
 
 function refresh() {
@@ -45,8 +46,9 @@ export async function saveCatalogCategory(id: string | null, input: CategoryInpu
     if (!before) return { ok: false, error: "Category not found." };
     await prisma.catalogCategory.update({ where: { id }, data });
     await writeAudit(g.admin, "catalogCategory.update", "CatalogCategory", id, before, { slug, nameEn: data.nameEn, active: data.active });
+    const visibility = before.active !== data.active ? await setCategoriesPublished([id], data.active) : undefined;
     refresh();
-    return { ok: true, id };
+    return { ok: true, id, visibility };
   }
   const top = (await prisma.catalogCategory.aggregate({ _max: { sortOrder: true } }))._max.sortOrder ?? -1;
   const created = await prisma.catalogCategory.create({ data: { ...data, sortOrder: top + 1 } });
@@ -72,20 +74,24 @@ export async function moveCatalogCategory(id: string, direction: "up" | "down"):
 export async function setCatalogCategoryActive(id: string, active: boolean): Promise<CatalogResult> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return { ok: false, error: g.error };
-  await prisma.catalogCategory.update({ where: { id }, data: { active } });
-  await writeAudit(g.admin, active ? "catalogCategory.activate" : "catalogCategory.deactivate", "CatalogCategory", id, null, { active });
+  // Published/Hidden: the category's page goes live or offline too, and it joins or leaves the Services lists.
+  const visibility = await setCategoriesPublished([id], active);
+  await writeAudit(g.admin, active ? "catalogCategory.publish" : "catalogCategory.hide", "CatalogCategory", id, null, { active, ...visibility });
   refresh();
-  return { ok: true };
+  revalidatePath("/admin/website", "layout");
+  return { ok: true, visibility };
 }
 
 // Switch every service of a category on or off at once.
 export async function setCatalogCategoryServicesActive(categoryId: string, active: boolean): Promise<CatalogResult & { count?: number }> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return { ok: false, error: g.error };
-  const r = await prisma.catalogService.updateMany({ where: { categories: { some: { categoryId } } }, data: { active } });
-  await writeAudit(g.admin, active ? "catalogService.activateAll" : "catalogService.deactivateAll", "CatalogCategory", categoryId, null, { count: r.count });
+  const ids = (await prisma.catalogCategoryService.findMany({ where: { categoryId }, select: { serviceId: true } })).map((l) => l.serviceId);
+  const visibility = await setServicesPublished(ids, active);
+  await writeAudit(g.admin, active ? "catalogService.publishAll" : "catalogService.hideAll", "CatalogCategory", categoryId, null, { count: ids.length, ...visibility });
   refresh();
-  return { ok: true, count: r.count };
+  revalidatePath("/admin/website", "layout");
+  return { ok: true, count: ids.length, visibility };
 }
 
 export async function deleteCatalogCategory(id: string): Promise<CatalogResult> {
@@ -123,9 +129,11 @@ export async function saveCatalogService(id: string | null, input: ServiceInput)
   };
   const wanted = [...new Set(input.categoryIds)];
   let serviceId = id;
+  let previous: { active: boolean } | null = null;
   if (id) {
     const before = await prisma.catalogService.findUnique({ where: { id }, select: { slug: true, nameEn: true, active: true } });
     if (!before) return { ok: false, error: "Service not found." };
+    previous = before;
     await prisma.catalogService.update({ where: { id }, data });
     await writeAudit(g.admin, "catalogService.update", "CatalogService", id, before, { slug, nameEn: data.nameEn, active: data.active });
   } else {
@@ -134,8 +142,11 @@ export async function saveCatalogService(id: string | null, input: ServiceInput)
     await writeAudit(g.admin, "catalogService.create", "CatalogService", created.id, null, { slug, nameEn: data.nameEn });
   }
   await syncCategories(serviceId!, wanted);
+  // Turning "Published" on or off in the form does the same as the Publish / Hide button.
+  const wasActive = id ? (previous?.active ?? false) : false;
+  const visibility = (id ? wasActive !== input.active : input.active) ? await setServicesPublished([serviceId!], input.active) : undefined;
   refresh();
-  return { ok: true, id: serviceId! };
+  return { ok: true, id: serviceId!, visibility };
 }
 
 // Make the service belong to exactly these categories; new ones go to the end of their list.
@@ -166,10 +177,12 @@ export async function moveCatalogService(categoryId: string, serviceId: string, 
 export async function setCatalogServiceActive(id: string, active: boolean): Promise<CatalogResult> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return { ok: false, error: g.error };
-  await prisma.catalogService.update({ where: { id }, data: { active } });
-  await writeAudit(g.admin, active ? "catalogService.activate" : "catalogService.deactivate", "CatalogService", id, null, { active });
+  // Published/Hidden: the service's page, its place in the Services lists and its booking entry all follow.
+  const visibility = await setServicesPublished([id], active);
+  await writeAudit(g.admin, active ? "catalogService.publish" : "catalogService.hide", "CatalogService", id, null, { active, ...visibility });
   refresh();
-  return { ok: true };
+  revalidatePath("/admin/website", "layout");
+  return { ok: true, visibility };
 }
 
 export async function duplicateCatalogService(id: string): Promise<CatalogResult> {
@@ -204,6 +217,8 @@ export async function importCatalogServicesCsv(text: string): Promise<ImportResu
   const g = await guardPermission("pages.create");
   if (!g.ok) return { ok: false, error: g.error, created: 0, updated: 0, issues: [] };
   const r = await runServicesImport(text);
+  // The file's "active" column is the Published flag: make the pages and booking entries match it.
+  if (r.ok) await reconcileCatalogVisibility();
   if (r.ok) await writeAudit(g.admin, "catalogService.import", "CatalogService", "csv", null, { created: r.created, updated: r.updated, skipped: r.issues.length });
   refresh();
   return r;

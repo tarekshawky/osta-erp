@@ -57,8 +57,12 @@ export async function addCatalogToBooking(): Promise<AddToBookingResult> {
     pricingUnit: "VISIT", priceMode: "INSPECTION", minQuantity: 1, active: true, sortOrder: 100 + n, catalogServiceId: s.id,
   }));
   for (const part of chunks(rows, 200)) await prisma.bookableService.createMany({ data: part });
-  // Offered for booking now, so the catalogue marks them (and their categories) active too.
-  await prisma.catalogService.updateMany({ where: { active: false }, data: { active: true } });
-  await prisma.catalogCategory.updateMany({ where: { active: false }, data: { active: true } });
+  // The services just added are offered for booking, so they (and their categories) are published. Services that were already in
+  // booking keep whatever you chose (published or hidden).
+  const newIds = [...fresh.map((f) => f.s.id), ...toLink.map((l) => l.catalogServiceId)];
+  if (newIds.length) {
+    await prisma.catalogService.updateMany({ where: { id: { in: newIds } }, data: { active: true } });
+    await prisma.catalogCategory.updateMany({ where: { services: { some: { serviceId: { in: newIds } } } }, data: { active: true } });
+  }
   return { created: rows.length, linked, switchedToInspection: switched, alreadyHad };
 }

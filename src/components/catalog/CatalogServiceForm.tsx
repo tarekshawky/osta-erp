@@ -89,7 +89,7 @@ export function CatalogServiceForm({ id, initial, categories, backHref }: { id: 
 
       <SeoFields value={v} onChange={(p) => set(p)} slugHint="The slug above is the address of the service page." />
 
-      <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={v.active} onChange={(e) => set({ active: e.target.checked })} /> Active</label>
+      <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={v.active} onChange={(e) => set({ active: e.target.checked })} /> Published (its page is live, it shows in the Services lists and can be booked; untick to hide it everywhere)</label>
       <div className="flex flex-wrap gap-3">
         <button type="button" disabled={pending} onClick={save} className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{pending ? "Saving…" : "Save service"}</button>
         <Link href={backHref} className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600">Back</Link>

@@ -18,11 +18,13 @@ export function CatalogServiceList({ categoryId, rows }: { categoryId: string; r
     return needle ? rows.filter((r) => `${r.nameEn} ${r.nameAr} ${r.slug}`.toLowerCase().includes(needle)) : rows;
   }, [rows, q]);
 
-  function run(fn: () => Promise<{ ok: boolean; error?: string }>, success?: string) {
+  function run(fn: () => Promise<{ ok: boolean; error?: string; visibility?: { problems: string[] } }>, success?: string) {
     startTransition(async () => {
       const r = await fn();
       if (r.ok) {
-        if (success) showToast(success);
+        // A page that can't be published (for example a missing title) is reported; the others are done.
+        if (r.visibility?.problems.length) showToast(`Done, but ${r.visibility.problems.length} page(s) could not be published: ${r.visibility.problems[0]}`, "error");
+        else if (success) showToast(success);
         router.refresh();
       } else showToast(r.error ?? "Something went wrong.", "error");
     });
@@ -33,10 +35,11 @@ export function CatalogServiceList({ categoryId, rows }: { categoryId: string; r
       <div className="flex flex-wrap items-center gap-3">
         <Link href={`/admin/catalog/service/new?category=${categoryId}`} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">+ Add service</Link>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter this list…" className="w-60 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm" />
-        <button type="button" disabled={pending || rows.length === 0} onClick={() => { if (confirm(`Activate all ${rows.length} services of this category?`)) run(() => setCatalogCategoryServicesActive(categoryId, true), "All services activated."); }} className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 disabled:opacity-50">Activate all</button>
-        <button type="button" disabled={pending || rows.length === 0} onClick={() => { if (confirm(`Deactivate all ${rows.length} services of this category?`)) run(() => setCatalogCategoryServicesActive(categoryId, false), "All services deactivated."); }} className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 disabled:opacity-50">Deactivate all</button>
+        <button type="button" disabled={pending || rows.length === 0} onClick={() => { if (confirm(`Publish all ${rows.length} services of this category?\n\nTheir website pages go live, they appear in the menu, the Services lists and the sitemap, and they can be booked.`)) run(() => setCatalogCategoryServicesActive(categoryId, true), "All services published."); }} className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 disabled:opacity-50">Publish all</button>
+        <button type="button" disabled={pending || rows.length === 0} onClick={() => { if (confirm(`Hide all ${rows.length} services of this category?\n\nTheir website pages go offline, they disappear from the menu, the Services lists and the sitemap, and they can't be booked. Existing orders are not affected.`)) run(() => setCatalogCategoryServicesActive(categoryId, false), "All services hidden."); }} className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 disabled:opacity-50">Hide all</button>
         <span className="text-xs text-slate-500">{shown.length} of {rows.length}</span>
       </div>
+      <p className="-mt-2 text-xs text-slate-500"><b>Published</b> = the service&apos;s page is live (menu, sitemap), it shows in the Services lists and can be booked. <b>Hidden</b> = all of that is switched off. Click the status to change it.</p>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full text-sm">
@@ -62,7 +65,7 @@ export function CatalogServiceList({ categoryId, rows }: { categoryId: string; r
                   </td>
                   <td className="px-3 py-2.5 text-xs text-slate-500">{s.others.join(" · ")}</td>
                   <td className="px-3 py-2.5">
-                    <button type="button" disabled={pending} onClick={() => run(() => setCatalogServiceActive(s.id, !s.active))} className={`rounded-full px-2.5 py-1 text-xs font-medium ${s.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{s.active ? "Active" : "Inactive"}</button>
+                    <button type="button" disabled={pending} onClick={() => run(() => setCatalogServiceActive(s.id, !s.active), s.active ? "Service hidden everywhere." : "Service published.")} title={s.active ? "Published: its page is live and it can be booked. Click to hide it everywhere." : "Hidden: its page is offline and it can't be booked. Click to publish it."} className={`rounded-full px-2.5 py-1 text-xs font-medium ${s.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{s.active ? "Published" : "Hidden"}</button>
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <div className="flex justify-end gap-3 text-xs font-medium">

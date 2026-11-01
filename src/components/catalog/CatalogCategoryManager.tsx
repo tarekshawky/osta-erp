@@ -27,11 +27,13 @@ export function CatalogCategoryManager({ rows, serviceCount }: { rows: CategoryR
   const [imported, setImported] = useState<ImportResult | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function run(fn: () => Promise<{ ok: boolean; error?: string }>, success?: string) {
+  function run(fn: () => Promise<{ ok: boolean; error?: string; visibility?: { problems: string[] } }>, success?: string) {
     startTransition(async () => {
       const r = await fn();
       if (r.ok) {
-        if (success) showToast(success);
+        // A page that can't be published (for example a missing title) is reported; the others are done.
+        if (r.visibility?.problems.length) showToast(`Done, but ${r.visibility.problems.length} page(s) could not be published: ${r.visibility.problems[0]}`, "error");
+        else if (success) showToast(success);
         router.refresh();
       } else showToast(r.error ?? "Something went wrong.", "error");
     });
@@ -143,7 +145,7 @@ export function CatalogCategoryManager({ rows, serviceCount }: { rows: CategoryR
           </div>
           <SeoFields value={editing.data} onChange={(p) => set(p)} slugHint="The slug above is the address of the category page." />
           <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={editing.data.active} onChange={(e) => set({ active: e.target.checked })} /> Active
+            <input type="checkbox" checked={editing.data.active} onChange={(e) => set({ active: e.target.checked })} /> Published (the category page is live and the category shows in the Services lists; untick to hide it)
           </label>
           <div className="flex gap-3">
             <button type="button" disabled={pending} onClick={save} className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{pending ? "Saving…" : "Save category"}</button>
@@ -173,12 +175,12 @@ export function CatalogCategoryManager({ rows, serviceCount }: { rows: CategoryR
                   <p className="text-xs text-slate-500" dir="rtl">{c.nameAr}</p>
                 </td>
                 <td className="px-3 py-3"><span className="font-medium">{c.total}</span> <span className="text-xs text-slate-400">{c.activeCount} active</span></td>
-                <td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${c.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{c.active ? "Active" : "Inactive"}</span></td>
+                <td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${c.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{c.active ? "Published" : "Hidden"}</span></td>
                 <td className="px-3 py-3 text-right">
                   <div className="flex justify-end gap-3 text-xs font-medium">
                     <Link href={`/admin/catalog/category/${c.id}`} className="text-blue-600">Services</Link>
                     <button type="button" onClick={() => { const { id: _id, total: _t, activeCount: _a, ...data } = c; void _id; void _t; void _a; setEditing({ id: c.id, data }); setSlugTouched(true); setError(null); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="text-blue-600">Edit</button>
-                    <button type="button" disabled={pending} onClick={() => run(() => setCatalogCategoryActive(c.id, !c.active), c.active ? "Category deactivated." : "Category activated.")} className="text-slate-600">{c.active ? "Deactivate" : "Activate"}</button>
+                    <button type="button" disabled={pending} onClick={() => { if (c.active && !confirm(`Hide “${c.nameEn}”?\n\nIts category page goes offline and it leaves the Services lists and the menu (its services stay as they are). Use the category's “Hide all” to hide its services too.`)) return; run(() => setCatalogCategoryActive(c.id, !c.active), c.active ? "Category hidden." : "Category published."); }} className="text-slate-600">{c.active ? "Hide" : "Publish"}</button>
                     <button type="button" disabled={pending} onClick={() => { if (confirm(`Delete “${c.nameEn}”? This can't be undone.`)) run(() => deleteCatalogCategory(c.id), "Category deleted."); }} className="text-red-600">Delete</button>
                   </div>
                 </td>
