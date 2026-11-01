@@ -6,6 +6,8 @@ import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { SERVICE_NOTE_MAX } from "@/lib/pricing/serviceNote";
 import { aedToFils } from "@/lib/pricing/money";
 import { validateTiers } from "@/lib/pricing/priceQuote";
+import { factorProblem } from "@/lib/pricing/regional";
+import { recalculateRegionalPrices } from "@/lib/pricing/priceList";
 
 export type ActionResult = { ok: boolean; error?: string };
 const fail = (error: string): ActionResult => ({ ok: false, error });
@@ -52,7 +54,7 @@ export async function setServicePrice(serviceId: string, regionId: string, price
 
   const saved = await prisma.servicePrice.upsert({
     where: { serviceId_regionId: { serviceId, regionId } },
-    update: { unitPriceFils: fils, active: true },
+    update: { unitPriceFils: fils, active: true, auto: false },
     create: { serviceId, regionId, unitPriceFils: fils },
   });
   await log(
@@ -63,6 +65,38 @@ export async function setServicePrice(serviceId: string, regionId: string, price
     admin.id
   );
   return done();
+}
+
+// ---------- Emirate price levels ----------
+
+// Each emirate has a price factor (1.00 = the base price). Prices that were calculated (not typed by hand) follow it.
+export async function saveRegionFactors(factors: { regionId: string; factor: string }[]): Promise<ActionResult> {
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const parsed: { regionId: string; factor: number }[] = [];
+  for (const f of factors) {
+    const n = Number(f.factor);
+    const problem = factorProblem(n);
+    if (problem) return fail(problem);
+    parsed.push({ regionId: f.regionId, factor: Math.round(n * 10000) / 10000 });
+  }
+  for (const f of parsed) {
+    const before = await prisma.region.findUnique({ where: { id: f.regionId }, select: { priceFactor: true } });
+    if (!before || before.priceFactor === f.factor) continue;
+    await prisma.region.update({ where: { id: f.regionId }, data: { priceFactor: f.factor } });
+    await log("Region", f.regionId, { priceFactor: before.priceFactor }, { priceFactor: f.factor }, g.admin.id);
+  }
+  return done();
+}
+
+// Recalculates every calculated price from the base price and the emirate factor. Prices typed by hand are left alone.
+export async function recalculatePrices(): Promise<ActionResult & { updated?: number; created?: number; keptManual?: number }> {
+  const g = await guardPermission("pricing.edit");
+  if (!g.ok) return fail(g.error);
+  const r = await recalculateRegionalPrices();
+  await log("ServicePrice", "recalculate", null, r, g.admin.id);
+  revalidatePath("/admin/pricing", "layout");
+  return { ok: true, ...r };
 }
 
 export type ServiceInput = {
@@ -83,7 +117,7 @@ export type ServiceInput = {
 };
 
 
-const UNITS = ["AC_UNIT", "UNIT", "ROOM", "AREA_SQM", "VISIT", "FIXED"];
+const UNITS = ["AC_UNIT", "UNIT", "ROOM", "AREA_SQM", "VISIT", "FIXED", "LINEAR_METER", "HOUR", "KG", "MONTH", "YEAR"];
 
 function validateService(i: ServiceInput): string | null {
   if (!i.nameEn.trim() || !i.nameAr.trim()) return "Both English and Arabic names are required.";
@@ -421,7 +455,7 @@ export async function setOptionPrice(optionId: string, regionId: string, priceAe
   if (fils > 100_000_000) return fail("Price is too large.");
   const saved = await prisma.serviceOptionPrice.upsert({
     where: { optionId_regionId: { optionId, regionId } },
-    update: { unitPriceFils: fils, active: true },
+    update: { unitPriceFils: fils, active: true, auto: false },
     create: { optionId, regionId, unitPriceFils: fils },
   });
   await log("ServiceOptionPrice", saved.id, existing ? { unitPriceFils: existing.unitPriceFils, active: existing.active } : null, { unitPriceFils: fils, active: true }, g.admin.id);

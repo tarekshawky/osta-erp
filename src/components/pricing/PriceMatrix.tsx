@@ -45,8 +45,20 @@ function Cell({ serviceId, optionId, regionId, initial }: { serviceId?: string; 
 }
 
 export function PriceMatrix({ regions, services }: { regions: Region[]; services: Row[] }) {
+  const [query, setQuery] = useState("");
+  const [limit, setLimit] = useState(50);
   if (services.length === 0) return <p className="text-sm text-slate-500">No services yet. Add one below.</p>;
+  const q = query.trim().toLowerCase();
+  const matches = q ? services.filter((s) => s.nameEn.toLowerCase().includes(q)) : services;
+  const shown = matches.slice(0, limit);
   return (
+    <div className="flex flex-col gap-3">
+    <input
+      value={query}
+      onChange={(e) => { setQuery(e.target.value); setLimit(50); }}
+      placeholder={`Search ${services.length} services…`}
+      className="w-full max-w-sm rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
       <table className="w-full text-sm">
         <thead className="bg-slate-50 text-xs font-medium uppercase text-slate-500">
@@ -60,7 +72,7 @@ export function PriceMatrix({ regions, services }: { regions: Region[]; services
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {services.flatMap((s) => [
+          {shown.flatMap((s) => [
             <tr key={s.id} className={s.active ? "" : "opacity-60"}>
               <td className="sticky left-0 bg-white px-4 py-2.5 font-medium text-slate-900">
                 {s.nameEn}
@@ -93,8 +105,14 @@ export function PriceMatrix({ regions, services }: { regions: Region[]; services
         </tbody>
       </table>
       <p className="border-t border-slate-100 px-4 py-2.5 text-xs text-slate-400">
-        Unit price in AED. Leave a cell empty to make the service unavailable in that emirate. Saves when you leave the cell.
+        Unit price in AED. Leave a cell empty to make the service unavailable in that emirate. Saves when you leave the cell. A price you type here is kept when the emirate price levels are recalculated.
       </p>
+    </div>
+    {matches.length > shown.length && (
+      <button type="button" onClick={() => setLimit((l) => l + 100)} className="self-start rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+        Show more ({matches.length - shown.length} left)
+      </button>
+    )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { priceQuote, QuoteError, type DiscountTier, type Quote } from "./priceQuote";
 import { chooseUnitPrice } from "./options";
+import { regionalPriceFils } from "./regional";
 
 export type QuoteRequest = {
   regionId: string;
@@ -72,10 +73,16 @@ export async function resolveQuote(req: QuoteRequest): Promise<ResolvedQuote> {
     ? rs.tiers.map((t) => ({ minQty: t.minQty, maxQty: t.maxQty, percent: t.percent, startsAt: t.startsAt, endsAt: t.endsAt }))
     : [];
 
+  // No price row for this emirate: the base price times the emirate's price factor (a price typed for the emirate always wins).
+  let ownPrice = price?.unitPriceFils ?? null;
+  if (ownPrice === null && !inspection && service.basePriceFils !== null && options.length === 0) {
+    const region = await prisma.region.findFirst({ where: { id: req.regionId, active: true }, select: { priceFactor: true } });
+    if (region) ownPrice = regionalPriceFils(service.basePriceFils, region.priceFactor);
+  }
   const unit = inspection
     ? { unitPriceFils: 0, optionId: null }
     : chooseUnitPrice({
-        basePriceFils: price?.unitPriceFils ?? null,
+        basePriceFils: ownPrice,
         options: options.map((o) => ({ id: o.id, priceFils: o.prices[0]?.unitPriceFils ?? null })),
         optionId: req.optionId,
       });

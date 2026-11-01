@@ -9,7 +9,7 @@ import { OptionsEditor, type OptionItem } from "@/components/pricing/OptionsEdit
 
 export type ServiceRow = ServiceInput & { id: string; slug: string; options: OptionItem[] };
 
-const UNITS = ["AC_UNIT", "UNIT", "ROOM", "AREA_SQM", "VISIT", "FIXED"];
+const UNITS = ["AC_UNIT", "UNIT", "ROOM", "AREA_SQM", "VISIT", "FIXED", "LINEAR_METER", "HOUR", "KG", "MONTH", "YEAR"];
 const empty: ServiceInput = {
   nameEn: "",
   nameAr: "",

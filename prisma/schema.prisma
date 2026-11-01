@@ -1081,6 +1081,8 @@ model Region {
   nameAr       String
   active       Boolean                  @default(true)
   sortOrder    Int                      @default(0)
+  // Price level of this emirate against the base price (Ajman, Umm Al Quwain and Al Ain = 1.00, Sharjah/RAK/Fujairah = 1.10, Dubai/Abu Dhabi = 1.20).
+  priceFactor  Float                    @default(1)
   prices       ServicePrice[]
   optionPrices ServiceOptionPrice[]
   addOnPrices  AddOnPrice[]
@@ -1101,6 +1103,11 @@ model BookableService {
   // PRICED = the price comes from the price table (per emirate). INSPECTION = "price after inspection": bookable in every active
   // emirate with no price; the customer books a visit (plus any booking fee) and the admin sets the price after the inspection.
   priceMode         String                   @default("PRICED") // PRICED | INSPECTION
+  // "Base starting price" (the Ajman / base-level price). An emirate without its own price row gets base x its price factor.
+  basePriceFils     Int?
+  // What the price is for, shown with it: "per sqm" / "للمتر المربع".
+  unitLabelEn       String                   @default("")
+  unitLabelAr       String                   @default("")
   // The Service Catalogue entry this bookable service was created from ("Add to booking"), so it is never added twice.
   catalogServiceId  String?                  @unique
   catalogService    CatalogService?          @relation(fields: [catalogServiceId], references: [id], onDelete: SetNull)
@@ -1133,6 +1140,8 @@ model ServicePrice {
   region        Region          @relation(fields: [regionId], references: [id], onDelete: Cascade)
   unitPriceFils Int
   active        Boolean         @default(true)
+  // true = calculated from the base price and the emirate's price factor (recalculated when those change); a price typed by hand is false and is never overwritten.
+  auto          Boolean         @default(false)
   updatedAt     DateTime        @default(now()) @updatedAt
 
   @@unique([serviceId, regionId])
@@ -1164,6 +1173,7 @@ model ServiceOptionPrice {
   region        Region        @relation(fields: [regionId], references: [id], onDelete: Cascade)
   unitPriceFils Int
   active        Boolean       @default(true)
+  auto          Boolean       @default(false)
   updatedAt     DateTime      @default(now()) @updatedAt
 
   @@unique([optionId, regionId])

@@ -170,6 +170,8 @@ Hire daily and permanent workers: publish a job, share it on WhatsApp, review ap
 
 **Service options.** When the price depends on a choice (a gas refill by weight: ¼ kg, ½ kg, 1 kg), open the service (**Edit**) and add **Options** (English and Arabic names). Then enter each option's price per emirate in **Prices by emirate**: the options appear as ↳ rows under the service. The customer must pick one option, and its price is the unit price (the service itself then has no price of its own). An option with no price in an emirate is not offered there. Orders keep the option's name. **Service note:** the optional note on a service (for example “Repair only, spare parts not included”) is shown to customers next to the service and in the price summary.
 
+**Emirate price levels and the master price list.** Each service can have a **base price** and a **unit** (per sqm, per hour, per kg, per visit, per month, per year …). Each emirate has a **price level** (Pricing → *Emirate price levels*): Ajman, Umm Al Quwain and Al Ain 1.00; Sharjah, Ras Al Khaimah and Fujairah 1.10; Dubai and Abu Dhabi 1.20. An emirate price = base price × level, rounded to a whole AED. After changing a level press **Save levels**, then **Recalculate prices**. Prices that were calculated follow the levels; a price you type yourself in the table is **kept** and never overwritten. Prices are **before VAT** (5% is added in the summary). The booking summary shows the standard disclaimer (starting price, may vary with site / quantity / parts, confirmed before work). Services priced per visit, project, site, month or year do not ask for a quantity. The master price list is loaded with `npx tsx scripts/import-price-list.ts` (add `--dry` to preview without writing); apartment painting and cleaning are priced by size through options.
+
 ## 10. Backup (Website → Backup)
 
 **Download content backup** saves pages (as drafts), site settings, menus, social, forms, areas and redirects. It does **not** include leads, customers, orders or image files. **Import** (Owner only) checks the file first and changes nothing until you confirm; pages always arrive as drafts.
@@ -386,6 +388,8 @@ Google Tag Manager وGA4 وبكسل ميتا وتحقق Search Console وBing و
 * **الضريبة ورسوم الزيارة:** ضريبة القيمة المضافة وسياسة رسوم الزيارة (كل حفظ ينشر نسخة جديدة مرقّمة).
 * **الطلبات:** صفحة الطلب تعرض تفصيل السعر كما رآه العميل، وخطاً زمنياً (سجّل *وصول الفريق* وغيره) ونموذج رسوم الزيارة. لا تُفرض رسوم الزيارة إلا بعد تحرك الفريق، ولا تُفرض أبداً إذا ألغت الشركة أو لم يحضر الفريق.
 * تغيير السعر **لا يغيّر** الطلبات السابقة أبداً.
+
+**مستويات أسعار الإمارات وقائمة الأسعار الرئيسية.** لكل خدمة **سعر أساسي** و**وحدة** (للمتر المربع، للساعة، للكيلو، للزيارة، شهرياً، سنوياً …). ولكل إمارة **مستوى سعر** (التسعير ← *مستويات أسعار الإمارات*): عجمان وأم القيوين والعين 1.00؛ الشارقة ورأس الخيمة والفجيرة 1.10؛ دبي وأبوظبي 1.20. سعر الإمارة = السعر الأساسي × المستوى، مقرَّباً لأقرب درهم. بعد تغيير مستوى اضغط **حفظ المستويات** ثم **إعادة حساب الأسعار**. الأسعار المحسوبة تتبع المستويات، أما السعر الذي تكتبه بنفسك في الجدول فيبقى كما هو ولا يُستبدل. الأسعار **قبل الضريبة** (تُضاف 5% في الملخص). يعرض ملخص الحجز عبارة التنبيه الموحدة (سعر ابتدائي قد يختلف حسب الموقع والكمية وقطع الغيار ويُؤكَّد قبل العمل). الخدمات المسعّرة للزيارة أو المشروع أو الموقع أو شهرياً أو سنوياً لا تطلب كمية. تُحمَّل قائمة الأسعار بالأمر `npx tsx scripts/import-price-list.ts` (أضف `--dry` للمعاينة دون كتابة)؛ ودهان وتنظيف الشقق يُسعَّران حسب الحجم عبر الخيارات.
 
 ## ١٠. النسخ الاحتياطي (الموقع ← النسخ الاحتياطي)
 

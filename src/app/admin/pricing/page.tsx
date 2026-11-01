@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { filsToAed } from "@/lib/pricing/money";
 import { PriceMatrix } from "@/components/pricing/PriceMatrix";
 import { ServiceManager } from "@/components/pricing/ServiceManager";
+import { RegionFactors } from "@/components/pricing/RegionFactors";
 
 export default async function PricingPage() {
   const [regions, services, ruleSets] = await Promise.all([
@@ -15,6 +16,7 @@ export default async function PricingPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      <RegionFactors regions={regions.map((r) => ({ id: r.id, nameEn: r.nameEn, priceFactor: r.priceFactor }))} />
       <section>
         <h2 className="text-xl font-bold text-slate-900">Prices by emirate</h2>
         <p className="mb-4 mt-1 text-sm text-slate-500">

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
+import { regionalPriceFils } from "@/lib/pricing/regional";
 
 const primaryGroup = (cats: { nameEn: string; nameAr: string; sortOrder: number; iconName: string | null }[]) => {
   const c = [...cats].sort((a, b) => a.sortOrder - b.sortOrder)[0];
@@ -56,7 +57,12 @@ export async function GET() {
       pricesIncludeVat: s.pricesIncludeVat,
       noteEn: s.noteEn,
       noteAr: s.noteAr,
-      prices: s.prices,
+      // An emirate without its own price row is priced from the base price and its price factor (the same rule the order uses).
+      prices: s.options.length === 0 && s.priceMode !== "INSPECTION" && s.basePriceFils !== null
+        ? [...s.prices, ...regions.filter((r) => !s.prices.some((p) => p.regionId === r.id)).map((r) => ({ regionId: r.id, unitPriceFils: regionalPriceFils(s.basePriceFils!, r.priceFactor) }))]
+        : s.prices,
+      unitLabelEn: s.unitLabelEn,
+      unitLabelAr: s.unitLabelAr,
       optionLabelEn: s.optionLabelEn,
       optionLabelAr: s.optionLabelAr,
       options: s.options.map((o) => ({ id: o.id, nameEn: o.nameEn, nameAr: o.nameAr, noteEn: o.noteEn, noteAr: o.noteAr, prices: o.prices })),
