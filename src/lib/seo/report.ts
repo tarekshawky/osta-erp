@@ -15,12 +15,11 @@ export async function seoReport(): Promise<PageSeoRow[]> {
   ]);
   return pages.map((p) => {
     const parsed = parseBlocks(p.draftBlocks);
-    // Duplicates are checked against everyone else, so remove this page from "others" by its own title+seo match.
+    // Duplicates are checked against everyone else: the page itself is skipped by its own title+seo match (ctx.self).
     const seo = { ...emptySeo, ...((p.draftSeo as Partial<SeoFields>) ?? {}) };
-    const others = ctx.others.filter((o) => !(o.label === p.titleEn && o.titleEn === seo.titleEn && o.descriptionEn === seo.descriptionEn));
     const result = analyzePage(
       { slug: p.slug, type: p.type, titleEn: p.titleEn, titleAr: p.titleAr, showInSitemap: p.showInSitemap, showLastUpdated: p.showLastUpdated, blocks: parsed.ok ? parsed.blocks : [], seo, areaNames: p.area ? { en: p.area.nameEn, ar: p.area.nameAr } : undefined },
-      { ...ctx, others, areaPages: ctx.areaPages?.filter((a) => a.label !== p.titleEn) }
+      { ...ctx, self: { label: p.titleEn, titleEn: seo.titleEn, descriptionEn: seo.descriptionEn }, areaPages: ctx.areaPages?.filter((a) => a.label !== p.titleEn) }
     );
     return { id: p.id, titleEn: p.titleEn, slug: p.slug, isHomepage: p.isHomepage, status: p.status, score: result.score, issues: result.issues };
   });

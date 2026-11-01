@@ -60,6 +60,16 @@ describe("analyzePage", () => {
     const r = analyzePage(p, ctx({ others: [{ label: "Other page", titleEn: p.seo.titleEn.toUpperCase() }] }));
     expect(r.issues.map((i) => i.id)).toContain("dup-English SEO title");
   });
+  it("a whole-site list skips the page itself (ctx.self) and still finds a real duplicate, ignoring case and spacing", () => {
+    const p = goodPage();
+    const me = { label: p.titleEn, titleEn: p.seo.titleEn, titleAr: p.seo.titleAr, descriptionEn: p.seo.descriptionEn, descriptionAr: p.seo.descriptionAr };
+    const others = [me, { label: "Other", titleEn: `  ${p.seo.titleEn.toUpperCase()}  `, descriptionEn: "something else" }];
+    const withSelf = analyzePage(p, ctx({ others, self: me }));
+    expect(withSelf.issues.some((i) => i.id === "dup-English SEO title" && i.message.includes('"Other"'))).toBe(true);
+    // when the only other page with that text is the page itself, there is no duplicate
+    const alone = analyzePage(p, ctx({ others: [me], self: me }));
+    expect(alone.issues.some((i) => i.id.startsWith("dup-"))).toBe(false);
+  });
   it("warns on noindex + sitemap, bad canonical, thin content, missing alt", () => {
     const p = goodPage();
     p.seo.noindex = true; p.seo.canonical = "ftp://x"; p.blocks[0].props.subtitle = { en: "short", ar: "" };

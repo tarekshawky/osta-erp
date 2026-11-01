@@ -21,10 +21,21 @@ export default async function LinksPage() {
     return { p, internal: [...new Set(links.filter((l) => l.startsWith("/") && !l.startsWith("//")))], external: [...new Set(links.filter((l) => /^https?:\/\//.test(l)))] };
   });
 
+  // Who links to each address, built once (comparing every page with every other page is far too slow for hundreds of pages).
+  const inbound = new Map<string, { id: string; title: string }[]>();
+  for (const o of outbound) for (const l of new Set(o.internal.map(clean))) {
+    const list = inbound.get(l) ?? [];
+    list.push({ id: o.p.id, title: o.p.titleEn });
+    inbound.set(l, list);
+  }
+  const backlinkCount = new Map<string, number>();
+  for (const b of backlinks) backlinkCount.set(clean(b.targetUrl), (backlinkCount.get(clean(b.targetUrl)) ?? 0) + 1);
+
   const rows: PageLinks[] = outbound.map(({ p, internal, external }) => ({
     id: p.id, title: p.titleEn, slug: p.slug, internalOut: internal, external,
-    internalIn: outbound.filter((o) => o.p.id !== p.id && o.internal.some((l) => clean(l) === `/${p.slug}`)).map((o) => o.p.titleEn),
-    backlinks: backlinks.filter((b) => clean(b.targetUrl) === `/${p.slug}`).length,
+    // a page linking to itself doesn't count
+    internalIn: (inbound.get(`/${p.slug}`) ?? []).filter((x) => x.id !== p.id).map((x) => x.title),
+    backlinks: backlinkCount.get(`/${p.slug}`) ?? 0,
   }));
 
   return (

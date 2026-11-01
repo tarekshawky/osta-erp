@@ -25,6 +25,8 @@ export default async function CmsPagesPage() {
     where: { deletedAt: null },
     orderBy: { updatedAt: "desc" },
     include: { publishedVersion: { select: { slug: true } } },
+    // The list never shows a page's content: leave the (large) blocks out.
+    omit: { draftBlocks: true },
   });
   const parents = parentOptions(pages.map((p) => ({ id: p.id, parentId: p.parentId, sortOrder: p.sortOrder, titleEn: p.titleEn })));
   const titleOf = new Map(pages.map((p) => [p.id, p.titleEn]));

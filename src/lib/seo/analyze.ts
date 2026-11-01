@@ -21,7 +21,9 @@ export type SeoPageInput = {
 export type OtherMeta = { label: string; titleEn?: string; titleAr?: string; descriptionEn?: string; descriptionAr?: string };
 // Other area pages' body text with their own place names already masked.
 export type AreaPageText = { label: string; textEn: string; textAr: string };
-export type SeoContext = { others: OtherMeta[]; knownPaths: Set<string>; areaPages?: AreaPageText[] };
+// `self`: the page being analysed is one of `others` (a whole-site report passes the same list for every page); it is skipped when
+// looking for duplicates, so the list never has to be copied per page.
+export type SeoContext = { others: OtherMeta[]; knownPaths: Set<string>; areaPages?: AreaPageText[]; self?: { label: string; titleEn?: string; descriptionEn?: string } };
 
 export type AeoItem = { id: string; label: string; pass: boolean; hint: string };
 
@@ -31,6 +33,23 @@ export const DESC_MAX = 160;
 export const DESC_MIN = 70;
 
 const norm = (s: string | undefined) => (s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+
+// Duplicate lookup by normalised text, built once per list of other pages (a report over hundreds of pages would otherwise
+// compare every page with every other page, normalising the text again each time).
+type DupKey = "titleEn" | "titleAr" | "descriptionEn" | "descriptionAr";
+const dupIndexes = new WeakMap<OtherMeta[], Record<DupKey, Map<string, OtherMeta[]>>>();
+function dupIndex(others: OtherMeta[]) {
+  let idx = dupIndexes.get(others);
+  if (!idx) {
+    idx = { titleEn: new Map(), titleAr: new Map(), descriptionEn: new Map(), descriptionAr: new Map() };
+    for (const o of others) for (const k of Object.keys(idx) as DupKey[]) {
+      const v = norm(o[k]);
+      if (v) { const list = idx[k].get(v); if (list) list.push(o); else idx[k].set(v, [o]); }
+    }
+    dupIndexes.set(others, idx);
+  }
+  return idx;
+}
 const bi = (v: unknown): { en: string; ar: string } => {
   const o = (v ?? {}) as { en?: string; ar?: string };
   return { en: stripInline(o.en ?? ""), ar: stripInline(o.ar ?? "") };
@@ -126,15 +145,18 @@ export function analyzePage(page: SeoPageInput, ctx: SeoContext): { score: numbe
   for (const link of broken) add(`broken-link-${link}`, "error", `Broken internal link: ${link} does not exist on the site.`);
 
   // --- duplicates across the site ---
-  const dupChecks: [string, string, (o: OtherMeta) => string | undefined][] = [
-    [seo.titleEn, "English SEO title", (o) => o.titleEn],
-    [seo.titleAr, "Arabic SEO title", (o) => o.titleAr],
-    [seo.descriptionEn, "English meta description", (o) => o.descriptionEn],
-    [seo.descriptionAr, "Arabic meta description", (o) => o.descriptionAr],
+  const dupChecks: [string, string, DupKey][] = [
+    [seo.titleEn, "English SEO title", "titleEn"],
+    [seo.titleAr, "Arabic SEO title", "titleAr"],
+    [seo.descriptionEn, "English meta description", "descriptionEn"],
+    [seo.descriptionAr, "Arabic meta description", "descriptionAr"],
   ];
-  for (const [value, label, pick] of dupChecks) {
-    if (!norm(value)) continue;
-    const clash = ctx.others.find((o) => norm(pick(o)) === norm(value));
+  const index = dupIndex(ctx.others);
+  const isSelf = (o: OtherMeta) => !!ctx.self && o.label === ctx.self.label && o.titleEn === ctx.self.titleEn && o.descriptionEn === ctx.self.descriptionEn;
+  for (const [value, label, key] of dupChecks) {
+    const v = norm(value);
+    if (!v) continue;
+    const clash = index[key].get(v)?.find((o) => !isSelf(o));
     if (clash) add(`dup-${label}`, "warn", `${label} is identical to "${clash.label}". Search engines prefer unique text on every page.`);
   }
 

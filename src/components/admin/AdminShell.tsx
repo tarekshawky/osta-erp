@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AdminSidebar } from "./AdminSidebar";
 import { AutoTablePager } from "./AutoTablePager";
+import { NavProgress } from "./NavProgress";
 
 export function AdminShell({
   adminName,
@@ -44,6 +45,7 @@ export function AdminShell({
         </button>
         {children}
         <AutoTablePager />
+        <NavProgress />
       </div>
     </div>
   );

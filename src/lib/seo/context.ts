@@ -12,14 +12,13 @@ export const siteOrigin = () => (process.env.SITE_URL ?? "https://www.ostaservic
 // Everything the analyzer needs to know about the rest of the site: which URLs exist (for broken-link checks)
 // and what every other page's SEO text is (for duplicate checks).
 export async function loadSeoContext(excludePageId?: string): Promise<SeoContext> {
-  const [pages, posts, services, redirects] = await Promise.all([
+  const [pages, areaRows, posts, services, redirects] = await Promise.all([
     prisma.cmsPage.findMany({
       where: { deletedAt: null },
-      select: {
-        id: true, titleEn: true, draftSeo: true, status: true, type: true, draftBlocks: true,
-        publishedVersion: { select: { slug: true } }, area: { select: { nameEn: true, nameAr: true } },
-      },
+      select: { id: true, titleEn: true, draftSeo: true, status: true, type: true, publishedVersion: { select: { slug: true } } },
     }),
+    // Only the area pages' text is compared, so only they need their blocks (the content of hundreds of other pages is not loaded).
+    prisma.cmsPage.findMany({ where: { deletedAt: null, type: "area" }, select: { id: true, titleEn: true, draftBlocks: true, area: { select: { nameEn: true, nameAr: true } } } }),
     prisma.blogPost.findMany({ select: { slug: true, titleEn: true, published: true, seoTitleEn: true, seoTitleAr: true, seoDescriptionEn: true, seoDescriptionAr: true } }),
     prisma.servicePage.findMany({ select: { slug: true, nameEn: true, published: true, seoTitleEn: true, seoTitleAr: true, seoDescriptionEn: true, seoDescriptionAr: true } }),
     prisma.cmsRedirect.findMany({ select: { fromPath: true } }),
@@ -39,8 +38,8 @@ export async function loadSeoContext(excludePageId?: string): Promise<SeoContext
     ...posts.map((b) => ({ label: `Blog: ${b.titleEn}`, titleEn: b.seoTitleEn ?? undefined, titleAr: b.seoTitleAr ?? undefined, descriptionEn: b.seoDescriptionEn ?? undefined, descriptionAr: b.seoDescriptionAr ?? undefined })),
     ...services.map((s) => ({ label: `Service: ${s.nameEn}`, titleEn: s.seoTitleEn ?? undefined, titleAr: s.seoTitleAr ?? undefined, descriptionEn: s.seoDescriptionEn ?? undefined, descriptionAr: s.seoDescriptionAr ?? undefined })),
   ];
-  const areaPages = pages
-    .filter((p) => p.type === "area" && p.id !== excludePageId)
+  const areaPages = areaRows
+    .filter((p) => p.id !== excludePageId)
     .map((p) => {
       const parsed = parseBlocks(p.draftBlocks);
       const blocks = parsed.ok ? parsed.blocks : [];
