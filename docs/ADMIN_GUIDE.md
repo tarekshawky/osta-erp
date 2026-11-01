@@ -57,6 +57,8 @@ Every long table in the dashboard (more than 25 rows) is paged: under the table 
 
 **Search and filter on every table.** Any table with 8 rows or more has a **Search this table…** box above it (it looks at all the text of a row) and a dropdown for each column that has only a few different values, such as **Status** or **Type**. **Clear** resets them, and the pager below counts only the matching rows. It is not added where the page already has its own search, on tables with a select-all checkbox, or on documents. While a page is loading you see a spinner in the middle of the page.
 
+**Website tabs.** Clicking a tab in Website keeps the heading and the tabs where they are: the tab you clicked lights up at once and only the content below shows the spinner until it is ready.
+
 **Searching the page list.** Above the list of pages: a search box (title in English or Arabic, URL, or the page it sits in; several words must all match) and filters for **Status**, **Type** and **SEO score** (Good 80+, Fair 55–79, Low under 55). **Clear** resets them. The filters are kept in the address, so you can bookmark or share a filtered list.
 
 ### Technical files & AI (Website → Technical Files & AI)
@@ -453,5 +455,7 @@ Google Tag Manager وGA4 وبكسل ميتا وتحقق Search Console وBing و
 كل جدول طويل في لوحة التحكم (أكثر من 25 صفاً) صار بصفحات: تحت الجدول **Showing 1–25 of 143** و**Previous / Next** وأرقام الصفحات و**Rows** (25 أو 50 أو 100 أو All؛ ويُحفظ اختيارك). الجداول التي لها ترقيم من الخادم أصلاً (الطلبات والفواتير والعملاء…) تحتفظ بترقيمها. المستندات مثل معاينة الفاتورة وعرض السعر والقوائم المالية لا تُقطع أبداً، والطباعة تطبع كل الصفوف دائماً.
 
 **بحث وتصفية في كل جدول.** أي جدول فيه 8 صفوف أو أكثر يظهر فوقه مربع **Search this table…** (يبحث في كل نص الصف) وقائمة لكل عمود قيمه قليلة مثل **Status** أو **Type**. زر **Clear** يعيد الضبط، والترقيم تحته يحسب الصفوف المطابقة فقط. لا يُضاف حيث للصفحة بحثها الخاص، ولا للجداول التي فيها خانة تحديد الكل، ولا للمستندات. أثناء تحميل الصفحة يظهر مؤشر دائري في منتصف الصفحة.
+
+**تبويبات الموقع.** عند الضغط على تبويب في الموقع يبقى العنوان والتبويبات في مكانها: يضيء التبويب الذي ضغطته فوراً ويظهر المؤشر الدائري في منطقة المحتوى فقط حتى تجهز الصفحة.
 
 **البحث في قائمة الصفحات.** فوق قائمة الصفحات: مربع بحث (العنوان بالعربية أو الإنجليزية أو الرابط أو الصفحة الأم؛ ويجب أن تتطابق كل الكلمات) ومرشحات **الحالة** و**النوع** و**درجة SEO** (جيدة 80+، متوسطة 55–79، منخفضة أقل من 55). زر **Clear** يعيد الضبط. تُحفظ المرشحات في عنوان الصفحة فيمكنك حفظ القائمة المفلترة أو مشاركتها.
