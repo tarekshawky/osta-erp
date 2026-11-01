@@ -55,6 +55,8 @@ const RAW_SCHEMAS = {
   // Links to the published pages directly under this page in the page tree (Website → Page Structure): a category page lists its
   // service pages, and a page appears here only once it is published.
   subPages: z.object({ eyebrow: bi, heading: bi, subtitle: bi }),
+  // Every Service Catalogue service with search, category cards, "Add" (a basket of several services) and "Book".
+  serviceCatalog: z.object({ heading: bi, subtitle: bi }),
   homeSections: z.object({}),
   richText: z.object({ heading: bi, body: bi, align: z.enum(["start", "center"]) }),
   imageText: z.object({
@@ -114,6 +116,7 @@ export const BLOCK_SCHEMAS = {
   blogPreview: withStyle(RAW_SCHEMAS.blogPreview),
   jobsList: withStyle(RAW_SCHEMAS.jobsList),
   subPages: withStyle(RAW_SCHEMAS.subPages),
+  serviceCatalog: withStyle(RAW_SCHEMAS.serviceCatalog),
   homeSections: withStyle(RAW_SCHEMAS.homeSections),
   richText: withStyle(RAW_SCHEMAS.richText),
   imageText: withStyle(RAW_SCHEMAS.imageText),
@@ -273,6 +276,15 @@ export const BLOCK_REGISTRY: Record<
       { kind: "bi-text", key: "subtitle", label: "Text under the heading" },
     ],
     defaults: () => ({ eyebrow: biEmpty(), heading: { en: "Our services", ar: "خدماتنا" }, subtitle: biEmpty() }),
+  },
+  serviceCatalog: {
+    label: "Service catalogue (search, categories, Book)",
+    description: "All your services from the Service Catalogue: visitors search or pick a category, press Add on several services (or Book on one) and complete ONE booking with all of them. Only published services show.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading (empty = “All our services”)" },
+      { kind: "bi-textarea", key: "subtitle", label: "Text under the heading (empty = the standard line)", rich: true },
+    ],
+    defaults: () => ({ heading: biEmpty(), subtitle: biEmpty() }),
   },
   homeSections: {
     label: "Homepage sections",

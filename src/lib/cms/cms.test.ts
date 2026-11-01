@@ -40,6 +40,12 @@ describe("block registry", () => {
     void _s; void _c;
     expect(parseBlocks([{ ...createBlock("servicesGrid"), props: old }]).ok).toBe(true);
   });
+  it("has a Service catalogue block", () => {
+    const b = createBlock("serviceCatalog");
+    expect(parseBlocks([b]).ok).toBe(true);
+    b.props = { heading: { en: "All services", ar: "كل الخدمات" }, subtitle: { en: "", ar: "" } };
+    expect(parseBlocks([b]).ok).toBe(true);
+  });
   it("accepts very long text (no practical limit) and many FAQ items", () => {
     const rt = createBlock("richText");
     rt.props.body = { en: "word ".repeat(30_000), ar: "كلمة ".repeat(30_000) }; // ~150,000 characters each
