@@ -46,6 +46,17 @@ describe("block registry", () => {
     b.props = { heading: { en: "All services", ar: "كل الخدمات" }, subtitle: { en: "", ar: "" } };
     expect(parseBlocks([b]).ok).toBe(true);
   });
+  it("has a Weather block", () => {
+    const b = createBlock("weather");
+    expect(b.props.city).toBe("dubai");
+    expect(parseBlocks([b]).ok).toBe(true);
+    for (const city of ["abu-dhabi", "al-ain", "ras-al-khaimah"]) expect(parseBlocks([{ ...b, props: { ...b.props, city } }]).ok).toBe(true);
+    expect(parseBlocks([{ ...b, props: { ...b.props, mode: "all", forecast: "none" } }]).ok).toBe(true);
+    expect(parseBlocks([{ ...b, props: { ...b.props, city: "london" } }]).ok).toBe(false);
+    expect(parseBlocks([{ ...b, props: { ...b.props, forecast: "30" } }]).ok).toBe(false);
+    expect(parseBlocks([{ ...b, props: { ...b.props, tipFromC: 99 } }]).ok).toBe(false);
+    expect(parseBlocks([{ ...b, props: { ...b.props, tipUrl: "javascript:alert(1)" } }]).ok).toBe(false);
+  });
   it("accepts very long text (no practical limit) and many FAQ items", () => {
     const rt = createBlock("richText");
     rt.props.body = { en: "word ".repeat(30_000), ar: "كلمة ".repeat(30_000) }; // ~150,000 characters each

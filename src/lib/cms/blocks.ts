@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { hasUnsafeInlineLink } from "./inlineLinks";
 import { cleanRichValue } from "./richText";
+import { WEATHER_CITIES, WEATHER_CITY_SLUGS } from "./weatherCities";
 
 // ---- shared field schemas ----
 // Text is either plain (with optional [link text](address){flags} links) or HTML from the visual editor, which is
@@ -98,6 +99,15 @@ const RAW_SCHEMAS = {
   contactCards: z.object({ heading: bi, subtitle: bi, whatsappButtonLabel: bi }),
   // The live price calculator: emirate, service, quantity, booking type, summary, agreement and Book.
   bookingCalculator: z.object({ heading: bi, subtitle: bi }),
+  // Live weather from Open-Meteo (free, no key; listed in github.com/public-apis/public-apis): one emirate with an optional forecast,
+  // or a card for every emirate. It loads on the visitor's screen, so it is always current. The tip shows only in hot weather.
+  weather: z.object({
+    heading: bi, subtitle: bi,
+    mode: z.enum(["city", "all"]),
+    city: z.enum(WEATHER_CITY_SLUGS),
+    forecast: z.enum(["none", "3", "5", "7"]),
+    tipText: bi, tipUrl: link, tipFromC: z.number().int().min(15).max(60),
+  }),
 } as const;
 
 // Any section can have its own background: an image under a dark overlay, or a plain colour.
@@ -128,6 +138,7 @@ export const BLOCK_SCHEMAS = {
   form: withStyle(RAW_SCHEMAS.form),
   contactCards: withStyle(RAW_SCHEMAS.contactCards),
   bookingCalculator: withStyle(RAW_SCHEMAS.bookingCalculator),
+  weather: withStyle(RAW_SCHEMAS.weather),
 } as const;
 
 export type BlockType = keyof typeof BLOCK_SCHEMAS;
@@ -453,6 +464,27 @@ export const BLOCK_REGISTRY: Record<
       { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
     ],
     defaults: () => ({ heading: biEmpty(), subtitle: biEmpty() }),
+  },
+  weather: {
+    label: "Weather",
+    description: "Live weather for the UAE (temperature, feels-like, humidity, wind and a forecast), for one emirate or all of them. It updates by itself on the visitor's screen. Optional tip that appears only in hot weather, for example “Book an AC service”.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Text under the heading", rich: true },
+      { kind: "select", key: "mode", label: "Show", options: [{ value: "city", label: "One emirate (with a forecast)" }, { value: "all", label: "A card for every emirate" }] },
+      { kind: "select", key: "city", label: "Emirate", showIf: { key: "mode", equals: "city" }, options: WEATHER_CITIES.map((c) => ({ value: c.slug, label: c.nameEn })) },
+      {
+        kind: "select", key: "forecast", label: "Forecast", showIf: { key: "mode", equals: "city" },
+        options: [{ value: "none", label: "No forecast (today only)" }, { value: "3", label: "3 days" }, { value: "5", label: "5 days" }, { value: "7", label: "7 days" }],
+      },
+      { kind: "bi-text", key: "tipText", label: "Hot-weather tip (empty = no tip)" },
+      { kind: "url", key: "tipUrl", label: "Tip button link (for example /pricing)" },
+      { kind: "number", key: "tipFromC", label: "Show the tip from this temperature, in °C (15–60)" },
+    ],
+    defaults: () => ({
+      heading: { en: "Weather today", ar: "الطقس اليوم" }, subtitle: biEmpty(), mode: "city", city: "dubai", forecast: "5",
+      tipText: { en: "It is hot out there. Book an AC service before the heat gets worse.", ar: "الجو حار. احجز صيانة المكيف قبل أن يزداد الحر." }, tipUrl: "/pricing", tipFromC: 38,
+    }),
   },
 };
 

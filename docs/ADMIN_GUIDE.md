@@ -75,6 +75,8 @@ On the website each category has its own page (`/blog/category/<slug>`). A categ
 ### Blog posts and service pages use the same blocks
 Website content like articles and service pages is built with the same blocks as pages. In **Blog** (new or edit) and **Website Services** (new or edit) scroll to **Article content (blocks)** / **Service page content (blocks)**: press **+ Add block** and choose Hero, Text, Image + text, FAQ, Call to action, Services grid, Latest blog posts, Contact cards or Price calculator. When a post or service has blocks, visitors see the blocks instead of the plain text fields above them (those stay as a fallback and are only required when there are no blocks).
 
+**Weather block (any page, article or service page).** In the block list choose **Weather**. It shows live UAE weather (temperature, feels-like, humidity, wind, and a 3/5/7-day forecast) for **one emirate**, or a **card for every emirate**. It updates by itself on the visitor's screen, in English or Arabic, and needs no key or account (data from Open-Meteo, a free service from the public-apis list). Optional **hot-weather tip**: write a short text and a link (for example /pricing); it appears with a Book button only when the temperature reaches the number you set (38°C by default). If the weather service is ever unreachable, visitors see a short message instead.
+
 ### Images and layout: background, Image block, Columns
 * **Picture behind a section:** every block (except the Hero, which has its own background controls) has **Section background (optional)** at the bottom of its form: a background image with an overlay strength and colour, or a plain colour. The block's heading and text sit on top of it.
 * **Image block:** a picture on its own: choose the width (narrow, wide, full screen), the shape (original, 16:9, 3:2, 21:9, square), rounded corners, position, a caption and a link.
@@ -299,6 +301,8 @@ npm run build
 
 ### المقالات وصفحات الخدمات تستخدم نفس الأقسام
 تُبنى المقالات وصفحات الخدمات بنفس أقسام الصفحات. في **المدونة** (جديد أو تعديل) و**خدمات الموقع** (جديد أو تعديل) انزل إلى **Article content (blocks)** / **Service page content (blocks)**: اضغط **+ Add block** واختر Hero أو Text أو Image + text أو FAQ أو Call to action أو Services grid أو Latest blog posts أو Contact cards أو Price calculator. عندما يحتوي المقال أو الخدمة على أقسام يرى الزوار الأقسام بدلاً من حقول النص العادي أعلاها (وتبقى تلك الحقول احتياطية ولا تكون مطلوبة إلا عند عدم وجود أقسام).
+
+**قسم الطقس (أي صفحة أو مقال أو صفحة خدمة).** من قائمة الأقسام اختر **Weather**. يعرض طقس الإمارات مباشرة (الحرارة، الإحساس الحراري، الرطوبة، الرياح، وتوقعات 3/5/7 أيام) لـ**إمارة واحدة** أو **بطاقة لكل إمارة**. يتحدّث تلقائياً على شاشة الزائر بالعربية أو الإنجليزية ولا يحتاج مفتاحاً أو حساباً (البيانات من Open-Meteo، خدمة مجانية من قائمة public-apis). **نصيحة الطقس الحار** اختيارية: اكتب نصاً قصيراً ورابطاً (مثل /pricing) فيظهر مع زر الحجز فقط عندما تبلغ الحرارة الرقم الذي تحدده (38°م افتراضياً). وإذا تعذّر الوصول إلى خدمة الطقس تظهر للزائر رسالة قصيرة.
 
 ### الصور والتخطيط: الخلفية وبلوك الصورة والأعمدة
 * **صورة خلف القسم:** كل بلوك (عدا Hero الذي له إعدادات خلفية خاصة) فيه في آخر نموذجه **Section background (optional)**: صورة خلفية مع قوة وتلوين الطبقة فوقها، أو لون ثابت. يظهر عنوان البلوك ونصه فوقها.
