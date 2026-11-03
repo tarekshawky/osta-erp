@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { partialCollectedByMethod } from "./invoiceCollections";
 import { canonicalExpensePayment } from "./expenseData";
 import { computeRetainedEarnings } from "./financialReportsIncomeStatement";
 import { SETTING_ID } from "./settings";
@@ -39,7 +40,7 @@ export async function computeCashAndCashEquivalents(
   const openingDate = position?.openingDate ?? new Date(0);
   const range = { gte: openingDate, lte: endOfDayUtc(asOfDate) };
 
-  const [invoiceInflowRows, expenseOutflowAgg, cardPaymentAgg, payrollAgg, assetPurchaseAgg, liabilityAgg] = await Promise.all([
+  const [invoiceInflowRows, expenseOutflowAgg, cardPaymentAgg, payrollAgg, assetPurchaseAgg, liabilityAgg, partialRows] = await Promise.all([
     prisma.invoice.groupBy({
       by: ["payment"],
       _sum: { amount: true, refundedAmount: true },
@@ -66,11 +67,15 @@ export async function computeCashAndCashEquivalents(
     // Symmetrically, a Liability (e.g. a bank loan) is real cash received --
     // otherwise Total Liabilities grows with nothing backing it on the Asset side.
     prisma.liability.aggregate({ _sum: { amount: true }, where: { createdAt: range } }),
+    partialCollectedByMethod({ date: range }),
   ]);
 
-  const cashLikeInvoiceInflow = invoiceInflowRows
-    .filter((r) => ["Cash", "Bank Transfer", "Ziina"].includes(r.payment))
-    .reduce((sum, r) => sum + (r._sum.amount ?? 0) - (r._sum.refundedAmount ?? 0), 0);
+  // Part-paid invoices have received part of their amount in cash; the rest stays in Accounts Receivable below.
+  const cashLikeInvoiceInflow =
+    invoiceInflowRows
+      .filter((r) => ["Cash", "Bank Transfer", "Ziina"].includes(r.payment))
+      .reduce((sum, r) => sum + (r._sum.amount ?? 0) - (r._sum.refundedAmount ?? 0), 0) +
+    partialRows.filter((r) => ["Cash", "Bank Transfer", "Ziina"].includes(r.payment)).reduce((sum, r) => sum + r.collected, 0);
 
   const cashLikeExpenseOutflow = expenseOutflowAgg
     .filter((e) => ["Cash", "Bank Transfer"].includes(canonicalExpensePayment(e.payment)))
@@ -101,10 +106,11 @@ export async function computeCashAndCashEquivalents(
 // against a Paid invoice), confirmed in customerData.ts -- no subtraction needed.
 export async function computeAccountsReceivable(asOfDate: Date): Promise<number> {
   const agg = await prisma.invoice.aggregate({
-    _sum: { amount: true },
+    _sum: { amount: true, paidAmount: true },
     where: { status: "Unpaid", ...boundBy("date", asOfDate) },
   });
-  return agg._sum.amount ?? 0;
+  // What is still owed: the invoiced amount less anything already received on part-paid invoices.
+  return (agg._sum.amount ?? 0) - (agg._sum.paidAmount ?? 0);
 }
 
 export type AccountsReceivableRow = { id: string; number: string; date: Date; customerName: string; amount: number };
@@ -120,7 +126,7 @@ export async function getAccountsReceivableDetail(asOfDate: Date): Promise<{ row
     number: inv.number,
     date: inv.date,
     customerName: inv.customer.type === "COMPANY" ? inv.customer.companyName ?? inv.customer.name : inv.customer.name,
-    amount: inv.amount,
+    amount: inv.amount - inv.paidAmount,
   }));
   return { rows, total: rows.reduce((sum, r) => sum + r.amount, 0) };
 }

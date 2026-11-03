@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { invoiceStatusFilter } from "@/lib/invoiceCollections";
+import { collectionOf } from "@/lib/invoicePayment";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { buildWorkbookBuffer } from "@/lib/excel";
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
     ];
   }
   if (team !== "all") where.team = { name: team };
-  if (status !== "all") where.status = status;
+  Object.assign(where, invoiceStatusFilter(status));
   const dateRange = buildDateRange(year, month);
   if (dateRange) where.date = dateRange;
 
@@ -50,6 +52,10 @@ export async function GET(request: NextRequest) {
     "Payment",
     "Amount",
     "Status",
+    "Payment Status",
+    "Payment Date",
+    "Paid Amount",
+    "Remaining Balance",
   ];
 
   const rows = invoices.map((inv) => [
@@ -67,6 +73,10 @@ export async function GET(request: NextRequest) {
     inv.payment,
     inv.amount,
     inv.status,
+    collectionOf(inv).state,
+    collectionOf(inv).paymentDate ? formatDate(collectionOf(inv).paymentDate as Date) : "",
+    collectionOf(inv).received,
+    collectionOf(inv).remaining,
   ]);
 
   const buffer = await buildWorkbookBuffer("Invoices", headers, rows);

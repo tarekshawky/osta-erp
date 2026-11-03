@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { collectionOf } from "@/lib/invoicePayment";
 import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatUaePhone } from "@/lib/format";
@@ -87,6 +88,7 @@ export default async function EmployeeInvoiceDetailPage({
             createdByName={invoice.createdBy.name}
             createdByCode={invoice.createdBy.code}
             createdAt={invoice.createdAt}
+            collection={collectionOf(invoice)}
           />
         </div>
       </div>

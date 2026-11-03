@@ -85,7 +85,7 @@ export async function getCustomersFinancialMap(customerIds?: string[]): Promise<
     prisma.invoice.groupBy({
       by: ["customerId"],
       where: { ...customerFilter, status: "Unpaid" },
-      _sum: { amount: true },
+      _sum: { amount: true, paidAmount: true },
     }),
   ]);
 
@@ -117,7 +117,8 @@ export async function getCustomersFinancialMap(customerIds?: string[]): Promise<
   }
   for (const row of unpaidStats) {
     const entry = get(row.customerId);
-    entry.outstandingAmount = row._sum.amount ?? 0;
+    // Still owed = invoiced less anything already received on part-paid invoices.
+    entry.outstandingAmount = (row._sum.amount ?? 0) - (row._sum.paidAmount ?? 0);
     entry.paidAmount -= entry.outstandingAmount;
   }
 

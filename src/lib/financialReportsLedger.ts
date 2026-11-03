@@ -38,16 +38,19 @@ export async function getGeneralLedger({ account, from, to }: { account: (typeof
   if (account === "Cash" || account === "Revenue" || account === "Accounts Receivable") {
     const invoices = await prisma.invoice.findMany({
       where: { date: range },
-      select: { date: true, number: true, amount: true, refundedAmount: true, payment: true, status: true },
+      select: { date: true, number: true, amount: true, refundedAmount: true, payment: true, status: true, paidAmount: true },
     });
     for (const inv of invoices) {
       const net = inv.amount - inv.refundedAmount;
       const isCashLike = inv.status !== "Unpaid";
-      if (account === "Cash" && isCashLike) {
-        rows.push({ date: inv.date, description: `Invoice ${inv.number}`, account: "Cash", debit: net, credit: 0 });
+      // A part-paid (still "Unpaid") invoice splits: what was received is Cash, the rest stays Accounts Receivable.
+      const cashPart = isCashLike ? net : Math.min(inv.paidAmount, net);
+      const receivablePart = isCashLike ? 0 : net - cashPart;
+      if (account === "Cash" && cashPart > 0) {
+        rows.push({ date: inv.date, description: `Invoice ${inv.number}`, account: "Cash", debit: cashPart, credit: 0 });
       }
-      if (account === "Accounts Receivable" && !isCashLike) {
-        rows.push({ date: inv.date, description: `Invoice ${inv.number}`, account: "Accounts Receivable", debit: net, credit: 0 });
+      if (account === "Accounts Receivable" && receivablePart > 0) {
+        rows.push({ date: inv.date, description: `Invoice ${inv.number}`, account: "Accounts Receivable", debit: receivablePart, credit: 0 });
       }
       if (account === "Revenue") {
         rows.push({ date: inv.date, description: `Invoice ${inv.number}`, account: "Revenue", debit: 0, credit: net });

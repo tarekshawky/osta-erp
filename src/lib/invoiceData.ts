@@ -76,11 +76,11 @@ export const WARRANTY_DAYS = 14;
 
 export const COMPANY_INFO = {
   name: "OSTA TECHNICAL SERVICES CO. L.L.C S.O.C",
-  email: "Info@ostaservices.com",
+  email: "info@ostaservices.com",
   trn: "105442240300001",
   license: "1601375",
   website: "www.ostaservices.com",
-  phone: "+971 50 903 0175",
+  phone: "0568676036",
   address: "Ajman, United Arab Emirates",
 };
 

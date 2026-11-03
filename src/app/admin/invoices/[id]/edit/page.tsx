@@ -92,6 +92,8 @@ export default async function AdminInvoiceEditPage({
 
   const initialPayment: PaymentFormData = {
     method: invoice.payment as "Cash" | "Bank Transfer" | "Ziina",
+    // Not editable here (the status step is hidden when editing); changed via "Update Payment Status" with a history entry.
+    status: invoice.status === "Unpaid" ? "Unpaid" : "Paid",
     date: invoice.date.toISOString().slice(0, 10),
     teamId: invoice.teamId ?? "",
     paymentLink: invoice.paymentLink ?? "",

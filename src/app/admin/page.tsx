@@ -11,6 +11,7 @@ import { getCollectMoneyTotal } from "@/lib/walletData";
 import { getVehicleAlerts } from "@/lib/vehicleData";
 import { getRentalAlerts } from "@/lib/rentalData";
 import { getEmployeesRequiringStock } from "@/lib/inventoryData";
+import { partialCollectedTotal } from "@/lib/invoiceCollections";
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -34,6 +35,7 @@ export default async function AdminDashboardPage({
     vehicleAlerts,
     rentalAlerts,
     employeesRequiringStock,
+    partialCollected,
   ] = await Promise.all([
     prisma.invoice.findMany({ select: { date: true } }),
     prisma.invoice.aggregate({
@@ -54,10 +56,12 @@ export default async function AdminDashboardPage({
     getVehicleAlerts(),
     getRentalAlerts(),
     getEmployeesRequiringStock(),
+    partialCollectedTotal(dateRange ? { date: dateRange } : {}),
   ]);
 
   const years = Array.from(new Set(invoiceDates.map((i) => i.date.getFullYear()))).sort((a, b) => b - a);
-  const revenue = revenueAgg._sum.amount ?? 0;
+  // Paid invoices plus the part already received on part-paid ones.
+  const revenue = (revenueAgg._sum.amount ?? 0) + partialCollected;
   const expenses = (expenseAgg._sum.amount ?? 0) - (expenseAgg._sum.refundedAmount ?? 0);
 
   return (

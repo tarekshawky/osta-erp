@@ -239,6 +239,7 @@ export function InvoiceWizard({
       )}
       {step === 2 && (
         <PaymentStep
+          showStatus={mode !== "edit"}
           value={payment}
           service={service}
           onChange={setPayment}

@@ -48,6 +48,8 @@ export type ServiceFormData = {
 
 export type PaymentFormData = {
   method: "Cash" | "Bank Transfer" | "Ziina";
+  // Chosen separately from the method: picking Cash/Ziina/Bank Transfer never means the customer has paid.
+  status: "Paid" | "Unpaid";
   date: string;
   teamId: string;
   paymentLink: string;
@@ -92,6 +94,7 @@ export const emptyService: ServiceFormData = {
 
 export const emptyPayment: PaymentFormData = {
   method: "Cash",
+  status: "Paid",
   date: new Date().toISOString().slice(0, 10),
   teamId: "",
   paymentLink: "",

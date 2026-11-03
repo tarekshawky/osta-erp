@@ -182,6 +182,10 @@ export async function createInvoiceFromWizard(
   const usageLines = mergeUsageLines(resolveInventoryUsage(service), resolveSparePartUsageLines(service));
   const inventoryEmployeeId = service.inventoryEmployeeId || employee.id;
 
+  // The status is chosen explicitly (separately from the payment method). Older clients that don't send one keep the
+  // previous rule: a payment link means Unpaid, otherwise Paid.
+  const paidNow = payment.status ? payment.status === "Paid" : !payment.paymentLink.trim();
+
   let invoice;
   try {
     invoice = await prisma.$transaction(async (tx) => {
@@ -199,7 +203,10 @@ export async function createInvoiceFromWizard(
           // confirms the payment came through (see InvoiceStatusControl). With
           // no link, the admin is recording a payment already collected in
           // hand/bank, so it's Paid immediately, same as before.
-          status: payment.paymentLink.trim() ? "Unpaid" : "Paid",
+          status: paidNow ? "Paid" : "Unpaid",
+          // Recorded as collected at issuance when created as Paid; an Unpaid invoice has received nothing yet.
+          paidAmount: paidNow ? amount : 0,
+          paymentDate: paidNow ? date : null,
           paymentLink: payment.paymentLink.trim() || null,
           leadSource: customer.leadSource,
           warrantyUntil,
@@ -208,6 +215,19 @@ export async function createInvoiceFromWizard(
           items: {
             create: items,
           },
+        },
+      });
+      await tx.invoicePayment.create({
+        data: {
+          invoiceId: created.id,
+          kind: "Invoice Created",
+          previousStatus: "—",
+          newStatus: created.status,
+          amount: created.paidAmount,
+          paidAfter: created.paidAmount,
+          method: created.payment,
+          paymentDate: created.paymentDate,
+          changedById: employee.id,
         },
       });
       if (usageLines.length > 0) {
@@ -301,6 +321,8 @@ export async function updateInvoiceFromWizard(
           category: service.category,
           payment: payment.method,
           amount,
+          // A fully paid invoice stays fully paid when its amount is edited.
+          ...(existing.status === "Paid" ? { paidAmount: amount } : {}),
           paymentLink: payment.paymentLink.trim() || null,
           leadSource: customer.leadSource,
           date,

@@ -45,6 +45,10 @@ const METHODS = [
 const T = {
   ar: {
     selectMethod: "اختر طريقة الدفع",
+    paymentStatus: "حالة الدفع",
+    paid: "تم الدفع",
+    unpaid: "لم يتم الدفع",
+    statusHelp: "اختيار طريقة الدفع لا يعني أن العميل دفع. حدّد حالة الدفع هنا، ويمكن تحديثها لاحقاً من صفحة الفاتورة.",
     invoiceDate: "تاريخ الفاتورة",
     team: "الفريق",
     selectTeam: "اختر فريقاً",
@@ -57,6 +61,10 @@ const T = {
   },
   en: {
     selectMethod: "Select Payment Method",
+    paymentStatus: "Payment Status",
+    paid: "Paid",
+    unpaid: "Unpaid",
+    statusHelp: "Choosing a payment method does not mean the customer has paid. Set the status here; it can be updated later from the invoice page.",
     invoiceDate: "Invoice Date",
     team: "Team",
     selectTeam: "Select a team",
@@ -76,6 +84,7 @@ export function PaymentStep({
   onChange,
   onNext,
   showInvoiceControls = false,
+  showStatus = true,
   teamOptions = [],
   lang = "en",
 }: {
@@ -84,6 +93,8 @@ export function PaymentStep({
   onChange: (value: PaymentFormData) => void;
   onNext: () => void;
   showInvoiceControls?: boolean;
+  // Hidden when editing: an existing invoice's payment is changed with "Update Payment Status" so it is recorded in the history.
+  showStatus?: boolean;
   teamOptions?: TeamOption[];
   lang?: EmployeeLang;
 }) {
@@ -127,6 +138,34 @@ export function PaymentStep({
         </div>
       </div>
 
+      {showStatus && (
+        <div>
+          <label className={`text-xs font-medium text-slate-600 mb-1.5 block ${font}`} dir={dir}>
+            {s.paymentStatus}
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            {(["Paid", "Unpaid"] as const).map((st) => {
+              const active = value.status === st;
+              const tone = st === "Paid" ? "border-green-600 bg-green-50 text-green-700" : "border-red-600 bg-red-50 text-red-700";
+              return (
+                <button
+                  key={st}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => onChange({ ...value, status: st })}
+                  className={`rounded-xl border py-3 text-sm font-semibold ${active ? tone : "border-slate-200 text-slate-600"} ${font}`}
+                >
+                  {st === "Paid" ? s.paid : s.unpaid}
+                </button>
+              );
+            })}
+          </div>
+          <p className={`mt-1.5 text-[11px] text-slate-400 ${font}`} dir={dir}>
+            {s.statusHelp}
+          </p>
+        </div>
+      )}
+
       {showInvoiceControls && (
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={s.invoiceDate} dir={dir} labelClassName={font}>
@@ -164,7 +203,12 @@ export function PaymentStep({
             placeholder="https://pay.ziina.com/..."
             className={inputClassName}
             value={value.paymentLink}
-            onChange={(event) => onChange({ ...value, paymentLink: event.target.value })}
+            onChange={(event) => {
+              const link = event.target.value;
+              // Typing a payment link for the first time means the customer will pay it themselves: suggest Unpaid.
+              const first = !value.paymentLink.trim() && link.trim();
+              onChange({ ...value, paymentLink: link, ...(first && showStatus ? { status: "Unpaid" as const } : {}) });
+            }}
           />
         </Field>
         <p className={`mt-1.5 text-[11px] text-slate-400 ${font}`} dir={dir}>

@@ -13,6 +13,14 @@ import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { buildDateRange } from "@/lib/dateRangeFilter";
 import { importInvoicesFromExcel } from "./import/actions";
 import type { Prisma } from "@/generated/prisma";
+import { collectionOf } from "@/lib/invoicePayment";
+import { invoiceStatusFilter, partialCollectedTotal, PARTIAL_INVOICES } from "@/lib/invoiceCollections";
+
+const STATE_STYLE = {
+  PAID: "bg-green-50 text-green-700",
+  UNPAID: "bg-red-50 text-red-600",
+  "PARTIALLY PAID": "bg-orange-50 text-orange-600",
+} as const;
 
 export default async function AdminInvoicesPage({
   searchParams,
@@ -33,12 +41,18 @@ export default async function AdminInvoicesPage({
 
   const years = Array.from(new Set(invoiceDates.map((i) => i.date.getFullYear()))).sort((a, b) => b - a);
 
-  const [paidCount, unpaidCount, partiallyRefundedCount, refundedCount] = await Promise.all([
+  const [paidCount, unpaidCount, partialCount, partiallyRefundedCount, refundedCount, openAgg, partialCollected] = await Promise.all([
     prisma.invoice.count({ where: { status: "Paid" } }),
-    prisma.invoice.count({ where: { status: "Unpaid" } }),
+    prisma.invoice.count({ where: { status: "Unpaid", paidAmount: 0 } }),
+    prisma.invoice.count({ where: PARTIAL_INVOICES }),
     prisma.invoice.count({ where: { status: "Partially Refunded" } }),
     prisma.invoice.count({ where: { status: "Refunded" } }),
+    prisma.invoice.aggregate({ _sum: { amount: true, paidAmount: true }, where: { status: "Unpaid" } }),
+    partialCollectedTotal(),
   ]);
+  // Collected = fully paid invoices plus what has been received on part-paid ones; still owed = open invoices less that part.
+  const totalPaidAmount = (paidInvoices._sum.amount ?? 0) + partialCollected;
+  const totalUnpaidAmount = (openAgg._sum.amount ?? 0) - (openAgg._sum.paidAmount ?? 0);
 
   const where: Prisma.InvoiceWhereInput = {};
   if (q) {
@@ -49,7 +63,7 @@ export default async function AdminInvoicesPage({
     ];
   }
   if (team !== "all") where.team = { name: team };
-  if (status !== "all") where.status = status;
+  Object.assign(where, invoiceStatusFilter(status));
   const dateRange = buildDateRange(year, month);
   if (dateRange) where.date = dateRange;
 
@@ -120,12 +134,15 @@ export default async function AdminInvoicesPage({
         </div>
 
         <div className="mt-4 grid grid-cols-2 lg:grid-cols-6 gap-3">
-          <AdminStatCard label="Total Revenue" value={formatAed(paidInvoices._sum.amount ?? 0)} valueClassName="text-blue-700" />
-          <AdminStatCard label="Total Invoices" value={String(allInvoices._count)} valueClassName="text-green-600" />
-          <AdminStatCard label="Paid" value={String(paidCount)} valueClassName="text-green-600" />
-          <AdminStatCard label="Unpaid" value={String(unpaidCount)} valueClassName="text-amber-600" />
-          <AdminStatCard label="Partially Refunded" value={String(partiallyRefundedCount)} valueClassName="text-orange-500" />
-          <AdminStatCard label="Refunded" value={String(refundedCount)} valueClassName="text-red-500" />
+          <AdminStatCard label="Total Invoiced Amount" value={formatAed(allInvoices._sum.amount ?? 0)} valueClassName="text-blue-700" />
+          <AdminStatCard label="Total Paid Amount" value={formatAed(totalPaidAmount)} valueClassName="text-green-600" />
+          <AdminStatCard label="Total Unpaid Amount" value={formatAed(totalUnpaidAmount)} valueClassName="text-red-600" />
+          <AdminStatCard label="Partially Paid" value={String(partialCount)} valueClassName="text-orange-500" />
+          <AdminStatCard label="Paid Invoices" value={String(paidCount)} valueClassName="text-green-600" />
+          <AdminStatCard label="Unpaid Invoices" value={String(unpaidCount)} valueClassName="text-red-600" />
+        </div>
+        <div className="mt-2 text-xs text-slate-500">
+          {allInvoices._count} invoices · {partiallyRefundedCount} partially refunded · {refundedCount} refunded
         </div>
 
         <form className="mt-5 flex flex-col sm:flex-row gap-3">
@@ -155,10 +172,10 @@ export default async function AdminInvoicesPage({
             defaultValue={status}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
           >
-            <option value="all">All Statuses</option>
-            <option value="Paid">Paid</option>
-            <option value="Unpaid">Unpaid</option>
-            <option value="Pending">Pending</option>
+            <option value="all">All Invoices</option>
+            <option value="Paid">Paid Invoices</option>
+            <option value="Unpaid">Unpaid Invoices</option>
+            <option value="PartiallyPaid">Partially Paid Invoices</option>
             <option value="Partially Refunded">Partially Refunded</option>
             <option value="Refunded">Refunded</option>
           </select>
@@ -180,9 +197,10 @@ export default async function AdminInvoicesPage({
                 <th className="px-4 py-3 font-medium">Team</th>
                 <th className="px-4 py-3 font-medium">Created By</th>
                 <th className="px-4 py-3 font-medium">Service</th>
-                <th className="px-4 py-3 font-medium">Payment</th>
+                <th className="px-4 py-3 font-medium">Payment Method</th>
                 <th className="px-4 py-3 font-medium text-right">Amount</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Payment Date</th>
               </tr>
             </thead>
             <tbody>
@@ -205,15 +223,26 @@ export default async function AdminInvoicesPage({
                   <td className="px-4 py-3 text-slate-600">{inv.payment}</td>
                   <td className="px-4 py-3 text-right font-semibold text-slate-900 whitespace-nowrap">
                     {formatAed(inv.amount)}
+                    {inv.status === "Unpaid" && collectionOf(inv).received > 0 && (
+                      <div className="text-[11px] font-normal text-orange-600">Remaining {formatAed(collectionOf(inv).remaining)}</div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={inv.status} />
+                    {inv.status === "Paid" || inv.status === "Unpaid" ? (
+                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATE_STYLE[collectionOf(inv).state]}`}>{collectionOf(inv).state}</span>
+                    ) : (
+                      <StatusBadge status={inv.status} />
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                    {collectionOf(inv).paymentDate ? formatDate(collectionOf(inv).paymentDate as Date) : "—"}
+                    {collectionOf(inv).paymentDateIsEstimate ? <span title="Collected when the invoice was issued"> *</span> : null}
                   </td>
                 </tr>
               ))}
               {invoices.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
                     No invoices match your filters.
                   </td>
                 </tr>

@@ -111,6 +111,7 @@ model Employee {
   ordersRescheduled            Order[]                        @relation("OrderRescheduledBy")
   orderStatusChanges           OrderStatusChange[]
   invoiceStatusChanges         InvoiceStatusChange[]
+  invoicePayments              InvoicePayment[]              @relation("InvoicePaymentBy")
   customersCreated             Customer[]                     @relation("CustomerCreatedBy")
   customersUpdated             Customer[]                     @relation("CustomerUpdatedBy")
   blogPostsCreated             BlogPost[]                     @relation("BlogPostCreatedBy")
@@ -260,6 +261,11 @@ model Invoice {
   amount                Float
   status                String                  @default("Unpaid")
   paymentLink           String?
+  // Collection tracking, kept apart from the invoice date (which never changes when a payment arrives later):
+  // paidAmount = money actually received so far, paymentDate = when the last payment was received (null while nothing
+  // is received). Remaining balance = amount - paidAmount. Status "Paid" always means paidAmount == amount.
+  paidAmount            Float                   @default(0)
+  paymentDate           DateTime?
   refundedAmount        Float                   @default(0)
   leadSource            String                  @default("Organic")
   warrantyUntil         DateTime?
@@ -269,6 +275,7 @@ model Invoice {
   createdBy             Employee                @relation(fields: [createdById], references: [id])
   items                 InvoiceItem[]
   statusChanges         InvoiceStatusChange[]
+  payments              InvoicePayment[]
   order                 Order?
   quotation             Quotation?
   inventoryTransactions InventoryTransaction[]
@@ -2104,4 +2111,28 @@ model CatalogCategoryService {
   @@id([categoryId, serviceId])
   @@index([categoryId, sortOrder])
   @@index([serviceId])
+}
+
+// Append-only payment history of an invoice: every creation, payment received, reversal. Rows are never edited or
+// deleted on their own (only with the invoice), so a payment date can't change without leaving a trace.
+model InvoicePayment {
+  id                  String    @id @default(cuid())
+  invoiceId           String
+  invoice             Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  // "Invoice Created" | "Payment Received" | "Payment Reversed"
+  kind                String
+  previousStatus      String
+  newStatus           String
+  // Money received by this event (0 for creation/reversal).
+  amount              Float     @default(0)
+  paidAfter           Float     @default(0)
+  method              String?
+  paymentDate         DateTime?
+  previousPaymentDate DateTime?
+  note                String?
+  changedById         String
+  changedBy           Employee  @relation("InvoicePaymentBy", fields: [changedById], references: [id])
+  createdAt           DateTime  @default(now())
+
+  @@index([invoiceId, createdAt])
 }

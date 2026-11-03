@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { COST_OF_SERVICES_CATEGORIES } from "./expenseData";
 import type { Prisma } from "@/generated/prisma";
+import { partialCollectedByMethod } from "./invoiceCollections";
 
 export type PaymentTotals = { cash: number; ziina: number; bankTransfer: number };
 
@@ -13,6 +14,8 @@ export async function getPaymentTotals(where: Prisma.InvoiceWhereInput = {}): Pr
     where: { ...where, status: "Paid" },
   });
   const map = new Map(rows.map((r) => [r.payment, r._sum.amount ?? 0]));
+  // Money received on part-paid invoices counts as collected by its payment method.
+  for (const p of await partialCollectedByMethod(where)) map.set(p.payment, (map.get(p.payment) ?? 0) + p.collected);
   return {
     cash: map.get("Cash") ?? 0,
     ziina: map.get("Ziina") ?? 0,

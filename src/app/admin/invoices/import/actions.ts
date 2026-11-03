@@ -103,6 +103,8 @@ export async function importInvoicesFromExcel(formData: FormData): Promise<Impor
           payment,
           amount,
           status: "Paid",
+          paidAmount: amount,
+          paymentDate: date,
           warrantyUntil,
           teamId,
           createdById: admin.id,

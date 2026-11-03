@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { partialCollectedByMethod } from "./invoiceCollections";
 import { SETTING_ID } from "./settings";
 
 export type EmployeeFinancials = {
@@ -36,6 +37,10 @@ export async function getEmployeeFinancials(
   ]);
 
   const paymentMap = new Map(invoicesByPayment.map((r) => [r.payment, r._sum.amount ?? 0]));
+  // Cash the employee collected on part-paid invoices is in their hands too.
+  for (const p of await partialCollectedByMethod({ createdById: employeeId, ...(dateFilter ? { createdAt: dateFilter } : {}) })) {
+    paymentMap.set(p.payment, (paymentMap.get(p.payment) ?? 0) + p.collected);
+  }
   const cash = paymentMap.get("Cash") ?? 0;
   const ziina = paymentMap.get("Ziina") ?? 0;
   const bankTransfer = paymentMap.get("Bank Transfer") ?? 0;

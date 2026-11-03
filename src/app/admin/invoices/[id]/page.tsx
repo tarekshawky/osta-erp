@@ -1,4 +1,7 @@
 import { notFound } from "next/navigation";
+import { amountReceived, collectionOf, remainingBalance } from "@/lib/invoicePayment";
+import { PaymentUpdatePanel } from "@/components/invoice/PaymentUpdatePanel";
+import { formatDateSlash } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { formatUaePhone, formatDateTimeSlash } from "@/lib/format";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
@@ -6,7 +9,6 @@ import { InvoicePreviewCard } from "@/components/invoice/InvoicePreviewCard";
 import { DownloadPdfButton } from "@/components/invoice/DownloadPdfButton";
 import { DeleteInvoiceButton } from "@/components/invoice/DeleteInvoiceButton";
 import { RefundModal } from "@/components/invoice/RefundModal";
-import { InvoiceStatusControl } from "@/components/invoice/InvoiceStatusControl";
 import { StatusBadge } from "@/components/StatusBadge";
 
 export default async function AdminInvoiceDetailPage({
@@ -22,6 +24,7 @@ export default async function AdminInvoiceDetailPage({
       items: true,
       createdBy: true,
       statusChanges: { orderBy: { createdAt: "desc" }, include: { changedBy: true } },
+      payments: { orderBy: { createdAt: "desc" }, include: { changedBy: true } },
     },
   });
   if (!invoice) notFound();
@@ -90,9 +93,44 @@ export default async function AdminInvoiceDetailPage({
 
         {canToggleStatus && (
           <div className="mt-4">
-            <InvoiceStatusControl invoiceId={invoice.id} currentStatus={invoice.status} />
+            <PaymentUpdatePanel
+              invoiceId={invoice.id}
+              method={invoice.payment}
+              amount={invoice.amount}
+              received={amountReceived(invoice)}
+              remaining={remainingBalance(invoice)}
+              invoiceDate={invoice.date.toISOString().slice(0, 10)}
+            />
           </div>
         )}
+
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+          <h3 className="text-xs font-semibold text-slate-500 mb-2">Payment History · سجل الدفعات</h3>
+          <div className="flex flex-col gap-2.5">
+            {invoice.payments.map((p) => (
+              <div key={p.id} className="text-sm">
+                <div className="font-medium text-slate-900">
+                  {p.kind} — {p.previousStatus === "—" ? p.newStatus : `${p.previousStatus} → ${p.newStatus}`}
+                </div>
+                <div className="text-xs text-slate-500">
+                  {p.amount > 0 ? `AED ${p.amount.toFixed(2)} received · ` : ""}
+                  {p.method ? `${p.method === "Ziina" ? "Zina" : p.method} · ` : ""}
+                  {p.paymentDate ? `Payment date ${formatDateSlash(p.paymentDate)} · ` : ""}
+                  {p.previousPaymentDate && p.kind !== "Invoice Created" ? `Previous date ${formatDateSlash(p.previousPaymentDate)} · ` : ""}
+                  Updated by {p.changedBy.name} · {formatDateTimeSlash(p.createdAt)}
+                </div>
+              </div>
+            ))}
+            {invoice.payments.length === 0 && (
+              <div className="text-sm">
+                <div className="font-medium text-slate-900">Invoice Created — {invoice.status === "Unpaid" ? "Unpaid" : "Paid"}</div>
+                <div className="text-xs text-slate-500">
+                  Issued {formatDateSlash(invoice.date)} · by {invoice.createdBy.name} · {formatDateTimeSlash(invoice.createdAt)} · earlier invoices keep only their current state
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {invoice.statusChanges.length > 0 && (
           <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
@@ -135,6 +173,7 @@ export default async function AdminInvoiceDetailPage({
             createdByName={invoice.createdBy.name}
             createdByCode={invoice.createdBy.code}
             createdAt={invoice.createdAt}
+            collection={collectionOf(invoice)}
           />
         </div>
       </div>

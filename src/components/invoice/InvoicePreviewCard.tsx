@@ -3,6 +3,7 @@ import { LogoImage } from "@/components/LogoImage";
 import { formatNumber2, formatDateSlash, formatDateTimeSlash } from "@/lib/format";
 import { COMPANY_INFO, INVOICE_NOTE, INVOICE_TERMS, WARRANTY_DAYS } from "@/lib/invoiceData";
 import { amountInWordsAed } from "@/lib/numberToWords";
+import type { PaymentState } from "@/lib/invoicePayment";
 
 export const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
@@ -18,6 +19,22 @@ export type PreviewCustomer = {
   emirate: string;
   buildingName?: string | null;
   flatNo?: string | null;
+};
+
+// How much of the invoice has been collected. Only passed for saved invoices (a draft has no payment state yet).
+export type PreviewCollection = {
+  state: PaymentState;
+  received: number;
+  remaining: number;
+  paymentDate: Date | null;
+  // True when paymentDate is only the invoice date standing in for an old invoice that never recorded one.
+  paymentDateIsEstimate?: boolean;
+};
+
+const STAMP: Record<PaymentState, { color: string; label: string }> = {
+  PAID: { color: "#15803D", label: "PAID" },
+  UNPAID: { color: "#DC2626", label: "UNPAID" },
+  "PARTIALLY PAID": { color: "#EA580C", label: "PARTIALLY PAID" },
 };
 
 export type PreviewItem = {
@@ -180,6 +197,7 @@ export function InvoicePreviewCard({
   createdByName,
   createdByCode,
   createdAt,
+  collection,
   innerRef,
 }: {
   number: string;
@@ -192,6 +210,7 @@ export function InvoicePreviewCard({
   createdByName: string;
   createdByCode?: string;
   createdAt?: Date;
+  collection?: PreviewCollection;
   innerRef?: React.Ref<HTMLDivElement>;
 }) {
   const total = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
@@ -389,10 +408,45 @@ export function InvoicePreviewCard({
         </div>
       </div>
 
-      {/* Payment method */}
-      <div className="mt-6 flex justify-between text-sm border-t border-gray-100 pt-4">
+      {/* Payment method + collection (the stamp sits in the empty middle of this block) */}
+      <div className="relative mt-6 border-t border-gray-100 pt-4">
+        {collection && (
+          <div
+            aria-label={`Payment status: ${STAMP[collection.state].label}`}
+            className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap rounded-md border-4 px-3 py-1 text-xl font-extrabold tracking-[0.2em] sm:border-[5px] sm:px-6 sm:py-2 sm:text-4xl"
+            style={{ color: STAMP[collection.state].color, borderColor: STAMP[collection.state].color, rotate: "-8deg", opacity: 0.82 }}
+          >
+            {STAMP[collection.state].label}
+          </div>
+        )}
+      <div className="flex justify-between text-sm">
         <span className="text-gray-500">Payment Method</span>
         <span className="font-semibold text-gray-900">{payment}</span>
+      </div>
+      {collection && (
+        <div className="mt-2 space-y-1.5 text-sm">
+          <div className="flex justify-between">
+            <span className="text-gray-500">Payment Status</span>
+            <span className="font-bold" style={{ color: STAMP[collection.state].color }}>{STAMP[collection.state].label}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Payment Date</span>
+            <span className="font-semibold text-gray-900">
+              {collection.paymentDate ? formatDateSlash(collection.paymentDate) : "—"}
+              {collection.paymentDate && collection.paymentDateIsEstimate ? " *" : ""}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Paid Amount</span>
+            <span className="font-semibold text-gray-900">AED {formatNumber2(collection.received)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Remaining Balance</span>
+            <span className="font-semibold text-gray-900">AED {formatNumber2(collection.remaining)}</span>
+          </div>
+          {collection.paymentDateIsEstimate && <div className="text-[10px] text-gray-400">* Collected when the invoice was issued.</div>}
+        </div>
+      )}
       </div>
 
       {/* Terms & Conditions */}
