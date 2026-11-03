@@ -46,6 +46,13 @@ describe("block registry", () => {
     b.props = { heading: { en: "All services", ar: "كل الخدمات" }, subtitle: { en: "", ar: "" } };
     expect(parseBlocks([b]).ok).toBe(true);
   });
+  it("has an AI service finder block", () => {
+    const b = createBlock("aiServiceFinder");
+    expect(parseBlocks([b]).ok).toBe(true);
+    expect((b.props.examples as unknown[]).length).toBe(3);
+    expect(parseBlocks([{ ...b, props: { ...b.props, examples: [] } }]).ok).toBe(true);
+    expect(parseBlocks([{ ...b, props: { ...b.props, examples: Array.from({ length: 5 }, () => ({ text: { en: "x", ar: "x" } })) } }]).ok).toBe(false);
+  });
   it("has a Weather block", () => {
     const b = createBlock("weather");
     expect(b.props.city).toBe("dubai");

@@ -99,6 +99,8 @@ const RAW_SCHEMAS = {
   contactCards: z.object({ heading: bi, subtitle: bi, whatsappButtonLabel: bi }),
   // The live price calculator: emirate, service, quantity, booking type, summary, agreement and Book.
   bookingCalculator: z.object({ heading: bi, subtitle: bi }),
+  // "Find my service" (AI): the visitor describes a problem and gets the matching catalogue services with Book buttons.
+  aiServiceFinder: z.object({ heading: bi, subtitle: bi, placeholder: bi, button: bi, examples: z.array(z.object({ text: bi })).max(4) }),
   // Live weather from Open-Meteo (free, no key; listed in github.com/public-apis/public-apis): one emirate with an optional forecast,
   // or a card for every emirate. It loads on the visitor's screen, so it is always current. The tip shows only in hot weather.
   weather: z.object({
@@ -139,6 +141,7 @@ export const BLOCK_SCHEMAS = {
   contactCards: withStyle(RAW_SCHEMAS.contactCards),
   bookingCalculator: withStyle(RAW_SCHEMAS.bookingCalculator),
   weather: withStyle(RAW_SCHEMAS.weather),
+  aiServiceFinder: withStyle(RAW_SCHEMAS.aiServiceFinder),
 } as const;
 
 export type BlockType = keyof typeof BLOCK_SCHEMAS;
@@ -464,6 +467,28 @@ export const BLOCK_REGISTRY: Record<
       { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
     ],
     defaults: () => ({ heading: biEmpty(), subtitle: biEmpty() }),
+  },
+  aiServiceFinder: {
+    label: "AI service finder",
+    description: "The visitor describes the problem in their own words (“the AC is not cooling”) and AI suggests the matching services from your Service Catalogue, each with a Book button. It only ever suggests services you really offer. Needs the ANTHROPIC_API_KEY setting on the admin app; without it the block shows a link to your services instead.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Text under the heading", rich: true },
+      { kind: "bi-text", key: "placeholder", label: "Hint inside the box" },
+      { kind: "bi-text", key: "button", label: "Button text" },
+      { kind: "list", key: "examples", label: "Example problems visitors can tap (up to 4)", itemLabel: "Example", max: 4, fields: [{ kind: "bi-text", key: "text", label: "Example" }] },
+    ],
+    defaults: () => ({
+      heading: { en: "Not sure which service you need?", ar: "لست متأكداً أي خدمة تحتاج؟" },
+      subtitle: { en: "Describe the problem and we will suggest the right service.", ar: "صف المشكلة وسنقترح عليك الخدمة المناسبة." },
+      placeholder: { en: "For example: my AC is running but not cooling", ar: "مثلاً: المكيف يعمل لكنه لا يبرّد" },
+      button: { en: "Find my service", ar: "اعثر على خدمتي" },
+      examples: [
+        { text: { en: "AC is not cooling", ar: "المكيف لا يبرّد" } },
+        { text: { en: "Water leaking from the ceiling", ar: "تسرّب مياه من السقف" } },
+        { text: { en: "A light switch stopped working", ar: "مفتاح الإنارة لا يعمل" } },
+      ],
+    }),
   },
   weather: {
     label: "Weather",

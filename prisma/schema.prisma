@@ -1273,6 +1273,16 @@ model PricingRules {
   updatedAt        DateTime @updatedAt
 }
 
+// One row per AI service-finder request (a keyed hash of the visitor's IP, never the IP itself): the per-visitor and daily limits count these.
+model AiFinderLog {
+  id        String   @id @default(cuid())
+  ipHash    String
+  createdAt DateTime @default(now())
+
+  @@index([ipHash, createdAt])
+  @@index([createdAt])
+}
+
 model VisitFeePolicy {
   id                  String           @id @default(cuid())
   version             Int              @unique
