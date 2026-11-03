@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { PageInsight } from "@/components/admin/PageInsight";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
@@ -90,6 +91,7 @@ export default async function AdminCustomersPage({
         <ToastOnMount message="Customer deleted." />
       </Suspense>
       <AdminTopBar title="Customers" />
+      <PageInsight kind="customers" />
 
       <div className="px-6 py-6">
         <div className="flex items-center justify-between flex-wrap gap-3">

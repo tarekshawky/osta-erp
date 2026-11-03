@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WorkReportsManager } from "@/components/admin/WorkReportsManager";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
@@ -66,6 +67,7 @@ export default async function AdminWorkReportsPage({
         title="Work Reports"
         dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin/work-reports" }}
       />
+      <PageInsight kind="workReports" />
 
       <div className="px-6 py-6">
         <WorkReportsManager

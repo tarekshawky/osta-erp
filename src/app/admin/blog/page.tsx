@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { formatDateSlash } from "@/lib/format";
@@ -26,6 +27,7 @@ export default async function AdminBlogPage() {
   return (
     <div className="pb-10">
       <AdminTopBar title="Blog" />
+      <PageInsight kind="blog" />
       <ToastOnMount message="Blog post deleted." />
 
       <div className="px-6 py-6">

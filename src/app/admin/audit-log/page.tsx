@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { guardPermission } from "@/lib/adminGuard";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 
@@ -18,6 +19,7 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Pro
     return (
       <div className="pb-10">
         <AdminTopBar title="Audit Log" />
+      <PageInsight kind="audit" />
         <p className="px-6 py-6 text-sm text-slate-500">{guard.error}</p>
       </div>
     );

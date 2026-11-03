@@ -93,3 +93,71 @@ tr[data-osta-filtered] {
 .osta-progress {
   animation: osta-progress 1.1s ease-in-out infinite;
 }
+
+/* Admin portal palette (from the OSTA ERP design spec). Tailwind v4 reads colours from CSS variables, so re-pointing the
+   ones the admin pages already use restyles every page at once -- no markup or data changes. Scoped to .admin-theme so the
+   public site, employee app and customer app keep their own colours. */
+.admin-theme {
+  --color-slate-50: #f4f7fd;
+  --color-slate-100: #e9eff9;
+  --color-slate-200: #dce5f7;
+  --color-slate-300: #c3d1ec;
+  --color-slate-400: #8a99b8;
+  --color-slate-500: #4a5b80;
+  --color-slate-600: #3d4b66;
+  --color-slate-700: #2b3a5c;
+  --color-slate-800: #14295c;
+  --color-slate-900: #0b1f4d;
+  --color-blue-50: #e6eefd;
+  --color-blue-100: #d3e1fb;
+  --color-blue-200: #b4cbf7;
+  --color-blue-300: #86a9f0;
+  --color-blue-400: #5a88e6;
+  --color-blue-500: #3b6fdf;
+  --color-blue-600: #1e5bd8;
+  --color-blue-700: #1a4cb5;
+  --color-blue-800: #123a8f;
+  --color-blue-900: #0b2a6b;
+  --color-blue-950: #081f52;
+  --color-green-50: #e3f6ec;
+  --color-green-600: #138a4c;
+  --color-orange-50: #ffeedf;
+  --color-orange-600: #c2560c;
+  --color-purple-50: #f0e8fd;
+  --color-purple-600: #7b3fe4;
+  --color-red-500: #e5383b;
+  background: #eef3fc;
+}
+
+/* Softer, rounder cards and navy table headers, as in the design spec. Pure styling: scoped to the admin portal. */
+.admin-theme {
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+}
+.admin-theme .border.bg-white.rounded-xl,
+.admin-theme .border.bg-white.rounded-2xl {
+  border-color: #dce5f7;
+  box-shadow: 0 1px 2px rgba(11, 42, 107, 0.04), 0 6px 18px rgba(30, 91, 216, 0.06);
+}
+.admin-theme table thead {
+  background: #0b2a6b;
+}
+.admin-theme table thead th {
+  color: #ffffff;
+  font-weight: 500;
+}
+.admin-theme #invoice-preview table thead {
+  background: transparent;
+}
+.admin-theme #invoice-preview table thead th {
+  color: inherit;
+}
+.admin-theme table tbody tr:hover {
+  background: #f4f7fd;
+}
+.admin-theme input:focus,
+.admin-theme select:focus,
+.admin-theme textarea:focus {
+  border-color: #1e5bd8;
+}

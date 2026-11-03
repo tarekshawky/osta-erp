@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { VehiclesManager, type VehicleManagerRow } from "@/components/vehicle/VehiclesManager";
 import {
@@ -54,6 +55,7 @@ export default async function AdminVehiclesPage() {
   return (
     <div className="pb-10">
       <AdminTopBar title="Vehicles" />
+      <PageInsight kind="vehicles" />
       <div className="px-6 py-6">
         <h2 className="text-2xl font-bold text-slate-900">Vehicles</h2>
         <p className="text-sm text-slate-500 mt-0.5">Track fleet expenses, mileage, service, fuel, and fines</p>

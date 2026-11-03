@@ -413,7 +413,7 @@ export function InvoicePreviewCard({
         {collection && (
           <div
             aria-label={`Payment status: ${STAMP[collection.state].label}`}
-            className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap rounded-md border-4 px-3 py-1 text-xl font-extrabold tracking-[0.2em] sm:border-[5px] sm:px-6 sm:py-2 sm:text-4xl"
+            className="pointer-events-none absolute left-[60%] top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap rounded-md border-[3px] px-2 py-0.5 text-base font-extrabold tracking-[0.15em] sm:left-1/2 sm:border-[5px] sm:px-6 sm:py-2 sm:text-4xl sm:tracking-[0.2em]"
             style={{ color: STAMP[collection.state].color, borderColor: STAMP[collection.state].color, rotate: "-8deg", opacity: 0.82 }}
           >
             {STAMP[collection.state].label}

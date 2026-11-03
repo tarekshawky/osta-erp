@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { PageInsight } from "@/components/admin/PageInsight";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDateTimeSlash } from "@/lib/format";
@@ -55,6 +56,7 @@ export default async function AdminOrdersPage({
         <ToastOnMount message="Order deleted." />
       </Suspense>
       <AdminTopBar title="Orders" />
+      <PageInsight kind="orders" />
 
       <div className="px-6 py-6">
         <div className="flex items-center justify-between flex-wrap gap-3">

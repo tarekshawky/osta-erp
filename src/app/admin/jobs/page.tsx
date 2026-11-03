@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { EmptyState, StatCard, jobTitle, stamp } from "@/components/jobs/ui";
 import { NotificationsList } from "@/components/jobs/NotificationsList";
@@ -16,6 +17,7 @@ export default async function JobsOverviewPage() {
   return (
     <div className="pb-10">
       <AdminTopBar title="Jobs & Workforce · إدارة الوظائف والعمالة" />
+      <PageInsight kind="jobs" />
       <div className="flex flex-col gap-6 px-6 py-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

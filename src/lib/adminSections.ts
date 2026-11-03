@@ -53,6 +53,8 @@ export function resolveAdminSectionKey(pathname: string): AdminSectionKey | null
 // Empty allowedSections = unrestricted (the default -- see schema comment).
 export function canAccessAdminSection(allowedSections: string[], pathname: string): boolean {
   if (allowedSections.length === 0) return true;
+  // A system's overview page decides for itself (it only opens when the admin has a page in that system).
+  if (pathname === "/admin/systems" || pathname.startsWith("/admin/systems/")) return true;
   const key = resolveAdminSectionKey(pathname);
   if (!key) return true;
   return allowedSections.includes(key);

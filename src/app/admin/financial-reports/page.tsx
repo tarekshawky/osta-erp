@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 
@@ -48,6 +49,7 @@ export default async function FinancialReportsHubPage() {
   return (
     <div className="pb-10">
       <AdminTopBar title="Financial Reports" />
+      <PageInsight kind="finance" />
       <div className="px-6 py-6">
         <h2 className="text-2xl font-bold text-slate-900">Financial Reports</h2>
         <p className="text-sm text-slate-500 mt-0.5">

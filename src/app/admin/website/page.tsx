@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
@@ -31,6 +32,7 @@ export default async function WebsiteOverviewPage() {
   return (
     <div className="pb-10">
       <AdminTopBar title="Website" />
+      <PageInsight kind="website" />
       <div className="px-6 py-6">
         <WebsiteTabs />
         <h2 className="mb-4 text-2xl font-bold text-slate-900">Website management</h2>

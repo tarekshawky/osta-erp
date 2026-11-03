@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WalletsManager } from "@/components/wallet/WalletsManager";
 import { getCollectMoneyTotal, getEmployeeFinancials } from "@/lib/walletData";
@@ -48,6 +49,7 @@ export default async function AdminWalletsPage() {
   return (
     <div className="pb-10">
       <AdminTopBar title="Wallets" />
+      <PageInsight kind="wallets" />
       <div className="px-6 py-6">
         <WalletsManager wallets={wallets} collectMoneyTotal={collectMoneyTotal} creditCards={creditCards} />
       </div>

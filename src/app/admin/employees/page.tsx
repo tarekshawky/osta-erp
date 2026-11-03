@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { EmployeesManager } from "@/components/employee-admin/EmployeesManager";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
@@ -58,6 +59,7 @@ export default async function AdminEmployeesPage({
   return (
     <div className="pb-10">
       <AdminTopBar title="Employees" />
+      <PageInsight kind="employees" />
 
       <div className="px-6 py-6">
         <EmployeesManager

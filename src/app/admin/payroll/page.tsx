@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { formatAed } from "@/lib/format";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
@@ -65,6 +66,7 @@ export default async function AdminPayrollPage({
         title="Payroll"
         dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin/payroll" }}
       />
+      <PageInsight kind="payroll" />
 
       <div className="px-6 py-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">

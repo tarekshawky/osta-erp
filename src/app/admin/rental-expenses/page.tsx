@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { formatAed } from "@/lib/format";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
@@ -65,6 +66,7 @@ export default async function RentalExpensesPage({
         title="Rental Expenses"
         dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin/rental-expenses" }}
       />
+      <PageInsight kind="rentals" />
       <div className="px-6 py-6">
         <h2 className="text-2xl font-bold text-slate-900">Rental Expenses</h2>
         <p className="text-sm text-slate-500 mt-0.5">Rental agreements and monthly rent transactions across all landlords.</p>

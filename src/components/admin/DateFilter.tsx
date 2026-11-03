@@ -44,10 +44,10 @@ export function DateFilter({
   }
 
   const selectClass =
-    "bg-transparent text-xs sm:text-sm text-white border-none focus:outline-none [&>option]:text-slate-900 max-w-[6.5rem] sm:max-w-none";
+    "bg-transparent text-xs sm:text-sm text-[#0B1F4D] border-none focus:outline-none [&>option]:text-slate-900 max-w-[6.5rem] sm:max-w-none";
 
   return (
-    <div className="flex items-center rounded-full bg-white/10 divide-x divide-white/15 focus-within:ring-1 focus-within:ring-white/40">
+    <div className="flex items-center rounded-full bg-[#EEF3FC] divide-x divide-[#DCE5F7] focus-within:ring-1 focus-within:ring-[#1E5BD8]">
       <select
         value={selectedMonth}
         onChange={(e) => updateParam("month", e.target.value)}

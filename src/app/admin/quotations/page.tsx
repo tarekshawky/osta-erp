@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { PageInsight } from "@/components/admin/PageInsight";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatAed, formatDate } from "@/lib/format";
@@ -63,6 +64,7 @@ export default async function AdminQuotationsPage({
         title="Quotations"
         dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin/quotations" }}
       />
+      <PageInsight kind="quotations" />
 
       <div className="px-6 py-6">
         <div className="flex items-center justify-between flex-wrap gap-3">

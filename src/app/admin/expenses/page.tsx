@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { formatAed } from "@/lib/format";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
+import { MonthlyBarChart } from "@/components/admin/MonthlyBarChart";
+import { expensesByMonth } from "@/lib/monthlySeries";
 import { ExpensesManager } from "@/components/expense/ExpensesManager";
 import { PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { buildDateRange } from "@/lib/dateRangeFilter";
@@ -133,6 +135,8 @@ export default async function AdminExpensesPage({
     creditCardLastFour: exp.creditCard?.lastFour ?? null,
   }));
 
+  const monthlyExpenses = await expensesByMonth();
+
   return (
     <div className="pb-10">
       <AdminTopBar
@@ -156,6 +160,10 @@ export default async function AdminExpensesPage({
               value={formatAed((c._sum.amount ?? 0) - (c._sum.refundedAmount ?? 0))}
             />
           ))}
+        </div>
+
+        <div className="mb-5">
+          <MonthlyBarChart title="Expenses overview" points={monthlyExpenses} tone="orange" />
         </div>
 
         <ExpensesManager

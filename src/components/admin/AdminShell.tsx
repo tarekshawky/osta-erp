@@ -4,6 +4,8 @@ import { useState } from "react";
 import { AdminSidebar } from "./AdminSidebar";
 import { AutoTablePager } from "./AutoTablePager";
 import { NavProgress } from "./NavProgress";
+import { poppins } from "@/lib/fonts";
+import { AdminUserProvider } from "./AdminUserContext";
 
 export function AdminShell({
   adminName,
@@ -19,7 +21,8 @@ export function AdminShell({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-dvh flex bg-slate-50">
+    <AdminUserProvider value={{ name: adminName, isSuperAdmin, adminSections }}>
+    <div className={`admin-theme min-h-dvh flex bg-[#eef3fc] ${poppins.className}`}>
       <AdminSidebar
         adminName={adminName}
         isSuperAdmin={isSuperAdmin}
@@ -48,5 +51,6 @@ export function AdminShell({
         <NavProgress />
       </div>
     </div>
+    </AdminUserProvider>
   );
 }

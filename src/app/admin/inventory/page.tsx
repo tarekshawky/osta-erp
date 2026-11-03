@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { formatAed } from "@/lib/format";
@@ -16,6 +17,7 @@ export default async function InventoryDashboardPage() {
   return (
     <div className="pb-10">
       <AdminTopBar title="Inventory Dashboard" />
+      <PageInsight kind="inventory" />
       <div className="px-6 py-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Inventory Dashboard</h2>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
@@ -33,6 +34,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   return (
     <div className="pb-10">
       <AdminTopBar title="Service Catalogue" />
+      <PageInsight kind="catalog" />
       <div className="px-6 py-6">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div>

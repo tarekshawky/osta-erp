@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { formatAed, formatDate } from "@/lib/format";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
+import { MonthlyBarChart } from "@/components/admin/MonthlyBarChart";
+import { revenueByMonth } from "@/lib/monthlySeries";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Pagination } from "@/components/admin/Pagination";
@@ -79,6 +81,8 @@ export default async function AdminInvoicesPage({
     take: PAGE_SIZE,
   });
 
+  const monthlyRevenue = await revenueByMonth();
+
   return (
     <div className="pb-10">
       <Suspense fallback={null}>
@@ -143,6 +147,10 @@ export default async function AdminInvoicesPage({
         </div>
         <div className="mt-2 text-xs text-slate-500">
           {allInvoices._count} invoices · {partiallyRefundedCount} partially refunded · {refundedCount} refunded
+        </div>
+
+        <div className="mt-4">
+          <MonthlyBarChart title="Revenue overview" points={monthlyRevenue} tone="blue" />
         </div>
 
         <form className="mt-5 flex flex-col sm:flex-row gap-3">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { prisma } from "@/lib/prisma";
 import { formatAed } from "@/lib/format";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
@@ -90,6 +91,7 @@ export default async function AdminReportsPage({
         title="Reports"
         dateFilter={{ years, selectedYear: year, selectedMonth: month ?? "all", basePath: "/admin/reports" }}
       />
+      <PageInsight kind="finance" />
 
       <div className="px-6 py-6">
         <div className="flex items-center justify-between flex-wrap gap-3">

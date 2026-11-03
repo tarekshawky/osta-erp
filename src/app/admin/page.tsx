@@ -12,12 +12,17 @@ import { getVehicleAlerts } from "@/lib/vehicleData";
 import { getRentalAlerts } from "@/lib/rentalData";
 import { getEmployeesRequiringStock } from "@/lib/inventoryData";
 import { partialCollectedTotal } from "@/lib/invoiceCollections";
+import { requireEmployee } from "@/lib/auth";
+import { SystemCards } from "@/components/admin/SystemCards";
+import { MonthlyBarChart } from "@/components/admin/MonthlyBarChart";
+import { expensesByMonth, revenueByMonth } from "@/lib/monthlySeries";
 
 export default async function AdminDashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
+  const admin = await requireEmployee("ADMIN");
   const { year: yearParam, month: monthParam } = await searchParams;
   const year = yearParam ? Number(yearParam) : null;
   const month = monthParam ? Number(monthParam) : null;
@@ -59,6 +64,8 @@ export default async function AdminDashboardPage({
     partialCollectedTotal(dateRange ? { date: dateRange } : {}),
   ]);
 
+  const [monthlyRevenue, monthlyExpenses] = await Promise.all([revenueByMonth(), expensesByMonth()]);
+
   const years = Array.from(new Set(invoiceDates.map((i) => i.date.getFullYear()))).sort((a, b) => b - a);
   // Paid invoices plus the part already received on part-paid ones.
   const revenue = (revenueAgg._sum.amount ?? 0) + partialCollected;
@@ -71,6 +78,12 @@ export default async function AdminDashboardPage({
         dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin" }}
       />
 
+      <SystemCards
+        name={admin.name}
+        allowed={admin.role === "SUPER_ADMIN" ? [] : admin.adminSections}
+        badges={{ fleet: vehicleAlerts.length, inventory: employeesRequiringStock.length }}
+      />
+
       <div className="px-6 py-6">
         <h2 className="text-2xl font-bold text-slate-900">Overview</h2>
 
@@ -79,6 +92,11 @@ export default async function AdminDashboardPage({
           <AdminStatCard label="Total Invoices" value={String(invoiceCount)} valueClassName="text-green-600" />
           <AdminStatCard label="All Expenses" value={formatAed(expenses)} valueClassName="text-red-500" />
           <AdminStatCard label="Employees" value={String(employeeCount)} />
+        </div>
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <MonthlyBarChart title="Revenue overview" points={monthlyRevenue} tone="blue" />
+          <MonthlyBarChart title="Expenses overview" points={monthlyExpenses} tone="orange" />
         </div>
 
         <h3 className="mt-6 font-semibold text-slate-900">Revenue by Payment Method</h3>

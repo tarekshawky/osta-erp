@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageInsight } from "@/components/admin/PageInsight";
 import { prisma } from "@/lib/prisma";
 import { formatAed } from "@/lib/format";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
@@ -30,6 +31,7 @@ export default async function AdminMarketingPage({
         title="Marketing"
         dateFilter={{ years, selectedYear: year ?? "all", selectedMonth: month ?? "all", basePath: "/admin/marketing" }}
       />
+      <PageInsight kind="marketing" />
 
       <div className="px-6 py-6">
         <h2 className="text-2xl font-bold text-slate-900 mb-5">Marketing Dashboard</h2>
