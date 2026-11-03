@@ -8,6 +8,15 @@ const db = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/prisma", () => ({ prisma: { aiFinderLog: { count: db.count, create: db.create }, bookableService: { findMany: db.services } } }));
 vi.mock("@anthropic-ai/sdk", () => ({ default: class { messages = { parse: db.parse }; } }));
+vi.mock("@/lib/assistant/data", () => ({
+  assistantData: vi.fn().mockResolvedValue({
+    regions: [], categories: [], contact: { phone: "", whatsapp: "", email: "", hoursEn: "", hoursAr: "", addressEn: "", addressAr: "" },
+    services: [
+      { slug: "gas-refill", nameEn: "AC Gas Refilling", nameAr: "تعبئة غاز المكيف", category: "AC Services", categoryAr: "خدمات التكييف", price: { mode: "INSPECTION" } },
+      { slug: "leak-repair", nameEn: "Water Leak Repair", nameAr: "إصلاح تسرب المياه", category: "Plumbing", categoryAr: "السباكة", price: { mode: "INSPECTION" } },
+    ],
+  }),
+}));
 import { POST } from "./route";
 import { NextRequest } from "next/server";
 
@@ -30,12 +39,21 @@ afterEach(() => { delete process.env.ANTHROPIC_API_KEY; });
 const json = async (r: Response) => (await r.json()) as { data?: { matches: { bookSlug: string; nameAr: string; category: string; reason: string }[]; note: string }; error?: { code: string } };
 
 describe("POST /api/v1/ai/recommend", () => {
-  it("is unavailable (and calls nothing) without a key", async () => {
+  it("works for free without a key: matches the services itself and never calls the AI", async () => {
     delete process.env.ANTHROPIC_API_KEY;
-    const r = await POST(req({ text: "AC not cooling" }));
-    expect(r.status).toBe(503);
-    expect((await json(r)).error?.code).toBe("ai_unavailable");
+    const r = await POST(req({ text: "my AC is not cooling" }));
+    expect(r.status).toBe(200);
+    const body = await json(r);
+    expect(body.data?.matches.map((m) => m.bookSlug)).toEqual(["gas-refill"]);
+    expect(body.data?.matches[0]).toMatchObject({ nameEn: "AC Gas Refilling", category: "AC Services", reason: "" });
     expect(db.parse).not.toHaveBeenCalled();
+    expect(db.create).toHaveBeenCalledWith({ data: expect.objectContaining({ kind: "assistant" }) });
+  });
+  it("limits the free matching too", async () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    db.count.mockResolvedValueOnce(30);
+    const r = await POST(req({ text: "my AC is not cooling" }));
+    expect(r.status).toBe(429);
     expect(db.create).not.toHaveBeenCalled();
   });
   it("refuses bad input", async () => {
@@ -61,16 +79,15 @@ describe("POST /api/v1/ai/recommend", () => {
     expect((await POST(req({ text: "AC not cooling" }))).status).toBe(429);
     db.count.mockResolvedValueOnce(0).mockResolvedValueOnce(300);
     const r = await POST(req({ text: "AC not cooling" }));
-    expect(r.status).toBe(503);
+    expect(r.status).toBe(200); // the daily cap of the paid AI is reached: the free matching answers instead
     expect(db.parse).not.toHaveBeenCalled();
-    expect(db.create).not.toHaveBeenCalled();
   });
-  it("answers 'unavailable' (not an error page) when the AI service fails", async () => {
+  it("falls back to the free matching when the AI service fails (not an error page)", async () => {
     db.parse.mockRejectedValueOnce(new Error("overloaded"));
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const r = await POST(req({ text: "AC not cooling" }));
-    expect(r.status).toBe(503);
-    expect((await json(r)).error?.code).toBe("ai_unavailable");
+    const r = await POST(req({ text: "my AC is not cooling" }));
+    expect(r.status).toBe(200);
+    expect((await json(r)).data?.matches[0].bookSlug).toBe("gas-refill");
     spy.mockRestore();
   });
 });

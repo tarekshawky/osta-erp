@@ -99,6 +99,9 @@ const RAW_SCHEMAS = {
   contactCards: z.object({ heading: bi, subtitle: bi, whatsappButtonLabel: bi }),
   // The live price calculator: emirate, service, quantity, booking type, summary, agreement and Book.
   bookingCalculator: z.object({ heading: bi, subtitle: bi }),
+  // A small chat: visitors ask about services, prices, the emirates you cover, hours and how to book, and get answers from your own data.
+  // Free: no AI service and no key. Suggested questions appear as buttons.
+  servicesAssistant: z.object({ heading: bi, subtitle: bi, placeholder: bi, welcome: bi, suggestions: z.array(z.object({ text: bi })).max(6) }),
   // "Find my service" (AI): the visitor describes a problem and gets the matching catalogue services with Book buttons.
   aiServiceFinder: z.object({ heading: bi, subtitle: bi, placeholder: bi, button: bi, examples: z.array(z.object({ text: bi })).max(4) }),
   // Live weather from Open-Meteo (free, no key; listed in github.com/public-apis/public-apis): one emirate with an optional forecast,
@@ -142,6 +145,7 @@ export const BLOCK_SCHEMAS = {
   bookingCalculator: withStyle(RAW_SCHEMAS.bookingCalculator),
   weather: withStyle(RAW_SCHEMAS.weather),
   aiServiceFinder: withStyle(RAW_SCHEMAS.aiServiceFinder),
+  servicesAssistant: withStyle(RAW_SCHEMAS.servicesAssistant),
 } as const;
 
 export type BlockType = keyof typeof BLOCK_SCHEMAS;
@@ -467,6 +471,24 @@ export const BLOCK_REGISTRY: Record<
       { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
     ],
     defaults: () => ({ heading: biEmpty(), subtitle: biEmpty() }),
+  },
+  servicesAssistant: {
+    label: "Services assistant (free chat)",
+    description: "A small chat where visitors ask about your services, prices per emirate, the emirates you cover, opening hours and how to book, and get answers straight away from your own data (Service Catalogue, Dynamic Pricing, Site & Contact). Each answer can carry Book buttons. Free: it needs no AI account, no key and costs nothing per question.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Text under the heading", rich: true },
+      { kind: "bi-text", key: "placeholder", label: "Hint inside the message box" },
+      { kind: "bi-textarea", key: "welcome", label: "First message from the assistant" },
+      { kind: "list", key: "suggestions", label: "Suggested questions shown as buttons (up to 6; empty = the standard ones)", itemLabel: "Question", max: 6, fields: [{ kind: "bi-text", key: "text", label: "Question" }] },
+    ],
+    defaults: () => ({
+      heading: { en: "Ask about our services", ar: "اسأل عن خدماتنا" },
+      subtitle: { en: "Prices, areas we cover and how to book: ask and get an answer right away.", ar: "الأسعار والمناطق التي نغطيها وطريقة الحجز: اسأل واحصل على الجواب فوراً." },
+      placeholder: { en: "Type your question…", ar: "اكتب سؤالك…" },
+      welcome: { en: "Hello! Ask me about a service, a price, the emirates we cover or how to book. You can also describe a problem, like “my AC is not cooling”.", ar: "أهلاً بك! اسألني عن خدمة أو سعر أو الإمارات التي نغطيها أو طريقة الحجز. ويمكنك أيضاً وصف مشكلتك، مثل «المكيف لا يبرد»." },
+      suggestions: [],
+    }),
   },
   aiServiceFinder: {
     label: "AI service finder",

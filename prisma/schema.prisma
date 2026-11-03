@@ -1277,10 +1277,13 @@ model PricingRules {
 model AiFinderLog {
   id        String   @id @default(cuid())
   ipHash    String
+  // "finder" = a paid AI request; "assistant" = a question to the free services assistant (limits are counted separately)
+  kind      String   @default("finder")
   createdAt DateTime @default(now())
 
   @@index([ipHash, createdAt])
   @@index([createdAt])
+  @@index([kind, createdAt])
 }
 
 model VisitFeePolicy {

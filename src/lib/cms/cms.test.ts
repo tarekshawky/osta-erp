@@ -46,6 +46,14 @@ describe("block registry", () => {
     b.props = { heading: { en: "All services", ar: "كل الخدمات" }, subtitle: { en: "", ar: "" } };
     expect(parseBlocks([b]).ok).toBe(true);
   });
+  it("has a free Services assistant block", () => {
+    const b = createBlock("servicesAssistant");
+    expect(parseBlocks([b]).ok).toBe(true);
+    expect(b.props.suggestions).toEqual([]);
+    const withQs = { ...b, props: { ...b.props, suggestions: [{ text: { en: "How much is AC cleaning?", ar: "كم سعر تنظيف المكيف؟" } }] } };
+    expect(parseBlocks([withQs]).ok).toBe(true);
+    expect(parseBlocks([{ ...b, props: { ...b.props, suggestions: Array.from({ length: 7 }, () => ({ text: { en: "x", ar: "x" } })) } }]).ok).toBe(false);
+  });
   it("has an AI service finder block", () => {
     const b = createBlock("aiServiceFinder");
     expect(parseBlocks([b]).ok).toBe(true);
