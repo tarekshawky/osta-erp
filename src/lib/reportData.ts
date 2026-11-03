@@ -1,7 +1,8 @@
 import { prisma } from "./prisma";
 import { COST_OF_SERVICES_CATEGORIES } from "./expenseData";
 import type { Prisma } from "@/generated/prisma";
-import { partialCollectedByMethod } from "./invoiceCollections";
+import { partialCollectedByMethod, PARTIAL_INVOICES } from "./invoiceCollections";
+import { collectedOf } from "./invoicePayment";
 
 export type PaymentTotals = { cash: number; ziina: number; bankTransfer: number };
 
@@ -55,8 +56,9 @@ export async function computeAnnualReport(
 
   const [invoices, expenses, payrollEntries] = await Promise.all([
     prisma.invoice.findMany({
-      where: { ...teamFilter, status: { not: "Unpaid" } },
-      select: { date: true, amount: true, refundedAmount: true, payment: true },
+      // Collected invoices, plus part-paid ones (counted for what has been received so far).
+      where: { ...teamFilter, OR: [{ status: { not: "Unpaid" } }, PARTIAL_INVOICES] },
+      select: { date: true, amount: true, refundedAmount: true, payment: true, status: true, paidAmount: true },
     }),
     prisma.expense.findMany({ where: teamFilter, select: { date: true, amount: true, refundedAmount: true, category: true } }),
     prisma.payrollEntry.findMany({ where: payrollTeamFilter, select: { date: true, amount: true, type: true } }),
@@ -74,7 +76,7 @@ export async function computeAnnualReport(
 
   for (const inv of invoices) {
     if (inv.date.getFullYear() !== year) continue;
-    const net = inv.amount - inv.refundedAmount;
+    const net = collectedOf(inv);
     const bucket = months[inv.date.getMonth()];
     bucket.revenue += net;
     if (inv.payment === "Cash") bucket.cash += net;

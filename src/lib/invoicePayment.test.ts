@@ -42,3 +42,14 @@ describe("recording a payment", () => {
     expect(planPayment({ amount: 500, status: "Paid", paidAmount: 0 }, 10).ok).toBe(false);
   });
 });
+
+import { collectedOf } from "./invoicePayment";
+
+describe("collected revenue per invoice", () => {
+  it("counts what was received on a part-paid invoice, nothing on an untouched unpaid one, and amount less refunds otherwise", () => {
+    expect(collectedOf({ amount: 500, refundedAmount: 0, status: "Unpaid", paidAmount: 200 })).toBe(200);
+    expect(collectedOf({ amount: 500, refundedAmount: 0, status: "Unpaid", paidAmount: 0 })).toBe(0);
+    expect(collectedOf({ amount: 500, refundedAmount: 100, status: "Partially Refunded", paidAmount: 500 })).toBe(400);
+    expect(collectedOf({ amount: 500, refundedAmount: 0, status: "Paid", paidAmount: 0 })).toBe(500);
+  });
+});

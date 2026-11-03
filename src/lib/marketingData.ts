@@ -1,4 +1,6 @@
 import { prisma } from "./prisma";
+import { PARTIAL_INVOICES } from "./invoiceCollections";
+import { collectedOf } from "./invoicePayment";
 import { buildDateRange } from "./dateRangeFilter";
 import { MARKETING_EXPENSE_CATEGORY } from "./expenseData";
 import { LEAD_SOURCES, type LeadSource } from "./invoiceData";
@@ -40,8 +42,9 @@ export async function computeMarketingDashboard(
 
   const [invoices, expenses] = await Promise.all([
     prisma.invoice.findMany({
-      where: { ...dateFilter, status: { not: "Unpaid" } },
-      select: { customerId: true, amount: true, refundedAmount: true, leadSource: true },
+      // Collected invoices, plus part-paid ones (counted for what has been received so far).
+      where: { ...dateFilter, OR: [{ status: { not: "Unpaid" } }, PARTIAL_INVOICES] },
+      select: { customerId: true, amount: true, refundedAmount: true, leadSource: true, status: true, paidAmount: true },
     }),
     prisma.expense.findMany({
       where: { ...dateFilter, category: MARKETING_EXPENSE_CATEGORY },
@@ -56,7 +59,7 @@ export async function computeMarketingDashboard(
   // zero spend / N/A ROI.
   const campaigns: CampaignRow[] = LEAD_SOURCES.map((source) => {
     const sourceInvoices = invoices.filter((inv) => (inv.leadSource || "Organic") === source);
-    const revenue = sourceInvoices.reduce((sum, inv) => sum + (inv.amount - inv.refundedAmount), 0);
+    const revenue = sourceInvoices.reduce((sum, inv) => sum + collectedOf(inv), 0);
     const spend = source === "Organic" ? 0 : totalMarketingSpend;
     const netRevenue = revenue - spend;
     const roi = spend > 0 ? (netRevenue / spend) * 100 : null;
@@ -71,7 +74,7 @@ export async function computeMarketingDashboard(
     };
   });
 
-  const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.amount - inv.refundedAmount), 0);
+  const totalRevenue = invoices.reduce((sum, inv) => sum + collectedOf(inv), 0);
   const totalInvoices = invoices.length;
   const totalCustomers = new Set(invoices.map((inv) => inv.customerId)).size;
   const netRevenue = totalRevenue - totalMarketingSpend;

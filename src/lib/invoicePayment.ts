@@ -53,3 +53,9 @@ export function planPayment(inv: PaymentFields, receivedNow: number): PaymentPla
   const paidAmount = round2(amountReceived(inv) + amount);
   return { ok: true, paidAmount: Math.min(paidAmount, inv.amount), status: paidAmount >= inv.amount - 0.005 ? "Paid" : "Unpaid", received: amount };
 }
+
+// Revenue actually collected on an invoice for the collected-basis reports: a fully collected invoice counts its amount
+// less refunds; a part-paid (still "Unpaid") one counts what has been received so far; an untouched Unpaid one counts nothing.
+export function collectedOf(inv: { amount: number; refundedAmount: number; status: string; paidAmount: number }): number {
+  return inv.status === "Unpaid" ? Math.min(inv.paidAmount, inv.amount) : inv.amount - inv.refundedAmount;
+}
