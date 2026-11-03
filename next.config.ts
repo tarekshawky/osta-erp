@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { securityHeaders } from "./src/lib/securityHeaders";
 
 // While the website and the dashboard live on different addresses, the old address can send every /jobs link to the new one
 // with a permanent (301) redirect. It does nothing until LEGACY_JOBS_DOMAIN is set (for example "osta-invoices.vercel.app")
@@ -8,6 +9,10 @@ const newBase = (process.env.PUBLIC_JOBS_BASE_URL?.trim() || process.env.SITE_UR
 const jobsPath = process.env.PUBLIC_JOBS_PATH?.trim() ? `/${process.env.PUBLIC_JOBS_PATH.trim().replace(/^\/+|\/+$/g, "")}` : "/join-osta-team/jobs";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false, // do not announce the framework in every response
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders() }];
+  },
   // Long articles and pages are saved through server actions; the default 1 MB would cut them off.
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
   // The public job pages are served on the website at /join-osta-team/jobs. The dashboard answers on that path as well,
