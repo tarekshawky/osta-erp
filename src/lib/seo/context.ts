@@ -3,6 +3,7 @@ import { parseBlocks } from "@/lib/cms/blocks";
 import type { SeoContext } from "./analyze";
 import type { JsonLdArea, JsonLdSite } from "./jsonld";
 import { maskNames, pageText } from "./similarity";
+import { loadBranches } from "@/lib/locations/data";
 
 // Routes that exist in the public app regardless of CMS content.
 const STATIC_PATHS = ["/", "/services", "/pricing", "/blog", "/about", "/contact", "/login", "/signup", "/orders/new"];
@@ -66,9 +67,12 @@ export async function loadJsonLdSite(): Promise<JsonLdSite> {
   };
 }
 
-export async function loadJsonLdArea(areaId: string | null): Promise<JsonLdArea | null> {
+export async function loadJsonLdArea(areaId: string | null, branches?: JsonLdArea["branches"]): Promise<JsonLdArea | null> {
   if (!areaId) return null;
-  const a = await prisma.serviceArea.findUnique({ where: { id: areaId }, include: { services: { where: { active: true }, select: { nameEn: true } } } });
+  const [a, found] = await Promise.all([
+    prisma.serviceArea.findUnique({ where: { id: areaId }, include: { services: { where: { active: true }, select: { nameEn: true } } } }),
+    branches ? Promise.resolve({ ld: branches }) : loadBranches({ areaId }),
+  ]);
   if (!a) return null;
-  return { nameEn: a.nameEn, kind: a.kind, latitude: a.latitude, longitude: a.longitude, mapsUrl: a.mapsUrl || undefined, serviceNames: a.services.map((x) => x.nameEn) };
+  return { nameEn: a.nameEn, kind: a.kind, latitude: a.latitude, longitude: a.longitude, mapsUrl: a.mapsUrl || undefined, serviceNames: a.services.map((x) => x.nameEn), branches: found.ld };
 }

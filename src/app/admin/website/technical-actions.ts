@@ -6,6 +6,7 @@ import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { revalidateSite } from "@/lib/cms/publish";
 import { generateLlmsTxt, isAiPolicy, technicalProblem, TECHNICAL_KEYS, type TechnicalKey } from "@/lib/site/technicalFiles";
 import { siteOrigin } from "@/lib/seo/context";
+import { loadBranches } from "@/lib/locations/data";
 import type { Permission } from "@/lib/permissions";
 
 export type TechResult = { ok: boolean; error?: string };
@@ -39,11 +40,12 @@ export async function saveTechnicalFile(key: string, input: { enabled: boolean; 
 export async function generateLlmsDraft(): Promise<{ ok: boolean; error?: string; text?: string }> {
   const g = await guardPermission("seo.edit");
   if (!g.ok) return { ok: false, error: g.error };
-  const [s, services, areas, pages] = await Promise.all([
+  const [s, services, areas, pages, branches] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "default" } }),
     prisma.servicePage.findMany({ where: { published: true }, orderBy: { displayOrder: "asc" }, select: { slug: true, nameEn: true, shortDescriptionEn: true } }),
     prisma.serviceArea.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" }, select: { nameEn: true } }),
     prisma.cmsPage.findMany({ where: { status: "PUBLISHED", deletedAt: null, isHomepage: false, publishedVersion: { isNot: null } }, select: { publishedVersion: { select: { slug: true, titleEn: true } } } }),
+    loadBranches(),
   ]);
   const origin = siteOrigin();
   const text = generateLlmsTxt({
@@ -52,6 +54,11 @@ export async function generateLlmsDraft(): Promise<{ ok: boolean; error?: string
     services: services.map((x) => ({ name: x.nameEn, path: `/services/${x.slug}`, summary: x.shortDescriptionEn })),
     pages: pages.flatMap((p) => (p.publishedVersion ? [{ name: p.publishedVersion.titleEn, path: `/${p.publishedVersion.slug}` }] : [])).slice(0, 30),
     areas: areas.map((a) => a.nameEn),
+    // each branch links to its emirate's page when it has a published one
+    branches: await (async () => {
+      const slugs = new Map((await prisma.cmsPage.findMany({ where: { areaId: { not: null }, status: "PUBLISHED", deletedAt: null, publishedVersion: { isNot: null } }, select: { area: { select: { slug: true } }, publishedVersion: { select: { slug: true } } } })).map((p) => [p.area?.slug, p.publishedVersion?.slug]));
+      return branches.pub.map((b) => ({ name: b.nameEn, address: b.addressEn, phone: b.phone, mapsUrl: b.mapsUrl, path: slugs.get(b.areaSlug) ? `/${slugs.get(b.areaSlug)}` : "/" }));
+    })(),
   });
   return { ok: true, text };
 }

@@ -1,5 +1,6 @@
 import { parseBlocks, type Block } from "./blocks";
 import { buildJsonLd, jsonLdProblems, type JsonLdArea, type JsonLdSite } from "@/lib/seo/jsonld";
+import type { PublicBranch } from "@/lib/locations/locations";
 
 export type PublicPage = {
   id: string;
@@ -14,6 +15,9 @@ export type PublicPage = {
   updatedAt: string;
   // For a "Sub-pages list" block: the pages directly under this one in the page tree (published only on the live site).
   subPages?: { slug: string; titleEn: string; titleAr: string }[];
+  // Emirate pages: the real branches of that emirate (shown automatically), the page this one sits under, and the pages under it.
+  locations?: PublicBranch[];
+  parent?: { slug: string; titleEn: string; titleAr: string } | null;
   // Custom code for this page (public pages only, never in previews). Absent when the page has none.
   code?: { headCode: string; headCodeConsent: string; bodyCode: string; bodyCodeConsent: string };
 };
@@ -24,7 +28,7 @@ export function toPublicPage(
   page: { id: string; type: string; updatedAt: Date; showLastUpdated?: boolean; headCode?: string; headCodeConsent?: string; bodyCode?: string; bodyCodeConsent?: string },
   snapshot: { slug: string; titleEn: string; titleAr: string; blocks: unknown; seo: unknown },
   includeHidden = false,
-  site?: JsonLdSite & { publishedAt?: Date; area?: JsonLdArea | null }
+  site?: JsonLdSite & { publishedAt?: Date; area?: JsonLdArea | null; parent?: { slug: string; titleEn: string } | null }
 ): PublicPage | null {
   const parsed = parseBlocks(snapshot.blocks);
   if (!parsed.ok) return null;
@@ -34,7 +38,7 @@ export function toPublicPage(
   if (site) {
     const built = buildJsonLd(
       {
-        slug: snapshot.slug, type: page.type, titleEn: snapshot.titleEn, blocks: parsed.blocks, area: site.area,
+        slug: snapshot.slug, type: page.type, titleEn: snapshot.titleEn, blocks: parsed.blocks, area: site.area, parent: site.parent,
         seo: { descriptionEn: seo.descriptionEn as string | undefined, ogImage: seo.ogImage as string | undefined },
         publishedAt: site.publishedAt?.toISOString(), updatedAt: page.updatedAt.toISOString(),
       },

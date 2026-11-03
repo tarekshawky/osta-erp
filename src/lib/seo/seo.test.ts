@@ -187,21 +187,69 @@ describe("AEO checklist", () => {
 
 describe("LocalBusiness JSON-LD for area pages", () => {
   const site = { origin: "https://www.ostaservices.com", name: "OSTA Services", phone: "+971568676036", email: "info@ostaservices.com", sameAs: ["https://instagram.com/osta"] };
-  const area = { nameEn: "Ajman", kind: "emirate", latitude: 25.4052, longitude: 55.5136, mapsUrl: "https://maps.google.com/?q=ajman", serviceNames: ["AC Cleaning"] };
-  const page = (a = area) => ({ slug: "ac-repair-ajman", type: "area", titleEn: "AC Repair Ajman", blocks: goodPage().blocks, seo: {}, area: a });
-  it("emits a valid LocalBusiness + Service with areaServed and geo", () => {
+  const branch = {
+    slug: "ajman", nameEn: "Osta Services Ajman", streetEn: "Paradise Lake Tower B9", localityEn: "Emirates City", regionEn: "", addressEn: "", postalCode: "", latitude: 25.3925699, longitude: 55.5760205,
+    phone: "+971 56 867 6036", email: "", mapsUrl: "https://www.google.com/maps/place//data=!4m3", appleMapsUrl: "https://maps.apple.com/place?place-id=I3155F068C9E2FA8A", businessProfileUrl: "",
+    images: ["/api/media/abc"], hours: [{ days: [0, 1, 2, 3, 4, 5, 6], opens: "10:00", closes: "24:00" }], coverage: ["Emirates City", "Al Nuaimiya"], faqs: [{ question: "Do you serve Emirates City?", answer: "Yes, it is where our branch is." }],
+  };
+  const area = { nameEn: "Ajman", kind: "emirate", latitude: 25.4052, longitude: 55.5136, mapsUrl: "https://maps.google.com/?q=ajman", serviceNames: ["AC Cleaning"], branches: [branch] };
+  const page = (a: typeof area | null = area, extra = {}) => ({ slug: "ajman", type: "area", titleEn: "Home Maintenance in Ajman", blocks: goodPage().blocks, seo: {}, area: a, ...extra });
+  const lb = (ld: Record<string, unknown>[]) => ld.filter((x) => x["@type"] === "HomeAndConstructionBusiness");
+
+  it("gives a real branch its own LocalBusiness: id, address, coordinates, phone, hours, areas served", () => {
     const ld = buildJsonLd(page(), site);
-    const lb = ld.find((x) => x["@type"] === "HomeAndConstructionBusiness") as Record<string, unknown>;
-    expect(lb.telephone).toBe("+971568676036");
-    expect((lb.geo as Record<string, unknown>).latitude).toBe(25.4052);
+    const [b] = lb(ld) as Record<string, unknown>[];
+    expect(b["@id"]).toBe("https://www.ostaservices.com/ajman#branch-ajman");
+    expect(b.name).toBe("Osta Services Ajman");
+    expect(b.telephone).toBe("+971568676036");
+    expect(b.address).toEqual({ "@type": "PostalAddress", streetAddress: "Paradise Lake Tower B9", addressLocality: "Emirates City", addressRegion: "Ajman", addressCountry: "AE" });
+    expect(b.geo).toEqual({ "@type": "GeoCoordinates", latitude: 25.3925699, longitude: 55.5760205 });
+    expect(b.hasMap).toBe(branch.mapsUrl);
+    expect(b.image).toEqual(["https://www.ostaservices.com/api/media/abc"]);
+    expect((b.openingHoursSpecification as { closes: string }[])[0].closes).toBe("23:59");
+    expect((b.areaServed as { name: string; "@type": string }[]).map((x) => `${x["@type"]}:${x.name}`)).toEqual(["AdministrativeArea:Ajman", "Place:Emirates City", "Place:Al Nuaimiya"]);
+    expect(b.sameAs).toEqual([branch.appleMapsUrl, "https://instagram.com/osta"]);
+    expect(b.parentOrganization).toMatchObject({ "@type": "Organization", name: "OSTA Services" });
     expect(ld.some((x) => x["@type"] === "Service")).toBe(true);
     expect(jsonLdProblems(ld)).toEqual([]);
   });
-  it("blocks when the phone is missing", () => {
-    expect(jsonLdProblems(buildJsonLd(page(), { ...site, phone: "" })).join(" ")).toMatch(/phone/);
+  it("writes the real emirate in the address when it differs from the page's (Al Ain is in Abu Dhabi)", () => {
+    const [b] = lb(buildJsonLd(page({ ...area, nameEn: "Al Ain", branches: [{ ...branch, regionEn: "Abu Dhabi" }] }), site)) as { address: { addressRegion: string } }[];
+    expect(b.address.addressRegion).toBe("Abu Dhabi");
+  });
+  it("never puts an address on an area without a branch: no LocalBusiness, no street address anywhere", () => {
+    const ld = buildJsonLd(page({ ...area, branches: [] }), site);
+    expect(lb(ld)).toEqual([]);
+    expect(JSON.stringify(ld)).not.toMatch(/PostalAddress|streetAddress/);
+    expect(ld.some((x) => x["@type"] === "Service")).toBe(true); // it is still a place we serve
+    expect(jsonLdProblems(ld)).toEqual([]);
+    const { branches: _none, ...noBranchField } = area; void _none;
+    expect(lb(buildJsonLd(page(noBranchField as unknown as typeof area), site))).toEqual([]);
+  });
+  it("gives every branch its own @id", () => {
+    const ld = buildJsonLd(page({ ...area, branches: [branch, { ...branch, slug: "ajman-2", nameEn: "Osta Services Ajman Two" }] }), site);
+    const ids = lb(ld).map((x) => x["@id"]);
+    expect(ids).toEqual(["https://www.ostaservices.com/ajman#branch-ajman", "https://www.ostaservices.com/ajman#branch-ajman-2"]);
+  });
+  it("leaves hours out until they are entered, so nothing unverified is published", () => {
+    const [b] = lb(buildJsonLd(page({ ...area, branches: [{ ...branch, hours: [] }] }), site)) as Record<string, unknown>[];
+    expect(b.openingHoursSpecification).toBeUndefined();
+  });
+  it("adds the branch FAQs to the FAQ data, because they are shown on the page", () => {
+    const faq = buildJsonLd(page(), site).find((x) => x["@type"] === "FAQPage") as { mainEntity: { name: string }[] };
+    expect(faq.mainEntity.map((q) => q.name)).toContain("Do you serve Emirates City?");
+    expect(buildJsonLd(page({ ...area, branches: [{ ...branch, faqs: [] }] }), site).some((x) => x["@type"] === "FAQPage")).toBe(false);
+  });
+  it("adds the parent page to the breadcrumb trail", () => {
+    const crumbs = (buildJsonLd(page(area, { parent: { slug: "areas", titleEn: "Areas we cover" } }), site).find((x) => x["@type"] === "BreadcrumbList") as { itemListElement: { name: string; position: number }[] }).itemListElement;
+    expect(crumbs.map((c) => `${c.position}:${c.name}`)).toEqual(["1:Home", "2:Areas we cover", "3:Home Maintenance in Ajman"]);
+  });
+  it("blocks a branch that has no phone or no street address", () => {
+    expect(jsonLdProblems(buildJsonLd(page({ ...area, branches: [{ ...branch, phone: "" }] }), site)).join(" ")).toMatch(/phone/);
+    expect(jsonLdProblems(buildJsonLd(page({ ...area, branches: [{ ...branch, streetEn: "", addressEn: "" }] }), site)).join(" ")).toMatch(/street address/);
   });
   it("is not emitted for non-area pages", () => {
-    expect(buildJsonLd({ ...page(), type: "page" }, site).some((x) => x["@type"] === "HomeAndConstructionBusiness")).toBe(false);
+    expect(lb(buildJsonLd({ ...page(), type: "page" }, site))).toEqual([]);
   });
 });
 

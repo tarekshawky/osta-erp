@@ -80,12 +80,19 @@ export function technicalProblem(key: TechnicalKey, content: string): string | n
 export function generateLlmsTxt(o: {
   siteName: string; description: string; origin: string; phone: string; email: string; address: string;
   services: { name: string; path: string; summary: string }[]; pages: { name: string; path: string }[]; areas: string[];
+  // Real branches only (Website → Locations): an emirate served without an office is listed under "Areas served", never here.
+  branches?: { name: string; address: string; phone: string; mapsUrl: string; path: string }[];
 }): string {
   const link = (name: string, path: string, note = "") => `- [${name}](${o.origin}${path})${note ? `: ${note}` : ""}`;
   const lines = [`# ${o.siteName}`, "", `> ${o.description || `${o.siteName} provides home maintenance services in the UAE.`}`, ""];
   if (o.areas.length) lines.push(`Areas served: ${o.areas.join(", ")}.`, "");
   const contact = [o.phone && `Phone: ${o.phone}`, o.email && `Email: ${o.email}`, o.address && `Address: ${o.address}`].filter(Boolean);
   if (contact.length) lines.push("## Contact", "", ...contact.map((c) => `- ${c}`), "");
+  if (o.branches?.length) {
+    lines.push("## Locations", "");
+    for (const b of o.branches) lines.push(`- [${b.name}](${o.origin}${b.path}): ${[b.address, b.phone && `Phone ${b.phone}`, b.mapsUrl && `Map ${b.mapsUrl}`].filter(Boolean).join(". ")}`);
+    lines.push("");
+  }
   if (o.services.length) lines.push("## Services", "", ...o.services.map((s) => link(s.name, s.path, s.summary)), "");
   lines.push("## Key pages", "", link("Pricing and booking", "/pricing", "live prices by emirate and service"), link("Blog", "/blog", "guides and advice"), ...o.pages.map((p) => link(p.name, p.path)), "");
   return lines.join("\n");

@@ -3,6 +3,7 @@ import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
 import { promoteDueScheduledPages } from "@/lib/cms/publish";
 import { hasSubPagesBlock, loadSubPages, toPublicPage } from "@/lib/cms/publicPage";
 import { loadJsonLdArea, loadJsonLdSite } from "@/lib/seo/context";
+import { loadAreaPageContext } from "@/lib/locations/data";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -18,9 +19,14 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     include: { publishedVersion: true },
   });
   if (page?.publishedVersion) {
-    const [site, area] = await Promise.all([loadJsonLdSite(), loadJsonLdArea(page.areaId)]);
-    const publicPage = toPublicPage(page, page.publishedVersion, false, { ...site, area, publishedAt: page.publishedVersion.createdAt });
-    if (publicPage) return apiSuccess(hasSubPagesBlock(publicPage.blocks) ? { ...publicPage, subPages: await loadSubPages(prisma, page.id, true) } : publicPage);
+    const [site, ctx] = await Promise.all([loadJsonLdSite(), loadAreaPageContext(page)]);
+    const area = await loadJsonLdArea(page.areaId, ctx.branches.ld);
+    const publicPage = toPublicPage(page, page.publishedVersion, false, { ...site, area, parent: ctx.parent, publishedAt: page.publishedVersion.createdAt });
+    if (publicPage) {
+      // An emirate page shows its real branch(es) automatically, and links to the pages under it.
+      const subPages = hasSubPagesBlock(publicPage.blocks) ? await loadSubPages(prisma, page.id, true) : page.type === "area" && ctx.children.length ? ctx.children : undefined;
+      return apiSuccess({ ...publicPage, ...(subPages ? { subPages } : {}), ...(ctx.branches.pub.length ? { locations: ctx.branches.pub } : {}), ...(ctx.parent ? { parent: ctx.parent } : {}) });
+    }
   }
 
   const redirect = await prisma.cmsRedirect.findUnique({ where: { fromPath: `/${slug}` } });

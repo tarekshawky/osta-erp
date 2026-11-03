@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError, corsPreflight } from "@/lib/apiResponse";
 import { verifyPreviewToken } from "@/lib/cms/pageRules";
 import { hasSubPagesBlock, loadSubPages, toPublicPage } from "@/lib/cms/publicPage";
+import { loadAreaPageContext } from "@/lib/locations/data";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -18,5 +19,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   if (!page) return apiError("not_found", "Page not found.", 404);
   const publicPage = toPublicPage(page, { slug: page.slug, titleEn: page.titleEn, titleAr: page.titleAr, blocks: page.draftBlocks, seo: page.draftSeo });
   if (!publicPage) return apiError("invalid_content", "This draft has invalid blocks.", 422);
-  return apiSuccess(hasSubPagesBlock(publicPage.blocks) ? { ...publicPage, subPages: await loadSubPages(prisma, page.id, false) } : publicPage);
+  const ctx = await loadAreaPageContext(page);
+  const subPages = hasSubPagesBlock(publicPage.blocks) ? await loadSubPages(prisma, page.id, false) : page.type === "area" && ctx.children.length ? ctx.children : undefined;
+  return apiSuccess({ ...publicPage, ...(subPages ? { subPages } : {}), ...(ctx.branches.pub.length ? { locations: ctx.branches.pub } : {}), ...(ctx.parent ? { parent: ctx.parent } : {}) });
 }

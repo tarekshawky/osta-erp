@@ -99,6 +99,8 @@ const RAW_SCHEMAS = {
   contactCards: z.object({ heading: bi, subtitle: bi, whatsappButtonLabel: bi }),
   // The live price calculator: emirate, service, quantity, booking type, summary, agreement and Book.
   bookingCalculator: z.object({ heading: bi, subtitle: bi }),
+  // Every active branch (real office) as a card: address, phone, directions and, optionally, its map. Pulled automatically from Website → Locations.
+  locations: z.object({ heading: bi, subtitle: bi, showMap: z.enum(["yes", "no"]) }),
   // A small chat: visitors ask about services, prices, the emirates you cover, hours and how to book, and get answers from your own data.
   // Free: no AI service and no key. Suggested questions appear as buttons.
   servicesAssistant: z.object({ heading: bi, subtitle: bi, placeholder: bi, welcome: bi, suggestions: z.array(z.object({ text: bi })).max(6) }),
@@ -146,6 +148,7 @@ export const BLOCK_SCHEMAS = {
   weather: withStyle(RAW_SCHEMAS.weather),
   aiServiceFinder: withStyle(RAW_SCHEMAS.aiServiceFinder),
   servicesAssistant: withStyle(RAW_SCHEMAS.servicesAssistant),
+  locations: withStyle(RAW_SCHEMAS.locations),
 } as const;
 
 export type BlockType = keyof typeof BLOCK_SCHEMAS;
@@ -471,6 +474,16 @@ export const BLOCK_REGISTRY: Record<
       { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
     ],
     defaults: () => ({ heading: biEmpty(), subtitle: biEmpty() }),
+  },
+  locations: {
+    label: "Our locations (branches with maps)",
+    description: "All your active branches, pulled automatically from Website → Locations: name, address, phone, opening hours, a Get Directions button and, if you like, an embedded map for each. Good for the Contact page. Emirate pages already show their own branch without this block.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Text under the heading", rich: true },
+      { kind: "select", key: "showMap", label: "Map on each card", options: [{ value: "yes", label: "Show an embedded map" }, { value: "no", label: "No map (faster page)" }] },
+    ],
+    defaults: () => ({ heading: { en: "Our locations", ar: "فروعنا" }, subtitle: biEmpty(), showMap: "yes" }),
   },
   servicesAssistant: {
     label: "Services assistant (free chat)",

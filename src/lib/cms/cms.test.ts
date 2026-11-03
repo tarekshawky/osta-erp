@@ -46,6 +46,12 @@ describe("block registry", () => {
     b.props = { heading: { en: "All services", ar: "كل الخدمات" }, subtitle: { en: "", ar: "" } };
     expect(parseBlocks([b]).ok).toBe(true);
   });
+  it("has an Our locations block", () => {
+    const b = createBlock("locations");
+    expect(parseBlocks([b]).ok).toBe(true);
+    expect(parseBlocks([{ ...b, props: { ...b.props, showMap: "no" } }]).ok).toBe(true);
+    expect(parseBlocks([{ ...b, props: { ...b.props, showMap: "maybe" } }]).ok).toBe(false);
+  });
   it("has a free Services assistant block", () => {
     const b = createBlock("servicesAssistant");
     expect(parseBlocks([b]).ok).toBe(true);

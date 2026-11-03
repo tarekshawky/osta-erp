@@ -57,6 +57,20 @@ describe("llms.txt template", () => {
   });
 });
 
+describe("llms.txt locations", () => {
+  const o = { siteName: "Osta", description: "", origin: "https://x.test", phone: "", email: "", address: "", services: [], pages: [], areas: ["Dubai", "Sharjah"] };
+  it("lists each real branch with its address, phone and map, and nothing for emirates without one", () => {
+    const t = generateLlmsTxt({ ...o, branches: [{ name: "Osta Services Ajman", address: "Paradise Lake Tower B9, Emirates City, Ajman, UAE", phone: "+971568676036", mapsUrl: "https://www.google.com/maps?cid=1", path: "/services-in-ajman" }] });
+    expect(t).toContain("## Locations");
+    expect(t).toContain("- [Osta Services Ajman](https://x.test/services-in-ajman): Paradise Lake Tower B9, Emirates City, Ajman, UAE. Phone +971568676036. Map https://www.google.com/maps?cid=1");
+    expect(t).toContain("Areas served: Dubai, Sharjah.");
+  });
+  it("has no Locations section when there are no branches", () => {
+    expect(generateLlmsTxt(o)).not.toContain("## Locations");
+    expect(generateLlmsTxt({ ...o, branches: [] })).not.toContain("## Locations");
+  });
+});
+
 describe("custom code rules", () => {
   const ok = { headCode: "", headCodeConsent: "analytics", bodyCode: "", bodyCodeConsent: "marketing" };
   it("accepts normal snippets", () => {

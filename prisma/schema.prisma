@@ -1586,7 +1586,51 @@ model ServiceArea {
   sortOrder Int               @default(0)
   services  BookableService[] @relation("AreaServices")
   pages     CmsPage[]
+  branches  Branch[]
   createdAt DateTime          @default(now())
+}
+
+// A real office / branch of the company in an emirate (Website → Locations). Only a place that really exists is a Branch: an emirate
+// served without an office has no Branch, so no address is ever published for it. The emirate page shows its branch automatically
+// (address, map, directions, call / WhatsApp, services, coverage areas, rating, FAQs) and its structured data (LocalBusiness) comes from here.
+model Branch {
+  id                 String            @id @default(cuid())
+  slug               String            @unique // also the fragment of the branch's structured-data @id (#branch-<slug>)
+  areaId             String
+  area               ServiceArea       @relation(fields: [areaId], references: [id])
+  nameEn             String // "Osta Services Ajman"
+  nameAr             String
+  branchNameEn       String            @default("") // "Ajman Branch"
+  branchNameAr       String            @default("")
+  streetEn           String            @default("") // street / building line of the address
+  streetAr           String            @default("")
+  localityEn         String            @default("") // district or city: "Emirates City, Ajman"
+  localityAr         String            @default("")
+  regionEn           String            @default("") // the emirate written in the address; empty = the page's emirate (Al Ain is in "Abu Dhabi")
+  postalCode         String            @default("")
+  addressEn          String            @default("") // the full address as shown to visitors
+  addressAr          String            @default("")
+  latitude           Float
+  longitude          Float
+  mapsUrl            String            @default("") // Google Maps place link
+  mapsEmbedUrl       String            @default("") // empty = built from the coordinates
+  appleMapsUrl       String            @default("")
+  businessProfileUrl String            @default("") // Google Business Profile
+  reviewsUrl         String            @default("")
+  phone              String            @default("")
+  whatsapp           String            @default("")
+  email              String            @default("")
+  hours              Json              @default("[]") // [{ days: [0-6], opens: "10:00", closes: "24:00" }]
+  images             String[]          @default([])
+  ratingValue        Float?
+  ratingCount        Int?
+  coverage           Json              @default("[]") // [{ nameEn, nameAr }]: areas really served from this branch
+  faqs               Json              @default("[]") // [{ question: {en,ar}, answer: {en,ar} }]
+  categories         CatalogCategory[] @relation("BranchCategories")
+  active             Boolean           @default(true)
+  sortOrder          Int               @default(0)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @default(now()) @updatedAt
 }
 
 // ===== Forms & leads =====
@@ -2014,6 +2058,7 @@ model CatalogCategory {
   seoKeywordsAr      String?
   canonicalUrl       String?
   services           CatalogCategoryService[]
+  branches           Branch[]                 @relation("BranchCategories")
   createdAt          DateTime                 @default(now())
   updatedAt          DateTime                 @default(now()) @updatedAt
 
