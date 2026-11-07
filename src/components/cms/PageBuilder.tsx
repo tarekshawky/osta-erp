@@ -39,7 +39,7 @@ type Draft = Pick<BuilderPage, "titleEn" | "titleAr" | "slug" | "type" | "showIn
 type SaveState = "saved" | "dirty" | "saving" | "error";
 
 
-export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasMenu, linkTargets, parentChoices }: { parentChoices: { id: string; label: string }[]; page: BuilderPage; versions: VersionRow[]; siteOrigin: string; hasAreasMenu: boolean; linkTargets: LinkTarget[]; menuParents: { id: string; label: string }[] }) {
+export function PageBuilder({ canEditCode, page, versions, siteOrigin, menuParents, hasAreasMenu, linkTargets, parentChoices }: { canEditCode: boolean; parentChoices: { id: string; label: string }[]; page: BuilderPage; versions: VersionRow[]; siteOrigin: string; hasAreasMenu: boolean; linkTargets: LinkTarget[]; menuParents: { id: string; label: string }[] }) {
   const { showToast } = useToast();
   const [draft, setDraft] = useState<Draft>({
     titleEn: page.titleEn, titleAr: page.titleAr, slug: page.slug, type: page.type, showInMenus: page.showInMenus, menuParent: page.menuParent,
@@ -213,7 +213,7 @@ export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasM
             </Field>
           </div>
 
-          <BlocksEditor blocks={draft.blocks} onChange={setBlocks} />
+          <BlocksEditor blocks={draft.blocks} onChange={setBlocks} canEditCode={canEditCode} />
 
           {previewUrl && (
             <section className="rounded-xl border border-slate-200 bg-white p-3">

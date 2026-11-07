@@ -5,6 +5,7 @@ import { requireEmployee } from "@/lib/auth";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { BLOCK_REGISTRY, parseBlocks, type BlockType } from "@/lib/cms/blocks";
 import { globalIdsIn } from "@/lib/cms/globalBlocks";
+import { OWNER_ONLY_MESSAGE, changedCodeBlocks } from "@/lib/cms/blockCode";
 
 export type GlobalActionResult = { ok: boolean; error?: string; id?: string };
 const fail = (error: string): GlobalActionResult => ({ ok: false, error });
@@ -49,6 +50,7 @@ export async function createGlobalBlock(block: unknown, name: string): Promise<G
   if (!parsed.ok) return fail(parsed.error);
   const b = parsed.blocks[0];
   if (b.type === "global") return fail("A global block cannot be made from a link to another global block.");
+  if (changedCodeBlocks([b], []).length > 0 && !(await guardPermission("integrations.manage")).ok) return fail(OWNER_ONLY_MESSAGE);
   try {
     const row = await prisma.cmsGlobalBlock.create({ data: { name: clean, type: b.type, props: b.props as never, createdById: g.admin.id, updatedById: g.admin.id } });
     await writeAudit(g.admin, "globalblock.create", "CmsGlobalBlock", row.id, null, { name: clean, type: b.type });
@@ -67,6 +69,8 @@ export async function updateGlobalBlock(id: string, name: string, props: unknown
   if (!existing) return fail("This global block no longer exists.");
   const parsed = parseBlocks([{ id: "global_check", type: existing.type, props, hidden: false, visibility: { desktop: true, mobile: true } }]);
   if (!parsed.ok) return fail(parsed.error);
+  // Custom CSS / JavaScript is owner-only here too (the same code unchanged is fine).
+  if (changedCodeBlocks([{ id: "x", props: parsed.blocks[0].props }], [{ id: "x", props: existing.props }]).length > 0 && !(await guardPermission("integrations.manage")).ok) return fail(OWNER_ONLY_MESSAGE);
   await prisma.cmsGlobalBlock.update({ where: { id }, data: { name: clean, props: parsed.blocks[0].props as never, updatedById: g.admin.id } });
   await writeAudit(g.admin, "globalblock.update", "CmsGlobalBlock", id, { name: existing.name }, { name: clean });
   return { ok: true, id };

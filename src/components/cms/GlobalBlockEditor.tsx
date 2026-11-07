@@ -4,12 +4,11 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
-import { FieldEditor } from "@/components/cms/BlockForm";
-import { ShowcaseEditor } from "@/components/cms/ShowcaseEditor";
+import { BlockSettings } from "@/components/cms/BlockSettings";
 import { updateGlobalBlock } from "@/app/admin/website/global-blocks-actions";
 import { BLOCK_REGISTRY, type BlockType } from "@/lib/cms/blocks";
 
-export function GlobalBlockEditor({ id, name: initialName, type, props: initialProps, usedOn }: { id: string; name: string; type: string; props: Record<string, unknown>; usedOn: { id: string; title: string }[] }) {
+export function GlobalBlockEditor({ id, name: initialName, type, props: initialProps, usedOn, canEditCode }: { canEditCode: boolean; id: string; name: string; type: string; props: Record<string, unknown>; usedOn: { id: string; title: string }[] }) {
   const { showToast } = useToast();
   const [name, setName] = useState(initialName);
   const [props, setProps] = useState(initialProps);
@@ -40,11 +39,7 @@ export function GlobalBlockEditor({ id, name: initialName, type, props: initialP
         <input className={inputClassName} value={name} maxLength={80} onChange={(e) => { setName(e.target.value); setDirty(true); }} />
       </Field>
       <div className="rounded-xl border border-slate-200 bg-white p-4">
-        {type === "showcase" ? (
-          <ShowcaseEditor value={props} onChange={(p) => { setProps(p); setDirty(true); }} />
-        ) : (
-          <FieldEditor fields={reg.fields} value={props} onChange={(p) => { setProps(p); setDirty(true); }} />
-        )}
+        <BlockSettings canEditCode={canEditCode} type={type as BlockType} props={props} onChange={(p) => { setProps(p); setDirty(true); }} />
       </div>
       <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm">
         <p className="mb-2 font-semibold text-slate-900">Used on</p>

@@ -1,3 +1,4 @@
+import { guardPermission } from "@/lib/adminGuard";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
@@ -32,6 +33,8 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
   const treePages = await prisma.cmsPage.findMany({ where: { deletedAt: null }, select: { id: true, parentId: true, sortOrder: true, titleEn: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] });
   const parentChoices = parentOptions(treePages, id).map((o) => ({ id: o.id, label: o.label }));
 
+  // Custom CSS / JavaScript on blocks is owner-only (the same permission as page-level code).
+  const canEditCode = (await guardPermission("integrations.manage")).ok;
   const parsed = parseBlocks(page.draftBlocks);
   const builderPage: BuilderPage = {
     id: page.id,
@@ -59,6 +62,7 @@ export default async function CmsPageEditor({ params }: { params: Promise<{ id: 
       <AdminTopBar title="Website · Page Builder" />
       {!parsed.ok && <p className="bg-red-50 px-6 py-3 text-sm text-red-600">This draft has invalid content ({parsed.error}). It was loaded empty; restore a version from History if needed.</p>}
       <PageBuilder
+        canEditCode={canEditCode}
         siteOrigin={siteOrigin()}
         page={builderPage}
         hasAreasMenu={hasAreasMenu}

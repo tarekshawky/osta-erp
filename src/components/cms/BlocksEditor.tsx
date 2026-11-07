@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { FieldEditor } from "@/components/cms/BlockForm";
 import { LinkTargetsContext, type LinkTarget } from "@/components/cms/LinkInserter";
 import { BlockLibrary, LibraryIcon } from "@/components/cms/BlockLibrary";
-import { ShowcaseEditor } from "@/components/cms/ShowcaseEditor";
+import { BlockSettings } from "@/components/cms/BlockSettings";
 import { GlobalBlockRef } from "@/components/cms/GlobalBlockRef";
 import { PageTemplates } from "@/components/cms/PageTemplates";
 import type { PageTemplate } from "@/lib/cms/pageTemplates";
@@ -36,9 +35,9 @@ const blockSummary = (b: Block): string => {
 };
 
 function SortableBlock({
-  block, open, onToggleOpen, onChange, onRemove, onDuplicate, onCopy, onSaveGlobal, onMove, canUp, canDown,
+  canEditCode, block, open, onToggleOpen, onChange, onRemove, onDuplicate, onCopy, onSaveGlobal, onMove, canUp, canDown,
 }: {
-  block: Block; open: boolean; onToggleOpen: () => void; onChange: (b: Block) => void; onRemove: () => void; onDuplicate: () => void; onCopy: () => void; onSaveGlobal: () => void;
+  canEditCode: boolean; block: Block; open: boolean; onToggleOpen: () => void; onChange: (b: Block) => void; onRemove: () => void; onDuplicate: () => void; onCopy: () => void; onSaveGlobal: () => void;
   onMove: (by: -1 | 1) => void; canUp: boolean; canDown: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
@@ -80,36 +79,22 @@ function SortableBlock({
       </div>
       {open && (
         <div className="border-t border-slate-100 p-4">
-          <div className="mb-4 flex flex-wrap gap-4 text-xs text-slate-600">
-            <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={block.visibility.desktop} onChange={(e) => onChange({ ...block, visibility: { ...block.visibility, desktop: e.target.checked } })} />
-              Show on desktop
-            </label>
-            <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={block.visibility.mobile} onChange={(e) => onChange({ ...block, visibility: { ...block.visibility, mobile: e.target.checked } })} />
-              Show on mobile
-            </label>
-            {block.type !== "global" && (
+          {block.type !== "global" && (
+            <div className="mb-3 text-xs">
               <button type="button" onClick={onSaveGlobal} className="font-medium text-blue-600">
                 Save as global block…
               </button>
-            )}
-          </div>
-          {block.type === "global" ? (
-            <GlobalBlockRef globalId={String(block.props.globalId ?? "")} onDetach={(c) => onChange({ ...block, type: c.type, props: structuredClone(c.props) })} />
-          ) : block.type === "showcase" ? (
-            <>
-              <ShowcaseEditor value={block.props} onChange={(props) => onChange({ ...block, props })} />
-              <details className="mt-4 rounded-lg border border-slate-200 p-3">
-                <summary className="cursor-pointer text-xs font-semibold text-slate-500">All fields</summary>
-                <div className="mt-3">
-                  <FieldEditor fields={reg.fields} value={block.props} onChange={(props) => onChange({ ...block, props })} />
-                </div>
-              </details>
-            </>
-          ) : (
-            <FieldEditor fields={reg.fields} value={block.props} onChange={(props) => onChange({ ...block, props })} />
+            </div>
           )}
+          <BlockSettings
+            type={block.type}
+            props={block.props}
+            onChange={(props) => onChange({ ...block, props })}
+            canEditCode={canEditCode}
+            visibility={block.visibility}
+            onVisibilityChange={(visibility) => onChange({ ...block, visibility })}
+            customContent={block.type === "global" ? <GlobalBlockRef globalId={String(block.props.globalId ?? "")} onDetach={(c) => onChange({ ...block, type: c.type, props: structuredClone(c.props) })} /> : undefined}
+          />
         </div>
       )}
     </div>
@@ -118,7 +103,7 @@ function SortableBlock({
 
 // The list of blocks with drag-to-reorder, hide/duplicate/delete and the "Add block" picker. Used by the page builder
 // and by the blog post and service editors, so every content type is built from the same blocks.
-export function BlocksEditor({ blocks, onChange, linkTargets }: { blocks: Block[]; onChange: (blocks: Block[]) => void; linkTargets?: LinkTarget[] }) {
+export function BlocksEditor({ blocks, onChange, linkTargets, canEditCode = false }: { blocks: Block[]; onChange: (blocks: Block[]) => void; linkTargets?: LinkTarget[]; canEditCode?: boolean }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [templates, setTemplates] = useState(false);
@@ -208,6 +193,7 @@ export function BlocksEditor({ blocks, onChange, linkTargets }: { blocks: Block[
                 {blocks.map((b) => (
                   <SortableBlock
                     key={b.id}
+                    canEditCode={canEditCode}
                     block={b}
                     open={openId === b.id}
                     onToggleOpen={() => setOpenId(openId === b.id ? null : b.id)}

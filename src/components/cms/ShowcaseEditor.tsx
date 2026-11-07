@@ -14,7 +14,7 @@ const TABS: { id: string; label: string; keys: string[] }[] = [
   { id: "content", label: "Content", keys: ["kind", "source", "imageUrl", "imageAlt", "gallery", "name", "subtitle", "description"] },
   { id: "price", label: "Price & features", keys: ["price", "oldPrice", "currency", "startingFrom", "priceLabel", "priceUnit", "showDiscount", "priceColor", "featuresHeading", "features", "badge", "rating", "reviews"] },
   { id: "buttons", label: "Buttons", keys: ["primary", "secondaryType", "secondaryLabel", "secondaryUrl", "buttonStyle"] },
-  { id: "look", label: "Look", keys: ["imagePosition", "layout", "bgColor", "textColor", "shadow", "radius", "style"] },
+  { id: "look", label: "Look", keys: ["imagePosition", "layout", "bgColor", "textColor", "shadow", "radius"] },
 ];
 
 const BADGE_LABEL: Record<string, { en: string; ar: string }> = {

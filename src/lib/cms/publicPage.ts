@@ -22,23 +22,36 @@ export type PublicPage = {
   code?: { headCode: string; headCodeConsent: string; bodyCode: string; bodyCodeConsent: string };
 };
 
+// A block can be shown only inside a date window ("Show from" / "Show until the end of", UAE time). Outside it the block is left
+// out of what visitors get (so crawlers never see it either); the admin's own preview shows everything.
+export function withinShowWindow(props: unknown, now: number): boolean {
+  const style = (props as { style?: { showFrom?: unknown; showUntil?: unknown } } | null)?.style;
+  const date = /^\d{4}-\d{2}-\d{2}$/;
+  if (typeof style?.showFrom === "string" && date.test(style.showFrom) && now < Date.parse(`${style.showFrom}T00:00:00+04:00`)) return false;
+  if (typeof style?.showUntil === "string" && date.test(style.showUntil) && now > Date.parse(`${style.showUntil}T23:59:59.999+04:00`)) return false;
+  return true;
+}
+
 // Shapes a stored snapshot for the public site: re-validates the blocks and drops hidden ones,
 // so a hand-edited or stale row can never reach visitors as malformed or hidden content.
 export function toPublicPage(
   page: { id: string; type: string; updatedAt: Date; showLastUpdated?: boolean; headCode?: string; headCodeConsent?: string; bodyCode?: string; bodyCodeConsent?: string },
   snapshot: { slug: string; titleEn: string; titleAr: string; blocks: unknown; seo: unknown },
   includeHidden = false,
-  site?: JsonLdSite & { publishedAt?: Date; area?: JsonLdArea | null; parent?: { slug: string; titleEn: string } | null }
+  site?: JsonLdSite & { publishedAt?: Date; area?: JsonLdArea | null; parent?: { slug: string; titleEn: string } | null },
+  now: number = Date.now()
 ): PublicPage | null {
   const parsed = parseBlocks(snapshot.blocks);
   if (!parsed.ok) return null;
   const seo = (snapshot.seo && typeof snapshot.seo === "object" ? snapshot.seo : {}) as Record<string, unknown>;
+  // What visitors get: structured data (FAQ and so on) must describe only blocks that are actually shown.
+  const visible = includeHidden ? parsed.blocks : parsed.blocks.filter((b) => !b.hidden && withinShowWindow(b.props, now));
   // Only ever serve structured data that validates; a half-filled schema would be worse than none.
   let jsonLd: Record<string, unknown>[] = [];
   if (site) {
     const built = buildJsonLd(
       {
-        slug: snapshot.slug, type: page.type, titleEn: snapshot.titleEn, blocks: parsed.blocks, area: site.area, parent: site.parent,
+        slug: snapshot.slug, type: page.type, titleEn: snapshot.titleEn, blocks: visible, area: site.area, parent: site.parent,
         seo: { descriptionEn: seo.descriptionEn as string | undefined, ogImage: seo.ogImage as string | undefined },
         publishedAt: site.publishedAt?.toISOString(), updatedAt: page.updatedAt.toISOString(),
       },
@@ -52,7 +65,7 @@ export function toPublicPage(
     type: page.type,
     titleEn: snapshot.titleEn,
     titleAr: snapshot.titleAr,
-    blocks: includeHidden ? parsed.blocks : parsed.blocks.filter((b) => !b.hidden),
+    blocks: visible,
     seo,
     jsonLd,
     showLastUpdated: !!page.showLastUpdated,

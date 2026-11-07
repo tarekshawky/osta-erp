@@ -110,6 +110,17 @@ describe("new block fields", () => {
     expect(withProps("heading", { style: { anchorId: "1bad" } }).ok).toBe(false);
     expect(withProps("heading", { style: { cssClass: 'a"><script>' } }).ok).toBe(false);
   });
+  it("design, responsive and advanced settings validate, and bad values are refused", () => {
+    const ok = { textColor: "#112233", accentColor: "#ff6600", border: "thin", spacing: "lg", spacingTablet: "inherit", spacingMobile: "none", fontSizeDesktop: "lg", fontSizeTablet: "inherit", fontSizeMobile: "sm", animation: "fade", showFrom: "2026-12-01", showUntil: "2026-12-31" };
+    expect(withProps("heading", { style: ok }).ok).toBe(true);
+    for (const bad of [{ textColor: "red" }, { fontSizeDesktop: "huge" }, { spacingMobile: "giant" }, { animation: "spin" }, { showFrom: "tomorrow" }, { border: "dashed" }]) expect(withProps("heading", { style: bad }).ok, JSON.stringify(bad)).toBe(false);
+  });
+  it("tablet visibility is optional so blocks saved before it still validate", () => {
+    const b = createBlock("heading");
+    expect(parseBlocks([{ ...b, visibility: { desktop: true, mobile: false } }]).ok).toBe(true);
+    expect(parseBlocks([{ ...b, visibility: { desktop: true, mobile: true, tablet: false } }]).ok).toBe(true);
+    expect(parseBlocks([{ ...b, visibility: { desktop: true, mobile: true, tablet: "no" } }]).ok).toBe(false);
+  });
   it("showcase blocks saved before the new price fields still validate", () => {
     const added = ["priceLabel", "priceUnit", "gallery", "shadow"];
     const old = Object.fromEntries(Object.entries(createBlock("showcase").props).filter(([k]) => !added.includes(k)));

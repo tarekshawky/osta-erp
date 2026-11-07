@@ -1,5 +1,6 @@
 "use server";
 
+import { hasCode } from "@/lib/cms/blockCode";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -42,6 +43,8 @@ function validate(input: ServicePageFormInput) {
   if (!input.shortDescriptionAr.trim()) return "Arabic short description is required.";
   const parsed = parseBlocks(input.blocks ?? []);
   if (!parsed.ok) return parsed.error;
+  // Custom CSS / JavaScript is for pages and global blocks (owner only); articles and service pages do not take it.
+  if (parsed.blocks.some((b) => hasCode(b.props))) return "Custom CSS and JavaScript are available on pages and global blocks only. Remove it from this block.";
   // The page body is either the blocks or the plain text; one of them must have content.
   const hasBlocks = parsed.blocks.some((b) => !b.hidden);
   if (!hasBlocks && !input.contentEn.trim()) return "Add English content, or at least one block.";

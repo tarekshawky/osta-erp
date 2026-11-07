@@ -34,3 +34,26 @@ describe("global blocks", () => {
     expect(await resolveGlobalBlocks([createBlock("faq"), ref("a", "g1")], db)).toHaveLength(1);
   });
 });
+
+import { toPublicPage, withinShowWindow } from "./publicPage";
+
+describe("show window", () => {
+  const at = (iso: string) => Date.parse(iso);
+  it("a block is shown only between its dates (UAE time)", () => {
+    const p = { style: { showFrom: "2026-12-01", showUntil: "2026-12-31" } };
+    expect(withinShowWindow(p, at("2026-11-30T19:59:59Z"))).toBe(false); // still 30 Nov 23:59 in the UAE
+    expect(withinShowWindow(p, at("2026-11-30T20:00:00Z"))).toBe(true); // 1 Dec 00:00 UAE
+    expect(withinShowWindow(p, at("2026-12-31T19:59:59Z"))).toBe(true); // 31 Dec 23:59 UAE
+    expect(withinShowWindow(p, at("2026-12-31T20:00:00Z"))).toBe(false);
+    expect(withinShowWindow({}, 0)).toBe(true);
+    expect(withinShowWindow({ style: { showFrom: "", showUntil: "" } }, 0)).toBe(true);
+  });
+  it("visitors do not get blocks outside their window, the admin preview does", () => {
+    const a = createBlock("faq"), b = { ...createBlock("faq"), props: { ...createBlock("faq").props, style: { showUntil: "2026-01-01" } } };
+    const page = { id: "p", type: "page", updatedAt: new Date() };
+    const snap = { slug: "s", titleEn: "t", titleAr: "ت", blocks: [a, b], seo: {} };
+    expect(toPublicPage(page, snap, false, undefined, Date.parse("2026-06-01T00:00:00Z"))?.blocks).toHaveLength(1);
+    expect(toPublicPage(page, snap, true, undefined, Date.parse("2026-06-01T00:00:00Z"))?.blocks).toHaveLength(2);
+    expect(toPublicPage(page, snap, false, undefined, Date.parse("2025-06-01T00:00:00Z"))?.blocks).toHaveLength(2);
+  });
+});

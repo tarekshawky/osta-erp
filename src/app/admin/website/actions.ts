@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { parseBlocks, type Block } from "@/lib/cms/blocks";
+import { OWNER_ONLY_MESSAGE, changedCodeBlocks, codeOf } from "@/lib/cms/blockCode";
 import { BUILT_IN_PAGES, createPreviewToken, isBuiltInSlug, slugProblem, slugify } from "@/lib/cms/pageRules";
 import { BUILT_IN_SEEDS, type BuiltInSlug } from "@/lib/cms/pageSeeds";
 import { revalidateSite } from "@/lib/cms/publish";
@@ -93,6 +94,11 @@ export async function saveDraft(id: string, input: DraftInput, autosave: boolean
   const parsed = parseBlocks(input.blocks);
   if (!parsed.ok) return fail(parsed.error);
 
+  // Custom CSS / JavaScript on a block runs on visitors' browsers: only the owner may add or change it. Code that is already
+  // there (same block, same code) can always be kept, so other admins can still edit the rest of the page.
+  const codeChanged = changedCodeBlocks(parsed.blocks, page.draftBlocks);
+  if (codeChanged.length > 0 && !(await guardPermission("integrations.manage")).ok) return fail(OWNER_ONLY_MESSAGE);
+
   const data = {
     slug,
     type: input.type,
@@ -119,6 +125,10 @@ export async function saveDraft(id: string, input: DraftInput, autosave: boolean
     }
   });
   if (!autosave) await writeAudit(g.admin, "cms.page.save", "CmsPage", id, { slug: page.slug, title: page.titleEn }, { slug, title: data.titleEn });
+  // The audit log records that block code changed and how long it is, never the code itself.
+  if (codeChanged.length > 0 && !autosave) {
+    await writeAudit(g.admin, "cms.block.code", "CmsPage", id, null, { slug, blocks: codeChanged.map((bid) => { const c = codeOf(parsed.blocks.find((b) => b.id === bid)?.props); return { id: bid, cssChars: c.css.length, jsChars: c.js.length }; }) });
+  }
   return done(id);
 }
 

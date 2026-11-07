@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cssProblem, jsProblem } from "./blockCode";
 import { ICON_NAMES } from "./icons";
 import { hasUnsafeInlineLink } from "./inlineLinks";
 import { cleanRichValue } from "./richText";
@@ -246,6 +247,23 @@ const sectionStyle = z.object({
   shadow: z.enum(["none", "sm", "md", "lg"]).optional(),
   cssClass: z.string().max(120).regex(/^[A-Za-z0-9_ -]*$/, "Use letters, numbers, - and _ only.").optional(),
   anchorId: z.string().max(40).regex(/^([A-Za-z][A-Za-z0-9_-]*)?$/, "Start with a letter; use letters, numbers, - and _ only.").optional(),
+  // Design: text and accent colours for the block, a border. Responsive: size of the block's content and extra space per device
+  // (tablet and phone follow desktop until set). Advanced: entrance animation and a date window in which the block is shown.
+  textColor: hex.optional(),
+  accentColor: hex.optional(),
+  border: z.enum(["none", "thin", "accent"]).optional(),
+  fontSizeDesktop: z.enum(["auto", "sm", "lg", "xl"]).optional(),
+  fontSizeTablet: z.enum(["inherit", "auto", "sm", "lg", "xl"]).optional(),
+  fontSizeMobile: z.enum(["inherit", "auto", "sm", "lg", "xl"]).optional(),
+  spacingTablet: z.enum(["inherit", "none", "sm", "md", "lg", "xl"]).optional(),
+  spacingMobile: z.enum(["inherit", "none", "sm", "md", "lg", "xl"]).optional(),
+  animation: z.enum(["none", "fade", "slideUp"]).optional(),
+  showFrom: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use a date like 2026-12-01.").optional(),
+  showUntil: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use a date like 2026-12-31.").optional(),
+  // Owner-only custom code for this block (see blockCode.ts for the rules and how it runs).
+  customCss: z.string().superRefine((v, ctx) => { const p = cssProblem(v); if (p) ctx.addIssue({ code: "custom", message: p }); }).optional(),
+  customJs: z.string().superRefine((v, ctx) => { const p = jsProblem(v); if (p) ctx.addIssue({ code: "custom", message: p }); }).optional(),
+  customJsConsent: z.enum(["always", "analytics", "marketing"]).optional(),
 });
 const withStyle = <T extends z.ZodRawShape>(s: z.ZodObject<T>) => s.extend({ style: sectionStyle.optional() });
 
@@ -304,7 +322,8 @@ export type Block = {
   type: BlockType;
   props: Record<string, unknown>;
   hidden: boolean;
-  visibility: { desktop: boolean; mobile: boolean };
+  // tablet is optional: blocks saved before it existed follow their desktop setting on tablets.
+  visibility: { desktop: boolean; mobile: boolean; tablet?: boolean };
 };
 
 // ---- editor field definitions (drive the generic block form) ----
@@ -1046,6 +1065,18 @@ export const BLOCK_REGISTRY: Record<
 };
 
 // Every block (except the hero, which has its own background controls) can take a section background.
+const SPACING_OPTIONS = [{ value: "none", label: "Standard" }, { value: "sm", label: "A little more" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }, { value: "xl", label: "Extra large" }];
+const FONT_OPTIONS = [{ value: "auto", label: "As designed" }, { value: "sm", label: "Smaller" }, { value: "lg", label: "Larger" }, { value: "xl", label: "Much larger" }];
+
+// Which tab of a block's settings each section-design field belongs to (Content is the block's own fields).
+export const STYLE_TABS = {
+  design: ["bgImage", "overlay", "overlayColor", "bgColor", "textColor", "accentColor", "border", "radius", "shadow"],
+  layout: ["width", "spacing", "textAlign"],
+  advanced: ["anchorId", "cssClass", "animation", "showFrom", "showUntil"],
+  responsive: ["spacingTablet", "spacingMobile", "fontSizeDesktop", "fontSizeTablet", "fontSizeMobile"],
+} as const;
+export type StyleTab = keyof typeof STYLE_TABS;
+
 const STYLE_FIELD: FieldDef = {
   kind: "group",
   key: "style",
@@ -1055,7 +1086,18 @@ const STYLE_FIELD: FieldDef = {
     { kind: "number", key: "overlay", label: "Overlay strength over the image, 0–100 (higher = darker)" },
     { kind: "color", key: "overlayColor", label: "Overlay colour" },
     { kind: "color", key: "bgColor", label: "Plain background colour (used when there is no image)" },
-    { kind: "select", key: "spacing", label: "Extra space above and below", options: [{ value: "none", label: "Standard" }, { value: "sm", label: "A little more" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }, { value: "xl", label: "Extra large" }] },
+    { kind: "color", key: "textColor", label: "Text colour" },
+    { kind: "color", key: "accentColor", label: "Accent colour (buttons, icons and highlights)" },
+    { kind: "select", key: "border", label: "Border", options: [{ value: "none", label: "None" }, { value: "thin", label: "Thin" }, { value: "accent", label: "Accent colour" }] },
+    { kind: "select", key: "spacing", label: "Extra space above and below (desktop)", options: SPACING_OPTIONS },
+    { kind: "select", key: "spacingTablet", label: "Extra space on tablets", options: [{ value: "inherit", label: "Same as desktop" }, ...SPACING_OPTIONS] },
+    { kind: "select", key: "spacingMobile", label: "Extra space on phones", options: [{ value: "inherit", label: "Same as desktop" }, ...SPACING_OPTIONS] },
+    { kind: "select", key: "fontSizeDesktop", label: "Content size on desktop", options: FONT_OPTIONS },
+    { kind: "select", key: "fontSizeTablet", label: "Content size on tablets", options: [{ value: "inherit", label: "Same as desktop" }, ...FONT_OPTIONS] },
+    { kind: "select", key: "fontSizeMobile", label: "Content size on phones", options: [{ value: "inherit", label: "Same as desktop" }, ...FONT_OPTIONS] },
+    { kind: "select", key: "animation", label: "Entrance animation", options: [{ value: "none", label: "None" }, { value: "fade", label: "Fade in" }, { value: "slideUp", label: "Slide up" }] },
+    { kind: "text", key: "showFrom", label: "Show from (YYYY-MM-DD, optional)" },
+    { kind: "text", key: "showUntil", label: "Show until the end of (YYYY-MM-DD, optional)" },
     { kind: "select", key: "textAlign", label: "Text alignment (blocks that follow it)", options: [{ value: "auto", label: "As designed" }, { value: "start", label: "Start" }, { value: "center", label: "Centre" }, { value: "end", label: "End" }] },
     { kind: "select", key: "width", label: "Content width", options: [{ value: "auto", label: "As designed" }, { value: "medium", label: "Medium" }, { value: "narrow", label: "Narrow" }] },
     { kind: "select", key: "radius", label: "Section corners", options: [{ value: "none", label: "Square" }, { value: "md", label: "Slightly rounded" }, { value: "xl", label: "Rounded" }, { value: "2xl", label: "Very rounded" }] },
@@ -1064,6 +1106,7 @@ const STYLE_FIELD: FieldDef = {
     { kind: "text", key: "cssClass", label: "Custom CSS class (advanced; the class must exist in Page Code)" },
   ],
 };
+export const STYLE_FIELDS: FieldDef[] = STYLE_FIELD.kind === "group" ? STYLE_FIELD.fields : [];
 for (const type of Object.keys(BLOCK_REGISTRY) as BlockType[]) if (type !== "hero" && type !== "global") BLOCK_REGISTRY[type].fields.push(STYLE_FIELD);
 
 export function newBlockId(): string {
@@ -1079,7 +1122,7 @@ const envelope = z.object({
   type: z.enum(BLOCK_TYPES as [BlockType, ...BlockType[]]),
   props: z.record(z.string(), z.unknown()),
   hidden: z.boolean(),
-  visibility: z.object({ desktop: z.boolean(), mobile: z.boolean() }),
+  visibility: z.object({ desktop: z.boolean(), mobile: z.boolean(), tablet: z.boolean().optional() }),
 });
 
 // Validates every block against its own schema. Never trusts client JSON.
