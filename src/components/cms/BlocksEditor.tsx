@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -8,8 +8,21 @@ import { FieldEditor } from "@/components/cms/BlockForm";
 import { LinkTargetsContext, type LinkTarget } from "@/components/cms/LinkInserter";
 import { BlockLibrary, LibraryIcon } from "@/components/cms/BlockLibrary";
 import { ShowcaseEditor } from "@/components/cms/ShowcaseEditor";
-import { BLOCK_REGISTRY, newBlockId, type Block } from "@/lib/cms/blocks";
+import { BLOCK_REGISTRY, newBlockId, parseBlocks, type Block } from "@/lib/cms/blocks";
 import { LIBRARY, createFromLibrary, type LibraryEntry } from "@/lib/cms/blockLibrary";
+
+// Copy / paste between blocks and pages: the copied block is kept in this browser (so it also works across pages).
+const COPY_KEY = "osta-copied-block";
+function readCopied(): Block | null {
+  try {
+    const raw = window.localStorage.getItem(COPY_KEY);
+    if (!raw) return null;
+    const res = parseBlocks([JSON.parse(raw)]);
+    return res.ok ? res.blocks[0] : null;
+  } catch {
+    return null;
+  }
+}
 
 const iconOf = (type: Block["type"]) => LIBRARY.find((e) => e.type === type)?.icon ?? "LayoutGrid";
 
@@ -19,9 +32,9 @@ const blockSummary = (b: Block): string => {
 };
 
 function SortableBlock({
-  block, open, onToggleOpen, onChange, onRemove, onDuplicate, onMove, canUp, canDown,
+  block, open, onToggleOpen, onChange, onRemove, onDuplicate, onCopy, onMove, canUp, canDown,
 }: {
-  block: Block; open: boolean; onToggleOpen: () => void; onChange: (b: Block) => void; onRemove: () => void; onDuplicate: () => void;
+  block: Block; open: boolean; onToggleOpen: () => void; onChange: (b: Block) => void; onRemove: () => void; onDuplicate: () => void; onCopy: () => void;
   onMove: (by: -1 | 1) => void; canUp: boolean; canDown: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
@@ -32,13 +45,13 @@ function SortableBlock({
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }}
       className={`rounded-xl border bg-white ${block.hidden ? "border-dashed border-slate-300" : "border-slate-200"}`}
     >
-      <div className="flex items-center gap-2 px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2.5">
         <button type="button" aria-label="Drag to reorder" className="cursor-grab touch-none px-1 text-slate-400" {...attributes} {...listeners}>
           ⠿
         </button>
-        <button type="button" onClick={onToggleOpen} className="flex flex-1 items-center gap-2 text-left" aria-expanded={open}>
+        <button type="button" onClick={onToggleOpen} className="flex min-w-[9rem] flex-1 items-center gap-2 overflow-hidden text-left" aria-expanded={open}>
           <LibraryIcon name={iconOf(block.type)} size={16} className="shrink-0 text-blue-600" />
-          <span className="text-sm font-semibold text-slate-900">{reg.label}</span>
+          <span className="shrink-0 text-sm font-semibold text-slate-900">{reg.label}</span>
           <span className="truncate text-xs text-slate-400">{blockSummary(block)}</span>
           {block.hidden && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500">hidden</span>}
         </button>
@@ -53,6 +66,9 @@ function SortableBlock({
         </button>
         <button type="button" onClick={onDuplicate} className="text-xs font-medium text-slate-600">
           Duplicate
+        </button>
+        <button type="button" onClick={onCopy} className="text-xs font-medium text-slate-600">
+          Copy
         </button>
         <button type="button" onClick={onRemove} className="text-xs font-medium text-red-600">
           Delete
@@ -94,6 +110,8 @@ function SortableBlock({
 export function BlocksEditor({ blocks, onChange, linkTargets }: { blocks: Block[]; onChange: (blocks: Block[]) => void; linkTargets?: LinkTarget[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [copied, setCopied] = useState<Block | null>(null);
+  const [notice, setNotice] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
   const setBlocks = onChange;
 
@@ -102,6 +120,30 @@ export function BlocksEditor({ blocks, onChange, linkTargets }: { blocks: Block[
     const from = blocks.findIndex((b) => b.id === e.active.id);
     const to = blocks.findIndex((b) => b.id === e.over!.id);
     setBlocks(arrayMove(blocks, from, to));
+  }
+
+  // Read after mount so the server and first client render agree.
+  useEffect(() => {
+    Promise.resolve().then(() => setCopied(readCopied()));
+  }, []);
+
+  function copyBlock(b: Block) {
+    try {
+      window.localStorage.setItem(COPY_KEY, JSON.stringify(b));
+      setCopied(b);
+      setNotice("Block copied. Use “Paste block” on this or any other page.");
+    } catch {
+      setNotice("Could not copy: this browser blocks saving.");
+    }
+  }
+
+  function pasteBlock() {
+    const src = readCopied();
+    if (!src) return setNotice("Nothing to paste.");
+    const copy: Block = { ...structuredClone(src), id: newBlockId() };
+    setBlocks([...blocks, copy]);
+    setOpenId(copy.id);
+    setNotice("Block pasted at the end of the page.");
   }
 
   function addBlock(entry: LibraryEntry) {
@@ -130,6 +172,7 @@ export function BlocksEditor({ blocks, onChange, linkTargets }: { blocks: Block[
                       const i = blocks.findIndex((x) => x.id === b.id);
                       setBlocks(arrayMove(blocks, i, i + by));
                     }}
+                    onCopy={() => copyBlock(b)}
                     onRemove={() => { if (confirm("Delete this block?")) setBlocks(blocks.filter((x) => x.id !== b.id)); }}
                     onDuplicate={() => {
                       const i = blocks.findIndex((x) => x.id === b.id);
@@ -142,9 +185,17 @@ export function BlocksEditor({ blocks, onChange, linkTargets }: { blocks: Block[
             </SortableContext>
           </DndContext>
 
-          <button type="button" onClick={() => setAdding(true)} className="self-start rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-blue-600">
-            + Add block
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" onClick={() => setAdding(true)} className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-blue-600">
+              + Add block
+            </button>
+            {copied && (
+              <button type="button" onClick={pasteBlock} className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700">
+                Paste block ({BLOCK_REGISTRY[copied.type].label})
+              </button>
+            )}
+            {notice && <span role="status" className="text-xs text-slate-500">{notice}</span>}
+          </div>
           <BlockLibrary open={adding} onClose={() => setAdding(false)} onAdd={addBlock} />
     </>
   );

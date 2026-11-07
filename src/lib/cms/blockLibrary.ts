@@ -4,13 +4,15 @@ import { createBlock, type Block, type BlockType } from "./blocks";
 // wireframe for the thumbnail and the preview. Many entries are ready-made presets of one block type (for example a
 // bullet list and a checkmark list are both the "list" block), so a page built from them stays editable like any block.
 
-export type LibraryCategory = "text" | "images" | "products" | "buttons" | "dynamic";
+export type LibraryCategory = "text" | "images" | "products" | "buttons" | "trust" | "process" | "dynamic";
 
 export const LIBRARY_CATEGORIES: { id: LibraryCategory; label: string; hint: string }[] = [
   { id: "text", label: "Text & content", hint: "Headings, text, lists, quotes and announcements" },
   { id: "images", label: "Images & layouts", hint: "Pictures, columns, galleries and sliders" },
   { id: "products", label: "Products & services", hint: "Showcases, cards, pricing and offers" },
   { id: "buttons", label: "Buttons & conversion", hint: "Book, call, WhatsApp and quote buttons" },
+  { id: "trust", label: "Trust & social proof", hint: "Reviews, logos, badges and your team" },
+  { id: "process", label: "How it works", hint: "Steps, timelines and processes" },
   { id: "dynamic", label: "Dynamic blocks", hint: "Filled automatically from the site's data" },
 ];
 
@@ -89,6 +91,19 @@ export const LIBRARY: LibraryEntry[] = [
   { id: "multi-cta", category: "buttons", name: "Multiple CTA buttons", description: "Book, call and WhatsApp buttons together.", icon: "MousePointerClick", type: "ctaButtons", wire: { rows: [row("T"), row("bb")], center: true }, patch: set({ buttons: [btn("book"), btn("call"), btn("whatsapp")] }) },
   { id: "contact-banner", category: "buttons", name: "Contact banner", description: "A strong banner inviting the visitor to book, call or WhatsApp.", icon: "Headset", type: "contactBanner", wire: { rows: [row("T", "bb")], tone: "dark" } },
   { id: "cta", category: "buttons", name: "Call to action", description: "A heading, a line of text and one button of your choice.", icon: "Rocket", type: "cta", wire: { rows: [row("T"), row("t"), row("b")], center: true } },
+
+  // ---- Trust, process and extras ----
+  { id: "testimonials", category: "trust", name: "Customer testimonials", description: "Customer reviews with stars, names and photos.", icon: "MessagesSquare", type: "testimonials", wire: { rows: [row("T"), row("q", "q", "q")] }, keywords: "reviews feedback" },
+  { id: "reviews-carousel", category: "trust", name: "Reviews carousel", description: "Customer reviews that slide across.", icon: "GalleryHorizontal", type: "testimonials", wire: { rows: [row("q"), row("d")] }, patch: set({ layout: "carousel" }), keywords: "testimonials" },
+  { id: "logos", category: "trust", name: "Brands & partners", description: "A row of partner or customer logos.", icon: "Building2", type: "logos", wire: { rows: [row("g", "g", "g", "g")] }, keywords: "clients" },
+  { id: "trust-badges", category: "trust", name: "Trust badges", description: "Icon badges such as warranty, licensed and guaranteed.", icon: "ShieldCheck", type: "logos", wire: { rows: [row("k", "k", "k")] }, keywords: "certifications licenses warranty" },
+  { id: "why-choose", category: "trust", name: "Why choose us", description: "Four reasons to pick Osta, as icon cards.", icon: "ThumbsUp", type: "benefits", wire: { rows: [row("T"), row("k", "k", "k", "k")] }, patch: (p) => ({ ...p, columns: "4", heading: bi("Why choose Osta", "لماذا أوستا"), items: [{ icon: "BadgeCheck", title: bi("Verified technicians", "فنيون موثّقون"), text: bi("", "") }, { icon: "Clock", title: bi("On time", "في الموعد"), text: bi("", "") }, { icon: "ShieldCheck", title: bi("Warranty", "ضمان"), text: bi("", "") }, { icon: "Award", title: bi("Quality", "جودة"), text: bi("", "") }] }) },
+  { id: "team", category: "trust", name: "Team members", description: "Photos, names and roles of your people.", icon: "Users", type: "team", wire: { rows: [row("k", "k", "k")] } },
+  { id: "how-it-works", category: "process", name: "How it works", description: "Numbered steps with icons, as cards.", icon: "Workflow", type: "steps", wire: { rows: [row("T"), row("k", "k", "k")] } },
+  { id: "timeline", category: "process", name: "Timeline", description: "Steps one under the other along a line.", icon: "GitCommitVertical", type: "steps", wire: { rows: [row("r"), row("r"), row("r")] }, patch: set({ variant: "timeline" }), keywords: "journey process" },
+  { id: "numbered-list", category: "text", name: "Numbered list", description: "A list with numbers.", icon: "ListOrdered", type: "list", wire: { rows: [row("T"), row("x")] }, patch: set({ variant: "number" }) },
+  { id: "divider", category: "text", name: "Divider", description: "A line, dots or space between two parts.", icon: "Minus", type: "divider", wire: { rows: [row("a")] }, keywords: "separator spacer" },
+  { id: "video", category: "images", name: "Video player", description: "A YouTube or Vimeo video, or a video file.", icon: "CirclePlay", type: "video", wire: { rows: [row("I")] }, keywords: "youtube vimeo mp4" },
 
   // ---- E. Dynamic blocks (filled from the site's data) ----
   { id: "hero", category: "dynamic", name: "Hero", description: "Big heading, subtitle, image and up to 3 buttons.", icon: "PanelTop", type: "hero", wire: { rows: [row("T", "I"), row("bb")], tone: "dark" } },

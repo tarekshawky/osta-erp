@@ -30,7 +30,7 @@ const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a colour like #050b1
 const yesNo = z.enum(["yes", "no"]);
 const CURRENCIES = ["AED", "USD", "SAR", "EUR"] as const;
 const currency = z.enum(CURRENCIES);
-const BADGES = ["none", "featured", "popular", "new", "offer"] as const;
+const BADGES = ["none", "featured", "popular", "bestSeller", "new", "offer", "limited"] as const;
 const money = z.string().max(30);
 
 const RAW_SCHEMAS = {
@@ -159,7 +159,13 @@ const RAW_SCHEMAS = {
     features: z.array(z.object({ icon: iconName.optional(), text: bi })).max(20),
     badge: z.enum(BADGES),
     primary: cta,
-    secondaryType: z.enum(["none", "call", "whatsapp", "learn"]), secondaryLabel: bi, secondaryUrl: link,
+    secondaryType: z.enum(["none", "call", "whatsapp", "learn", "quote", "buy", "custom"]), secondaryLabel: bi, secondaryUrl: link,
+    // Price presentation: a small label above/next to the price ("Starting price"), the unit ("Per AC unit"), an automatic
+    // "-25%" badge, a heading over the feature list ("What's included?"), extra pictures under the main one, and card styling.
+    priceLabel: bi.optional(), priceUnit: bi.optional(), startingFrom: yesNo.optional(), showDiscount: yesNo.optional(), priceColor: hexColor.optional(),
+    featuresHeading: bi.optional(),
+    gallery: z.array(z.object({ imageUrl: image, alt: bi })).max(8).optional(),
+    shadow: z.enum(["none", "sm", "md", "lg"]).optional(), radius: z.enum(["none", "md", "xl", "2xl"]).optional(), buttonStyle: z.enum(["brand", "dark"]).optional(),
     rating: z.number().min(0).max(5).optional(), reviews: z.number().int().min(0).max(10_000_000).optional(),
     bgColor: hexColor.optional(), textColor: hexColor.optional(),
     imagePosition: z.enum(["start", "end", "top"]), layout: z.enum(["split", "card"]),
@@ -194,6 +200,30 @@ const RAW_SCHEMAS = {
     buttons: z.array(z.object({ kind: z.enum(["book", "call", "whatsapp", "quote", "custom"]), label: bi, url: link })).min(1).max(5),
   }),
   contactBanner: z.object({ heading: bi, subtitle: bi, showBook: yesNo, showCall: yesNo, showWhatsapp: yesNo, tone: z.enum(["dark", "blue", "light"]) }),
+  divider: z.object({ variant: z.enum(["line", "dots", "space"]), size: z.enum(["sm", "md", "lg"]) }),
+  // How it works / booking steps / process / timeline: 2-10 steps, each with an icon, title, text and optional picture.
+  steps: z.object({
+    eyebrow: bi, heading: bi, subtitle: bi, variant: z.enum(["cards", "timeline"]),
+    items: z.array(z.object({ icon: iconName.optional(), title: bi, text: bi, imageUrl: image })).max(10),
+  }),
+  testimonials: z.object({
+    heading: bi, subtitle: bi, layout: z.enum(["grid", "carousel"]),
+    items: z.array(z.object({ name: bi, role: bi, text: bi, rating: z.number().min(0).max(5).optional(), imageUrl: image })).max(12),
+  }),
+  // Partner / brand logos, certifications and trust badges. With a picture it is a logo; without, the icon and name make a badge.
+  logos: z.object({
+    heading: bi, subtitle: bi, grayscale: yesNo,
+    items: z.array(z.object({ imageUrl: image, name: bi, icon: iconName.optional(), url: link })).max(24),
+  }),
+  team: z.object({
+    heading: bi, subtitle: bi, columns: z.enum(["2", "3", "4"]),
+    members: z.array(z.object({ imageUrl: image, name: bi, role: bi, bio: bi })).max(24),
+  }),
+  // A video from YouTube or Vimeo (paste the page address) or a .mp4/.webm file (from the media library or an https address).
+  video: z.object({
+    heading: bi, url: z.string().max(500).regex(/^(|https:\/\/(www\.)?(youtube\.com|youtu\.be|vimeo\.com)\/\S+|(https:\/\/\S+|\/api\/media\/\S+)\.(mp4|webm)(\?\S*)?|\/api\/media\/[^/?\s]+)$/, "Use a YouTube or Vimeo address, or a .mp4 / .webm file."),
+    poster: image, caption: bi, ratio: z.enum(["16:9", "4:3", "1:1"]),
+  }),
 } as const;
 
 // Any section can have its own background: an image under a dark overlay, or a plain colour.
@@ -206,6 +236,12 @@ const sectionStyle = z.object({
   // Extra space above and below the block, and where its text sits (for blocks that follow the section alignment).
   spacing: z.enum(["none", "sm", "md", "lg", "xl"]).optional(),
   textAlign: z.enum(["auto", "start", "center", "end"]).optional(),
+  // Width of the block's content, rounded corners and shadow of the section, a custom CSS class and an anchor id (#id) to link to.
+  width: z.enum(["auto", "medium", "narrow"]).optional(),
+  radius: z.enum(["none", "md", "xl", "2xl"]).optional(),
+  shadow: z.enum(["none", "sm", "md", "lg"]).optional(),
+  cssClass: z.string().max(120).regex(/^[A-Za-z0-9_ -]*$/, "Use letters, numbers, - and _ only.").optional(),
+  anchorId: z.string().max(40).regex(/^([A-Za-z][A-Za-z0-9_-]*)?$/, "Start with a letter; use letters, numbers, - and _ only.").optional(),
 });
 const withStyle = <T extends z.ZodRawShape>(s: z.ZodObject<T>) => s.extend({ style: sectionStyle.optional() });
 
@@ -247,6 +283,12 @@ export const BLOCK_SCHEMAS = {
   promo: withStyle(RAW_SCHEMAS.promo),
   ctaButtons: withStyle(RAW_SCHEMAS.ctaButtons),
   contactBanner: withStyle(RAW_SCHEMAS.contactBanner),
+  divider: withStyle(RAW_SCHEMAS.divider),
+  steps: withStyle(RAW_SCHEMAS.steps),
+  testimonials: withStyle(RAW_SCHEMAS.testimonials),
+  logos: withStyle(RAW_SCHEMAS.logos),
+  team: withStyle(RAW_SCHEMAS.team),
+  video: withStyle(RAW_SCHEMAS.video),
 } as const;
 
 export type BlockType = keyof typeof BLOCK_SCHEMAS;
@@ -288,7 +330,7 @@ const ctaFields: FieldDef[] = [
 const opts = (...pairs: [string, string][]) => pairs.map(([value, label]) => ({ value, label }));
 const iconField: FieldDef = { kind: "select", key: "icon", label: "Icon (checkmark lists use it)", options: [{ value: "", label: "Default" }, ...ICON_NAMES.map((n) => ({ value: n, label: n }))] };
 const currencyField: FieldDef = { kind: "select", key: "currency", label: "Currency", options: opts(["AED", "AED – Dirham"], ["USD", "USD – Dollar"], ["SAR", "SAR – Riyal"], ["EUR", "EUR – Euro"]) };
-const badgeField: FieldDef = { kind: "select", key: "badge", label: "Badge", options: opts(["none", "No badge"], ["featured", "Featured"], ["popular", "Popular"], ["new", "New"], ["offer", "Offer"]) };
+const badgeField: FieldDef = { kind: "select", key: "badge", label: "Badge", options: opts(["none", "No badge"], ["featured", "Featured"], ["popular", "Popular"], ["bestSeller", "Best seller"], ["new", "New"], ["offer", "Special offer"], ["limited", "Limited time"]) };
 const cols234 = opts(["2", "2"], ["3", "3"], ["4", "4"]);
 const biEmpty = () => ({ en: "", ar: "" });
 const ctaEmpty = () => ({ label: biEmpty(), url: "" });
@@ -742,26 +784,36 @@ export const BLOCK_REGISTRY: Record<
       { kind: "select", key: "kind", label: "This is a", options: opts(["service", "Service"], ["product", "Product"]) },
       { kind: "select", key: "source", label: "Content from", options: opts(["manual", "Typed here"], ["catalogue", "Service Catalogue (name and links come from it)"]) },
       { kind: "text", key: "catalogueKey", label: "Catalogue service (its page name, for example ac-maintenance)", showIf: { key: "source", equals: "catalogue" } },
-      { kind: "image", key: "imageUrl", label: "Picture" },
+      { kind: "image", key: "imageUrl", label: "Main picture" },
       { kind: "bi-text", key: "imageAlt", label: "Picture description (alt text)" },
+      { kind: "list", key: "gallery", label: "More pictures (shown under the main one)", itemLabel: "Picture", max: 8, fields: [{ kind: "image", key: "imageUrl", label: "Picture" }, { kind: "bi-text", key: "alt", label: "Description (alt text)" }] },
       { kind: "bi-text", key: "name", label: "Name" },
       { kind: "bi-text", key: "subtitle", label: "Subtitle" },
       { kind: "bi-textarea", key: "description", label: "Description", rich: true },
       { kind: "text", key: "price", label: "Price (for example 150)" },
       { kind: "text", key: "oldPrice", label: "Old price, crossed out (optional)" },
       currencyField,
+      { kind: "select", key: "startingFrom", label: "“Starting from” price", options: opts(["no", "No"], ["yes", "Yes (label “Starting price”)"]) },
+      { kind: "bi-text", key: "priceLabel", label: "Custom price label (for example “Starting price”; empty = automatic)" },
+      { kind: "bi-text", key: "priceUnit", label: "Price unit (for example “Per AC unit”)" },
+      { kind: "select", key: "showDiscount", label: "Show the discount % (from the old price)", options: opts(["no", "No"], ["yes", "Yes"]) },
+      { kind: "color", key: "priceColor", label: "Price colour" },
+      { kind: "bi-text", key: "featuresHeading", label: "Heading over the features (for example “What’s included?”)" },
       { kind: "list", key: "features", label: "Features", itemLabel: "Feature", max: 20, fields: [{ kind: "bi-text", key: "text", label: "Text" }, iconField] },
       badgeField,
       { kind: "group", key: "primary", label: "Main button", fields: ctaFields },
-      { kind: "select", key: "secondaryType", label: "Second button", options: opts(["none", "None"], ["call", "Call (official number)"], ["whatsapp", "WhatsApp (official number)"], ["learn", "Learn more (link)"]) },
-      { kind: "bi-text", key: "secondaryLabel", label: "Second button text", showIf: { key: "secondaryType", equals: "learn" } },
-      { kind: "url", key: "secondaryUrl", label: "Second button link", showIf: { key: "secondaryType", equals: "learn" } },
+      { kind: "select", key: "secondaryType", label: "Second button", options: opts(["none", "None"], ["call", "Call now (official number)"], ["whatsapp", "WhatsApp (official number)"], ["learn", "Learn more (link)"], ["quote", "Request a quote"], ["buy", "Buy now (link)"], ["custom", "Custom (text and link)"]) },
+      { kind: "bi-text", key: "secondaryLabel", label: "Second button text (empty = default; call and WhatsApp ignore it)" },
+      { kind: "url", key: "secondaryUrl", label: "Second button link (empty = default; call and WhatsApp ignore it)" },
+      { kind: "select", key: "buttonStyle", label: "Button style", options: opts(["brand", "Brand blue"], ["dark", "Dark / outlined"]) },
       { kind: "number", key: "rating", label: "Rating, 0–5 (optional)" },
       { kind: "number", key: "reviews", label: "Number of reviews (optional)" },
       { kind: "color", key: "bgColor", label: "Card background colour" },
       { kind: "color", key: "textColor", label: "Text colour" },
       { kind: "select", key: "imagePosition", label: "Picture position", options: opts(["start", "Start"], ["end", "End"], ["top", "Top"]) },
       { kind: "select", key: "layout", label: "Layout", options: opts(["split", "Side by side"], ["card", "Compact card"]) },
+      { kind: "select", key: "shadow", label: "Shadow", options: opts(["none", "None"], ["sm", "Soft"], ["md", "Medium"], ["lg", "Strong"]) },
+      { kind: "select", key: "radius", label: "Corner roundness", options: opts(["xl", "Rounded"], ["2xl", "Very rounded"], ["md", "Slightly rounded"], ["none", "Square"]) },
     ],
     defaults: () => ({
       kind: "service", source: "manual", imageUrl: "", imageAlt: biEmpty(),
@@ -901,13 +953,92 @@ export const BLOCK_REGISTRY: Record<
     ],
     defaults: () => ({ heading: { en: "Need help? We are one tap away", ar: "تحتاج مساعدة؟ نحن على بعد ضغطة" }, subtitle: biEmpty(), showBook: "yes", showCall: "yes", showWhatsapp: "yes", tone: "dark" }),
   },
+  divider: {
+    label: "Divider",
+    description: "A line, dots or empty space between two parts of the page.",
+    fields: [
+      { kind: "select", key: "variant", label: "Look", options: opts(["line", "Line"], ["dots", "Dots"], ["space", "Empty space"]) },
+      { kind: "select", key: "size", label: "Space around it", options: opts(["sm", "Small"], ["md", "Medium"], ["lg", "Large"]) },
+    ],
+    defaults: () => ({ variant: "line", size: "md" }),
+  },
+  steps: {
+    label: "Steps / process",
+    description: "How it works: 2–10 numbered steps with an icon, title, text and optional picture; as cards or a timeline.",
+    fields: [
+      { kind: "bi-text", key: "eyebrow", label: "Small label above" },
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      { kind: "select", key: "variant", label: "Look", options: opts(["cards", "Cards in a row"], ["timeline", "Vertical timeline"]) },
+      { kind: "list", key: "items", label: "Steps", itemLabel: "Step", max: 10, fields: [iconField, { kind: "bi-text", key: "title", label: "Title" }, { kind: "bi-text", key: "text", label: "Text" }, { kind: "image", key: "imageUrl", label: "Picture (optional)" }] },
+    ],
+    defaults: () => ({
+      eyebrow: biEmpty(), heading: { en: "How it works", ar: "كيف تعمل الخدمة" }, subtitle: biEmpty(), variant: "cards",
+      items: [
+        { icon: "CalendarCheck", title: { en: "Book online", ar: "احجز أونلاين" }, text: biEmpty(), imageUrl: "" },
+        { icon: "UserCheck", title: { en: "We visit you", ar: "نزورك" }, text: biEmpty(), imageUrl: "" },
+        { icon: "CheckCircle2", title: { en: "Job done", ar: "تم العمل" }, text: biEmpty(), imageUrl: "" },
+      ],
+    }),
+  },
+  testimonials: {
+    label: "Customer testimonials",
+    description: "Reviews from customers with name, role, stars and a photo; in a grid or a carousel.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      { kind: "select", key: "layout", label: "Layout", options: opts(["grid", "Grid"], ["carousel", "Carousel"]) },
+      { kind: "list", key: "items", label: "Testimonials", itemLabel: "Testimonial", max: 12, fields: [{ kind: "bi-textarea", key: "text", label: "What the customer said" }, { kind: "bi-text", key: "name", label: "Name" }, { kind: "bi-text", key: "role", label: "Role or place (optional)" }, { kind: "number", key: "rating", label: "Stars, 0–5 (0 = none)" }, { kind: "image", key: "imageUrl", label: "Photo (optional)" }] },
+    ],
+    defaults: () => ({
+      heading: { en: "What our customers say", ar: "آراء عملائنا" }, subtitle: biEmpty(), layout: "grid",
+      items: [{ text: biEmpty(), name: biEmpty(), role: biEmpty(), rating: 5, imageUrl: "" }, { text: biEmpty(), name: biEmpty(), role: biEmpty(), rating: 5, imageUrl: "" }, { text: biEmpty(), name: biEmpty(), role: biEmpty(), rating: 5, imageUrl: "" }],
+    }),
+  },
+  logos: {
+    label: "Logos & trust badges",
+    description: "Partner and brand logos, certifications and trust badges (a picture, or an icon with a name).",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      { kind: "select", key: "grayscale", label: "Show logos in grey until hovered", options: opts(["no", "No"], ["yes", "Yes"]) },
+      { kind: "list", key: "items", label: "Items", itemLabel: "Item", max: 24, fields: [{ kind: "image", key: "imageUrl", label: "Logo picture (leave empty for an icon badge)" }, { kind: "bi-text", key: "name", label: "Name" }, iconField, { kind: "url", key: "url", label: "Link (optional)" }] },
+    ],
+    defaults: () => ({
+      heading: { en: "Trusted by", ar: "موثوق من" }, subtitle: biEmpty(), grayscale: "no",
+      items: [{ imageUrl: "", name: { en: "Licensed technicians", ar: "فنيون مرخّصون" }, icon: "BadgeCheck", url: "" }, { imageUrl: "", name: { en: "Warranty included", ar: "ضمان مشمول" }, icon: "ShieldCheck", url: "" }, { imageUrl: "", name: { en: "Satisfaction guaranteed", ar: "رضاك مضمون" }, icon: "ThumbsUp", url: "" }],
+    }),
+  },
+  team: {
+    label: "Team members",
+    description: "Photos, names and roles of your people.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      { kind: "select", key: "columns", label: "Columns", options: cols234 },
+      { kind: "list", key: "members", label: "People", itemLabel: "Person", max: 24, fields: [{ kind: "image", key: "imageUrl", label: "Photo" }, { kind: "bi-text", key: "name", label: "Name" }, { kind: "bi-text", key: "role", label: "Role" }, { kind: "bi-text", key: "bio", label: "Short bio (optional)" }] },
+    ],
+    defaults: () => ({ heading: { en: "Meet our team", ar: "تعرّف على فريقنا" }, subtitle: biEmpty(), columns: "3", members: [0, 1, 2].map(() => ({ imageUrl: "", name: biEmpty(), role: biEmpty(), bio: biEmpty() })) }),
+  },
+  video: {
+    label: "Video",
+    description: "A YouTube or Vimeo video, or a .mp4 / .webm file, with an optional heading and caption.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading (optional)" },
+      { kind: "text", key: "url", label: "Video address (YouTube or Vimeo page, or a .mp4 / .webm file)" },
+      { kind: "image", key: "poster", label: "Cover picture (for a .mp4 / .webm file)" },
+      { kind: "bi-text", key: "caption", label: "Caption (optional)" },
+      { kind: "select", key: "ratio", label: "Shape", options: opts(["16:9", "Wide 16:9"], ["4:3", "Classic 4:3"], ["1:1", "Square"]) },
+    ],
+    defaults: () => ({ heading: biEmpty(), url: "", poster: "", caption: biEmpty(), ratio: "16:9" }),
+  },
 };
 
 // Every block (except the hero, which has its own background controls) can take a section background.
 const STYLE_FIELD: FieldDef = {
   kind: "group",
   key: "style",
-  label: "Section background (optional)",
+  label: "Section design (background, spacing, corners…)",
   fields: [
     { kind: "image", key: "bgImage", label: "Background image" },
     { kind: "number", key: "overlay", label: "Overlay strength over the image, 0–100 (higher = darker)" },
@@ -915,6 +1046,11 @@ const STYLE_FIELD: FieldDef = {
     { kind: "color", key: "bgColor", label: "Plain background colour (used when there is no image)" },
     { kind: "select", key: "spacing", label: "Extra space above and below", options: [{ value: "none", label: "Standard" }, { value: "sm", label: "A little more" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }, { value: "xl", label: "Extra large" }] },
     { kind: "select", key: "textAlign", label: "Text alignment (blocks that follow it)", options: [{ value: "auto", label: "As designed" }, { value: "start", label: "Start" }, { value: "center", label: "Centre" }, { value: "end", label: "End" }] },
+    { kind: "select", key: "width", label: "Content width", options: [{ value: "auto", label: "As designed" }, { value: "medium", label: "Medium" }, { value: "narrow", label: "Narrow" }] },
+    { kind: "select", key: "radius", label: "Section corners", options: [{ value: "none", label: "Square" }, { value: "md", label: "Slightly rounded" }, { value: "xl", label: "Rounded" }, { value: "2xl", label: "Very rounded" }] },
+    { kind: "select", key: "shadow", label: "Section shadow", options: [{ value: "none", label: "None" }, { value: "sm", label: "Soft" }, { value: "md", label: "Medium" }, { value: "lg", label: "Strong" }] },
+    { kind: "text", key: "anchorId", label: "Anchor ID (link to this block with #id, for example offers)" },
+    { kind: "text", key: "cssClass", label: "Custom CSS class (advanced; the class must exist in Page Code)" },
   ],
 };
 for (const type of Object.keys(BLOCK_REGISTRY) as BlockType[]) if (type !== "hero") BLOCK_REGISTRY[type].fields.push(STYLE_FIELD);

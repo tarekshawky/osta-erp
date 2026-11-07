@@ -6,6 +6,7 @@ import {
   CloudSun, Columns2, Columns3, Contact, FileText, GalleryHorizontal, GalleryThumbnails, Grid2x2, Heading, Headset, Highlighter, House, Image as ImageIcon, ImagePlus,
   Layers, LayoutGrid, List, ListChecks, MapPin, Megaphone, MessageCircle, Monitor, MousePointerClick, Network, Newspaper, PanelLeft, PanelRight, PanelTop, PenLine,
   Phone, Quote, Rocket, Search, ShoppingBag, Smartphone, Sparkles, SplitSquareHorizontal, Star, Table, Tablet, Type, Wrench, X,
+  Award, Building2, CirclePlay, Clock, GitCommitVertical, ListOrdered, MessagesSquare, Minus, ShieldCheck, ThumbsUp, Users, Workflow,
   type LucideIcon,
 } from "lucide-react";
 import { LIBRARY, LIBRARY_CATEGORIES, searchLibrary, type LibraryCategory, type LibraryEntry, type Wire, type WireCell } from "@/lib/cms/blockLibrary";
@@ -16,12 +17,36 @@ const ICONS: Record<string, LucideIcon> = {
   CloudSun, Columns2, Columns3, Contact, FileText, GalleryHorizontal, GalleryThumbnails, Grid2x2, Heading, Headset, Highlighter, House, Image: ImageIcon, ImagePlus,
   Layers, LayoutGrid, List, ListChecks, MapPin, Megaphone, MessageCircle, MousePointerClick, Network, Newspaper, PanelLeft, PanelRight, PanelTop, PenLine,
   Phone, Quote, Rocket, ShoppingBag, Sparkles, SplitSquareHorizontal, Star, Table, Type, Wrench,
+  Award, Building2, CirclePlay, Clock, GitCommitVertical, ListOrdered, MessagesSquare, Minus, ShieldCheck, ThumbsUp, Users, Workflow,
 };
 
 export function LibraryIcon({ name, size = 18, className }: { name: string; size?: number; className?: string }) {
   const Icon = ICONS[name] ?? LayoutGrid;
   return <Icon size={size} className={className} aria-hidden />;
 }
+
+// "Recently used" and "Favorites" are remembered per browser; "Recommended" is a fixed shortlist for building a landing page.
+const RECENT_KEY = "osta-block-library-recent";
+const FAVORITE_KEY = "osta-block-library-favorites";
+const RECOMMENDED = ["service-showcase", "benefits", "pricing", "book-now", "multi-cta", "contact-banner", "promo", "gallery", "faq", "announcement", "before-after", "check-list"];
+
+function readIds(key: string): string[] {
+  try {
+    const v = JSON.parse(window.localStorage.getItem(key) ?? "[]");
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && LIBRARY.some((e) => e.id === x)) : [];
+  } catch {
+    return [];
+  }
+}
+function writeIds(key: string, ids: string[]) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(ids));
+  } catch {
+    // Not remembering is fine.
+  }
+}
+
+type View = LibraryCategory | "all" | "recent" | "favorites" | "recommended";
 
 export type Device = "desktop" | "tablet" | "mobile";
 const DEVICES: { id: Device; label: string; Icon: LucideIcon; width: string }[] = [
@@ -122,7 +147,9 @@ function Thumb({ entry, device }: { entry: LibraryEntry; device: Device }) {
 
 export function BlockLibrary({ open, onClose, onAdd }: { open: boolean; onClose: () => void; onAdd: (entry: LibraryEntry) => void }) {
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<LibraryCategory | "all">("all");
+  const [category, setCategory] = useState<View>("all");
+  const [recent, setRecent] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [device, setDevice] = useState<Device>("desktop");
   const [rtl, setRtl] = useState(false);
   const [previewId, setPreviewId] = useState<string | null>(null);
@@ -130,6 +157,11 @@ export function BlockLibrary({ open, onClose, onAdd }: { open: boolean; onClose:
 
   useEffect(() => {
     if (!open) return;
+    // Read after open so the server and first client render agree.
+    Promise.resolve().then(() => {
+      setRecent(readIds(RECENT_KEY));
+      setFavorites(readIds(FAVORITE_KEY));
+    });
     searchRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -138,16 +170,30 @@ export function BlockLibrary({ open, onClose, onAdd }: { open: boolean; onClose:
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const results = useMemo(() => searchLibrary(query, category), [query, category]);
+  const results = useMemo(() => {
+    const pool = searchLibrary(query, category === "all" || category === "recent" || category === "favorites" || category === "recommended" ? "all" : category);
+    const ids = category === "recent" ? recent : category === "favorites" ? favorites : category === "recommended" ? RECOMMENDED : null;
+    if (!ids) return pool;
+    // Keep the saved order (most recent first).
+    return ids.map((id) => pool.find((e) => e.id === id)).filter((e): e is LibraryEntry => !!e);
+  }, [query, category, recent, favorites]);
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: LIBRARY.length };
+    const c: Record<string, number> = { all: LIBRARY.length, recent: recent.length, favorites: favorites.length, recommended: RECOMMENDED.filter((id) => LIBRARY.some((e) => e.id === id)).length };
     for (const e of LIBRARY) c[e.category] = (c[e.category] ?? 0) + 1;
     return c;
-  }, []);
+  }, [recent, favorites]);
+  const toggleFavorite = (id: string) => {
+    const next = favorites.includes(id) ? favorites.filter((x) => x !== id) : [id, ...favorites];
+    setFavorites(next);
+    writeIds(FAVORITE_KEY, next);
+  };
   const preview = previewId ? LIBRARY.find((e) => e.id === previewId) ?? null : null;
   if (!open) return null;
 
   const add = (e: LibraryEntry) => {
+    const nextRecent = [e.id, ...recent.filter((x) => x !== e.id)].slice(0, 8);
+    setRecent(nextRecent);
+    writeIds(RECENT_KEY, nextRecent);
     setPreviewId(null);
     onAdd(e);
   };
@@ -180,7 +226,7 @@ export function BlockLibrary({ open, onClose, onAdd }: { open: boolean; onClose:
 
         <div className="flex min-h-0 flex-1 flex-col md:flex-row">
           <nav aria-label="Block categories" className="flex shrink-0 gap-1 overflow-x-auto border-b border-slate-200 p-2 md:w-56 md:flex-col md:overflow-visible md:border-b-0 md:border-r md:p-3">
-            {[{ id: "all" as const, label: "All blocks", hint: "" }, ...LIBRARY_CATEGORIES].map((c) => (
+            {([{ id: "all", label: "All blocks" }, { id: "recommended", label: "Recommended" }, { id: "recent", label: "Recently used" }, { id: "favorites", label: "Favorites" }, ...LIBRARY_CATEGORIES] as { id: View; label: string }[]).map((c) => (
               <button key={c.id} type="button" onClick={() => setCategory(c.id)} aria-pressed={category === c.id} className={`flex shrink-0 items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm ${category === c.id ? "bg-blue-50 font-semibold text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
                 <span>{c.label}</span>
                 <span className="rounded-full bg-slate-100 px-2 text-[11px] text-slate-500">{counts[c.id] ?? 0}</span>
@@ -190,10 +236,12 @@ export function BlockLibrary({ open, onClose, onAdd }: { open: boolean; onClose:
 
           <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
             {results.length === 0 ? (
-              <p className="py-16 text-center text-sm text-slate-400">No block matches “{query}”.</p>
+              <p className="py-16 text-center text-sm text-slate-400">
+                {query ? `No block matches “${query}”.` : category === "recent" ? "Blocks you add will show up here." : category === "favorites" ? "Tap the star on a block to keep it here." : "Nothing here yet."}
+              </p>
             ) : (
-              (category === "all" ? LIBRARY_CATEGORIES : LIBRARY_CATEGORIES.filter((c) => c.id === category)).map((cat) => {
-                const items = results.filter((e) => e.category === cat.id);
+              (category === "all" ? LIBRARY_CATEGORIES : category === "recent" || category === "favorites" || category === "recommended" ? [{ id: category, label: { recent: "Recently used", favorites: "Favorites", recommended: "Recommended" }[category], hint: category === "recommended" ? "A good starting set for a landing page" : "" }] : LIBRARY_CATEGORIES.filter((c) => c.id === category)).map((cat) => {
+                const items = cat.id === "recent" || cat.id === "favorites" || cat.id === "recommended" ? results : results.filter((e) => e.category === cat.id);
                 if (items.length === 0) return null;
                 return (
                   <section key={cat.id} className="mb-7 last:mb-0">
@@ -213,6 +261,9 @@ export function BlockLibrary({ open, onClose, onAdd }: { open: boolean; onClose:
                               <p className="text-sm font-semibold text-slate-900">{e.name}</p>
                               <p className="text-xs leading-snug text-slate-500">{e.description}</p>
                             </div>
+                            <button type="button" onClick={() => toggleFavorite(e.id)} aria-pressed={favorites.includes(e.id)} aria-label={favorites.includes(e.id) ? `Remove ${e.name} from favorites` : `Add ${e.name} to favorites`} className="shrink-0 text-slate-300 hover:text-amber-500">
+                              <Star size={16} className={favorites.includes(e.id) ? "fill-amber-400 text-amber-400" : ""} aria-hidden />
+                            </button>
                           </div>
                           <div className="mt-auto flex gap-2">
                             <button type="button" onClick={() => setPreviewId(e.id)} className="flex-1 rounded-lg border border-slate-200 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">

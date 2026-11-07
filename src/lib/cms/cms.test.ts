@@ -96,6 +96,28 @@ describe("block registry", () => {
   });
 });
 
+describe("new block fields", () => {
+  const withProps = (type: Parameters<typeof createBlock>[0], extra: Record<string, unknown>) => {
+    const b = createBlock(type);
+    return parseBlocks([{ ...b, props: { ...b.props, ...extra } }]);
+  };
+  it("video only accepts YouTube, Vimeo or a video file", () => {
+    for (const url of ["", "https://youtu.be/abcdefghijk", "https://vimeo.com/123456789", "/api/media/abc123", "https://cdn.example.com/a.mp4"]) expect(withProps("video", { url }).ok, url).toBe(true);
+    for (const url of ["javascript:alert(1)", "https://evil.example.com/page", "http://youtu.be/abcdefghijk"]) expect(withProps("video", { url }).ok, url).toBe(false);
+  });
+  it("section anchor and class are restricted to safe characters", () => {
+    expect(withProps("heading", { style: { anchorId: "offers", cssClass: "my-band dark", width: "narrow", radius: "xl", shadow: "md" } }).ok).toBe(true);
+    expect(withProps("heading", { style: { anchorId: "1bad" } }).ok).toBe(false);
+    expect(withProps("heading", { style: { cssClass: 'a"><script>' } }).ok).toBe(false);
+  });
+  it("showcase blocks saved before the new price fields still validate", () => {
+    const added = ["priceLabel", "priceUnit", "gallery", "shadow"];
+    const old = Object.fromEntries(Object.entries(createBlock("showcase").props).filter(([k]) => !added.includes(k)));
+    expect(parseBlocks([{ ...createBlock("showcase"), props: old }]).ok).toBe(true);
+    expect(withProps("showcase", { startingFrom: "yes", showDiscount: "yes", secondaryType: "quote", badge: "bestSeller", gallery: [{ imageUrl: "/a.jpg", alt: { en: "", ar: "" } }] }).ok).toBe(true);
+  });
+});
+
 describe("slugs", () => {
   it("normalises titles to slugs", () => expect(slugify("  Warranty & Terms! ")).toBe("warranty-terms"));
   it("blocks reserved and malformed slugs", () => {
