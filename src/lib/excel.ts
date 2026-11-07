@@ -26,6 +26,26 @@ export async function buildWorkbookBuffer(
   return Buffer.from(arrayBuffer);
 }
 
+export type SheetSpec = { name: string; headers: string[]; rows: (string | number | null)[][] };
+
+// One workbook with several sheets (the performance report export).
+export async function buildMultiSheetWorkbook(sheets: SheetSpec[]): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  for (const spec of sheets) {
+    const sheet = workbook.addWorksheet(spec.name.slice(0, 31));
+    sheet.addRow(spec.headers);
+    sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    sheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0B2A6B" } };
+    spec.rows.forEach((row) => sheet.addRow(row));
+    sheet.columns.forEach((col) => {
+      col.width = 18;
+    });
+    sheet.views = [{ state: "frozen", ySplit: 1 }];
+  }
+  const arrayBuffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
 export async function parseWorkbookRows(buffer: Buffer): Promise<Record<string, string>[]> {
   const workbook = new ExcelJS.Workbook();
   // exceljs's bundled type defs declare a conflicting global `Buffer extends ArrayBuffer`

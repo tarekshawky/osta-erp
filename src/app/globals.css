@@ -161,3 +161,19 @@ tr[data-osta-filtered] {
 .admin-theme textarea:focus {
   border-color: #1e5bd8;
 }
+
+/* Printing a report (Print / Save as PDF): only the report itself, no sidebar, header or controls. */
+@media print {
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+  .admin-theme,
+  body {
+    background: #ffffff !important;
+  }
+  .print-area {
+    padding: 0 !important;
+  }
+}

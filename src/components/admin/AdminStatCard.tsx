@@ -53,22 +53,27 @@ export function AdminStatCard({
   label,
   value,
   valueClassName = "text-slate-900",
+  hint,
+  hintClassName = "text-slate-500",
 }: {
   label: string;
   value: string;
   valueClassName?: string;
+  hint?: string;
+  hintClassName?: string;
 }) {
   const tone = TONES[toneOf(valueClassName)];
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
+    <div className="flex flex-col items-start gap-2 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:gap-3">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: tone.tile, color: tone.text }} aria-hidden>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           {ICONS[iconOf(label)]}
         </svg>
       </span>
-      <div className="min-w-0">
+      <div className="min-w-0 max-w-full">
         <div className="text-sm text-slate-500">{label}</div>
         <div className={`text-xl font-bold mt-0.5 sm:text-2xl ${valueClassName}`}>{value}</div>
+        {hint && <div className={`mt-0.5 text-[11px] ${hintClassName}`}>{hint}</div>}
       </div>
     </div>
   );

@@ -83,7 +83,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     id: "reports", label: "Reports & Analytics", icon: "reports",
-    items: [{ href: "/admin/reports", label: "General Reports", keywords: "analytics statistics" }, WORK_REPORTS, FINANCIAL_REPORTS, VEHICLE_EXPENSES],
+    items: [{ href: "/admin/reports", label: "General Reports", keywords: "analytics statistics" }, { href: "/admin/reports/performance", label: "Performance Report", keywords: "emirate team profit revenue expenses orders comparison analytics" }, WORK_REPORTS, FINANCIAL_REPORTS, VEHICLE_EXPENSES],
   },
   {
     id: "marketing", label: "Marketing & Blog", icon: "marketing",
