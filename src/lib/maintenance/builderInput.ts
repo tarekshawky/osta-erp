@@ -41,6 +41,9 @@ export const SubmitInput = EvaluateInput.extend({
   activationDate: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/).default(""),
   // The customer pressed "Request a Custom Quotation" (the price is then a request, not a commitment).
   wantsQuote: z.boolean().default(false),
+  // The customer's acceptance of the Maintenance Service Agreement: all five statements ticked, in the language they read it in.
+  // Needed to confirm a subscription; a request for a custom quotation commits to nothing and needs none.
+  agreement: z.object({ accepted: z.array(z.boolean()).length(5), lang: z.enum(["en", "ar"]).default("en") }).optional(),
 });
 export type SubmitInput = z.infer<typeof SubmitInput>;
 

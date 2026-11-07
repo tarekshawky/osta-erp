@@ -10,17 +10,23 @@
 export interface EmailSender {
   // adminCopy (default true): the admin address also gets the message. Mail meant only for a customer, such as a password reset
   // link, sets it to false.
-  send(params: { subject: string; html: string; text: string; to?: string[]; adminCopy?: boolean }): Promise<void>;
+  send(params: { subject: string; html: string; text: string; to?: string[]; adminCopy?: boolean; attachments?: EmailAttachment[] }): Promise<void>;
+}
+
+// A file sent with the email (for example the agreement PDF).
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
 }
 
 class ConsoleEmailSender implements EmailSender {
-  async send({ subject, text, to }: { subject: string; html: string; text: string; to?: string[]; adminCopy?: boolean }) {
-    console.log(`[EMAIL to ${to?.length ? to.join(", ") : "admin"}] ${subject}\n${text}`);
+  async send({ subject, text, to, attachments }: { subject: string; html: string; text: string; to?: string[]; adminCopy?: boolean; attachments?: EmailAttachment[] }) {
+    console.log(`[EMAIL to ${to?.length ? to.join(", ") : "admin"}] ${subject}${attachments?.length ? ` (+${attachments.length} attachment)` : ""}\n${text}`);
   }
 }
 
 class ResendEmailSender implements EmailSender {
-  async send({ subject, html, text, to: extra, adminCopy = true }: { subject: string; html: string; text: string; to?: string[]; adminCopy?: boolean }) {
+  async send({ subject, html, text, to: extra, adminCopy = true, attachments }: { subject: string; html: string; text: string; to?: string[]; adminCopy?: boolean; attachments?: EmailAttachment[] }) {
     const apiKey = process.env.RESEND_API_KEY!;
     // The admin address always gets a copy; a form can add its own recipients.
     const to = [...new Set([...(adminCopy ? [process.env.ADMIN_NOTIFICATION_EMAIL!] : []), ...(extra ?? [])])];
@@ -33,7 +39,7 @@ class ResendEmailSender implements EmailSender {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from, to, subject, html, text }),
+      body: JSON.stringify({ from, to, subject, html, text, ...(attachments?.length ? { attachments: attachments.map((a) => ({ filename: a.filename, content: a.content.toString("base64") })) } : {}) }),
     });
 
     if (!res.ok) {

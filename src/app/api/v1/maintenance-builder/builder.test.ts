@@ -3,8 +3,11 @@ import { NextRequest } from "next/server";
 import { STANDARD_PACKAGES, STANDARD_SERVICES, type Pkg } from "@/lib/maintenance/packages";
 import { defaultBuilder, type Option } from "@/lib/maintenance/builder";
 
-const db = vi.hoisted(() => ({ load: vi.fn(), create: vi.fn(), count: vi.fn(), logCreate: vi.fn(), notify: vi.fn() }));
-vi.mock("@/lib/prisma", () => ({ prisma: { maintenanceSubscription: { create: db.create }, aiFinderLog: { count: db.count, create: db.logCreate } } }));
+const db = vi.hoisted(() => ({ load: vi.fn(), create: vi.fn(), remove: vi.fn(), count: vi.fn(), logCreate: vi.fn(), notify: vi.fn(), contract: vi.fn(), afterSub: vi.fn() }));
+vi.mock("@/lib/prisma", () => ({ prisma: { maintenanceSubscription: { create: db.create, delete: db.remove }, aiFinderLog: { count: db.count, create: db.logCreate } } }));
+vi.mock("@/lib/contracts/service", () => ({ createFromSubmission: db.contract, afterSubmission: db.afterSub }));
+vi.mock("@/lib/contracts/terms", () => ({ activeTerms: async () => ({ id: "t1", version: 3, clauses: [] }) }));
+vi.mock("next/server", async (orig) => ({ ...(await orig<typeof import("next/server")>()), after: (fn: () => unknown) => void fn() }));
 vi.mock("@/lib/maintenance/data", () => ({ loadEngineData: db.load }));
 vi.mock("@/lib/emailSender", () => ({ notifyAdminOfMaintenanceSubscription: db.notify }));
 import { POST as evaluate } from "./evaluate/route";
@@ -21,7 +24,7 @@ const options: Option[] = [
 ];
 const engine = (enabled = true, fields: Partial<ReturnType<typeof defaultBuilder>["fields"]> = {}) => {
   const config = defaultBuilder();
-  return { groupId: null, pub: { packages, services }, config: { ...config, enabled, fields: { ...config.fields, ...fields } }, options, tax: { vatRatePercent: 5, pricesIncludeVat: true } };
+  return { groupId: null, pub: { packages, services, terms: { en: [], ar: [] } }, config: { ...config, enabled, fields: { ...config.fields, ...fields } }, options, tax: { vatRatePercent: 5, pricesIncludeVat: true } };
 };
 const post = (path: string, body: unknown) => new NextRequest(`http://x/api/v1/maintenance-builder/${path}`, { method: "POST", body: JSON.stringify(body), headers: { "x-forwarded-for": "6.6.6.6" } });
 const json = async (r: Response) => (await r.json()) as { data?: Record<string, never>; error?: { code: string } };
@@ -29,7 +32,8 @@ const json = async (r: Response) => (await r.json()) as { data?: Record<string, 
 beforeEach(() => {
   for (const m of Object.values(db)) m.mockReset();
   db.load.mockResolvedValue(engine());
-  db.count.mockResolvedValue(0); db.logCreate.mockResolvedValue({}); db.notify.mockResolvedValue(undefined); db.create.mockResolvedValue({ id: "r1" });
+  db.count.mockResolvedValue(0); db.logCreate.mockResolvedValue({}); db.notify.mockResolvedValue(undefined); db.create.mockResolvedValue({ id: "r1" }); db.remove.mockResolvedValue({}); db.afterSub.mockResolvedValue({});
+  db.contract.mockResolvedValue({ id: "c1", number: "OSTA-AGR-2026-000001", requestNumber: "OSTA-REQ-2026-000001", accessToken: "tok123" });
 });
 
 describe("POST /maintenance-builder/evaluate", () => {
@@ -71,9 +75,36 @@ describe("POST /maintenance-builder/submit", () => {
     expect(row.details.lines.find((l: { label: string }) => l.label === "Water Heater Maintenance")).toMatchObject({ amount: 80 });
     expect(db.notify).toHaveBeenCalledTimes(1);
   });
+  const agreement = { accepted: [true, true, true, true, true], lang: "ar" };
   it("an accepted upgrade is stored as the chosen package", async () => {
-    await submit(post("submit", { ...body, chosenId: "gold" }));
+    await submit(post("submit", { ...body, chosenId: "gold", agreement }));
     expect(db.create.mock.calls[0][0].data).toMatchObject({ packageName: "Gold Package", packagePrice: 1499, status: "New Request" });
+  });
+  it("confirming a subscription needs every statement of the agreement ticked, a quotation request does not", async () => {
+    const priced = { ...body, chosenId: "gold", needs: { ...body.needs, optionIds: [] } };
+    const none = await submit(post("submit", priced));
+    expect(none.status).toBe(400); expect((await json(none)).error?.code).toBe("agreement_required");
+    expect((await submit(post("submit", { ...priced, agreement: { accepted: [true, true, true, true, false], lang: "en" } }))).status).toBe(400);
+    expect((await submit(post("submit", { ...priced, agreement: { accepted: [true, true], lang: "en" } }))).status).toBe(400); // five statements, no fewer
+    expect(db.create).not.toHaveBeenCalled(); expect(db.contract).not.toHaveBeenCalled();
+    expect((await submit(post("submit", { ...body, wantsQuote: true }))).status).toBe(201);
+    expect(db.contract).not.toHaveBeenCalled(); // no commitment, no agreement
+  });
+  it("an accepted subscription creates the agreement from the SERVER's price, records the acceptance and builds the PDF afterwards", async () => {
+    const r = await submit(post("submit", { ...body, chosenId: "gold", needs: { ...body.needs, optionIds: [] }, agreement }));
+    expect(r.status).toBe(201);
+    const out = (await json(r)).data as unknown as { contract: { number: string; url: string } };
+    expect(out.contract).toMatchObject({ number: "OSTA-AGR-2026-000001" }); expect(out.contract.url).toContain("/agreement/tok123");
+    const arg = db.contract.mock.calls[0][0];
+    expect(arg).toMatchObject({ subscriptionId: "r1", lang: "ar", ip: "6.6.6.6" });
+    expect(arg.snapshot.pricing.total).toBe(1499); expect(arg.snapshot.terms.version).toBe(3); expect(arg.snapshot.package.nameEn).toBe("Gold Package");
+    expect(arg.snapshot.customer.email).toBe("sara@example.com"); expect(arg.snapshot.property.address).toBe("Tower 1");
+    expect(db.afterSub).toHaveBeenCalledWith("c1");
+  });
+  it("takes the request back when the agreement cannot be created, so the customer can try again", async () => {
+    db.contract.mockRejectedValue(new Error("db down"));
+    const r = await submit(post("submit", { ...body, chosenId: "gold", needs: { ...body.needs, optionIds: [] }, agreement }));
+    expect(r.status).toBe(500); expect(db.remove).toHaveBeenCalledWith({ where: { id: "r1" } });
   });
   it("the customer asking for a quotation is recorded as such", async () => {
     await submit(post("submit", { ...body, selectedId: "gold", chosenId: "gold", needs: { ...body.needs, acUnits: 4, optionIds: [] }, wantsQuote: true }));

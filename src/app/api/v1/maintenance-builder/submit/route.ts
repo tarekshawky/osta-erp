@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { clientIp, isLimited, recordAttempt } from "@/lib/authLimits";
 import { notifyAdminOfMaintenanceSubscription } from "@/lib/emailSender";
@@ -7,8 +7,14 @@ import { evaluateBuilder } from "@/lib/maintenance/builder";
 import { SubmitInput, toNeeds } from "@/lib/maintenance/builderInput";
 import { activationDateProblem } from "@/lib/maintenance/packages";
 import { apiSuccess, apiError, parseJsonBody, corsPreflight } from "@/lib/apiResponse";
+import { createFromSubmission, afterSubmission } from "@/lib/contracts/service";
+import { buildSnapshot } from "@/lib/contracts/snapshot";
+import { activeTerms } from "@/lib/contracts/terms";
+import { agreementUrl } from "@/lib/contracts/notify";
 
 export const dynamic = "force-dynamic";
+// Building the agreement PDF runs after the response and may take a few seconds on a cold start.
+export const maxDuration = 60;
 
 export function OPTIONS() {
   return corsPreflight();
@@ -41,6 +47,13 @@ export async function POST(request: NextRequest) {
   if (!type) return apiError("invalid_request", "Choose a property type.", 400);
 
   const ip = clientIp(request.headers);
+  // Confirming a subscription commits the customer, so every statement of the agreement must be accepted first (a quotation request is not a commitment).
+  const needs0 = toNeeds(input.needs);
+  const preview = evaluateBuilder({ packages, services, options: data.options, config: data.config, tax: data.tax, selectedId: selected.id, chosenId: chosen.id, needs: needs0 });
+  const isQuote = input.wantsQuote || preview.breakdown.quote;
+  if (!isQuote && !(input.agreement && input.agreement.accepted.every(Boolean))) {
+    return apiError("agreement_required", "Please read the agreement and accept every statement before confirming your subscription.", 400);
+  }
   if (await isLimited(prisma, "subscribe", ip, input.customer.email)) return apiError("rate_limited", "Too many requests. Please try again later or contact us on WhatsApp.", 429);
 
   const needs = toNeeds(input.needs);
@@ -78,5 +91,26 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error("[maintenance-builder] admin notification failed:", err instanceof Error ? err.message : "unknown");
   }
-  return apiSuccess({ received: true, id: row.id, quoteRequested: quote }, { status: 201 });
+  // An accepted subscription becomes an agreement: its record is frozen now, and the draft PDF and the customer's email follow.
+  let contract: { number: string; requestNumber: string; url: string } | null = null;
+  if (!quote && input.agreement) {
+    try {
+      const terms = await activeTerms(input.group);
+      const snapshot = buildSnapshot({
+        groupKey: input.group,
+        customer: { name: input.customer.name, phone: input.customer.phone, whatsapp: input.customer.whatsapp, email: input.customer.email },
+        property: { emirate: input.customer.emirate, area: input.customer.area, address: input.customer.address, type: type.en, bedrooms: input.property.bedrooms, bathrooms: input.property.bathrooms, floors: input.property.floors, size: input.property.size || null, acUnits: input.needs.acUnits, notes: input.notes },
+        pkg: chosen, services, breakdown: b, pageTerms: data.pub.terms, terms,
+      });
+      const created = await createFromSubmission({ subscriptionId: row.id, lang: input.agreement.lang, groupKey: input.group, snapshot, method: "Website – package builder", ip, agent: request.headers.get("user-agent") ?? "" });
+      contract = { number: created.number, requestNumber: created.requestNumber, url: agreementUrl(created.accessToken) };
+      after(() => afterSubmission(created.id));
+    } catch (err) {
+      // No agreement means no commitment: take the request back so the customer can simply try again.
+      console.error("[maintenance-builder] agreement creation failed:", err instanceof Error ? err.message : "unknown");
+      await prisma.maintenanceSubscription.delete({ where: { id: row.id } }).catch(() => undefined);
+      return apiError("server_error", "We could not create your agreement. Please try again in a moment.", 500);
+    }
+  }
+  return apiSuccess({ received: true, id: row.id, quoteRequested: quote, contract }, { status: 201 });
 }

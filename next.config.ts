@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders() }];
   },
+  // The agreement PDFs are drawn by a serverless Chromium whose binary is read from disk at run time, so the functions that make
+  // PDFs must ship it along.
+  outputFileTracingIncludes: {
+    "/api/v1/maintenance-builder/submit": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/v1/agreements/*/pdf": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/v1/me/contracts/*/pdf": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/admin/contracts": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/admin/contracts/**": ["./node_modules/@sparticuz/chromium/bin/**"],
+  },
   // Long articles and pages are saved through server actions; the default 1 MB would cut them off.
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
   // The public job pages are served on the website at /join-osta-team/jobs. The dashboard answers on that path as well,

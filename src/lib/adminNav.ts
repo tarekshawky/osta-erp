@@ -54,6 +54,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/customers", label: "Customers", keywords: "clients" },
       { href: "/admin/quotations", label: "Quotations", keywords: "quotes estimates" },
       { href: "/admin/invoices", label: "Invoices", keywords: "billing payments" },
+      { href: "/admin/contracts", label: "Contracts & Agreements", keywords: "maintenance service agreement amc subscriptions pending approval payment link terms conditions pdf contract عقود اتفاقيات", children: [{ href: "/admin/contracts/terms", label: "Terms & Conditions" }, { href: "/admin/contracts/settings", label: "Payment settings" }] },
       { href: "/admin/warranty-certificates", label: "Warranty Certificates", keywords: "guarantee" },
       WORK_REPORTS,
     ],

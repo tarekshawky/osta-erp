@@ -111,8 +111,8 @@ model Employee {
   ordersRescheduled            Order[]                        @relation("OrderRescheduledBy")
   orderStatusChanges           OrderStatusChange[]
   invoiceStatusChanges         InvoiceStatusChange[]
-  invoicePayments              InvoicePayment[]              @relation("InvoicePaymentBy")
-  customerPurchasesCreated     CustomerPurchase[]            @relation("CustomerPurchaseCreatedBy")
+  invoicePayments              InvoicePayment[]               @relation("InvoicePaymentBy")
+  customerPurchasesCreated     CustomerPurchase[]             @relation("CustomerPurchaseCreatedBy")
   customersCreated             Customer[]                     @relation("CustomerCreatedBy")
   customersUpdated             Customer[]                     @relation("CustomerUpdatedBy")
   blogPostsCreated             BlogPost[]                     @relation("BlogPostCreatedBy")
@@ -151,46 +151,47 @@ model Employee {
 }
 
 model Customer {
-  id               String               @id @default(cuid())
-  code             String               @unique
-  type             CustomerType         @default(INDIVIDUAL)
-  name             String
-  companyName      String?
-  trn              String?
-  phone            String               @unique
-  whatsapp         String?
-  email            String?              @unique
-  passwordHash     String?
-  language         String               @default("Arabic")
-  emirate          String
-  city             String?
-  area             String?
-  buildingType     String?
-  buildingName     String?
-  flatNo           String?
-  address          String?
-  locationUrl      String?
-  notes            String?
-  status           String               @default("Active")
+  id                String               @id @default(cuid())
+  code              String               @unique
+  type              CustomerType         @default(INDIVIDUAL)
+  name              String
+  companyName       String?
+  trn               String?
+  phone             String               @unique
+  whatsapp          String?
+  email             String?              @unique
+  passwordHash      String?
+  language          String               @default("Arabic")
+  emirate           String
+  city              String?
+  area              String?
+  buildingType      String?
+  buildingName      String?
+  flatNo            String?
+  address           String?
+  locationUrl       String?
+  notes             String?
+  status            String               @default("Active")
   // First-touch attribution: how this customer originally found OSTA. Set once at
   // creation (by whichever flow -- Add Customer, New Order, or New Invoice -- created
   // the record) and not overwritten afterward, unlike Invoice.leadSource which is
   // chosen per-invoice and drives the Marketing dashboard's revenue attribution.
-  leadSource       String               @default("Organic")
-  createdById      String?
-  createdBy        Employee?            @relation("CustomerCreatedBy", fields: [createdById], references: [id])
-  updatedById      String?
-  updatedBy        Employee?            @relation("CustomerUpdatedBy", fields: [updatedById], references: [id])
-  passwordResets   PasswordResetToken[]
-  reviews          OrderReview[]
-  updatedAt        DateTime             @default(now()) @updatedAt
-  invoices         Invoice[]
-  orders           Order[]
-  quotations       Quotation[]
-  customerNotes    CustomerNote[]
-  rentalAgreements RentalAgreement[]
+  leadSource        String               @default("Organic")
+  createdById       String?
+  createdBy         Employee?            @relation("CustomerCreatedBy", fields: [createdById], references: [id])
+  updatedById       String?
+  updatedBy         Employee?            @relation("CustomerUpdatedBy", fields: [updatedById], references: [id])
+  passwordResets    PasswordResetToken[]
+  reviews           OrderReview[]
+  updatedAt         DateTime             @default(now()) @updatedAt
+  invoices          Invoice[]
+  orders            Order[]
+  quotations        Quotation[]
+  customerNotes     CustomerNote[]
+  rentalAgreements  RentalAgreement[]
   customerPurchases CustomerPurchase[]
-  createdAt        DateTime             @default(now())
+  contracts         Contract[]
+  createdAt         DateTime             @default(now())
 }
 
 model CustomerNote {
@@ -317,32 +318,32 @@ model InvoiceItem {
 }
 
 model Order {
-  id               String       @id @default(cuid())
-  number           String       @unique
-  date             DateTime     @default(now())
-  scheduledAt      DateTime?
-  customerId       String
-  customer         Customer     @relation(fields: [customerId], references: [id])
-  locationUrl      String?
-  orderType        String       @default("New Order")
-  priceAgreed      String       @default("No")
-  customerLanguage String       @default("Arabic")
-  leadSource       String       @default("Organic")
-  notes            String?
-  status           String       @default("Assigned")
-  teamId           String?
-  team             Team?        @relation(fields: [teamId], references: [id])
+  id                String             @id @default(cuid())
+  number            String             @unique
+  date              DateTime           @default(now())
+  scheduledAt       DateTime?
+  customerId        String
+  customer          Customer           @relation(fields: [customerId], references: [id])
+  locationUrl       String?
+  orderType         String             @default("New Order")
+  priceAgreed       String             @default("No")
+  customerLanguage  String             @default("Arabic")
+  leadSource        String             @default("Organic")
+  notes             String?
+  status            String             @default("Assigned")
+  teamId            String?
+  team              Team?              @relation(fields: [teamId], references: [id])
   // Nullable to support customer self-service booking via the API (status "Requested"),
   // which has no employee assigned or creating it yet -- an admin triages it via the
   // Edit Order form, which assigns both and flips status to "Assigned".
-  assignedToId     String?
-  assignedTo       Employee?    @relation("OrderAssignedTo", fields: [assignedToId], references: [id])
-  createdById      String?
-  createdBy        Employee?    @relation("OrderCreatedBy", fields: [createdById], references: [id])
-  invoiceId        String?      @unique
-  invoice          Invoice?     @relation(fields: [invoiceId], references: [id])
-  review           OrderReview?
-  jobs             Job[]
+  assignedToId      String?
+  assignedTo        Employee?          @relation("OrderAssignedTo", fields: [assignedToId], references: [id])
+  createdById       String?
+  createdBy         Employee?          @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  invoiceId         String?            @unique
+  invoice           Invoice?           @relation(fields: [invoiceId], references: [id])
+  review            OrderReview?
+  jobs              Job[]
   customerPurchases CustomerPurchase[]
 
   acceptedAt    DateTime?
@@ -1512,32 +1513,32 @@ model MaintenanceOption {
 }
 
 model MaintenancePackage {
-  id            String   @id @default(cuid())
+  id            String                    @id @default(cuid())
   nameEn        String
   nameAr        String
-  descriptionEn String   @default("")
-  descriptionAr String   @default("")
-  suitableEn    String   @default("")
-  suitableAr    String   @default("")
+  descriptionEn String                    @default("")
+  descriptionAr String                    @default("")
+  suitableEn    String                    @default("")
+  suitableAr    String                    @default("")
   groupId       String?
   // The yearly price; empty for a "Custom Quotation" package, which shows priceText instead. pricePrefix is for "Starting from".
   price         Float?
-  pricePrefixEn String   @default("")
-  pricePrefixAr String   @default("")
-  priceTextEn   String   @default("")
-  priceTextAr   String   @default("")
+  pricePrefixEn String                    @default("")
+  pricePrefixAr String                    @default("")
+  priceTextEn   String                    @default("")
+  priceTextAr   String                    @default("")
   // [{ en, ar }]: the bullet list shown on the card. Empty = the card lists the included services with their quantities.
-  bullets       Json     @default("[]")
+  bullets       Json                      @default("[]")
   maxAcUnits    Int?
-  badgeEn       String   @default("")
-  badgeAr       String   @default("")
-  highlighted   Boolean  @default(false)
-  active        Boolean  @default(true)
-  sortOrder     Int      @default(0)
+  badgeEn       String                    @default("")
+  badgeAr       String                    @default("")
+  highlighted   Boolean                   @default(false)
+  active        Boolean                   @default(true)
+  sortOrder     Int                       @default(0)
   // [{ serviceId, quantityEn, quantityAr, shortEn?, shortAr? }]: what the package includes and how much of it.
-  lines         Json     @default("[]")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now()) @updatedAt
+  lines         Json                      @default("[]")
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @default(now()) @updatedAt
   subscriptions MaintenanceSubscription[]
 
   @@index([active, sortOrder])
@@ -1560,44 +1561,177 @@ model MaintenanceSettings {
 
 // A customer's "Subscribe now" request. The package name and price are copied at the time, so later edits never rewrite history.
 model MaintenanceSubscription {
-  id             String              @id @default(cuid())
-  packageId      String?
-  package        MaintenancePackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
-  packageName    String
-  packagePrice   Float?
-  groupKey       String              @default("")
+  id               String              @id @default(cuid())
+  packageId        String?
+  package          MaintenancePackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  packageName      String
+  packagePrice     Float?
+  groupKey         String              @default("")
   // "subscribe" (a household's subscription) or "quote" (a business asking for a quotation)
-  kind           String              @default("subscribe")
-  company        String              @default("")
-  message        String              @default("")
+  kind             String              @default("subscribe")
+  company          String              @default("")
+  message          String              @default("")
   // Smart Package Builder requests: the customer's extra details, the package the system suggested, and the price worked out by the server.
-  whatsapp       String              @default("")
-  area           String              @default("")
-  address        String              @default("")
-  propertySize   Float?
-  bathrooms      Int                 @default(0)
-  floors         Int                 @default(0)
-  suggestedPackage String            @default("")
-  subtotal       Float?
-  vatAmount      Float?
-  total          Float?
-  quoteRequested Boolean             @default(false)
-  details        Json                @default("{}")
-  name           String
-  phone          String
-  email          String
-  emirate        String
-  location       String              @default("")
-  propertyType   String              @default("")
-  bedrooms       Int                 @default(0)
-  acUnits        Int                 @default(0)
-  activationDate DateTime?
-  status         String              @default("New") // New | Contacted | Activated | Cancelled
-  notes          String              @default("")
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @default(now()) @updatedAt
+  whatsapp         String              @default("")
+  area             String              @default("")
+  address          String              @default("")
+  propertySize     Float?
+  bathrooms        Int                 @default(0)
+  floors           Int                 @default(0)
+  suggestedPackage String              @default("")
+  subtotal         Float?
+  vatAmount        Float?
+  total            Float?
+  quoteRequested   Boolean             @default(false)
+  details          Json                @default("{}")
+  name             String
+  phone            String
+  email            String
+  emirate          String
+  location         String              @default("")
+  propertyType     String              @default("")
+  bedrooms         Int                 @default(0)
+  acUnits          Int                 @default(0)
+  activationDate   DateTime?
+  status           String              @default("New") // New | Contacted | Activated | Cancelled
+  notes            String              @default("")
+  contract         Contract?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @default(now()) @updatedAt
 
   @@index([status, createdAt])
+}
+
+// ---- Maintenance Service Agreements (Contracts & Agreements) ----
+
+// The Terms & Conditions an agreement is built from, in numbered versions. groupKey "" is the default set; a package page can have
+// its own. A published version is never edited: a change is a new version, and every agreement keeps the exact text it accepted.
+model ContractTerms {
+  id            String    @id @default(cuid())
+  groupKey      String    @default("")
+  version       Int
+  status        String    @default("draft") // draft | published | archived
+  clauses       Json      @default("[]") // [{ key, titleEn, titleAr, bodyEn, bodyAr }]
+  note          String    @default("")
+  publishedAt   DateTime?
+  createdById   String?
+  createdByName String    @default("")
+  createdAt     DateTime  @default(now())
+
+  @@unique([groupKey, version])
+  @@index([groupKey, status])
+}
+
+// One agreement per accepted subscription request. `snapshot` freezes everything the customer agreed to (package, quantities, price,
+// property, terms text), so a later change to a package, a price or the terms never alters it.
+model Contract {
+  id               String                   @id @default(cuid())
+  number           String                   @unique // OSTA-AGR-2026-000001
+  requestNumber    String @unique
+  version          Int                      @default(1)
+  // PENDING_APPROVAL | DRAFT | CHANGES_REQUESTED | AWAITING_PAYMENT | ACTIVE | CANCELLED | REJECTED  (Expired is worked out from expiryDate)
+  status           String                   @default("PENDING_APPROVAL")
+  lang             String                   @default("en")
+  groupKey         String                   @default("")
+  subscriptionId   String?                  @unique
+  subscription     MaintenanceSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  customerId       String?
+  customer         Customer?                @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  invoiceId        String?
+  renewedFromId    String?
+  snapshot         Json
+  termsId          String?
+  termsVersion     Int                      @default(1)
+  // How and when the customer accepted (recorded before the request is sent).
+  acceptedAt       DateTime?
+  acceptanceMethod String                   @default("")
+  acceptanceIp     String                   @default("")
+  acceptanceAgent  String                   @default("")
+  approvedTotal    Float?
+  approvedAt       DateTime?
+  approvedByName   String                   @default("")
+  // The secret in the customer's link (agreement page and payment link). Random and unguessable.
+  accessToken      String                   @unique
+  paymentStatus    String                   @default("unpaid") // unpaid | paid
+  paidAt           DateTime?
+  paymentMethod    String                   @default("")
+  paymentReference String                   @default("")
+  paymentNote      String                   @default("")
+  activationDate   DateTime?
+  expiryDate       DateTime?
+  rejectionReason  String                   @default("")
+  adminNotes       String                   @default("")
+  documents        ContractDocument[]
+  events           ContractEvent[]
+  addenda          ContractAddendum[]
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @default(now()) @updatedAt
+
+  @@index([status, createdAt])
+  @@index([customerId])
+  @@index([expiryDate])
+}
+
+// Settings for the agreements: what the customer is told about paying (until an online gateway is connected, how to pay).
+model ContractSettings {
+  id                    String   @id @default("default")
+  paymentInstructionsEn String   @default("")
+  paymentInstructionsAr String   @default("")
+  // Renewal reminders (days before expiry the admin list highlights an agreement).
+  renewalWindowDays     Int      @default(60)
+  updatedAt             DateTime @default(now()) @updatedAt
+}
+
+// The PDF files, kept exactly as issued (a draft is never overwritten by the final one).
+model ContractDocument {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  kind       String // draft | final | addendum
+  addendumId String?
+  lang       String   @default("en")
+  bytes      Bytes
+  size       Int      @default(0)
+  sha256     String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([contractId, kind, createdAt])
+}
+
+// The audit trail: every submission, review, approval, payment and amendment.
+model ContractEvent {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  kind       String
+  actorType  String   @default("system") // customer | admin | system
+  actorId    String?
+  actorName  String   @default("")
+  note       String   @default("")
+  data       Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@index([contractId, createdAt])
+}
+
+// A change agreed after the contract was accepted: the original is never edited, an addendum records the change.
+model ContractAddendum {
+  id           String    @id @default(cuid())
+  contractId   String
+  contract     Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  number       String    @unique // OSTA-ADD-2026-000001
+  titleEn      String    @default("")
+  titleAr      String    @default("")
+  bodyEn       String    @default("")
+  bodyAr       String    @default("")
+  amountChange Float     @default(0)
+  status       String    @default("issued") // issued | accepted | cancelled
+  acceptedAt   DateTime?
+  acceptedNote String    @default("")
+  issuedByName String    @default("")
+  createdAt    DateTime  @default(now())
+
+  @@index([contractId, createdAt])
 }
 
 // Immutable snapshot (content + SEO) created on every manual save, publish and restore.
