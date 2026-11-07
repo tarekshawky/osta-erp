@@ -6,7 +6,8 @@ import { requireEmployee } from "@/lib/auth";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { revalidateSite } from "@/lib/cms/publish";
 import { asBullets, asLines, loadServices } from "@/lib/maintenance/data";
-import { seedSet } from "@/lib/maintenance/seeds";
+import { STANDARD_OPTIONS, seedSet } from "@/lib/maintenance/seeds";
+import { parseBuilder, type BuilderConfig } from "@/lib/maintenance/builder";
 import { SUBSCRIPTION_STATUSES, packageProblem, serviceProblem, type Bullet, type PkgLine, type PkgSettings } from "@/lib/maintenance/packages";
 
 export type MResult = { ok: boolean; error?: string; id?: string };
@@ -40,7 +41,7 @@ export async function savePackage(id: string | null, input: PackageInput): Promi
   const groupId = input.groupId || null;
   if (groupId && !(await prisma.maintenanceGroup.findUnique({ where: { id: groupId }, select: { id: true } }))) return fail("This group no longer exists.");
   const services = await loadServices(groupId);
-  const lines = input.lines.map((l) => ({ serviceId: l.serviceId, quantityEn: l.quantityEn.trim(), quantityAr: l.quantityAr.trim(), ...(l.shortEn?.trim() ? { shortEn: l.shortEn.trim() } : {}), ...(l.shortAr?.trim() ? { shortAr: l.shortAr.trim() } : {}) }));
+  const lines = input.lines.map((l) => ({ serviceId: l.serviceId, quantityEn: l.quantityEn.trim(), quantityAr: l.quantityAr.trim(), ...(l.shortEn?.trim() ? { shortEn: l.shortEn.trim() } : {}), ...(l.shortAr?.trim() ? { shortAr: l.shortAr.trim() } : {}), ...(typeof l.limit === "number" && Number.isFinite(l.limit) ? { limit: l.limit } : {}) }));
   const bullets = asBullets(input.bullets);
   const problem = packageProblem({ ...input, lines, bullets }, new Set(services.map((s) => s.id)));
   if (problem) return fail(problem);
@@ -121,14 +122,14 @@ export async function movePackage(id: string, direction: -1 | 1): Promise<MResul
 }
 
 // ---- services ----
-export type ServiceInput = { groupId: string | null; nameEn: string; nameAr: string; showInComparison: boolean };
+export type ServiceInput = { groupId: string | null; nameEn: string; nameAr: string; showInComparison: boolean; metric: "" | "handyman_hours" | "visits" };
 
 export async function saveService(id: string | null, input: ServiceInput): Promise<MResult> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return fail(g.error);
   const problem = serviceProblem(input.nameEn, input.nameAr);
   if (problem) return fail(problem);
-  const names = { nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), showInComparison: input.showInComparison };
+  const names = { nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), showInComparison: input.showInComparison, metric: input.metric === "handyman_hours" || input.metric === "visits" ? input.metric : "" };
   if (id) {
     if (!(await prisma.maintenanceService.findUnique({ where: { id }, select: { id: true } }))) return fail("This service no longer exists.");
     await prisma.maintenanceService.update({ where: { id }, data: names });
@@ -234,7 +235,7 @@ export async function loadReadySet(setKey: string): Promise<MResult> {
   await prisma.$transaction(async (tx) => {
     if (set.group) groupId = (await tx.maintenanceGroup.create({ data: { ...set.group, ...set.settings, sortOrder: (await tx.maintenanceGroup.count()) + 1 } })).id;
     let n = 0;
-    for (const s of set.services) ids.set(s.key, (await tx.maintenanceService.create({ data: { groupId, nameEn: s.nameEn, nameAr: s.nameAr, showInComparison: s.showInComparison, sortOrder: ++n } })).id);
+    for (const s of set.services) ids.set(s.key, (await tx.maintenanceService.create({ data: { groupId, nameEn: s.nameEn, nameAr: s.nameAr, showInComparison: s.showInComparison, metric: s.metric ?? "", sortOrder: ++n } })).id);
     n = 0;
     for (const p of set.packages) {
       await tx.maintenancePackage.create({
@@ -242,7 +243,7 @@ export async function loadReadySet(setKey: string): Promise<MResult> {
           groupId, nameEn: p.nameEn, nameAr: p.nameAr, suitableEn: p.suitableEn, suitableAr: p.suitableAr, price: p.price, pricePrefixEn: p.pricePrefixEn ?? "", pricePrefixAr: p.pricePrefixAr ?? "",
           priceTextEn: p.priceTextEn ?? "", priceTextAr: p.priceTextAr ?? "", maxAcUnits: p.maxAcUnits, badgeEn: p.badgeEn, badgeAr: p.badgeAr, highlighted: p.highlighted, sortOrder: ++n,
           bullets: p.bullets as never,
-          lines: p.lines.map((l) => ({ serviceId: ids.get(l.service)!, quantityEn: l.en, quantityAr: l.ar, ...(l.shortEn ? { shortEn: l.shortEn } : {}), ...(l.shortAr ? { shortAr: l.shortAr } : {}) })) as never,
+          lines: p.lines.map((l) => ({ serviceId: ids.get(l.service)!, quantityEn: l.en, quantityAr: l.ar, ...(l.shortEn ? { shortEn: l.shortEn } : {}), ...(l.shortAr ? { shortAr: l.shortAr } : {}), ...(l.limit != null ? { limit: l.limit } : {}) })) as never,
         },
       });
     }
@@ -270,4 +271,69 @@ export async function updateSubscription(id: string, status: string, notes: stri
 export async function listSubscriptions() {
   await requireEmployee("ADMIN");
   return prisma.maintenanceSubscription.findMany({ orderBy: { createdAt: "desc" }, take: 500 });
+}
+
+// ---- Smart Package Builder ----
+export async function saveBuilder(groupId: string | null, input: BuilderConfig): Promise<MResult> {
+  const g = await guardPermission("pages.edit");
+  if (!g.ok) return fail(g.error);
+  // The stored config is always the repaired one, so a bad value can never reach the website.
+  const config = parseBuilder(input);
+  if (groupId) {
+    if (!(await prisma.maintenanceGroup.findUnique({ where: { id: groupId }, select: { id: true } }))) return fail("This group no longer exists.");
+    await prisma.maintenanceGroup.update({ where: { id: groupId }, data: { builder: config as never } });
+  } else {
+    await prisma.maintenanceSettings.upsert({ where: { id: "default" }, update: { builder: config as never }, create: { id: "default", builder: config as never } });
+  }
+  await writeAudit(g.admin, "maintenance.builder.save", groupId ? "MaintenanceGroup" : "MaintenanceSettings", groupId ?? "default", null, { enabled: config.enabled, calculator: config.calculator });
+  refresh();
+  return { ok: true };
+}
+
+export type OptionInput = { groupId: string | null; category: string; nameEn: string; nameAr: string; serviceId: string | null; extraPrice: number | null; upgradeTrigger: boolean; active: boolean };
+
+export async function saveOption(id: string | null, input: OptionInput): Promise<MResult> {
+  const g = await guardPermission("pages.edit");
+  if (!g.ok) return fail(g.error);
+  const problem = serviceProblem(input.nameEn, input.nameAr);
+  if (problem) return fail(problem);
+  if (input.extraPrice != null && (!Number.isFinite(input.extraPrice) || input.extraPrice < 0 || input.extraPrice > 1_000_000)) return fail("The extra price must be 0 or more (leave it empty for a quotation).");
+  const groupId = input.groupId || null;
+  if (input.serviceId && !(await prisma.maintenanceService.findFirst({ where: { id: input.serviceId, groupId }, select: { id: true } }))) return fail("The linked service does not belong to this group.");
+  const data = { category: input.category.trim().slice(0, 40) || "general", nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), serviceId: input.serviceId || null, extraPrice: input.extraPrice, upgradeTrigger: input.upgradeTrigger, active: input.active };
+  if (id) {
+    if (!(await prisma.maintenanceOption.findUnique({ where: { id }, select: { id: true } }))) return fail("This option no longer exists.");
+    await prisma.maintenanceOption.update({ where: { id }, data });
+  } else {
+    const last = await prisma.maintenanceOption.findFirst({ where: { groupId }, orderBy: { sortOrder: "desc" }, select: { sortOrder: true } });
+    await prisma.maintenanceOption.create({ data: { ...data, groupId, sortOrder: (last?.sortOrder ?? 0) + 1 } });
+  }
+  await writeAudit(g.admin, id ? "maintenance.option.update" : "maintenance.option.create", "MaintenanceOption", id, null, { nameEn: data.nameEn, extraPrice: data.extraPrice });
+  refresh();
+  return { ok: true };
+}
+
+export async function deleteOption(id: string): Promise<MResult> {
+  const g = await guardPermission("pages.delete");
+  if (!g.ok) return fail(g.error);
+  const o = await prisma.maintenanceOption.findUnique({ where: { id }, select: { nameEn: true } });
+  if (!o) return fail("This option no longer exists.");
+  await prisma.maintenanceOption.delete({ where: { id } });
+  await writeAudit(g.admin, "maintenance.option.delete", "MaintenanceOption", id, { nameEn: o.nameEn }, null);
+  refresh();
+  return { ok: true };
+}
+
+// The standard list of requirements (AC, plumbing, electrical, handyman), each linked to the package service it belongs to by name.
+// Only into a group that has no options yet; anything not matching a service is created unlinked (an extra / quotation).
+export async function loadStandardOptions(groupId: string | null): Promise<MResult> {
+  const g = await guardPermission("pages.edit");
+  if (!g.ok) return fail(g.error);
+  if ((await prisma.maintenanceOption.count({ where: { groupId } })) > 0) return fail("This group already has options. The standard list is only loaded into an empty one.");
+  const services = await prisma.maintenanceService.findMany({ where: { groupId }, select: { id: true, nameEn: true } });
+  const idOf = (name?: string) => services.find((s) => s.nameEn === name)?.id ?? null;
+  await prisma.maintenanceOption.createMany({ data: STANDARD_OPTIONS.map((o, i) => ({ groupId, category: o.category, nameEn: o.nameEn, nameAr: o.nameAr, serviceId: idOf(o.service), sortOrder: i + 1 })) });
+  await writeAudit(g.admin, "maintenance.options.load-standard", "MaintenanceOption", null, null, { count: STANDARD_OPTIONS.length });
+  refresh();
+  return { ok: true };
 }

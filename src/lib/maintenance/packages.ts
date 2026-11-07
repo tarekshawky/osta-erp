@@ -4,8 +4,9 @@ import { z } from "zod";
 // built from the packages themselves (so it always matches them), the checks on what an admin saves and on a customer's request.
 
 export type Lang = "en" | "ar";
-export type PkgLine = { serviceId: string; quantityEn: string; quantityAr: string; shortEn?: string; shortAr?: string };
-export type PkgService = { id: string; nameEn: string; nameAr: string; showInComparison: boolean };
+// limit: the number the package covers for this service (for example 2 handyman hours); the Smart Package Builder compares needs with it.
+export type PkgLine = { serviceId: string; quantityEn: string; quantityAr: string; shortEn?: string; shortAr?: string; limit?: number };
+export type PkgService = { id: string; nameEn: string; nameAr: string; showInComparison: boolean; metric?: string };
 export type Bullet = { en: string; ar: string };
 export type Pkg = {
   id: string; nameEn: string; nameAr: string; descriptionEn: string; descriptionAr: string; suitableEn: string; suitableAr: string;
@@ -90,6 +91,7 @@ export function packageProblem(p: { nameEn: string; nameAr: string; price: numbe
     if (seen.has(l.serviceId)) return "A service is listed twice in this package.";
     seen.add(l.serviceId);
     if (l.quantityEn.length > 120 || l.quantityAr.length > 120 || (l.shortEn?.length ?? 0) > 30 || (l.shortAr?.length ?? 0) > 30) return "A quantity is too long.";
+    if (l.limit != null && (!Number.isFinite(l.limit) || l.limit < 0 || l.limit > 100_000)) return "A limit must be a number from 0 up.";
   }
   if (PEST.test(`${p.nameEn} ${p.nameAr} ${p.lines.map((l) => `${l.quantityEn} ${l.quantityAr}`).join(" ")} ${(p.bullets ?? []).map((b) => `${b.en} ${b.ar}`).join(" ")}`)) return "Pest control cannot be part of a maintenance package.";
   return null;
@@ -105,7 +107,9 @@ export function serviceProblem(nameEn: string, nameAr: string): string | null {
 // ---- a customer's "Subscribe now" request ----
 export const EMIRATES = ["Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Al Ain", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"] as const;
 export const PROPERTY_TYPES = ["Apartment", "Villa"] as const;
-export const SUBSCRIPTION_STATUSES = ["New", "Contacted", "Activated", "Cancelled"] as const;
+// The request statuses. The first four are the older ones, still valid for requests made before the Smart Package Builder.
+export const REQUEST_STATUSES = ["New Request", "Under Review", "Upgrade Suggested", "Quotation Sent", "Customer Approved", "Payment Pending", "Paid", "Contract Activated", "Rejected"] as const;
+export const SUBSCRIPTION_STATUSES = [...REQUEST_STATUSES, "New", "Contacted", "Activated", "Cancelled"] as const;
 
 const base = {
   packageId: z.string().min(1).max(40),
@@ -149,24 +153,24 @@ export function activationDateProblem(date: string, now = Date.now()): string | 
 }
 
 // ---- the standard packages (loaded once from the admin, then edited freely) ----
-type SeedLine = { service: string; en: string; ar: string; shortEn?: string; shortAr?: string };
+type SeedLine = { service: string; en: string; ar: string; shortEn?: string; shortAr?: string; limit?: number };
 
 const visits = (n: number): [string, string] => [`${n} visit${n > 1 ? "s" : ""}/year`, n === 1 ? "زيارة واحدة في السنة" : n === 2 ? "زيارتان في السنة" : `${n} زيارات في السنة`];
 const callouts = (n: number): [string, string] => [`${n} callouts/year`, n === 2 ? "بلاغان في السنة" : `${n} بلاغات في السنة`];
 const times = (n: number): [string, string] => [`${n} times/year`, n === 2 ? "مرتان في السنة" : `${n} مرات في السنة`];
 const hours = (n: number): [string, string] => [`${n} hour${n > 1 ? "s" : ""}/year`, n === 1 ? "ساعة واحدة في السنة" : n === 2 ? "ساعتان في السنة" : `${n} ساعات في السنة`];
-const line = (service: string, [en, ar]: [string, string], short?: string): SeedLine => ({ service, en, ar, shortEn: short, shortAr: short });
+const line = (service: string, [en, ar]: [string, string], short?: string, limit?: number): SeedLine => ({ service, en, ar, shortEn: short, shortAr: short, ...(limit != null ? { limit } : {}) });
 const included = (service: string, en = "Included", ar = "مشمول"): SeedLine => ({ service, en, ar, shortEn: "✓", shortAr: "✓" });
 const withinHandyman = (service: string): SeedLine => ({ service, en: "Included within handyman allowance", ar: "مشمولة ضمن رصيد الهاندي مان" });
 const vents = (n: number): SeedLine => ({ service: "vents", en: `1 visit/year – up to ${n} vents`, ar: `زيارة واحدة في السنة – حتى ${n} فتحات`, shortEn: `${n} Vents`, shortAr: `${n} فتحات` });
 
-export const STANDARD_SERVICES: { key: string; nameEn: string; nameAr: string; showInComparison: boolean }[] = [
+export const STANDARD_SERVICES: { key: string; nameEn: string; nameAr: string; showInComparison: boolean; metric?: string }[] = [
   { key: "ac", nameEn: "Preventive AC Maintenance", nameAr: "الصيانة الوقائية للمكيفات", showInComparison: true },
   { key: "plumbing", nameEn: "Plumbing Inspection", nameAr: "فحص السباكة", showInComparison: true },
   { key: "electrical", nameEn: "Electrical Inspection", nameAr: "فحص الكهرباء", showInComparison: true },
   { key: "callouts", nameEn: "Maintenance Callouts", nameAr: "بلاغات الأعطال", showInComparison: true },
   { key: "balcony", nameEn: "Balcony Drain Cleaning", nameAr: "تنظيف مصارف البلكونة", showInComparison: true },
-  { key: "handyman", nameEn: "Handyman Services", nameAr: "خدمات الهاندي مان", showInComparison: true },
+  { key: "handyman", nameEn: "Handyman Services", nameAr: "خدمات الهاندي مان", showInComparison: true, metric: "handyman_hours" },
   { key: "carpentry", nameEn: "Minor Carpentry Works", nameAr: "أعمال النجارة البسيطة", showInComparison: false },
   { key: "painting", nameEn: "Minor Painting Touch-ups", nameAr: "رتوش الدهانات البسيطة", showInComparison: false },
   { key: "masonry", nameEn: "Minor Masonry Works", nameAr: "أعمال المحارة والإصلاحات البسيطة", showInComparison: false },
@@ -184,17 +188,17 @@ export const STANDARD_PACKAGES: { nameEn: string; nameAr: string; price: number;
   {
     nameEn: "Silver Package", nameAr: "الباقة الفضية", price: 999, maxAcUnits: 3, badgeEn: "", badgeAr: "", highlighted: false,
     suitableEn: "Apartments with up to 2 bedrooms – up to 3 AC units.", suitableAr: "الشقق حتى غرفتين – حتى 3 مكيفات.",
-    lines: [line("ac", visits(2), "2"), line("plumbing", visits(2), "2"), line("electrical", visits(2), "2"), line("callouts", callouts(4), "4"), line("balcony", times(3), "3"), line("handyman", hours(1), "1"), included("priority")],
+    lines: [line("ac", visits(2), "2"), line("plumbing", visits(2), "2"), line("electrical", visits(2), "2"), line("callouts", callouts(4), "4"), line("balcony", times(3), "3"), line("handyman", hours(1), "1", 1), included("priority")],
   },
   {
     nameEn: "Gold Package", nameAr: "الباقة الذهبية", price: 1499, maxAcUnits: 5, badgeEn: "Most Recommended", badgeAr: "الأكثر ترشيحاً", highlighted: true,
     suitableEn: "Apartments with up to 3 bedrooms – up to 5 AC units.", suitableAr: "الشقق حتى 3 غرف – حتى 5 مكيفات.",
-    lines: [line("ac", visits(2), "2"), line("plumbing", visits(2), "2"), line("electrical", visits(2), "2"), line("callouts", callouts(6), "6"), line("balcony", times(3), "3"), line("handyman", hours(2), "2"), withinHandyman("carpentry"), withinHandyman("painting"), vents(5), included("emergency"), included("priority")],
+    lines: [line("ac", visits(2), "2"), line("plumbing", visits(2), "2"), line("electrical", visits(2), "2"), line("callouts", callouts(6), "6"), line("balcony", times(3), "3"), line("handyman", hours(2), "2", 2), withinHandyman("carpentry"), withinHandyman("painting"), vents(5), included("emergency"), included("priority")],
   },
   {
     nameEn: "Platinum Package", nameAr: "الباقة البلاتينية", price: 2299, maxAcUnits: 8, badgeEn: "Premium Package", badgeAr: "الباقة المميزة", highlighted: false,
     suitableEn: "Large apartments and small villas – up to 8 AC units.", suitableAr: "الشقق الكبيرة والفلل الصغيرة – حتى 8 مكيفات.",
-    lines: [line("ac", visits(2), "2"), line("plumbing", visits(2), "2"), line("electrical", visits(2), "2"), line("callouts", callouts(8), "8"), line("balcony", times(4), "4"), line("handyman", hours(4), "4"), withinHandyman("carpentry"), withinHandyman("painting"), withinHandyman("masonry"), vents(10), included("emergency"), included("priority", "Included (top priority)", "مشمول (أولوية قصوى)")],
+    lines: [line("ac", visits(2), "2"), line("plumbing", visits(2), "2"), line("electrical", visits(2), "2"), line("callouts", callouts(8), "8"), line("balcony", times(4), "4"), line("handyman", hours(4), "4", 4), withinHandyman("carpentry"), withinHandyman("painting"), withinHandyman("masonry"), vents(10), included("emergency"), included("priority", "Included (top priority)", "مشمول (أولوية قصوى)")],
   },
 ];
 

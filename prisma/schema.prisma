@@ -1472,6 +1472,8 @@ model MaintenanceGroup {
   termsAr    String   @default("")
   // "subscribe" = Subscribe Now (property details form); "quote" = Request a Quote (business enquiry form)
   ctaMode    String   @default("subscribe")
+  // The Smart Package Builder's settings for this group (see maintenance/builder.ts); {} = defaults, builder off.
+  builder    Json     @default("{}")
   sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())
 }
@@ -1484,8 +1486,29 @@ model MaintenanceService {
   nameAr           String
   // Services that are part of another allowance (for example small carpentry inside the handyman hours) can stay out of the table.
   showInComparison Boolean  @default(true)
+  // What the package limit on this service counts, so the builder can compare a customer's need with it: "" | "handyman_hours" | "visits"
+  metric           String   @default("")
   sortOrder        Int      @default(0)
   createdAt        DateTime @default(now())
+}
+
+// A requirement the customer can tick in the Smart Package Builder (for example "AC Duct Vent Cleaning"). It is "included" in a package
+// when that package includes the linked service; otherwise it is an extra (priced, or sent as a quotation request when it has no price).
+model MaintenanceOption {
+  id             String   @id @default(cuid())
+  groupId        String?
+  category       String   @default("general")
+  nameEn         String
+  nameAr         String
+  serviceId      String?
+  extraPrice     Float?
+  // Choosing it when the selected package does not include it suggests an upgrade.
+  upgradeTrigger Boolean  @default(true)
+  active         Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  @@index([groupId, sortOrder])
 }
 
 model MaintenancePackage {
@@ -1523,6 +1546,7 @@ model MaintenancePackage {
 // The texts around the packages: heading, subtitle, price note and the terms & conditions (one term per line).
 model MaintenanceSettings {
   id         String   @id @default("default")
+  builder    Json     @default("{}")
   headingEn  String   @default("")
   headingAr  String   @default("")
   subtitleEn String   @default("")
@@ -1546,6 +1570,19 @@ model MaintenanceSubscription {
   kind           String              @default("subscribe")
   company        String              @default("")
   message        String              @default("")
+  // Smart Package Builder requests: the customer's extra details, the package the system suggested, and the price worked out by the server.
+  whatsapp       String              @default("")
+  area           String              @default("")
+  address        String              @default("")
+  propertySize   Float?
+  bathrooms      Int                 @default(0)
+  floors         Int                 @default(0)
+  suggestedPackage String            @default("")
+  subtotal       Float?
+  vatAmount      Float?
+  total          Float?
+  quoteRequested Boolean             @default(false)
+  details        Json                @default("{}")
   name           String
   phone          String
   email          String

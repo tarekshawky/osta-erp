@@ -12,11 +12,11 @@ export function OPTIONS() {
 export async function GET(request: NextRequest) {
   // ?group=<key> picks one set of packages (for example commercial-maintenance); without it, the original home packages.
   const group = (request.nextUrl.searchParams.get("group") ?? "").toLowerCase().slice(0, 40);
-  if (group && !/^[a-z0-9-]+$/.test(group)) return apiSuccess({ key: group, ctaMode: "subscribe", settings: null, services: [], packages: [], comparison: [], terms: { en: [], ar: [] } });
+  if (group && !/^[a-z0-9-]+$/.test(group)) return apiSuccess({ key: group, ctaMode: "subscribe", settings: null, services: [], packages: [], comparison: [], terms: { en: [], ar: [] }, builder: null });
   try {
     return apiSuccess(await loadPublicPackages(group));
   } catch {
     // The packages tables are not there yet (or the database hiccuped): the website shows nothing instead of failing the page.
-    return apiSuccess({ key: group, ctaMode: "subscribe", settings: null, services: [], packages: [], comparison: [], terms: { en: [], ar: [] } });
+    return apiSuccess({ key: group, ctaMode: "subscribe", settings: null, services: [], packages: [], comparison: [], terms: { en: [], ar: [] }, builder: null });
   }
 }

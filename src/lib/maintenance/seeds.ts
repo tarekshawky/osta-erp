@@ -4,7 +4,7 @@ import { STANDARD_PACKAGES, STANDARD_SERVICES, STANDARD_SETTINGS, type PkgSettin
 // "home" is the original annual home packages (no group). The others are groups with their own services, texts and call to action.
 
 export type SeedBullet = { en: string; ar: string };
-export type SeedLine = { service: string; en: string; ar: string; shortEn?: string; shortAr?: string };
+export type SeedLine = { service: string; en: string; ar: string; shortEn?: string; shortAr?: string; limit?: number };
 export type SeedPackage = {
   nameEn: string; nameAr: string; price: number | null; pricePrefixEn?: string; pricePrefixAr?: string; priceTextEn?: string; priceTextAr?: string; maxAcUnits: number | null;
   suitableEn: string; suitableAr: string; badgeEn: string; badgeAr: string; highlighted: boolean; bullets: SeedBullet[]; lines: SeedLine[];
@@ -12,7 +12,7 @@ export type SeedPackage = {
 export type SeedSet = {
   key: string; label: string;
   group: null | { key: string; nameEn: string; nameAr: string; ctaMode: "subscribe" | "quote" };
-  services: { key: string; nameEn: string; nameAr: string; showInComparison: boolean }[];
+  services: { key: string; nameEn: string; nameAr: string; showInComparison: boolean; metric?: string }[];
   packages: SeedPackage[];
   settings: PkgSettings;
 };
@@ -126,3 +126,31 @@ const HOME: SeedSet = {
 
 export const SEED_SETS: SeedSet[] = [HOME, COMMERCIAL, HVAC];
 export const seedSet = (key: string) => SEED_SETS.find((s) => s.key === key);
+
+// The requirements a customer can tick in the Smart Package Builder, with the package service each one is part of (by the service's
+// English name). Only what the packages really include is linked: everything else is an extra (priced by the admin, or a quotation).
+export type SeedOption = { category: string; nameEn: string; nameAr: string; service?: string };
+export const STANDARD_OPTIONS: SeedOption[] = [
+  { category: "ac", nameEn: "AC Preventive Maintenance", nameAr: "صيانة وقائية للمكيفات", service: "Preventive AC Maintenance" },
+  { category: "ac", nameEn: "AC Cleaning", nameAr: "تنظيف المكيفات", service: "Preventive AC Maintenance" },
+  { category: "ac", nameEn: "AC Duct Vent Cleaning", nameAr: "تنظيف فتحات الدكت", service: "AC Duct Vent Cleaning" },
+  { category: "ac", nameEn: "Full AC Duct Cleaning", nameAr: "تنظيف مجاري الهواء بالكامل" },
+  { category: "ac", nameEn: "AC Repair", nameAr: "إصلاح أعطال المكيفات" },
+  { category: "ac", nameEn: "Refrigerant Gas Inspection", nameAr: "فحص غاز التبريد" },
+  { category: "plumbing", nameEn: "Plumbing Inspection", nameAr: "فحص السباكة", service: "Plumbing Inspection" },
+  { category: "plumbing", nameEn: "Water Leakage Inspection", nameAr: "فحص تسربات المياه", service: "Plumbing Inspection" },
+  { category: "plumbing", nameEn: "Drainage Cleaning", nameAr: "تنظيف وتسليك الصرف" },
+  { category: "plumbing", nameEn: "Water Heater Maintenance", nameAr: "صيانة السخانات" },
+  { category: "plumbing", nameEn: "Water Tank Inspection", nameAr: "فحص خزانات المياه" },
+  { category: "plumbing", nameEn: "Water Pump Maintenance", nameAr: "صيانة مضخات المياه" },
+  { category: "electrical", nameEn: "Electrical Inspection", nameAr: "فحص الكهرباء", service: "Electrical Inspection" },
+  { category: "electrical", nameEn: "Lighting Maintenance", nameAr: "صيانة الإضاءة" },
+  { category: "electrical", nameEn: "Switches & Sockets Maintenance", nameAr: "صيانة المفاتيح والمقابس" },
+  { category: "electrical", nameEn: "Electrical Panel Inspection", nameAr: "فحص لوحة الكهرباء", service: "Electrical Inspection" },
+  { category: "handyman", nameEn: "Minor Carpentry", nameAr: "النجارة البسيطة", service: "Minor Carpentry Works" },
+  { category: "handyman", nameEn: "Painting Touch-ups", nameAr: "رتوش الدهانات", service: "Minor Painting Touch-ups" },
+  { category: "handyman", nameEn: "Minor Masonry", nameAr: "أعمال المحارة البسيطة", service: "Minor Masonry Works" },
+  { category: "handyman", nameEn: "Furniture Assembly", nameAr: "تركيب الأثاث", service: "Handyman Services" },
+  { category: "handyman", nameEn: "Door & Lock Maintenance", nameAr: "صيانة الأبواب والأقفال", service: "Handyman Services" },
+  { category: "handyman", nameEn: "General Handyman Services", nameAr: "خدمات هاندي مان عامة", service: "Handyman Services" },
+];

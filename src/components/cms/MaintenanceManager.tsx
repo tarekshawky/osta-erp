@@ -1,41 +1,25 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/components/Toast";
+import { useState } from "react";
 import { inputClassName } from "@/components/FormField";
 import {
   deleteGroup, deletePackage, deleteService, duplicatePackage, loadReadySet, movePackage, moveService, savePackage, saveGroup, saveService, saveSettings, setPackageActive, updateSubscription,
-  type PackageInput, type MResult,
+  type PackageInput,
 } from "@/app/admin/website/maintenance-actions";
+import { btn, label, useRun } from "@/components/cms/maintenanceUi";
+import { BuilderAdmin } from "@/components/cms/MaintenanceBuilderAdmin";
+import type { BuilderConfig } from "@/lib/maintenance/builder";
 import { SEED_SETS } from "@/lib/maintenance/seeds";
-import { SUBSCRIPTION_STATUSES, buildComparison, formatPrice, type CtaMode, type Pkg, type PkgService, type PkgSettings } from "@/lib/maintenance/packages";
+import { REQUEST_STATUSES, buildComparison, formatPrice, type CtaMode, type Pkg, type PkgService, type PkgSettings } from "@/lib/maintenance/packages";
 
 type Group = PkgSettings & { id: string | null; key: string; nameEn: string; nameAr: string; ctaMode: CtaMode };
 type GPkg = Pkg & { groupId: string | null };
-type GService = PkgService & { groupId: string | null };
-type Request = { id: string; packageName: string; packagePrice: number | null; kind: string; groupKey: string; company: string; message: string; name: string; phone: string; email: string; emirate: string; location: string; propertyType: string; bedrooms: number; acUnits: number; activationDate: string | null; status: string; notes: string; createdAt: string };
-type Tab = "packages" | "services" | "texts" | "requests";
+type GService = PkgService & { groupId: string | null; metric?: string };
+type Request = { whatsapp: string; area: string; suggestedPackage: string; total: number | null; subtotal: number | null; vatAmount: number | null; quoteRequested: boolean; details: Record<string, unknown>; id: string; packageName: string; packagePrice: number | null; kind: string; groupKey: string; company: string; message: string; name: string; phone: string; email: string; emirate: string; location: string; propertyType: string; bedrooms: number; acUnits: number; activationDate: string | null; status: string; notes: string; createdAt: string };
+type Tab = "packages" | "services" | "texts" | "builder" | "requests";
+type OptRow = { id: string; groupId: string | null; category: string; nameEn: string; nameAr: string; serviceId: string | null; extraPrice: number | null; upgradeTrigger: boolean; active: boolean };
 
-const label = "text-xs font-medium text-slate-600";
-const btn = "rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40";
-
-function useRun() {
-  const router = useRouter();
-  const { showToast } = useToast();
-  const [pending, start] = useTransition();
-  const run = (fn: () => Promise<MResult>, ok?: string, after?: (r: MResult) => void) =>
-    start(async () => {
-      const r = await fn();
-      if (!r.ok) return showToast(r.error ?? "Something went wrong.", "error");
-      if (ok) showToast(ok);
-      after?.(r);
-      router.refresh();
-    });
-  return { run, pending };
-}
-
-export function MaintenanceManager({ packages, active, services, settings, groups, requests }: { packages: GPkg[]; active: Record<string, boolean>; services: GService[]; settings: PkgSettings; groups: Group[]; requests: Request[] }) {
+export function MaintenanceManager({ packages, active, services, settings, groups, requests, options, builders }: { packages: GPkg[]; active: Record<string, boolean>; services: GService[]; settings: PkgSettings; groups: Group[]; requests: Request[]; options: OptRow[]; builders: Record<string, BuilderConfig> }) {
   const [tab, setTab] = useState<Tab>("packages");
   // null = the original home packages; otherwise the id of a group.
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -46,7 +30,7 @@ export function MaintenanceManager({ packages, active, services, settings, group
   const texts: PkgSettings = group ?? settings;
   const fresh = requests.filter((r) => r.status === "New").length;
   const tabs: { id: Tab; text: string }[] = [
-    { id: "packages", text: `Packages (${inGroup.length})` }, { id: "services", text: `Services (${svcs.length})` }, { id: "texts", text: "Texts & terms" }, { id: "requests", text: `Requests${fresh ? ` · ${fresh} new` : ""}` },
+    { id: "packages", text: `Packages (${inGroup.length})` }, { id: "services", text: `Services (${svcs.length})` }, { id: "texts", text: "Texts & terms" }, { id: "builder", text: "Smart builder" }, { id: "requests", text: `Requests${fresh ? ` · ${fresh} new` : ""}` },
   ];
   const hasHome = packages.some((p) => p.groupId === null) || services.some((x) => x.groupId === null);
   const loadable = SEED_SETS.filter((st) => (st.group ? !groups.some((g) => g.key === st.group!.key) : !hasHome));
@@ -70,6 +54,7 @@ export function MaintenanceManager({ packages, active, services, settings, group
       {tab === "packages" && <PackagesTab key={group?.id ?? "home"} groupId={group?.id ?? null} packages={inGroup} active={active} services={svcs} />}
       {tab === "services" && <ServicesTab key={group?.id ?? "home"} groupId={group?.id ?? null} services={svcs} />}
       {tab === "texts" && <TextsTab key={group?.id ?? "home"} groupId={group?.id ?? null} settings={texts} />}
+      {tab === "builder" && <BuilderAdmin key={group?.id ?? "home"} groupId={group?.id ?? null} config={builders[group?.id ?? "home"]} options={options} services={svcs} />}
       {tab === "requests" && <RequestsTab requests={requests} />}
     </div>
   );
@@ -128,18 +113,18 @@ function GroupEditor({ group, onClose, onSaved }: { group: Group | null; onClose
 }
 
 // ---------------- Packages ----------------
-type LineForm = { on: boolean; quantityEn: string; quantityAr: string; shortEn: string; shortAr: string };
+type LineForm = { on: boolean; quantityEn: string; quantityAr: string; shortEn: string; shortAr: string; limit: string };
 type Form = Omit<PackageInput, "price" | "maxAcUnits" | "lines" | "bullets"> & { price: string; maxAcUnits: string; bulletsEn: string; bulletsAr: string; lines: Record<string, LineForm> };
 
 const blankForm = (services: PkgService[], groupId: string | null): Form => ({
   groupId, nameEn: "", nameAr: "", descriptionEn: "", descriptionAr: "", suitableEn: "", suitableAr: "", price: "", pricePrefixEn: "", pricePrefixAr: "", priceTextEn: "", priceTextAr: "", bulletsEn: "", bulletsAr: "", maxAcUnits: "", badgeEn: "", badgeAr: "", highlighted: false, active: false,
-  lines: Object.fromEntries(services.map((s) => [s.id, { on: false, quantityEn: "", quantityAr: "", shortEn: "", shortAr: "" }])),
+  lines: Object.fromEntries(services.map((s) => [s.id, { on: false, quantityEn: "", quantityAr: "", shortEn: "", shortAr: "", limit: "" }])),
 });
 const formOf = (p: GPkg, isActive: boolean, services: PkgService[]): Form => ({
   ...blankForm(services, p.groupId), price: p.price == null ? "" : String(p.price), pricePrefixEn: p.pricePrefixEn ?? "", pricePrefixAr: p.pricePrefixAr ?? "", priceTextEn: p.priceTextEn ?? "", priceTextAr: p.priceTextAr ?? "",
   bulletsEn: (p.bullets ?? []).map((b) => b.en).join("\n"), bulletsAr: (p.bullets ?? []).map((b) => b.ar).join("\n"), nameEn: p.nameEn, nameAr: p.nameAr, descriptionEn: p.descriptionEn, descriptionAr: p.descriptionAr, suitableEn: p.suitableEn, suitableAr: p.suitableAr,
   maxAcUnits: p.maxAcUnits == null ? "" : String(p.maxAcUnits), badgeEn: p.badgeEn, badgeAr: p.badgeAr, highlighted: p.highlighted, active: isActive,
-  lines: Object.fromEntries(services.map((s) => { const l = p.lines.find((x) => x.serviceId === s.id); return [s.id, { on: !!l, quantityEn: l?.quantityEn ?? "", quantityAr: l?.quantityAr ?? "", shortEn: l?.shortEn ?? "", shortAr: l?.shortAr ?? "" }]; })),
+  lines: Object.fromEntries(services.map((s) => { const l = p.lines.find((x) => x.serviceId === s.id); return [s.id, { on: !!l, quantityEn: l?.quantityEn ?? "", quantityAr: l?.quantityAr ?? "", shortEn: l?.shortEn ?? "", shortAr: l?.shortAr ?? "", limit: l?.limit == null ? "" : String(l.limit) }]; })),
 });
 
 function PackagesTab({ groupId, packages, active, services }: { groupId: string | null; packages: GPkg[]; active: Record<string, boolean>; services: PkgService[] }) {
@@ -214,7 +199,7 @@ function PackageEditor({ id, initial, services, onClose }: { id: string | null; 
     void _be; void _ba;
     const input: PackageInput = {
       ...rest, bullets, price: f.price.trim() === "" ? null : Number(f.price), maxAcUnits: f.maxAcUnits.trim() === "" ? null : Number(f.maxAcUnits),
-      lines: services.filter((s) => f.lines[s.id]?.on).map((s) => ({ serviceId: s.id, quantityEn: f.lines[s.id].quantityEn, quantityAr: f.lines[s.id].quantityAr, shortEn: f.lines[s.id].shortEn, shortAr: f.lines[s.id].shortAr })),
+      lines: services.filter((s) => f.lines[s.id]?.on).map((s) => ({ serviceId: s.id, quantityEn: f.lines[s.id].quantityEn, quantityAr: f.lines[s.id].quantityAr, shortEn: f.lines[s.id].shortEn, shortAr: f.lines[s.id].shortAr, ...(f.lines[s.id].limit.trim() !== "" && Number.isFinite(Number(f.lines[s.id].limit)) ? { limit: Number(f.lines[s.id].limit) } : {}) })),
     };
     run(() => savePackage(id, input), "Saved.", onClose);
   }
@@ -260,11 +245,12 @@ function PackageEditor({ id, initial, services, onClose }: { id: string | null; 
               <div key={s.id} className={`rounded-lg border p-3 ${l.on ? "border-blue-200 bg-blue-50/40" : "border-slate-100"}`}>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-800"><input type="checkbox" checked={l.on} onChange={(e) => setLine(s.id, { on: e.target.checked })} />{s.nameEn} <span className="text-slate-400" dir="rtl">{s.nameAr}</span></label>
                 {l.on && (
-                  <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                  <div className="mt-2 grid gap-2 sm:grid-cols-5">
                     <input className={inputClassName} placeholder="Quantity (English)" value={l.quantityEn} onChange={(e) => setLine(s.id, { quantityEn: e.target.value })} aria-label={`${s.nameEn} quantity in English`} />
                     <input className={inputClassName} dir="rtl" placeholder="الكمية (Arabic)" value={l.quantityAr} onChange={(e) => setLine(s.id, { quantityAr: e.target.value })} aria-label={`${s.nameEn} quantity in Arabic`} />
                     <input className={inputClassName} placeholder="Table value (EN)" value={l.shortEn} onChange={(e) => setLine(s.id, { shortEn: e.target.value })} aria-label={`${s.nameEn} table value in English`} />
                     <input className={inputClassName} dir="rtl" placeholder="قيمة الجدول (AR)" value={l.shortAr} onChange={(e) => setLine(s.id, { shortAr: e.target.value })} aria-label={`${s.nameEn} table value in Arabic`} />
+                    <input className={inputClassName} inputMode="decimal" dir="ltr" placeholder="Limit (a number, for the smart builder)" value={l.limit} onChange={(e) => setLine(s.id, { limit: e.target.value })} aria-label={`${s.nameEn} limit`} />
                   </div>
                 )}
               </div>
@@ -279,7 +265,7 @@ function PackageEditor({ id, initial, services, onClose }: { id: string | null; 
 // ---------------- Services ----------------
 function ServicesTab({ groupId, services }: { groupId: string | null; services: PkgService[] }) {
   const { run, pending } = useRun();
-  const [draft, setDraft] = useState<{ id: string | null; nameEn: string; nameAr: string; showInComparison: boolean } | null>(null);
+  const [draft, setDraft] = useState<{ id: string | null; nameEn: string; nameAr: string; showInComparison: boolean; metric: "" | "handyman_hours" | "visits" } | null>(null);
   return (
     <div className="flex max-w-3xl flex-col gap-3">
       <p className="text-sm text-slate-500">The services a package can include. Each one is a row in the comparison table. Pest control cannot be added.</p>
@@ -289,7 +275,7 @@ function ServicesTab({ groupId, services }: { groupId: string | null; services: 
             <span className="min-w-0 flex-1"><span className="font-medium text-slate-900">{s.nameEn}</span> <span className="text-slate-400" dir="rtl">{s.nameAr}</span>{!s.showInComparison && <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500">not in table</span>}</span>
             <button type="button" className={btn} disabled={pending || i === 0} aria-label="Move up" onClick={() => run(() => moveService(s.id, -1))}>↑</button>
             <button type="button" className={btn} disabled={pending || i === services.length - 1} aria-label="Move down" onClick={() => run(() => moveService(s.id, 1))}>↓</button>
-            <button type="button" className={btn} onClick={() => setDraft({ id: s.id, nameEn: s.nameEn, nameAr: s.nameAr, showInComparison: s.showInComparison })}>Edit</button>
+            <button type="button" className={btn} onClick={() => setDraft({ id: s.id, nameEn: s.nameEn, nameAr: s.nameAr, showInComparison: s.showInComparison, metric: ((s as GService).metric ?? "") as "" | "handyman_hours" | "visits" })}>Edit</button>
             <button type="button" className={`${btn} !text-red-600`} disabled={pending} onClick={() => { if (confirm(`Delete “${s.nameEn}”? It is removed from every package.`)) run(() => deleteService(s.id), "Deleted."); }}>Delete</button>
           </div>
         ))}
@@ -299,6 +285,7 @@ function ServicesTab({ groupId, services }: { groupId: string | null; services: 
         <div className="grid gap-3 rounded-xl border border-blue-200 bg-blue-50/40 p-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5"><span className={label}>Name (English) *</span><input className={inputClassName} value={draft.nameEn} onChange={(e) => setDraft({ ...draft, nameEn: e.target.value })} /></label>
           <label className="flex flex-col gap-1.5"><span className={label}>الاسم (Arabic) *</span><input className={inputClassName} dir="rtl" value={draft.nameAr} onChange={(e) => setDraft({ ...draft, nameAr: e.target.value })} /></label>
+          <label className="flex flex-col gap-1.5 sm:col-span-2"><span className={label}>What a package limit on this service counts (for the smart builder)</span><select className={inputClassName} value={draft.metric} onChange={(e) => setDraft({ ...draft, metric: e.target.value as "" | "handyman_hours" | "visits" })}><option value="">Nothing (the service is simply included or not)</option><option value="handyman_hours">Handyman hours</option><option value="visits">Visits</option></select></label>
           <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2"><input type="checkbox" checked={draft.showInComparison} onChange={(e) => setDraft({ ...draft, showInComparison: e.target.checked })} />Show as a row in the comparison table</label>
           <div className="flex gap-2 sm:col-span-2">
             <button type="button" disabled={pending} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50" onClick={() => run(() => saveService(draft.id, { ...draft, groupId }), "Saved.", () => setDraft(null))}>Save service</button>
@@ -306,7 +293,7 @@ function ServicesTab({ groupId, services }: { groupId: string | null; services: 
           </div>
         </div>
       ) : (
-        <button type="button" className="self-start rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-blue-600" onClick={() => setDraft({ id: null, nameEn: "", nameAr: "", showInComparison: true })}>+ Add service</button>
+        <button type="button" className="self-start rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-blue-600" onClick={() => setDraft({ id: null, nameEn: "", nameAr: "", showInComparison: true, metric: "" })}>+ Add service</button>
       )}
     </div>
   );
@@ -349,20 +336,22 @@ function RequestsTab({ requests }: { requests: Request[] }) {
           <div key={r.id} className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 lg:grid-cols-[1.4fr_1fr]">
             <div className="text-sm">
               <p className="font-semibold text-slate-900">{r.name} <span className="font-normal text-slate-400">· {new Date(r.createdAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</span></p>
-              <p className="mt-0.5 text-blue-700"><span className="mr-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold">{r.kind === "quote" ? "Quote request" : "Subscription"}</span>{r.packageName} — {r.packagePrice == null ? "custom quotation" : `AED ${r.packagePrice.toLocaleString("en-US")}/year`}</p>
+              <p className="mt-0.5 text-blue-700"><span className="mr-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold">{r.kind === "builder" ? "Smart builder" : r.kind === "quote" ? "Quote request" : "Subscription"}</span>{r.packageName} — {r.packagePrice == null ? "custom quotation" : `AED ${r.packagePrice.toLocaleString("en-US")}/year`}</p>
               <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs text-slate-600">
                 <dt className="text-slate-400">Phone</dt><dd dir="ltr"><a href={`tel:${r.phone.replace(/[^\d+]/g, "")}`} className="text-blue-600">{r.phone}</a></dd>
                 <dt className="text-slate-400">Email</dt><dd><a href={`mailto:${r.email}`} className="text-blue-600">{r.email}</a></dd>
                 <dt className="text-slate-400">Where</dt><dd>{r.emirate}{r.location ? ` — ${r.location}` : ""}</dd>
                 {r.company && (<><dt className="text-slate-400">Company</dt><dd>{r.company}</dd></>)}
                 <dt className="text-slate-400">Property</dt><dd>{[r.propertyType, r.bedrooms ? `${r.bedrooms} bedroom${r.bedrooms > 1 ? "s" : ""}` : "", r.acUnits ? `${r.acUnits} AC unit${r.acUnits > 1 ? "s" : ""}` : ""].filter(Boolean).join(", ") || "—"}</dd>
-                {r.message && (<><dt className="text-slate-400">Message</dt><dd className="whitespace-pre-line">{r.message}</dd></>)}
+                {r.message && (<><dt className="text-slate-400">Notes</dt><dd className="whitespace-pre-line">{r.message}</dd></>)}
+                {r.whatsapp && (<><dt className="text-slate-400">WhatsApp</dt><dd dir="ltr">{r.whatsapp}</dd></>)}
                 <dt className="text-slate-400">Activation</dt><dd>{r.activationDate ?? "No preference"}</dd>
               </dl>
+              {r.kind === "builder" && <BuilderRequest r={r} />}
             </div>
             <div className="flex flex-col gap-2">
               <select className={inputClassName} value={e.status} onChange={(ev) => setEdits({ ...edits, [r.id]: { ...e, status: ev.target.value } })} aria-label="Status">
-                {SUBSCRIPTION_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                {[...REQUEST_STATUSES, ...(((REQUEST_STATUSES as readonly string[]).includes(e.status)) ? [] : [e.status])].map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
               <textarea className={`${inputClassName} resize-y`} rows={2} placeholder="Notes (only you see these)" value={e.notes} onChange={(ev) => setEdits({ ...edits, [r.id]: { ...e, notes: ev.target.value } })} />
               <button type="button" disabled={pending || !dirty} onClick={() => run(() => updateSubscription(r.id, e.status, e.notes), "Saved.", () => setEdits((x) => { const n = { ...x }; delete n[r.id]; return n; }))} className="self-start rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40">Save</button>
@@ -370,6 +359,34 @@ function RequestsTab({ requests }: { requests: Request[] }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// What the Smart Package Builder worked out for a request: the package suggested, the services and extras, and the price breakdown.
+function BuilderRequest({ r }: { r: Request }) {
+  const d = r.details as { selectedPackage?: string; recommendedPackage?: string | null; selectedFits?: boolean; exceedsAll?: boolean; notices?: string[]; services?: string[]; handymanHours?: number; otherText?: string; lines?: { label: string; qty: number; unitPrice: number | null; amount: number | null; note: string }[]; quoteReasons?: string[]; vatPercent?: number; pricesIncludeVat?: boolean; wantsQuote?: boolean };
+  const money = (n: number | null | undefined) => (n == null ? "quotation" : `AED ${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`);
+  return (
+    <div className="mt-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+      <p className="mb-1 font-semibold text-slate-800">
+        Chose {r.packageName}{d.selectedPackage && d.selectedPackage !== r.packageName ? ` (started with ${d.selectedPackage})` : ""}
+        {r.suggestedPackage ? <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">System suggested: {r.suggestedPackage}</span> : <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Package covers the needs</span>}
+      </p>
+      {(d.notices ?? []).map((n, i) => <p key={i} className="mb-0.5 text-amber-700">⚠ {n}</p>)}
+      {d.exceedsAll && <p className="mb-0.5 text-amber-700">⚠ The needs go beyond every package.</p>}
+      {(d.services?.length ?? 0) > 0 && <p className="mb-0.5">Services: {d.services!.join(", ")}</p>}
+      {(d.handymanHours ?? 0) > 0 && <p className="mb-0.5">Handyman hours needed: {d.handymanHours}</p>}
+      {d.otherText && <p className="mb-0.5">Other: {d.otherText}</p>}
+      <table className="mt-2 w-full">
+        <tbody>
+          {(d.lines ?? []).map((l, i) => (
+            <tr key={i} className="border-t border-slate-100"><td className="py-1">{l.label}{l.qty > 1 ? ` × ${l.qty}` : ""}</td><td className="py-1 text-slate-400">{l.note === "included" ? "included" : l.note === "quote" ? "quotation" : ""}</td><td className="py-1 text-right">{l.note === "included" ? "—" : money(l.amount)}</td></tr>
+          ))}
+          <tr className="border-t border-slate-200 font-semibold text-slate-800"><td className="py-1" colSpan={2}>Estimated total{d.pricesIncludeVat ? ` (incl. ${d.vatPercent}% VAT)` : ` (VAT ${d.vatPercent}% added)`}</td><td className="py-1 text-right">{r.quoteRequested ? `${money(r.total)} + quotation` : money(r.total)}</td></tr>
+        </tbody>
+      </table>
+      {r.quoteRequested && <p className="mt-1 text-amber-700">{d.wantsQuote ? "The customer asked for a custom quotation." : "Some items have no approved price: a quotation is needed."}{(d.quoteReasons?.length ?? 0) > 0 ? ` (${d.quoteReasons!.join(", ")})` : ""}</p>}
     </div>
   );
 }
