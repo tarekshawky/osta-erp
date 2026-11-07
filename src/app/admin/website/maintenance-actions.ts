@@ -5,11 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { revalidateSite } from "@/lib/cms/publish";
-import { asLines, loadServices } from "@/lib/maintenance/data";
-import {
-  STANDARD_PACKAGES, STANDARD_SERVICES, STANDARD_SETTINGS, SUBSCRIPTION_STATUSES, packageProblem, serviceProblem,
-  type PkgLine, type PkgSettings,
-} from "@/lib/maintenance/packages";
+import { asBullets, asLines, loadServices } from "@/lib/maintenance/data";
+import { seedSet } from "@/lib/maintenance/seeds";
+import { SUBSCRIPTION_STATUSES, packageProblem, serviceProblem, type Bullet, type PkgLine, type PkgSettings } from "@/lib/maintenance/packages";
 
 export type MResult = { ok: boolean; error?: string; id?: string };
 const fail = (error: string): MResult => ({ ok: false, error });
@@ -18,45 +16,53 @@ const refresh = () => {
   void revalidateSite([]);
 };
 
+// groupId null = the original home packages.
 export type PackageInput = {
+  groupId: string | null;
   nameEn: string; nameAr: string; descriptionEn: string; descriptionAr: string; suitableEn: string; suitableAr: string;
-  price: number; maxAcUnits: number | null; badgeEn: string; badgeAr: string; highlighted: boolean; active: boolean; lines: PkgLine[];
+  price: number | null; pricePrefixEn: string; pricePrefixAr: string; priceTextEn: string; priceTextAr: string;
+  maxAcUnits: number | null; badgeEn: string; badgeAr: string; highlighted: boolean; active: boolean; bullets: Bullet[]; lines: PkgLine[];
 };
 
-const nextOrder = async (model: "maintenancePackage" | "maintenanceService") => {
+const nextOrder = async (model: "maintenancePackage" | "maintenanceService" | "maintenanceGroup") => {
   const last = await (prisma[model] as typeof prisma.maintenancePackage).findFirst({ orderBy: { sortOrder: "desc" }, select: { sortOrder: true } });
   return (last?.sortOrder ?? 0) + 1;
 };
 
-// One highlighted ("recommended") package at a time.
-async function clearHighlight(exceptId: string | null) {
-  await prisma.maintenancePackage.updateMany({ where: { highlighted: true, ...(exceptId ? { id: { not: exceptId } } : {}) }, data: { highlighted: false } });
+// One highlighted ("recommended") package at a time within a group.
+async function clearHighlight(groupId: string | null, exceptId: string | null) {
+  await prisma.maintenancePackage.updateMany({ where: { groupId, highlighted: true, ...(exceptId ? { id: { not: exceptId } } : {}) }, data: { highlighted: false } });
 }
 
 export async function savePackage(id: string | null, input: PackageInput): Promise<MResult> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return fail(g.error);
-  const services = await loadServices();
+  const groupId = input.groupId || null;
+  if (groupId && !(await prisma.maintenanceGroup.findUnique({ where: { id: groupId }, select: { id: true } }))) return fail("This group no longer exists.");
+  const services = await loadServices(groupId);
   const lines = input.lines.map((l) => ({ serviceId: l.serviceId, quantityEn: l.quantityEn.trim(), quantityAr: l.quantityAr.trim(), ...(l.shortEn?.trim() ? { shortEn: l.shortEn.trim() } : {}), ...(l.shortAr?.trim() ? { shortAr: l.shortAr.trim() } : {}) }));
-  const problem = packageProblem({ ...input, lines }, new Set(services.map((s) => s.id)));
+  const bullets = asBullets(input.bullets);
+  const problem = packageProblem({ ...input, lines, bullets }, new Set(services.map((s) => s.id)));
   if (problem) return fail(problem);
   const data = {
-    nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), descriptionEn: input.descriptionEn.trim(), descriptionAr: input.descriptionAr.trim(),
-    suitableEn: input.suitableEn.trim(), suitableAr: input.suitableAr.trim(), price: input.price, maxAcUnits: input.maxAcUnits,
-    badgeEn: input.badgeEn.trim(), badgeAr: input.badgeAr.trim(), highlighted: input.highlighted, active: input.active, lines: lines as never,
+    groupId, nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), descriptionEn: input.descriptionEn.trim(), descriptionAr: input.descriptionAr.trim(),
+    suitableEn: input.suitableEn.trim(), suitableAr: input.suitableAr.trim(), price: input.price, pricePrefixEn: input.pricePrefixEn.trim(), pricePrefixAr: input.pricePrefixAr.trim(),
+    priceTextEn: input.priceTextEn.trim(), priceTextAr: input.priceTextAr.trim(), maxAcUnits: input.maxAcUnits, badgeEn: input.badgeEn.trim(), badgeAr: input.badgeAr.trim(),
+    highlighted: input.highlighted, active: input.active, bullets: bullets as never, lines: lines as never,
   };
   let savedId = id;
   if (id) {
-    const before = await prisma.maintenancePackage.findUnique({ where: { id }, select: { nameEn: true, price: true, active: true } });
+    const before = await prisma.maintenancePackage.findUnique({ where: { id }, select: { nameEn: true, price: true, active: true, groupId: true } });
     if (!before) return fail("This package no longer exists.");
-    await prisma.maintenancePackage.update({ where: { id }, data });
+    // A package stays in its group (its included services belong to that group).
+    await prisma.maintenancePackage.update({ where: { id }, data: { ...data, groupId: before.groupId } });
     await writeAudit(g.admin, "maintenance.package.update", "MaintenancePackage", id, before, { nameEn: data.nameEn, price: data.price, active: data.active });
   } else {
     const row = await prisma.maintenancePackage.create({ data: { ...data, sortOrder: await nextOrder("maintenancePackage") } });
     savedId = row.id;
     await writeAudit(g.admin, "maintenance.package.create", "MaintenancePackage", row.id, null, { nameEn: data.nameEn, price: data.price });
   }
-  if (data.highlighted) await clearHighlight(savedId);
+  if (data.highlighted) await clearHighlight(groupId, savedId);
   refresh();
   return { ok: true, id: savedId ?? undefined };
 }
@@ -69,7 +75,7 @@ export async function duplicatePackage(id: string): Promise<MResult> {
   const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = src;
   void _id; void _c; void _u;
   // The copy starts switched off and not recommended, so it cannot appear on the website by accident.
-  const row = await prisma.maintenancePackage.create({ data: { ...rest, lines: asLines(src.lines) as never, nameEn: `${src.nameEn} (copy)`, nameAr: `${src.nameAr} (نسخة)`, active: false, highlighted: false, sortOrder: await nextOrder("maintenancePackage") } });
+  const row = await prisma.maintenancePackage.create({ data: { ...rest, bullets: asBullets(src.bullets) as never, lines: asLines(src.lines) as never, nameEn: `${src.nameEn} (copy)`, nameAr: `${src.nameAr} (نسخة)`, active: false, highlighted: false, sortOrder: await nextOrder("maintenancePackage") } });
   await writeAudit(g.admin, "maintenance.package.duplicate", "MaintenancePackage", row.id, { from: id }, { nameEn: row.nameEn });
   refresh();
   return { ok: true, id: row.id };
@@ -89,42 +95,47 @@ export async function deletePackage(id: string): Promise<MResult> {
   if (!g.ok) return fail(g.error);
   const pkg = await prisma.maintenancePackage.findUnique({ where: { id }, select: { nameEn: true, _count: { select: { subscriptions: true } } } });
   if (!pkg) return fail("This package no longer exists.");
-  // Past subscription requests keep their copy of the package name and price; they just stop pointing at the package.
+  // Past requests keep their copy of the package name and price; they just stop pointing at the package.
   await prisma.maintenancePackage.delete({ where: { id } });
   await writeAudit(g.admin, "maintenance.package.delete", "MaintenancePackage", id, { nameEn: pkg.nameEn, requests: pkg._count.subscriptions }, null);
   refresh();
   return { ok: true };
 }
 
+async function swapOrder(model: "maintenancePackage" | "maintenanceService", where: object, id: string, direction: -1 | 1) {
+  const all = await (prisma[model] as typeof prisma.maintenancePackage).findMany({ where, orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], select: { id: true } });
+  const i = all.findIndex((p) => p.id === id), j = i + direction;
+  if (i < 0 || j < 0 || j >= all.length) return;
+  const order = all.map((p) => p.id);
+  [order[i], order[j]] = [order[j], order[i]];
+  await prisma.$transaction(order.map((x, n) => (prisma[model] as typeof prisma.maintenancePackage).update({ where: { id: x }, data: { sortOrder: n + 1 } })));
+}
+
 export async function movePackage(id: string, direction: -1 | 1): Promise<MResult> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return fail(g.error);
-  const all = await prisma.maintenancePackage.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], select: { id: true } });
-  const i = all.findIndex((p) => p.id === id), j = i + direction;
-  if (i < 0 || j < 0 || j >= all.length) return { ok: true };
-  const order = all.map((p) => p.id);
-  [order[i], order[j]] = [order[j], order[i]];
-  await prisma.$transaction(order.map((pid, n) => prisma.maintenancePackage.update({ where: { id: pid }, data: { sortOrder: n + 1 } })));
+  const row = await prisma.maintenancePackage.findUnique({ where: { id }, select: { groupId: true } });
+  if (row) await swapOrder("maintenancePackage", { groupId: row.groupId }, id, direction);
   refresh();
   return { ok: true };
 }
 
 // ---- services ----
-export type ServiceInput = { nameEn: string; nameAr: string; showInComparison: boolean };
+export type ServiceInput = { groupId: string | null; nameEn: string; nameAr: string; showInComparison: boolean };
 
 export async function saveService(id: string | null, input: ServiceInput): Promise<MResult> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return fail(g.error);
   const problem = serviceProblem(input.nameEn, input.nameAr);
   if (problem) return fail(problem);
-  const data = { nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), showInComparison: input.showInComparison };
+  const names = { nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), showInComparison: input.showInComparison };
   if (id) {
     if (!(await prisma.maintenanceService.findUnique({ where: { id }, select: { id: true } }))) return fail("This service no longer exists.");
-    await prisma.maintenanceService.update({ where: { id }, data });
+    await prisma.maintenanceService.update({ where: { id }, data: names });
   } else {
-    await prisma.maintenanceService.create({ data: { ...data, sortOrder: await nextOrder("maintenanceService") } });
+    await prisma.maintenanceService.create({ data: { ...names, groupId: input.groupId || null, sortOrder: await nextOrder("maintenanceService") } });
   }
-  await writeAudit(g.admin, id ? "maintenance.service.update" : "maintenance.service.create", "MaintenanceService", id, null, data);
+  await writeAudit(g.admin, id ? "maintenance.service.update" : "maintenance.service.create", "MaintenanceService", id, null, names);
   refresh();
   return { ok: true };
 }
@@ -134,7 +145,7 @@ export async function deleteService(id: string): Promise<MResult> {
   if (!g.ok) return fail(g.error);
   const svc = await prisma.maintenanceService.findUnique({ where: { id } });
   if (!svc) return fail("This service no longer exists.");
-  const packages = await prisma.maintenancePackage.findMany({ select: { id: true, lines: true } });
+  const packages = await prisma.maintenancePackage.findMany({ where: { groupId: svc.groupId }, select: { id: true, lines: true } });
   await prisma.$transaction([
     ...packages
       .filter((p) => asLines(p.lines).some((l) => l.serviceId === id))
@@ -149,59 +160,100 @@ export async function deleteService(id: string): Promise<MResult> {
 export async function moveService(id: string, direction: -1 | 1): Promise<MResult> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return fail(g.error);
-  const all = await prisma.maintenanceService.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], select: { id: true } });
-  const i = all.findIndex((s) => s.id === id), j = i + direction;
-  if (i < 0 || j < 0 || j >= all.length) return { ok: true };
-  const order = all.map((s) => s.id);
-  [order[i], order[j]] = [order[j], order[i]];
-  await prisma.$transaction(order.map((sid, n) => prisma.maintenanceService.update({ where: { id: sid }, data: { sortOrder: n + 1 } })));
+  const row = await prisma.maintenanceService.findUnique({ where: { id }, select: { groupId: true } });
+  if (row) await swapOrder("maintenanceService", { groupId: row.groupId }, id, direction);
   refresh();
   return { ok: true };
 }
 
-// ---- texts and terms ----
-export async function saveSettings(input: PkgSettings): Promise<MResult> {
+// ---- groups ----
+export type GroupInput = { key: string; nameEn: string; nameAr: string; ctaMode: "subscribe" | "quote" };
+
+const KEY = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+// A group is one set of packages for one page. Its key is what the page block uses to pick it.
+export async function saveGroup(id: string | null, input: GroupInput): Promise<MResult> {
+  const g = await guardPermission("pages.edit");
+  if (!g.ok) return fail(g.error);
+  const key = input.key.trim().toLowerCase();
+  if (!KEY.test(key) || key.length > 40) return fail("The key can use lowercase letters, numbers and dashes (for example commercial-maintenance).");
+  if (!input.nameEn.trim() || !input.nameAr.trim()) return fail("Give the group a name in English and in Arabic.");
+  if (input.ctaMode !== "subscribe" && input.ctaMode !== "quote") return fail("Choose Subscribe Now or Request a Quote.");
+  const clash = await prisma.maintenanceGroup.findUnique({ where: { key } });
+  if (clash && clash.id !== id) return fail("Another group already uses this key.");
+  const data = { key, nameEn: input.nameEn.trim(), nameAr: input.nameAr.trim(), ctaMode: input.ctaMode };
+  const row = id ? await prisma.maintenanceGroup.update({ where: { id }, data }) : await prisma.maintenanceGroup.create({ data: { ...data, sortOrder: await nextOrder("maintenanceGroup") } });
+  await writeAudit(g.admin, id ? "maintenance.group.update" : "maintenance.group.create", "MaintenanceGroup", row.id, null, data);
+  refresh();
+  return { ok: true, id: row.id };
+}
+
+export async function deleteGroup(id: string): Promise<MResult> {
+  const g = await guardPermission("pages.delete");
+  if (!g.ok) return fail(g.error);
+  const group = await prisma.maintenanceGroup.findUnique({ where: { id }, select: { nameEn: true } });
+  if (!group) return fail("This group no longer exists.");
+  const packages = await prisma.maintenancePackage.count({ where: { groupId: id } });
+  if (packages > 0) return fail(`This group still has ${packages} package${packages > 1 ? "s" : ""}. Delete them first.`);
+  await prisma.$transaction([prisma.maintenanceService.deleteMany({ where: { groupId: id } }), prisma.maintenanceGroup.delete({ where: { id } })]);
+  await writeAudit(g.admin, "maintenance.group.delete", "MaintenanceGroup", id, { nameEn: group.nameEn }, null);
+  refresh();
+  return { ok: true };
+}
+
+// ---- texts and terms ---- (groupId null = the original home packages)
+export async function saveSettings(groupId: string | null, input: PkgSettings): Promise<MResult> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return fail(g.error);
   const keys = Object.keys(input) as (keyof PkgSettings)[];
   if (keys.some((k) => typeof input[k] !== "string" || input[k].length > 20_000)) return fail("A text is too long.");
-  await prisma.maintenanceSettings.upsert({ where: { id: "default" }, update: input, create: { id: "default", ...input } });
-  await writeAudit(g.admin, "maintenance.settings.save", "MaintenanceSettings", "default", null, { termsChars: input.termsEn.length + input.termsAr.length });
+  if (groupId) {
+    if (!(await prisma.maintenanceGroup.findUnique({ where: { id: groupId }, select: { id: true } }))) return fail("This group no longer exists.");
+    await prisma.maintenanceGroup.update({ where: { id: groupId }, data: input });
+  } else {
+    await prisma.maintenanceSettings.upsert({ where: { id: "default" }, update: input, create: { id: "default", ...input } });
+  }
+  await writeAudit(g.admin, "maintenance.settings.save", groupId ? "MaintenanceGroup" : "MaintenanceSettings", groupId ?? "default", null, { termsChars: input.termsEn.length + input.termsAr.length });
   refresh();
   return { ok: true };
 }
 
-// "Load the standard packages": only into an empty setup, so nothing the admin already made can be overwritten.
-export async function loadStandardPackages(): Promise<MResult> {
+// "Load a ready-made set": only when that set's place is empty, so nothing an admin already made can be overwritten.
+export async function loadReadySet(setKey: string): Promise<MResult> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return fail(g.error);
-  const [packages, services] = await Promise.all([prisma.maintenancePackage.count(), prisma.maintenanceService.count()]);
-  if (packages > 0 || services > 0) return fail("There are already packages or services. The standard ones are only loaded into an empty setup.");
+  const set = seedSet(setKey);
+  if (!set) return fail("Unknown set.");
+  let groupId: string | null = null;
+  if (set.group) {
+    if (await prisma.maintenanceGroup.findUnique({ where: { key: set.group.key } })) return fail("This set was already loaded. Edit it, or delete its group first.");
+  } else if ((await prisma.maintenancePackage.count({ where: { groupId: null } })) + (await prisma.maintenanceService.count({ where: { groupId: null } })) > 0) {
+    return fail("The home packages already exist. A ready-made set is only loaded into an empty place.");
+  }
   const ids = new Map<string, string>();
   await prisma.$transaction(async (tx) => {
+    if (set.group) groupId = (await tx.maintenanceGroup.create({ data: { ...set.group, ...set.settings, sortOrder: (await tx.maintenanceGroup.count()) + 1 } })).id;
     let n = 0;
-    for (const s of STANDARD_SERVICES) {
-      const row = await tx.maintenanceService.create({ data: { nameEn: s.nameEn, nameAr: s.nameAr, showInComparison: s.showInComparison, sortOrder: ++n } });
-      ids.set(s.key, row.id);
-    }
+    for (const s of set.services) ids.set(s.key, (await tx.maintenanceService.create({ data: { groupId, nameEn: s.nameEn, nameAr: s.nameAr, showInComparison: s.showInComparison, sortOrder: ++n } })).id);
     n = 0;
-    for (const p of STANDARD_PACKAGES) {
+    for (const p of set.packages) {
       await tx.maintenancePackage.create({
         data: {
-          nameEn: p.nameEn, nameAr: p.nameAr, suitableEn: p.suitableEn, suitableAr: p.suitableAr, price: p.price, maxAcUnits: p.maxAcUnits, badgeEn: p.badgeEn, badgeAr: p.badgeAr,
-          highlighted: p.highlighted, sortOrder: ++n,
+          groupId, nameEn: p.nameEn, nameAr: p.nameAr, suitableEn: p.suitableEn, suitableAr: p.suitableAr, price: p.price, pricePrefixEn: p.pricePrefixEn ?? "", pricePrefixAr: p.pricePrefixAr ?? "",
+          priceTextEn: p.priceTextEn ?? "", priceTextAr: p.priceTextAr ?? "", maxAcUnits: p.maxAcUnits, badgeEn: p.badgeEn, badgeAr: p.badgeAr, highlighted: p.highlighted, sortOrder: ++n,
+          bullets: p.bullets as never,
           lines: p.lines.map((l) => ({ serviceId: ids.get(l.service)!, quantityEn: l.en, quantityAr: l.ar, ...(l.shortEn ? { shortEn: l.shortEn } : {}), ...(l.shortAr ? { shortAr: l.shortAr } : {}) })) as never,
         },
       });
     }
-    await tx.maintenanceSettings.upsert({ where: { id: "default" }, update: STANDARD_SETTINGS, create: { id: "default", ...STANDARD_SETTINGS } });
+    if (!set.group) await tx.maintenanceSettings.upsert({ where: { id: "default" }, update: set.settings, create: { id: "default", ...set.settings } });
   });
-  await writeAudit(g.admin, "maintenance.load-standard", "MaintenancePackage", null, null, { packages: STANDARD_PACKAGES.length, services: STANDARD_SERVICES.length });
+  await writeAudit(g.admin, "maintenance.load-set", "MaintenancePackage", null, null, { set: setKey, packages: set.packages.length, services: set.services.length });
   refresh();
   return { ok: true };
 }
 
-// ---- subscription requests ----
+// ---- subscription / quote requests ----
 export async function updateSubscription(id: string, status: string, notes: string): Promise<MResult> {
   const g = await guardPermission("pages.edit");
   if (!g.ok) return fail(g.error);

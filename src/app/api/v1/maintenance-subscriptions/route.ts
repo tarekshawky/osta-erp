@@ -26,18 +26,20 @@ export async function POST(request: NextRequest) {
 
   const pkg = await prisma.maintenancePackage.findFirst({ where: { id: input.packageId, active: true } }).catch(() => null);
   if (!pkg) return apiError("not_found", "This package is not available. Please choose another one.", 404);
+  // The group comes from the package itself, not from what the browser says.
+  const group = pkg.groupId ? await prisma.maintenanceGroup.findUnique({ where: { id: pkg.groupId }, select: { key: true } }).catch(() => null) : null;
 
   await recordAttempt(prisma, "subscribe", ip, input.email);
   const row = await prisma.maintenanceSubscription.create({
     data: {
-      packageId: pkg.id, packageName: pkg.nameEn, packagePrice: pkg.price, name: input.name, phone: input.phone, email: input.email, emirate: input.emirate,
+      packageId: pkg.id, packageName: pkg.nameEn, packagePrice: pkg.price, groupKey: group?.key ?? "", kind: input.kind, company: input.company, message: input.message, name: input.name, phone: input.phone, email: input.email, emirate: input.emirate,
       location: input.location, propertyType: input.propertyType, bedrooms: input.bedrooms, acUnits: input.acUnits,
       activationDate: input.activationDate ? new Date(`${input.activationDate}T00:00:00+04:00`) : null,
     },
   });
   // A mail provider problem must never lose the request: it is already saved.
   try {
-    await notifyAdminOfMaintenanceSubscription({ packageName: pkg.nameEn, price: pkg.price, name: input.name, phone: input.phone, email: input.email, emirate: input.emirate, location: input.location, propertyType: input.propertyType, bedrooms: input.bedrooms, acUnits: input.acUnits, activationDate: input.activationDate });
+    await notifyAdminOfMaintenanceSubscription({ packageName: pkg.nameEn, price: pkg.price, kind: input.kind, company: input.company, message: input.message, name: input.name, phone: input.phone, email: input.email, emirate: input.emirate, location: input.location, propertyType: input.propertyType, bedrooms: input.bedrooms, acUnits: input.acUnits, activationDate: input.activationDate });
   } catch (err) {
     console.error("[maintenance-subscription] admin notification failed:", err instanceof Error ? err.message : "unknown");
   }

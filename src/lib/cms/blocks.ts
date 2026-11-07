@@ -215,7 +215,13 @@ const RAW_SCHEMAS = {
   }),
   // The annual maintenance packages, filled automatically from Website → Maintenance Packages: pricing cards, comparison table,
   // terms and the "Subscribe now" form. A heading or subtitle typed here replaces the one from the packages screen.
-  maintenancePackages: z.object({ heading: bi, subtitle: bi, showComparison: yesNo, showTerms: yesNo }),
+  // `group` picks one set of packages (its key from the Maintenance Packages screen); empty = the original home packages.
+  // Order on the page: heading, package cards, comparison table, terms and exclusions, then the request form.
+  maintenancePackages: z.object({
+    heading: bi, subtitle: bi, showComparison: yesNo, showTerms: yesNo,
+    group: z.string().max(40).regex(/^[a-z0-9-]*$/, "Use the group's key: lowercase letters, numbers and dashes.").optional(),
+    showForm: yesNo.optional(),
+  }),
   divider: z.object({ variant: z.enum(["line", "dots", "space"]), size: z.enum(["sm", "md", "lg"]) }),
   // How it works / booking steps / process / timeline: 2-10 steps, each with an icon, title, text and optional picture.
   steps: z.object({
@@ -1027,12 +1033,14 @@ export const BLOCK_REGISTRY: Record<
     label: "Maintenance packages",
     description: "The annual maintenance packages with prices, included services, comparison table, terms and a Subscribe form. Edit them under Website → Maintenance Packages.",
     fields: [
+      { kind: "text", key: "group", label: "Package group key (for example commercial-maintenance; empty = the original home packages)" },
       { kind: "bi-text", key: "heading", label: "Heading (empty = the one from Maintenance Packages)" },
       { kind: "bi-textarea", key: "subtitle", label: "Subtitle (empty = the one from Maintenance Packages)", rich: true },
-      { kind: "select", key: "showComparison", label: "Comparison table", options: opts(["yes", "Show"], ["no", "Hide"]) },
-      { kind: "select", key: "showTerms", label: "Terms & conditions", options: opts(["yes", "Show"], ["no", "Hide"]) },
+      { kind: "select", key: "showComparison", label: "Comparison table (right after the packages)", options: opts(["yes", "Show"], ["no", "Hide"]) },
+      { kind: "select", key: "showTerms", label: "Terms, conditions and exclusions", options: opts(["yes", "Show"], ["no", "Hide"]) },
+      { kind: "select", key: "showForm", label: "Request form at the bottom of the block", options: opts(["yes", "Show"], ["no", "Hide"]) },
     ],
-    defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), showComparison: "yes", showTerms: "yes" }),
+    defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), group: "", showComparison: "yes", showTerms: "yes", showForm: "yes" }),
   },
   divider: {
     label: "Divider",

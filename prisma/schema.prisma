@@ -1455,9 +1455,31 @@ model CmsGlobalBlock {
 
 // ===== Annual home maintenance packages (Website → Maintenance Packages) =====
 
+// A set of packages shown together on one page (for example "Commercial maintenance" or "HVAC AMC"), with its own services (the
+// comparison rows), texts, terms and call to action. Packages and services with no group belong to the original home packages.
+model MaintenanceGroup {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  nameEn     String
+  nameAr     String
+  headingEn  String   @default("")
+  headingAr  String   @default("")
+  subtitleEn String   @default("")
+  subtitleAr String   @default("")
+  noteEn     String   @default("")
+  noteAr     String   @default("")
+  termsEn    String   @default("")
+  termsAr    String   @default("")
+  // "subscribe" = Subscribe Now (property details form); "quote" = Request a Quote (business enquiry form)
+  ctaMode    String   @default("subscribe")
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
 // A service that packages can include (for example "Preventive AC Maintenance"). The comparison table has one row per service.
 model MaintenanceService {
   id               String   @id @default(cuid())
+  groupId          String?
   nameEn           String
   nameAr           String
   // Services that are part of another allowance (for example small carpentry inside the handyman hours) can stay out of the table.
@@ -1474,7 +1496,15 @@ model MaintenancePackage {
   descriptionAr String   @default("")
   suitableEn    String   @default("")
   suitableAr    String   @default("")
-  price         Float
+  groupId       String?
+  // The yearly price; empty for a "Custom Quotation" package, which shows priceText instead. pricePrefix is for "Starting from".
+  price         Float?
+  pricePrefixEn String   @default("")
+  pricePrefixAr String   @default("")
+  priceTextEn   String   @default("")
+  priceTextAr   String   @default("")
+  // [{ en, ar }]: the bullet list shown on the card. Empty = the card lists the included services with their quantities.
+  bullets       Json     @default("[]")
   maxAcUnits    Int?
   badgeEn       String   @default("")
   badgeAr       String   @default("")
@@ -1510,15 +1540,20 @@ model MaintenanceSubscription {
   packageId      String?
   package        MaintenancePackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
   packageName    String
-  packagePrice   Float
+  packagePrice   Float?
+  groupKey       String              @default("")
+  // "subscribe" (a household's subscription) or "quote" (a business asking for a quotation)
+  kind           String              @default("subscribe")
+  company        String              @default("")
+  message        String              @default("")
   name           String
   phone          String
   email          String
   emirate        String
   location       String              @default("")
-  propertyType   String
-  bedrooms       Int
-  acUnits        Int
+  propertyType   String              @default("")
+  bedrooms       Int                 @default(0)
+  acUnits        Int                 @default(0)
   activationDate DateTime?
   status         String              @default("New") // New | Contacted | Activated | Cancelled
   notes          String              @default("")

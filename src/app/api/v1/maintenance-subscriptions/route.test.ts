@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-const db = vi.hoisted(() => ({ findPkg: vi.fn(), create: vi.fn(), count: vi.fn(), logCreate: vi.fn(), notify: vi.fn() }));
-vi.mock("@/lib/prisma", () => ({ prisma: { maintenancePackage: { findFirst: db.findPkg }, maintenanceSubscription: { create: db.create }, aiFinderLog: { count: db.count, create: db.logCreate } } }));
+const db = vi.hoisted(() => ({ findPkg: vi.fn(), findGroup: vi.fn(), create: vi.fn(), count: vi.fn(), logCreate: vi.fn(), notify: vi.fn() }));
+vi.mock("@/lib/prisma", () => ({ prisma: { maintenancePackage: { findFirst: db.findPkg }, maintenanceGroup: { findUnique: db.findGroup }, maintenanceSubscription: { create: db.create }, aiFinderLog: { count: db.count, create: db.logCreate } } }));
 vi.mock("@/lib/emailSender", () => ({ notifyAdminOfMaintenanceSubscription: db.notify }));
 import { POST } from "./route";
 
@@ -15,6 +15,18 @@ beforeEach(() => {
   db.count.mockResolvedValue(0); db.logCreate.mockResolvedValue({}); db.notify.mockResolvedValue(undefined);
   db.findPkg.mockResolvedValue({ id: "p1", nameEn: "Gold Package", price: 1499 });
   db.create.mockResolvedValue({ id: "s1" });
+  db.findGroup.mockResolvedValue({ key: "commercial-maintenance" });
+});
+
+describe("POST /maintenance-subscriptions (quote requests)", () => {
+  const quote = { kind: "quote", packageId: "p1", groupKey: "spoofed", name: "Omar Ali", phone: "+971501234567", email: "omar@shop.ae", emirate: "Dubai", location: "Deira", company: "Ali Trading", message: "Three shops.", propertyType: "Shop", acUnits: 4, activationDate: "" };
+  it("saves a quote for a custom-quotation package with the company, message and the package's own group", async () => {
+    db.findPkg.mockResolvedValue({ id: "p1", nameEn: "Business Premium", price: null, groupId: "g1" });
+    const r = await POST(req(quote));
+    expect(r.status).toBe(201);
+    expect(db.create.mock.calls[0][0].data).toMatchObject({ kind: "quote", packagePrice: null, groupKey: "commercial-maintenance", company: "Ali Trading", message: "Three shops.", acUnits: 4, bedrooms: 0 });
+    expect(db.notify.mock.calls[0][0]).toMatchObject({ kind: "quote", price: null, company: "Ali Trading" });
+  });
 });
 
 describe("POST /maintenance-subscriptions", () => {

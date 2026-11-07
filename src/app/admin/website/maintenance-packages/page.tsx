@@ -3,25 +3,28 @@ import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { MaintenanceManager } from "@/components/cms/MaintenanceManager";
-import { asLines, loadServices, loadSettings, toPkg } from "@/lib/maintenance/data";
+import { asLines, loadGroups, loadSettings, toPkg } from "@/lib/maintenance/data";
 
 export default async function MaintenancePackagesPage() {
   await requireEmployee("ADMIN");
-  let data: { packages: ReturnType<typeof toPkg>[]; active: Record<string, boolean>; services: Awaited<ReturnType<typeof loadServices>>; settings: Awaited<ReturnType<typeof loadSettings>>; requests: Request[] } | null = null;
-  type Request = { id: string; packageName: string; packagePrice: number; name: string; phone: string; email: string; emirate: string; location: string; propertyType: string; bedrooms: number; acUnits: number; activationDate: string | null; status: string; notes: string; createdAt: string };
+  type Pk = ReturnType<typeof toPkg> & { groupId: string | null };
+  let data: { packages: Pk[]; active: Record<string, boolean>; services: { id: string; nameEn: string; nameAr: string; showInComparison: boolean; groupId: string | null }[]; settings: Awaited<ReturnType<typeof loadSettings>>; groups: Awaited<ReturnType<typeof loadGroups>>; requests: Request[] } | null = null;
+  type Request = { id: string; packageName: string; packagePrice: number | null; kind: string; groupKey: string; company: string; message: string; name: string; phone: string; email: string; emirate: string; location: string; propertyType: string; bedrooms: number; acUnits: number; activationDate: string | null; status: string; notes: string; createdAt: string };
   try {
-    const [rows, services, settings, subs] = await Promise.all([
+    const [rows, serviceRows, settings, groups, subs] = await Promise.all([
       prisma.maintenancePackage.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }),
-      loadServices(),
+      prisma.maintenanceService.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }),
       loadSettings(),
+      loadGroups(),
       prisma.maintenanceSubscription.findMany({ orderBy: { createdAt: "desc" }, take: 300 }),
     ]);
     data = {
-      packages: rows.map((r) => ({ ...toPkg(r), lines: asLines(r.lines) })),
+      packages: rows.map((r) => ({ ...toPkg(r), lines: asLines(r.lines), groupId: r.groupId })),
       active: Object.fromEntries(rows.map((r) => [r.id, r.active])),
-      services,
+      services: serviceRows.map((s) => ({ id: s.id, nameEn: s.nameEn, nameAr: s.nameAr, showInComparison: s.showInComparison, groupId: s.groupId })),
       settings,
-      requests: subs.map((s) => ({ id: s.id, packageName: s.packageName, packagePrice: s.packagePrice, name: s.name, phone: s.phone, email: s.email, emirate: s.emirate, location: s.location, propertyType: s.propertyType, bedrooms: s.bedrooms, acUnits: s.acUnits, activationDate: s.activationDate?.toISOString().slice(0, 10) ?? null, status: s.status, notes: s.notes, createdAt: s.createdAt.toISOString() })),
+      groups,
+      requests: subs.map((s) => ({ id: s.id, packageName: s.packageName, packagePrice: s.packagePrice, kind: s.kind, groupKey: s.groupKey, company: s.company, message: s.message, name: s.name, phone: s.phone, email: s.email, emirate: s.emirate, location: s.location, propertyType: s.propertyType, bedrooms: s.bedrooms, acUnits: s.acUnits, activationDate: s.activationDate?.toISOString().slice(0, 10) ?? null, status: s.status, notes: s.notes, createdAt: s.createdAt.toISOString() })),
     };
   } catch {
     data = null;

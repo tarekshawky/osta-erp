@@ -117,22 +117,26 @@ export async function notifyFormSubmission(params: { formName: string; rows: [st
 
 // Sent right after a visitor asks to subscribe to an annual maintenance package.
 export async function notifyAdminOfMaintenanceSubscription(params: {
-  packageName: string; price: number; name: string; phone: string; email: string; emirate: string; location: string; propertyType: string; bedrooms: number; acUnits: number; activationDate: string;
+  packageName: string; price: number | null; kind?: string; company?: string; message?: string; name: string; phone: string; email: string; emirate: string; location: string;
+  propertyType: string; bedrooms: number; acUnits: number; activationDate: string;
 }) {
+  const quote = params.kind === "quote";
   const { html, text } = renderRows([
-    ["Package", `${params.packageName} (AED ${params.price.toLocaleString("en-US")}/year)`],
+    ["Type", quote ? "Request a quote" : "Subscription"],
+    ["Package", `${params.packageName} (${params.price == null ? "custom quotation" : `AED ${params.price.toLocaleString("en-US")}/year`})`],
+    ...(params.company ? ([["Company", params.company]] as [string, string][]) : []),
     ["Name", params.name],
     ["Phone", params.phone],
     ["Email", params.email],
     ["Emirate", params.emirate],
     ["Location", params.location || "-"],
-    ["Property", `${params.propertyType}, ${params.bedrooms === 0 ? "studio" : `${params.bedrooms} bedroom(s)`}`],
-    ["AC units", String(params.acUnits)],
-    ["Preferred activation", params.activationDate || "-"],
+    ["Property", [params.propertyType, params.bedrooms ? `${params.bedrooms} bedroom(s)` : "", params.acUnits ? `${params.acUnits} AC units` : ""].filter(Boolean).join(", ") || "-"],
+    ["Preferred start", params.activationDate || "-"],
+    ...(params.message ? ([["Message", params.message]] as [string, string][]) : []),
   ]);
   await emailSender.send({
-    subject: `New maintenance package request: ${params.packageName} — ${params.name}`,
-    html: `<h2>New maintenance package request</h2>${html}`,
-    text: `New maintenance package request\n\n${text}`,
+    subject: `New maintenance ${quote ? "quote request" : "package request"}: ${params.packageName} — ${params.name}`,
+    html: `<h2>New maintenance ${quote ? "quote request" : "package request"}</h2>${html}`,
+    text: `New maintenance ${quote ? "quote request" : "package request"}\n\n${text}`,
   });
 }

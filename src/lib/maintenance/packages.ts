@@ -6,10 +6,14 @@ import { z } from "zod";
 export type Lang = "en" | "ar";
 export type PkgLine = { serviceId: string; quantityEn: string; quantityAr: string; shortEn?: string; shortAr?: string };
 export type PkgService = { id: string; nameEn: string; nameAr: string; showInComparison: boolean };
+export type Bullet = { en: string; ar: string };
 export type Pkg = {
   id: string; nameEn: string; nameAr: string; descriptionEn: string; descriptionAr: string; suitableEn: string; suitableAr: string;
-  price: number; maxAcUnits: number | null; badgeEn: string; badgeAr: string; highlighted: boolean; lines: PkgLine[];
+  // null = "Custom Quotation" (priceText says so, or the default wording does). pricePrefix is for "Starting from".
+  price: number | null; pricePrefixEn?: string; pricePrefixAr?: string; priceTextEn?: string; priceTextAr?: string;
+  maxAcUnits: number | null; badgeEn: string; badgeAr: string; highlighted: boolean; bullets?: Bullet[]; lines: PkgLine[];
 };
+export type CtaMode = "subscribe" | "quote";
 export type PkgSettings = {
   headingEn: string; headingAr: string; subtitleEn: string; subtitleAr: string; noteEn: string; noteAr: string; termsEn: string; termsAr: string;
 };
@@ -19,6 +23,12 @@ export const text = (en: string, ar: string, lang: Lang) => (lang === "ar" ? ar 
 export function formatPrice(price: number, lang: Lang): string {
   const n = price.toLocaleString("en-US", { maximumFractionDigits: 2 });
   return lang === "ar" ? `${n} د.إ` : `AED ${n}`;
+}
+
+// What a package's price reads as: "AED 999", "Starting from AED 399" or "Custom Quotation".
+export function priceText(p: Pick<Pkg, "price" | "pricePrefixEn" | "pricePrefixAr" | "priceTextEn" | "priceTextAr">, lang: Lang): { prefix: string; amount: string; custom: boolean } {
+  if (p.price == null) return { prefix: "", amount: text(p.priceTextEn ?? "", p.priceTextAr ?? "", lang) || (lang === "ar" ? "عرض سعر مخصص" : "Custom Quotation"), custom: true };
+  return { prefix: text(p.pricePrefixEn ?? "", p.pricePrefixAr ?? "", lang), amount: formatPrice(p.price, lang), custom: false };
 }
 
 // Terms are typed one per line (a leading "1." or "-" is ignored, the website numbers them itself).
@@ -43,8 +53,13 @@ export function shortValue(line: PkgLine | undefined, lang: Lang): string {
 export type ComparisonRow = { key: string; labelEn: string; labelAr: string; cells: { en: string; ar: string }[] };
 
 export function buildComparison(packages: Pkg[], services: PkgService[]): ComparisonRow[] {
+  // "699", "399+" (starting from) or the custom wording ("Custom").
+  const priceCell = (p: Pkg, lang: Lang) => {
+    if (p.price == null) return lang === "ar" ? "مخصص" : "Custom";
+    return p.price.toLocaleString("en-US", { maximumFractionDigits: 2 }) + ((p.pricePrefixEn || p.pricePrefixAr) ? "+" : "");
+  };
   const rows: ComparisonRow[] = [
-    { key: "price", labelEn: "Annual Price", labelAr: "السعر السنوي", cells: packages.map((p) => ({ en: p.price.toLocaleString("en-US", { maximumFractionDigits: 2 }), ar: p.price.toLocaleString("en-US", { maximumFractionDigits: 2 }) })) },
+    { key: "price", labelEn: "Annual Price", labelAr: "السعر السنوي", cells: packages.map((p) => ({ en: priceCell(p, "en"), ar: priceCell(p, "ar") })) },
   ];
   if (packages.some((p) => p.maxAcUnits != null)) {
     rows.push({ key: "ac", labelEn: "Maximum AC Units", labelAr: "الحد الأقصى للمكيفات", cells: packages.map((p) => ({ en: p.maxAcUnits == null ? "—" : String(p.maxAcUnits), ar: p.maxAcUnits == null ? "—" : String(p.maxAcUnits) })) });
@@ -63,9 +78,11 @@ export function buildComparison(packages: Pkg[], services: PkgService[]): Compar
 // No package or service may offer pest control.
 const PEST = /pest|insect|مكافحة|حشرات/i;
 
-export function packageProblem(p: { nameEn: string; nameAr: string; price: number; maxAcUnits: number | null; lines: PkgLine[] }, serviceIds: Set<string>): string | null {
+export function packageProblem(p: { nameEn: string; nameAr: string; price: number | null; maxAcUnits: number | null; lines: PkgLine[]; bullets?: Bullet[] }, serviceIds: Set<string>): string | null {
   if (!p.nameEn.trim() || !p.nameAr.trim()) return "Give the package a name in English and in Arabic.";
-  if (!Number.isFinite(p.price) || p.price <= 0 || p.price > 1_000_000) return "Enter the yearly price (more than 0).";
+  // An empty price is a "Custom Quotation" package; a typed one must make sense.
+  if (p.price != null && (!Number.isFinite(p.price) || p.price <= 0 || p.price > 1_000_000)) return "Enter the yearly price (more than 0), or leave it empty for a custom quotation.";
+  if ((p.bullets ?? []).length > 30 || (p.bullets ?? []).some((b) => b.en.length > 200 || b.ar.length > 200)) return "Each bullet can be up to 200 characters, and a package can have up to 30.";
   if (p.maxAcUnits != null && (!Number.isInteger(p.maxAcUnits) || p.maxAcUnits < 1 || p.maxAcUnits > 200)) return "The maximum number of AC units must be a whole number from 1 to 200.";
   const seen = new Set<string>();
   for (const l of p.lines) {
@@ -74,7 +91,7 @@ export function packageProblem(p: { nameEn: string; nameAr: string; price: numbe
     seen.add(l.serviceId);
     if (l.quantityEn.length > 120 || l.quantityAr.length > 120 || (l.shortEn?.length ?? 0) > 30 || (l.shortAr?.length ?? 0) > 30) return "A quantity is too long.";
   }
-  if (PEST.test(`${p.nameEn} ${p.nameAr} ${p.lines.map((l) => `${l.quantityEn} ${l.quantityAr}`).join(" ")}`)) return "Pest control cannot be part of a maintenance package.";
+  if (PEST.test(`${p.nameEn} ${p.nameAr} ${p.lines.map((l) => `${l.quantityEn} ${l.quantityAr}`).join(" ")} ${(p.bullets ?? []).map((b) => `${b.en} ${b.ar}`).join(" ")}`)) return "Pest control cannot be part of a maintenance package.";
   return null;
 }
 
@@ -90,19 +107,35 @@ export const EMIRATES = ["Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Al Ain", "Um
 export const PROPERTY_TYPES = ["Apartment", "Villa"] as const;
 export const SUBSCRIPTION_STATUSES = ["New", "Contacted", "Activated", "Cancelled"] as const;
 
-export const SubscriptionInput = z.object({
+const base = {
   packageId: z.string().min(1).max(40),
+  groupKey: z.string().max(40).regex(/^[a-z0-9-]*$/).default(""),
   name: z.string().trim().min(2).max(100),
   phone: z.string().trim().max(30).refine((v) => { const d = v.replace(/\D/g, ""); return d.length >= 8 && d.length <= 15; }),
   email: z.string().trim().toLowerCase().max(120).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
   emirate: z.enum(EMIRATES),
   location: z.string().trim().max(300).default(""),
+  activationDate: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/).default(""),
+};
+
+// A household subscribing: the property details are required.
+const subscribe = z.object({
+  ...base, kind: z.literal("subscribe").default("subscribe"), company: z.string().trim().max(120).default(""), message: z.string().trim().max(1000).default(""),
   propertyType: z.enum(PROPERTY_TYPES),
   // 0 = studio
   bedrooms: z.number().int().min(0).max(10),
   acUnits: z.number().int().min(1).max(50),
-  activationDate: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/).default(""),
 });
+
+// A business asking for a quotation: a company name and a message instead of the household's property details; units are optional.
+const quote = z.object({
+  ...base, kind: z.literal("quote"), company: z.string().trim().max(120).default(""), message: z.string().trim().max(1000).default(""),
+  propertyType: z.string().trim().max(60).default(""),
+  bedrooms: z.number().int().min(0).max(10).default(0),
+  acUnits: z.number().int().min(0).max(500).default(0),
+});
+
+export const SubscriptionInput = z.union([quote, subscribe]);
 export type SubscriptionInput = z.infer<typeof SubscriptionInput>;
 
 // The preferred activation date cannot be in the past (today is fine). Dates are UAE dates.
