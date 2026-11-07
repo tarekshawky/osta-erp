@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useToast } from "@/components/Toast";
 import { Field, inputClassName } from "@/components/FormField";
 import { BlocksEditor } from "@/components/cms/BlocksEditor";
+import { Redo2, Undo2 } from "lucide-react";
 import type { Block } from "@/lib/cms/blocks";
+import { blocksStructureChanged, emptyHistory, recordChange, redo as redoStep, undo as undoStep, type History } from "@/lib/cms/history";
 import { SeoPanel, type Analysis } from "@/components/cms/SeoPanel";
 import { LinkTargetsContext, type LinkTarget } from "@/components/cms/LinkInserter";
 import { ParentPicker } from "@/components/cms/ParentPicker";
@@ -98,10 +100,50 @@ export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasM
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
 
-  const update = (patch: Partial<Draft>) => {
-    setDraft((d) => ({ ...d, ...patch }));
+  // Undo / redo of the whole draft (title, blocks, SEO…). `latest` is kept current synchronously so several changes in one
+  // event and quick undo/redo presses always build on the newest draft.
+  const history = useRef<History<Draft>>(emptyHistory<Draft>());
+  const [steps, setSteps] = useState({ undo: 0, redo: 0 });
+  const syncSteps = () => setSteps({ undo: history.current.past.length, redo: history.current.future.length });
+  const apply = (next: Draft) => {
+    latest.current = next;
+    setDraft(next);
     setSaveState("dirty");
   };
+  const update = (patch: Partial<Draft>) => {
+    const before = latest.current;
+    const structural = !!patch.blocks && blocksStructureChanged(before.blocks, patch.blocks);
+    history.current = recordChange(history.current, before, Date.now(), structural);
+    apply({ ...before, ...patch });
+    syncSteps();
+  };
+  const undo = useCallback(() => {
+    const r = undoStep(history.current, latest.current);
+    if (!r) return;
+    history.current = r.history;
+    apply(r.value);
+    syncSteps();
+  }, []);
+  const redo = useCallback(() => {
+    const r = redoStep(history.current, latest.current);
+    if (!r) return;
+    history.current = r.history;
+    apply(r.value);
+    syncSteps();
+  }, []);
+  // Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z (or Ctrl+Y). Inside a text box the browser's own undo keeps working for that box.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))) return;
+      const k = e.key.toLowerCase();
+      if (k === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); redo(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
   const setBlocks = (blocks: Block[]) => update({ blocks });
 
   function run(fn: () => Promise<{ ok: boolean; error?: string }>, success: string, after?: () => void) {
@@ -140,6 +182,14 @@ export function PageBuilder({ page, versions, siteOrigin, menuParents, hasAreasM
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{status}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center rounded-lg border border-slate-200" role="group" aria-label="Undo and redo">
+            <button type="button" onClick={undo} disabled={steps.undo === 0} title="Undo (Ctrl/⌘ + Z)" aria-label="Undo" className="flex h-9 w-9 items-center justify-center rounded-l-lg text-slate-700 hover:bg-slate-50 disabled:opacity-30">
+              <Undo2 size={16} aria-hidden />
+            </button>
+            <button type="button" onClick={redo} disabled={steps.redo === 0} title="Redo (Ctrl/⌘ + Shift + Z)" aria-label="Redo" className="flex h-9 w-9 items-center justify-center rounded-r-lg border-l border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-30">
+              <Redo2 size={16} aria-hidden />
+            </button>
+          </div>
           <button type="button" disabled={pending} onClick={() => run(() => createPreviewUrl(page.id).then((r) => { if (r.ok && r.url) setPreviewUrl(r.url); return r; }), "Preview ready.")} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-50">
             Preview
           </button>
