@@ -79,7 +79,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     id: "finance", label: "Finance & Accounting", icon: "finance",
-    items: [FINANCIAL_REPORTS, { href: "/admin/expenses", label: "Expenses", keywords: "costs spending" }, { href: "/admin/wallets", label: "Wallets", keywords: "cash money" }, RENTAL_EXPENSES, VEHICLE_EXPENSES],
+    items: [FINANCIAL_REPORTS, { href: "/admin/expenses", label: "Expenses", keywords: "costs spending" }, { href: "/admin/expenses/purchases", label: "Customer Purchases", keywords: "customer materials parts purchase supplier" }, { href: "/admin/expenses/reports", label: "Expense Reports", keywords: "company employee daily workers rental equipment transport customer materials" }, { href: "/admin/wallets", label: "Wallets", keywords: "cash money" }, RENTAL_EXPENSES, VEHICLE_EXPENSES],
   },
   {
     id: "reports", label: "Reports & Analytics", icon: "reports",

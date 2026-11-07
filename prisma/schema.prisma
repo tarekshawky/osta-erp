@@ -112,6 +112,7 @@ model Employee {
   orderStatusChanges           OrderStatusChange[]
   invoiceStatusChanges         InvoiceStatusChange[]
   invoicePayments              InvoicePayment[]              @relation("InvoicePaymentBy")
+  customerPurchasesCreated     CustomerPurchase[]            @relation("CustomerPurchaseCreatedBy")
   customersCreated             Customer[]                     @relation("CustomerCreatedBy")
   customersUpdated             Customer[]                     @relation("CustomerUpdatedBy")
   blogPostsCreated             BlogPost[]                     @relation("BlogPostCreatedBy")
@@ -188,6 +189,7 @@ model Customer {
   quotations       Quotation[]
   customerNotes    CustomerNote[]
   rentalAgreements RentalAgreement[]
+  customerPurchases CustomerPurchase[]
   createdAt        DateTime             @default(now())
 }
 
@@ -341,6 +343,7 @@ model Order {
   invoice          Invoice?     @relation(fields: [invoiceId], references: [id])
   review           OrderReview?
   jobs             Job[]
+  customerPurchases CustomerPurchase[]
 
   acceptedAt    DateTime?
   departedAt    DateTime?
@@ -453,9 +456,19 @@ model Expense {
   nextServiceInterval   Int? // Service only, in KM
   fineInstallments      VehicleFineInstallment[]
   rentalTransaction     RentalTransaction?
+  // Expense classification (additive; every older row keeps null and is read as a company expense):
+  // COMPANY | EMPLOYEE | CUSTOMER_PURCHASE. expenseKind is the type inside it (Daily Worker, Equipment Rental, ...), emirate the
+  // emirate it belongs to, and details the type-specific fields (worker name, days, daily rate, supplier, dates, ...).
+  expenseClass          String?
+  expenseKind           String?
+  emirate               String?
+  details               Json?
+  customerPurchase      CustomerPurchase?
   createdById           String
   createdBy             Employee                 @relation(fields: [createdById], references: [id])
   createdAt             DateTime                 @default(now())
+
+  @@index([expenseClass, date])
 }
 
 // One card = one independent wallet: its own limit, expenses, payments, statement.
@@ -2135,4 +2148,57 @@ model InvoicePayment {
   createdAt           DateTime  @default(now())
 
   @@index([invoiceId, createdAt])
+}
+
+// A purchase of parts / materials made for a customer's job (not a general company expense). It is linked to the customer and
+// the service order and costed on that order. Once approved it has exactly ONE Expense row (expenseId) carrying its total, so
+// the financial reports see the money once; the purchase itself only adds the detail (items, supplier, order, margin).
+model CustomerPurchase {
+  id                 String                 @id @default(cuid())
+  number             String                 @unique // CMP-2026-000001
+  status             String                 @default("Pending") // Pending | Approved | Rejected
+  purchaseDate       DateTime
+  customerId         String
+  customer           Customer               @relation(fields: [customerId], references: [id])
+  orderId            String?
+  order              Order?                 @relation(fields: [orderId], references: [id])
+  teamId             String?
+  teamName           String?
+  technicianId       String?
+  technicianName     String?
+  emirate            String?
+  supplierName       String?
+  supplierInvoiceNo  String?
+  paymentMethod      String
+  creditCardId       String?
+  notes              String?
+  supplierInvoiceUrl String?
+  total              Float
+  expenseId          String?                @unique
+  expense            Expense?               @relation(fields: [expenseId], references: [id])
+  createdById        String
+  createdBy          Employee               @relation("CustomerPurchaseCreatedBy", fields: [createdById], references: [id])
+  approvedById       String?
+  approvedAt         DateTime?
+  rejectionReason    String?
+  items              CustomerPurchaseItem[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([orderId])
+  @@index([customerId])
+  @@index([purchaseDate])
+}
+
+model CustomerPurchaseItem {
+  id                String           @id @default(cuid())
+  purchaseId        String
+  purchase          CustomerPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  name              String
+  description       String?
+  qty               Float
+  unitPrice         Float
+  total             Float
+  supplier          String?
+  supplierInvoiceNo String?
 }

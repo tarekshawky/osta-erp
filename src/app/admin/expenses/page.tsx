@@ -103,7 +103,7 @@ export default async function AdminExpensesPage({
   const expenses = await prisma.expense.findMany({
     where,
     orderBy: { date: "desc" },
-    include: { createdBy: true, team: true, creditCard: { select: { lastFour: true } }, vehicleRef: { select: { name: true } } },
+    include: { createdBy: true, team: true, creditCard: { select: { lastFour: true } }, vehicleRef: { select: { name: true } }, customerPurchase: { select: { id: true } } },
     skip: (safePage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
   });
@@ -133,6 +133,9 @@ export default async function AdminExpensesPage({
     referenceNumber: exp.referenceNumber,
     creditCardId: exp.creditCardId,
     creditCardLastFour: exp.creditCard?.lastFour ?? null,
+    expenseClass: exp.expenseClass,
+    expenseKind: exp.expenseKind,
+    purchaseId: exp.customerPurchase?.id ?? null,
   }));
 
   const monthlyExpenses = await expensesByMonth();

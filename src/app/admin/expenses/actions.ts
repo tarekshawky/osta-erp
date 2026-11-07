@@ -50,6 +50,14 @@ export async function resolveCreditCard(
   return { ok: true, creditCardId: card.id };
 }
 
+// The Expense row of a customer purchase is owned by the purchase document (items, order, approval); changing or deleting it
+// from the general list would leave the two out of step, so it is managed from the purchase instead.
+const OWNED_BY_PURCHASE = "This expense belongs to a customer materials purchase. Open the purchase to change or delete it.";
+async function ownedByPurchase(id: string): Promise<boolean> {
+  const e = await prisma.expense.findUnique({ where: { id }, select: { expenseClass: true } });
+  return e?.expenseClass === "CUSTOMER_PURCHASE";
+}
+
 function resolveVehicleTypeFields(
   input: Pick<ExpenseFormInput, "category" | "subcategory" | "vehicleId" | "odometer" | "detailType" | "liters" | "nextServiceInterval">
 ) {
@@ -182,6 +190,7 @@ export async function updateExpense(
 
   const existing = await prisma.expense.findUnique({ where: { id } });
   if (!existing) return { ok: false, error: "Expense not found." };
+  if (existing.expenseClass === "CUSTOMER_PURCHASE") return { ok: false, error: OWNED_BY_PURCHASE };
 
   const details = resolveVehicleTypeFields(input);
   const mileageResult = await checkMileage(details.vehicleId, details.odometer, id, input.overrideMileage);
@@ -230,6 +239,7 @@ export async function updateExpense(
 
 export async function deleteExpense(id: string) {
   await requireEmployee("ADMIN");
+  if (await ownedByPurchase(id)) throw new Error(OWNED_BY_PURCHASE);
   const expense = await prisma.expense.delete({ where: { id } });
   revalidatePath("/admin/expenses");
   revalidatePath("/admin/wallets");
@@ -246,6 +256,7 @@ export async function refundExpense(
 
   const expense = await prisma.expense.findUnique({ where: { id } });
   if (!expense) return { ok: false, error: "Expense not found." };
+  if (expense.expenseClass === "CUSTOMER_PURCHASE") return { ok: false, error: OWNED_BY_PURCHASE };
 
   const remaining = expense.amount - expense.refundedAmount;
   if (amount <= 0 || amount > remaining + 0.001) {

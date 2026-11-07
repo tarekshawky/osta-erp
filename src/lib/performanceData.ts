@@ -17,8 +17,9 @@ const emirateOf = (v: string | null | undefined) => ((EMIRATES as readonly strin
 export const COST_BUCKETS = ["Fuel", "Vehicle & maintenance", "Materials & spare parts", "Employee-related", "Accommodation & rent", "Other"] as const;
 export type CostBucket = (typeof COST_BUCKETS)[number];
 
-export function bucketOf(source: "Expense" | "Payroll", category: string | null, subcategory: string | null): CostBucket {
-  if (source === "Payroll") return "Employee-related";
+export function bucketOf(source: "Expense" | "Payroll", category: string | null, subcategory: string | null, expenseClass?: string | null): CostBucket {
+  if (source === "Payroll" || expenseClass === "EMPLOYEE") return "Employee-related";
+  if (expenseClass === "CUSTOMER_PURCHASE") return "Materials & spare parts";
   const c = (category ?? "").toLowerCase();
   if (c === "vehicle") return /fuel|petrol/i.test(subcategory ?? "") ? "Fuel" : "Vehicle & maintenance";
   if (c === "materials") return "Materials & spare parts";

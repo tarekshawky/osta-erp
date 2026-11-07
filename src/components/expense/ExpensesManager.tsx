@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { formatAed, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TeamBadge } from "@/components/admin/TeamBadge";
 import { CategoryBadge } from "./CategoryBadge";
+import { ExpenseTypeChooser } from "./ExpenseTypeChooser";
 import { ExpenseForm, type ExpenseFormValue, type ActiveCreditCardOption, type VehicleOption } from "./ExpenseForm";
 import { ExpenseRefundModal } from "./ExpenseRefundModal";
 import { DeleteExpenseButton } from "./DeleteExpenseButton";
@@ -43,6 +45,9 @@ export type ExpenseRow = {
   referenceNumber: string | null;
   creditCardId: string | null;
   creditCardLastFour: string | null;
+  expenseClass: string | null;
+  expenseKind: string | null;
+  purchaseId: string | null;
 };
 
 function toFormValue(expense: ExpenseRow): ExpenseFormValue {
@@ -124,6 +129,7 @@ export function ExpensesManager({
   odometerMin?: string;
   odometerMax?: string;
 }) {
+  const [chooser, setChooser] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
@@ -239,9 +245,15 @@ export function ExpensesManager({
               </span>
             }
           />
+          <Link href="/admin/expenses/purchases" className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2">
+            Customer Purchases
+          </Link>
+          <Link href="/admin/expenses/reports" className="text-sm font-medium text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2">
+            Reports
+          </Link>
           <button
             type="button"
-            onClick={openAdd}
+            onClick={() => setChooser(true)}
             className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 flex items-center gap-1"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -331,6 +343,15 @@ export function ExpensesManager({
         </div>
       )}
 
+      {chooser && (
+        <ExpenseTypeChooser
+          onClose={() => setChooser(false)}
+          onCompany={() => {
+            setChooser(false);
+            openAdd();
+          }}
+        />
+      )}
       {mode === "add" && (
         <ExpenseForm
           initial={emptyFormValue}
@@ -388,6 +409,7 @@ export function ExpensesManager({
                 <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{formatDate(new Date(exp.date))}</td>
                 <td className="px-4 py-3">
                   <CategoryBadge category={exp.category} />
+                  {exp.expenseKind && <div className="mt-0.5 text-[11px] text-slate-400">{exp.expenseKind}</div>}
                   {(exp.vehicleName || exp.vehicle || exp.subcategory) && (
                     <div className="text-xs text-slate-400 mt-0.5">
                       {[exp.vehicleName ?? exp.vehicle, exp.subcategory].filter(Boolean).join(" · ")}
@@ -414,6 +436,13 @@ export function ExpensesManager({
                   <StatusBadge status={exp.status} />
                 </td>
                 <td className="px-4 py-3">
+                  {exp.purchaseId ? (
+                    <div className="flex items-center justify-end">
+                      <Link href={`/admin/expenses/purchases/${exp.purchaseId}`} className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50">
+                        Open purchase
+                      </Link>
+                    </div>
+                  ) : (
                   <div className="flex items-center justify-end gap-1">
                     <button
                       type="button"
@@ -451,6 +480,7 @@ export function ExpensesManager({
                       className="text-amber-600 hover:text-amber-700 p-1.5 disabled:opacity-40"
                     />
                   </div>
+                  )}
                 </td>
               </tr>
             ))}

@@ -17,6 +17,9 @@ describe("expense buckets", () => {
     expect(bucketOf("Expense", "Rent / Accommodation", null)).toBe("Accommodation & rent");
     expect(bucketOf("Expense", "Telephone Expenses", null)).toBe("Other");
     expect(bucketOf("Payroll", null, null)).toBe("Employee-related");
+    expect(bucketOf("Expense", "Daily Worker", null, "EMPLOYEE")).toBe("Employee-related");
+    expect(bucketOf("Expense", "Materials", null, "CUSTOMER_PURCHASE")).toBe("Materials & spare parts");
+    expect(bucketOf("Expense", "Equipment Rental", null, "COMPANY")).toBe("Accommodation & rent");
   });
 });
 

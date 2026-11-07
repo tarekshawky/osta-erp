@@ -13,7 +13,7 @@ export async function loadPerfInput(period: { from: Date; to: Date }): Promise<P
   const [orders, invoices, expenses, payroll, teams] = await Promise.all([
     prisma.order.findMany({ where: { date: range }, select: { id: true, number: true, date: true, status: true, teamId: true, assignedToId: true, customer: { select: { emirate: true, name: true, companyName: true, type: true } } } }),
     prisma.invoice.findMany({ where: { date: range }, select: { id: true, number: true, date: true, amount: true, refundedAmount: true, status: true, paidAmount: true, teamId: true, createdById: true, payment: true, customer: { select: { emirate: true, name: true, companyName: true, type: true } } } }),
-    prisma.expense.findMany({ where: { date: range }, select: { id: true, date: true, amount: true, refundedAmount: true, teamId: true, createdById: true, category: true, subcategory: true, description: true, vendor: true, attachmentUrl: true } }),
+    prisma.expense.findMany({ where: { date: range }, select: { id: true, date: true, amount: true, refundedAmount: true, teamId: true, createdById: true, category: true, subcategory: true, expenseClass: true, description: true, vendor: true, attachmentUrl: true } }),
     prisma.payrollEntry.findMany({ where: { date: range }, select: { id: true, date: true, amount: true, type: true, note: true, employeeId: true, employee: { select: { name: true, teamId: true } } } }),
     prisma.team.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
@@ -21,7 +21,7 @@ export async function loadPerfInput(period: { from: Date; to: Date }): Promise<P
   const costs: CostRow[] = [
     ...expenses.map((e): CostRow => ({
       id: e.id, date: e.date, amount: e.amount - e.refundedAmount, teamId: e.teamId, employeeId: e.createdById,
-      bucket: bucketOf("Expense", e.category, e.subcategory), source: "Expense",
+      bucket: bucketOf("Expense", e.category, e.subcategory, e.expenseClass), source: "Expense",
       category: [e.category, e.subcategory].filter(Boolean).join(" · ") || "Uncategorized", description: e.description, vendor: e.vendor, attachmentUrl: e.attachmentUrl,
     })),
     // Same "Net Payroll" rule as the rest of the reports: Salary + Advance - Deduction.
