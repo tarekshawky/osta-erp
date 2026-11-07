@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ICON_NAMES } from "./icons";
 import { hasUnsafeInlineLink } from "./inlineLinks";
 import { cleanRichValue } from "./richText";
 import { WEATHER_CITIES, WEATHER_CITY_SLUGS } from "./weatherCities";
@@ -24,6 +25,13 @@ const image = z
   .max(3_000_000)
   .refine((v) => v === "" || /^(\/|https?:\/\/|data:image\/(png|jpe?g|webp|gif);base64,)/.test(v), "Invalid image.");
 const cta = z.object({ label: bi, url: link });
+const iconName = z.string().max(40).regex(/^[A-Za-z0-9]*$/);
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a colour like #050b1a.");
+const yesNo = z.enum(["yes", "no"]);
+const CURRENCIES = ["AED", "USD", "SAR", "EUR"] as const;
+const currency = z.enum(CURRENCIES);
+const BADGES = ["none", "featured", "popular", "new", "offer"] as const;
+const money = z.string().max(30);
 
 const RAW_SCHEMAS = {
   hero: z.object({
@@ -115,15 +123,89 @@ const RAW_SCHEMAS = {
     forecast: z.enum(["none", "3", "5", "7"]),
     tipText: bi, tipUrl: link, tipFromC: z.number().int().min(15).max(60),
   }),
+  // ---- Visual block library (text, images, products & services, conversion) ----
+  heading: z.object({ eyebrow: bi, heading: bi, subtitle: bi, align: z.enum(["start", "center"]), size: z.enum(["md", "lg", "xl"]) }),
+  // One list block for bullets, numbers and checkmark features; each item may carry its own icon (checkmark lists).
+  list: z.object({
+    heading: bi, variant: z.enum(["bullet", "check", "number"]), columns: z.enum(["1", "2"]),
+    items: z.array(z.object({ icon: iconName.optional(), text: bi })).max(60),
+  }),
+  quote: z.object({ variant: z.enum(["quote", "highlight"]), text: bi, author: bi, role: bi, accentColor: hexColor.optional() }),
+  // A thin bar with one line of text and an optional link (offers, notices).
+  announcement: z.object({ text: bi, link: cta, tone: z.enum(["blue", "orange", "green", "dark"]), icon: iconName.optional() }),
+  gallery: z.object({
+    heading: bi, columns: z.enum(["2", "3", "4"]), ratio: z.enum(["auto", "1:1", "3:2", "16:9"]),
+    images: z.array(z.object({ imageUrl: image, alt: bi, caption: bi })).max(40),
+  }),
+  slider: z.object({
+    heading: bi, ratio: z.enum(["16:9", "21:9", "3:2"]), autoplay: yesNo,
+    slides: z.array(z.object({ imageUrl: image, heading: bi, text: bi, cta })).max(12),
+  }),
+  // A full-width banner with its own picture behind a heading, text and a button.
+  bgSection: z.object({
+    heading: bi, body: bi, cta, align: z.enum(["start", "center"]), height: z.enum(["sm", "md", "lg"]),
+    imageUrl: image, overlay: z.number().int().min(0).max(100), overlayColor: hexColor.optional(),
+  }),
+  // A product or a service shown in full: picture, price, features, rating and buttons. Typed by hand, or filled from the
+  // Service Catalogue (source "catalogue": the service's name and its Book / page links come from the catalogue, and anything
+  // typed here still wins).
+  showcase: z.object({
+    kind: z.enum(["product", "service"]),
+    source: z.enum(["manual", "catalogue"]),
+    catalogueKey: z.string().max(160).optional(),
+    imageUrl: image, imageAlt: bi,
+    name: bi, subtitle: bi, description: bi,
+    price: money, oldPrice: money, currency,
+    features: z.array(z.object({ icon: iconName.optional(), text: bi })).max(20),
+    badge: z.enum(BADGES),
+    primary: cta,
+    secondaryType: z.enum(["none", "call", "whatsapp", "learn"]), secondaryLabel: bi, secondaryUrl: link,
+    rating: z.number().min(0).max(5).optional(), reviews: z.number().int().min(0).max(10_000_000).optional(),
+    bgColor: hexColor.optional(), textColor: hexColor.optional(),
+    imagePosition: z.enum(["start", "end", "top"]), layout: z.enum(["split", "card"]),
+  }),
+  cardsGrid: z.object({
+    kind: z.enum(["product", "service"]), heading: bi, subtitle: bi, columns: z.enum(["2", "3", "4"]), currency,
+    cards: z.array(z.object({ imageUrl: image, name: bi, description: bi, price: money, oldPrice: money, badge: z.enum(BADGES), cta })).max(24),
+  }),
+  benefits: z.object({
+    eyebrow: bi, heading: bi, subtitle: bi, columns: z.enum(["2", "3", "4"]),
+    items: z.array(z.object({ icon: iconName.optional(), title: bi, text: bi })).max(24),
+  }),
+  pricing: z.object({
+    heading: bi, subtitle: bi, currency,
+    plans: z.array(z.object({ name: bi, price: money, period: bi, description: bi, features: z.array(z.object({ text: bi })).max(30), badge: bi, highlighted: yesNo, cta })).max(6),
+  }),
+  comparison: z.object({
+    heading: bi, subtitle: bi,
+    columns: z.array(z.object({ name: bi, highlighted: yesNo })).min(2).max(4),
+    rows: z.array(z.object({ label: bi, values: z.array(z.object({ v: z.string().max(80) })).max(4) })).max(30),
+  }),
+  beforeAfter: z.object({ heading: bi, subtitle: bi, beforeUrl: image, afterUrl: image, beforeLabel: bi, afterLabel: bi, alt: bi }),
+  promo: z.object({
+    badge: bi, heading: bi, text: bi, price: money, oldPrice: money, currency,
+    endDate: z.string().max(10).regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use a date like 2026-12-31."),
+    imageUrl: image, cta, accentColor: hexColor.optional(),
+  }),
+  // Booking, call, WhatsApp, quote and custom buttons. Call and WhatsApp always use the official contact details from Website →
+  // Site & Contact (no number is typed here); Book goes to the booking page.
+  ctaButtons: z.object({
+    heading: bi, subtitle: bi, align: z.enum(["start", "center", "end"]), size: z.enum(["md", "lg"]),
+    buttons: z.array(z.object({ kind: z.enum(["book", "call", "whatsapp", "quote", "custom"]), label: bi, url: link })).min(1).max(5),
+  }),
+  contactBanner: z.object({ heading: bi, subtitle: bi, showBook: yesNo, showCall: yesNo, showWhatsapp: yesNo, tone: z.enum(["dark", "blue", "light"]) }),
 } as const;
 
 // Any section can have its own background: an image under a dark overlay, or a plain colour.
-const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a colour like #050b1a.");
+const hex = hexColor;
 const sectionStyle = z.object({
   bgImage: image.optional(),
   overlay: z.number().int().min(0).max(100).optional(),
   overlayColor: hex.optional(),
   bgColor: hex.optional(),
+  // Extra space above and below the block, and where its text sits (for blocks that follow the section alignment).
+  spacing: z.enum(["none", "sm", "md", "lg", "xl"]).optional(),
+  textAlign: z.enum(["auto", "start", "center", "end"]).optional(),
 });
 const withStyle = <T extends z.ZodRawShape>(s: z.ZodObject<T>) => s.extend({ style: sectionStyle.optional() });
 
@@ -149,6 +231,22 @@ export const BLOCK_SCHEMAS = {
   aiServiceFinder: withStyle(RAW_SCHEMAS.aiServiceFinder),
   servicesAssistant: withStyle(RAW_SCHEMAS.servicesAssistant),
   locations: withStyle(RAW_SCHEMAS.locations),
+  heading: withStyle(RAW_SCHEMAS.heading),
+  list: withStyle(RAW_SCHEMAS.list),
+  quote: withStyle(RAW_SCHEMAS.quote),
+  announcement: withStyle(RAW_SCHEMAS.announcement),
+  gallery: withStyle(RAW_SCHEMAS.gallery),
+  slider: withStyle(RAW_SCHEMAS.slider),
+  bgSection: withStyle(RAW_SCHEMAS.bgSection),
+  showcase: withStyle(RAW_SCHEMAS.showcase),
+  cardsGrid: withStyle(RAW_SCHEMAS.cardsGrid),
+  benefits: withStyle(RAW_SCHEMAS.benefits),
+  pricing: withStyle(RAW_SCHEMAS.pricing),
+  comparison: withStyle(RAW_SCHEMAS.comparison),
+  beforeAfter: withStyle(RAW_SCHEMAS.beforeAfter),
+  promo: withStyle(RAW_SCHEMAS.promo),
+  ctaButtons: withStyle(RAW_SCHEMAS.ctaButtons),
+  contactBanner: withStyle(RAW_SCHEMAS.contactBanner),
 } as const;
 
 export type BlockType = keyof typeof BLOCK_SCHEMAS;
@@ -187,6 +285,11 @@ const ctaFields: FieldDef[] = [
   { kind: "bi-text", key: "label", label: "Label" },
   { kind: "url", key: "url", label: "Link" },
 ];
+const opts = (...pairs: [string, string][]) => pairs.map(([value, label]) => ({ value, label }));
+const iconField: FieldDef = { kind: "select", key: "icon", label: "Icon (checkmark lists use it)", options: [{ value: "", label: "Default" }, ...ICON_NAMES.map((n) => ({ value: n, label: n }))] };
+const currencyField: FieldDef = { kind: "select", key: "currency", label: "Currency", options: opts(["AED", "AED – Dirham"], ["USD", "USD – Dollar"], ["SAR", "SAR – Riyal"], ["EUR", "EUR – Euro"]) };
+const badgeField: FieldDef = { kind: "select", key: "badge", label: "Badge", options: opts(["none", "No badge"], ["featured", "Featured"], ["popular", "Popular"], ["new", "New"], ["offer", "Offer"]) };
+const cols234 = opts(["2", "2"], ["3", "3"], ["4", "4"]);
 const biEmpty = () => ({ en: "", ar: "" });
 const ctaEmpty = () => ({ label: biEmpty(), url: "" });
 
@@ -546,6 +649,258 @@ export const BLOCK_REGISTRY: Record<
       tipText: { en: "It is hot out there. Book an AC service before the heat gets worse.", ar: "الجو حار. احجز صيانة المكيف قبل أن يزداد الحر." }, tipUrl: "/pricing", tipFromC: 38,
     }),
   },
+  heading: {
+    label: "Heading & subtitle",
+    description: "A section title with a small label above and a subtitle under it.",
+    fields: [
+      { kind: "bi-text", key: "eyebrow", label: "Small label above" },
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      align,
+      { kind: "select", key: "size", label: "Heading size", options: opts(["md", "Medium"], ["lg", "Large"], ["xl", "Extra large"]) },
+    ],
+    defaults: () => ({ eyebrow: biEmpty(), heading: { en: "Section title", ar: "عنوان القسم" }, subtitle: biEmpty(), align: "center", size: "lg" }),
+  },
+  list: {
+    label: "List",
+    description: "Bullets, numbers or a checkmark features list, each line with its own icon if you like.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading (optional)" },
+      { kind: "select", key: "variant", label: "List style", options: opts(["bullet", "Bullets"], ["check", "Checkmarks / icons"], ["number", "Numbers"]) },
+      { kind: "select", key: "columns", label: "Columns", options: opts(["1", "1 column"], ["2", "2 columns"]) },
+      { kind: "list", key: "items", label: "Items", itemLabel: "Item", max: 60, fields: [{ kind: "bi-text", key: "text", label: "Text" }, iconField] },
+    ],
+    defaults: () => ({
+      heading: biEmpty(), variant: "check", columns: "1",
+      items: [{ text: { en: "First point", ar: "النقطة الأولى" }, icon: "" }, { text: { en: "Second point", ar: "النقطة الثانية" }, icon: "" }, { text: { en: "Third point", ar: "النقطة الثالثة" }, icon: "" }],
+    }),
+  },
+  quote: {
+    label: "Quote / highlight",
+    description: "A pull-quote with the author, or a highlighted note box.",
+    fields: [
+      { kind: "select", key: "variant", label: "Look", options: opts(["quote", "Quote"], ["highlight", "Highlight box"]) },
+      { kind: "bi-textarea", key: "text", label: "Text" },
+      { kind: "bi-text", key: "author", label: "Author / title (optional)" },
+      { kind: "bi-text", key: "role", label: "Role or place (optional)" },
+      { kind: "color", key: "accentColor", label: "Accent colour" },
+    ],
+    defaults: () => ({ variant: "quote", text: { en: "A short, memorable sentence.", ar: "جملة قصيرة لا تُنسى." }, author: biEmpty(), role: biEmpty() }),
+  },
+  announcement: {
+    label: "Announcement bar",
+    description: "A thin bar with one line of news or an offer, and an optional link.",
+    fields: [
+      { kind: "bi-text", key: "text", label: "Text" },
+      { kind: "group", key: "link", label: "Link (optional)", fields: ctaFields },
+      { kind: "select", key: "tone", label: "Colour", options: opts(["blue", "Blue"], ["orange", "Orange"], ["green", "Green"], ["dark", "Dark"]) },
+      iconField,
+    ],
+    defaults: () => ({ text: { en: "Free inspection this week!", ar: "فحص مجاني هذا الأسبوع!" }, link: ctaEmpty(), tone: "blue", icon: "Sparkles" }),
+  },
+  gallery: {
+    label: "Image gallery",
+    description: "A grid of pictures with optional captions.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading (optional)" },
+      { kind: "select", key: "columns", label: "Columns", options: cols234 },
+      { kind: "select", key: "ratio", label: "Picture shape", options: opts(["auto", "Natural"], ["1:1", "Square"], ["3:2", "Landscape 3:2"], ["16:9", "Wide 16:9"]) },
+      { kind: "list", key: "images", label: "Pictures", itemLabel: "Picture", max: 40, fields: [{ kind: "image", key: "imageUrl", label: "Picture" }, { kind: "bi-text", key: "alt", label: "Description (alt text)" }, { kind: "bi-text", key: "caption", label: "Caption" }] },
+    ],
+    defaults: () => ({ heading: biEmpty(), columns: "3", ratio: "3:2", images: [{ imageUrl: "", alt: biEmpty(), caption: biEmpty() }, { imageUrl: "", alt: biEmpty(), caption: biEmpty() }, { imageUrl: "", alt: biEmpty(), caption: biEmpty() }] }),
+  },
+  slider: {
+    label: "Image slider",
+    description: "Slides one after another, each with a picture, a line of text and a button.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading (optional)" },
+      { kind: "select", key: "ratio", label: "Slide shape", options: opts(["16:9", "Wide 16:9"], ["21:9", "Panorama 21:9"], ["3:2", "Landscape 3:2"]) },
+      { kind: "select", key: "autoplay", label: "Move by itself", options: opts(["yes", "Yes"], ["no", "No"]) },
+      { kind: "list", key: "slides", label: "Slides", itemLabel: "Slide", max: 12, fields: [{ kind: "image", key: "imageUrl", label: "Picture" }, { kind: "bi-text", key: "heading", label: "Heading" }, { kind: "bi-text", key: "text", label: "Text" }, { kind: "group", key: "cta", label: "Button (optional)", fields: ctaFields }] },
+    ],
+    defaults: () => ({ heading: biEmpty(), ratio: "16:9", autoplay: "yes", slides: [{ imageUrl: "", heading: biEmpty(), text: biEmpty(), cta: ctaEmpty() }, { imageUrl: "", heading: biEmpty(), text: biEmpty(), cta: ctaEmpty() }] }),
+  },
+  bgSection: {
+    label: "Background image section",
+    description: "A full-width banner with a picture behind a heading, text and button.",
+    fields: [
+      { kind: "image", key: "imageUrl", label: "Background picture" },
+      { kind: "number", key: "overlay", label: "Darkness over the picture, 0–100" },
+      { kind: "color", key: "overlayColor", label: "Overlay colour" },
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "body", label: "Text", rich: true },
+      { kind: "group", key: "cta", label: "Button (optional)", fields: ctaFields },
+      align,
+      { kind: "select", key: "height", label: "Height", options: opts(["sm", "Small"], ["md", "Medium"], ["lg", "Tall"]) },
+    ],
+    defaults: () => ({ heading: { en: "Your headline here", ar: "عنوانك هنا" }, body: biEmpty(), cta: ctaEmpty(), align: "center", height: "md", imageUrl: "", overlay: 55 }),
+  },
+  showcase: {
+    label: "Product / service showcase",
+    description: "One product or service in full: picture, price, features, rating and buttons. Type it by hand or fill it from the Service Catalogue.",
+    fields: [
+      { kind: "select", key: "kind", label: "This is a", options: opts(["service", "Service"], ["product", "Product"]) },
+      { kind: "select", key: "source", label: "Content from", options: opts(["manual", "Typed here"], ["catalogue", "Service Catalogue (name and links come from it)"]) },
+      { kind: "text", key: "catalogueKey", label: "Catalogue service (its page name, for example ac-maintenance)", showIf: { key: "source", equals: "catalogue" } },
+      { kind: "image", key: "imageUrl", label: "Picture" },
+      { kind: "bi-text", key: "imageAlt", label: "Picture description (alt text)" },
+      { kind: "bi-text", key: "name", label: "Name" },
+      { kind: "bi-text", key: "subtitle", label: "Subtitle" },
+      { kind: "bi-textarea", key: "description", label: "Description", rich: true },
+      { kind: "text", key: "price", label: "Price (for example 150)" },
+      { kind: "text", key: "oldPrice", label: "Old price, crossed out (optional)" },
+      currencyField,
+      { kind: "list", key: "features", label: "Features", itemLabel: "Feature", max: 20, fields: [{ kind: "bi-text", key: "text", label: "Text" }, iconField] },
+      badgeField,
+      { kind: "group", key: "primary", label: "Main button", fields: ctaFields },
+      { kind: "select", key: "secondaryType", label: "Second button", options: opts(["none", "None"], ["call", "Call (official number)"], ["whatsapp", "WhatsApp (official number)"], ["learn", "Learn more (link)"]) },
+      { kind: "bi-text", key: "secondaryLabel", label: "Second button text", showIf: { key: "secondaryType", equals: "learn" } },
+      { kind: "url", key: "secondaryUrl", label: "Second button link", showIf: { key: "secondaryType", equals: "learn" } },
+      { kind: "number", key: "rating", label: "Rating, 0–5 (optional)" },
+      { kind: "number", key: "reviews", label: "Number of reviews (optional)" },
+      { kind: "color", key: "bgColor", label: "Card background colour" },
+      { kind: "color", key: "textColor", label: "Text colour" },
+      { kind: "select", key: "imagePosition", label: "Picture position", options: opts(["start", "Start"], ["end", "End"], ["top", "Top"]) },
+      { kind: "select", key: "layout", label: "Layout", options: opts(["split", "Side by side"], ["card", "Compact card"]) },
+    ],
+    defaults: () => ({
+      kind: "service", source: "manual", imageUrl: "", imageAlt: biEmpty(),
+      name: { en: "Service name", ar: "اسم الخدمة" }, subtitle: biEmpty(), description: biEmpty(),
+      price: "", oldPrice: "", currency: "AED",
+      features: [{ text: { en: "Fast and tidy work", ar: "عمل سريع ومرتب" }, icon: "CheckCircle2" }, { text: { en: "Trained technicians", ar: "فنيون مدرَّبون" }, icon: "CheckCircle2" }],
+      badge: "none", primary: { label: { en: "Book now", ar: "احجز الآن" }, url: "/pricing" },
+      secondaryType: "whatsapp", secondaryLabel: biEmpty(), secondaryUrl: "", imagePosition: "end", layout: "split",
+    }),
+  },
+  cardsGrid: {
+    label: "Product / service cards",
+    description: "A grid of cards, each with a picture, name, text, price and button.",
+    fields: [
+      { kind: "select", key: "kind", label: "These are", options: opts(["service", "Services"], ["product", "Products"]) },
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      { kind: "select", key: "columns", label: "Columns", options: cols234 },
+      currencyField,
+      { kind: "list", key: "cards", label: "Cards", itemLabel: "Card", max: 24, fields: [{ kind: "image", key: "imageUrl", label: "Picture" }, { kind: "bi-text", key: "name", label: "Name" }, { kind: "bi-text", key: "description", label: "Short text" }, { kind: "text", key: "price", label: "Price" }, { kind: "text", key: "oldPrice", label: "Old price" }, badgeField, { kind: "group", key: "cta", label: "Button", fields: ctaFields }] },
+    ],
+    defaults: () => ({
+      kind: "service", heading: biEmpty(), subtitle: biEmpty(), columns: "3", currency: "AED",
+      cards: [0, 1, 2].map(() => ({ imageUrl: "", name: biEmpty(), description: biEmpty(), price: "", oldPrice: "", badge: "none", cta: ctaEmpty() })),
+    }),
+  },
+  benefits: {
+    label: "Features & benefits",
+    description: "Icon cards: a short title and text for each benefit.",
+    fields: [
+      { kind: "bi-text", key: "eyebrow", label: "Small label above" },
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      { kind: "select", key: "columns", label: "Columns", options: cols234 },
+      { kind: "list", key: "items", label: "Benefits", itemLabel: "Benefit", max: 24, fields: [iconField, { kind: "bi-text", key: "title", label: "Title" }, { kind: "bi-text", key: "text", label: "Text" }] },
+    ],
+    defaults: () => ({
+      eyebrow: biEmpty(), heading: { en: "Why choose us", ar: "لماذا نحن" }, subtitle: biEmpty(), columns: "3",
+      items: [{ icon: "ShieldCheck", title: { en: "Trusted", ar: "موثوق" }, text: biEmpty() }, { icon: "Clock", title: { en: "On time", ar: "في الموعد" }, text: biEmpty() }, { icon: "Award", title: { en: "Quality", ar: "جودة" }, text: biEmpty() }],
+    }),
+  },
+  pricing: {
+    label: "Pricing cards",
+    description: "Up to 6 plans side by side with price, features and a button; one can be highlighted.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      currencyField,
+      {
+        kind: "list", key: "plans", label: "Plans", itemLabel: "Plan", max: 6,
+        fields: [
+          { kind: "bi-text", key: "name", label: "Plan name" }, { kind: "text", key: "price", label: "Price" }, { kind: "bi-text", key: "period", label: "Per (for example “per visit”)" },
+          { kind: "bi-text", key: "description", label: "Short text" },
+          { kind: "list", key: "features", label: "What is included", itemLabel: "Line", max: 30, fields: [{ kind: "bi-text", key: "text", label: "Text" }] },
+          { kind: "bi-text", key: "badge", label: "Badge text (optional)" },
+          { kind: "select", key: "highlighted", label: "Highlight this plan", options: opts(["no", "No"], ["yes", "Yes"]) },
+          { kind: "group", key: "cta", label: "Button", fields: ctaFields },
+        ],
+      },
+    ],
+    defaults: () => ({
+      heading: biEmpty(), subtitle: biEmpty(), currency: "AED",
+      plans: [
+        { name: { en: "Basic", ar: "الأساسية" }, price: "99", period: { en: "per visit", ar: "للزيارة" }, description: biEmpty(), features: [{ text: { en: "Inspection", ar: "فحص" } }], badge: biEmpty(), highlighted: "no", cta: { label: { en: "Book", ar: "احجز" }, url: "/pricing" } },
+        { name: { en: "Standard", ar: "القياسية" }, price: "199", period: { en: "per visit", ar: "للزيارة" }, description: biEmpty(), features: [{ text: { en: "Inspection", ar: "فحص" } }, { text: { en: "Cleaning", ar: "تنظيف" } }], badge: { en: "Popular", ar: "الأكثر طلباً" }, highlighted: "yes", cta: { label: { en: "Book", ar: "احجز" }, url: "/pricing" } },
+      ],
+    }),
+  },
+  comparison: {
+    label: "Comparison table",
+    description: "Compare 2–4 options row by row (for example our packages).",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      { kind: "list", key: "columns", label: "Columns (the options being compared)", itemLabel: "Option", max: 4, fields: [{ kind: "bi-text", key: "name", label: "Name" }, { kind: "select", key: "highlighted", label: "Highlight", options: opts(["no", "No"], ["yes", "Yes"]) }] },
+      { kind: "list", key: "rows", label: "Rows", itemLabel: "Row", max: 30, fields: [{ kind: "bi-text", key: "label", label: "Row title" }, { kind: "list", key: "values", label: "Values, one per option (type ✓, ✗ or any text)", itemLabel: "Value", max: 4, fields: [{ kind: "text", key: "v", label: "Value" }] }] },
+    ],
+    defaults: () => ({
+      heading: biEmpty(), subtitle: biEmpty(),
+      columns: [{ name: { en: "Basic", ar: "أساسية" }, highlighted: "no" }, { name: { en: "Premium", ar: "مميزة" }, highlighted: "yes" }],
+      rows: [{ label: { en: "Inspection", ar: "الفحص" }, values: [{ v: "✓" }, { v: "✓" }] }, { label: { en: "Warranty", ar: "الضمان" }, values: [{ v: "✗" }, { v: "✓" }] }],
+    }),
+  },
+  beforeAfter: {
+    label: "Before & after",
+    description: "Two pictures of the same job, with a slider to compare them.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading (optional)" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      { kind: "image", key: "beforeUrl", label: "Before picture" },
+      { kind: "image", key: "afterUrl", label: "After picture" },
+      { kind: "bi-text", key: "beforeLabel", label: "Before label" },
+      { kind: "bi-text", key: "afterLabel", label: "After label" },
+      { kind: "bi-text", key: "alt", label: "Description (alt text)" },
+    ],
+    defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), beforeUrl: "", afterUrl: "", beforeLabel: { en: "Before", ar: "قبل" }, afterLabel: { en: "After", ar: "بعد" }, alt: biEmpty() }),
+  },
+  promo: {
+    label: "Promotional offer",
+    description: "A highlighted offer with a badge, price, picture, button and an optional countdown date.",
+    fields: [
+      { kind: "bi-text", key: "badge", label: "Badge (for example “Limited offer”)" },
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "text", label: "Text", rich: true },
+      { kind: "text", key: "price", label: "Offer price" },
+      { kind: "text", key: "oldPrice", label: "Old price, crossed out" },
+      currencyField,
+      { kind: "text", key: "endDate", label: "Offer ends (YYYY-MM-DD, optional). Shows a countdown; after this day the offer disappears from the page" },
+      { kind: "image", key: "imageUrl", label: "Picture" },
+      { kind: "group", key: "cta", label: "Button", fields: ctaFields },
+      { kind: "color", key: "accentColor", label: "Accent colour" },
+    ],
+    defaults: () => ({ badge: { en: "Limited offer", ar: "عرض محدود" }, heading: { en: "Special offer", ar: "عرض خاص" }, text: biEmpty(), price: "", oldPrice: "", currency: "AED", endDate: "", imageUrl: "", cta: { label: { en: "Book now", ar: "احجز الآن" }, url: "/pricing" } }),
+  },
+  ctaButtons: {
+    label: "Action buttons",
+    description: "Book now, call, WhatsApp, request a quote or your own buttons. Call and WhatsApp use the official number from Site & Contact.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading (optional)" },
+      { kind: "bi-textarea", key: "subtitle", label: "Text (optional)", rich: true },
+      { kind: "select", key: "align", label: "Alignment", options: opts(["start", "Start"], ["center", "Center"], ["end", "End"]) },
+      { kind: "select", key: "size", label: "Button size", options: opts(["md", "Normal"], ["lg", "Large"]) },
+      { kind: "list", key: "buttons", label: "Buttons", itemLabel: "Button", max: 5, fields: [{ kind: "select", key: "kind", label: "Type", options: opts(["book", "Book now"], ["call", "Call now"], ["whatsapp", "WhatsApp"], ["quote", "Request a quote"], ["custom", "Custom link"]) }, { kind: "bi-text", key: "label", label: "Text (empty = default)" }, { kind: "url", key: "url", label: "Link (empty = default; call/WhatsApp ignore it)" }] },
+    ],
+    defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), align: "center", size: "lg", buttons: [{ kind: "book", label: biEmpty(), url: "" }, { kind: "whatsapp", label: biEmpty(), url: "" }] }),
+  },
+  contactBanner: {
+    label: "Contact banner",
+    description: "A strong banner inviting the visitor to book, call or WhatsApp. Uses the official contact details.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Text", rich: true },
+      { kind: "select", key: "showBook", label: "Book button", options: opts(["yes", "Show"], ["no", "Hide"]) },
+      { kind: "select", key: "showCall", label: "Call button", options: opts(["yes", "Show"], ["no", "Hide"]) },
+      { kind: "select", key: "showWhatsapp", label: "WhatsApp button", options: opts(["yes", "Show"], ["no", "Hide"]) },
+      { kind: "select", key: "tone", label: "Colour", options: opts(["dark", "Dark"], ["blue", "Blue"], ["light", "Light"]) },
+    ],
+    defaults: () => ({ heading: { en: "Need help? We are one tap away", ar: "تحتاج مساعدة؟ نحن على بعد ضغطة" }, subtitle: biEmpty(), showBook: "yes", showCall: "yes", showWhatsapp: "yes", tone: "dark" }),
+  },
 };
 
 // Every block (except the hero, which has its own background controls) can take a section background.
@@ -558,6 +913,8 @@ const STYLE_FIELD: FieldDef = {
     { kind: "number", key: "overlay", label: "Overlay strength over the image, 0–100 (higher = darker)" },
     { kind: "color", key: "overlayColor", label: "Overlay colour" },
     { kind: "color", key: "bgColor", label: "Plain background colour (used when there is no image)" },
+    { kind: "select", key: "spacing", label: "Extra space above and below", options: [{ value: "none", label: "Standard" }, { value: "sm", label: "A little more" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }, { value: "xl", label: "Extra large" }] },
+    { kind: "select", key: "textAlign", label: "Text alignment (blocks that follow it)", options: [{ value: "auto", label: "As designed" }, { value: "start", label: "Start" }, { value: "center", label: "Centre" }, { value: "end", label: "End" }] },
   ],
 };
 for (const type of Object.keys(BLOCK_REGISTRY) as BlockType[]) if (type !== "hero") BLOCK_REGISTRY[type].fields.push(STYLE_FIELD);

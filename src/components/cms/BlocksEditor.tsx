@@ -6,7 +6,12 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from "@dnd-kit/utilities";
 import { FieldEditor } from "@/components/cms/BlockForm";
 import { LinkTargetsContext, type LinkTarget } from "@/components/cms/LinkInserter";
-import { BLOCK_REGISTRY, BLOCK_TYPES, createBlock, newBlockId, type Block, type BlockType } from "@/lib/cms/blocks";
+import { BlockLibrary, LibraryIcon } from "@/components/cms/BlockLibrary";
+import { ShowcaseEditor } from "@/components/cms/ShowcaseEditor";
+import { BLOCK_REGISTRY, newBlockId, type Block } from "@/lib/cms/blocks";
+import { LIBRARY, createFromLibrary, type LibraryEntry } from "@/lib/cms/blockLibrary";
+
+const iconOf = (type: Block["type"]) => LIBRARY.find((e) => e.type === type)?.icon ?? "LayoutGrid";
 
 const blockSummary = (b: Block): string => {
   const heading = (b.props.heading as { en?: string } | undefined)?.en;
@@ -14,9 +19,10 @@ const blockSummary = (b: Block): string => {
 };
 
 function SortableBlock({
-  block, open, onToggleOpen, onChange, onRemove, onDuplicate,
+  block, open, onToggleOpen, onChange, onRemove, onDuplicate, onMove, canUp, canDown,
 }: {
   block: Block; open: boolean; onToggleOpen: () => void; onChange: (b: Block) => void; onRemove: () => void; onDuplicate: () => void;
+  onMove: (by: -1 | 1) => void; canUp: boolean; canDown: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const reg = BLOCK_REGISTRY[block.type];
@@ -31,9 +37,16 @@ function SortableBlock({
           ⠿
         </button>
         <button type="button" onClick={onToggleOpen} className="flex flex-1 items-center gap-2 text-left" aria-expanded={open}>
+          <LibraryIcon name={iconOf(block.type)} size={16} className="shrink-0 text-blue-600" />
           <span className="text-sm font-semibold text-slate-900">{reg.label}</span>
           <span className="truncate text-xs text-slate-400">{blockSummary(block)}</span>
           {block.hidden && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500">hidden</span>}
+        </button>
+        <button type="button" disabled={!canUp} onClick={() => onMove(-1)} aria-label={`Move ${reg.label} up`} title="Move up" className="px-1 text-sm font-medium text-slate-600 disabled:opacity-30">
+          ↑
+        </button>
+        <button type="button" disabled={!canDown} onClick={() => onMove(1)} aria-label={`Move ${reg.label} down`} title="Move down" className="px-1 text-sm font-medium text-slate-600 disabled:opacity-30">
+          ↓
         </button>
         <button type="button" onClick={() => onChange({ ...block, hidden: !block.hidden })} className="text-xs font-medium text-slate-600">
           {block.hidden ? "Show" : "Hide"}
@@ -57,7 +70,19 @@ function SortableBlock({
               Show on mobile
             </label>
           </div>
-          <FieldEditor fields={reg.fields} value={block.props} onChange={(props) => onChange({ ...block, props })} />
+          {block.type === "showcase" ? (
+            <>
+              <ShowcaseEditor value={block.props} onChange={(props) => onChange({ ...block, props })} />
+              <details className="mt-4 rounded-lg border border-slate-200 p-3">
+                <summary className="cursor-pointer text-xs font-semibold text-slate-500">All fields</summary>
+                <div className="mt-3">
+                  <FieldEditor fields={reg.fields} value={block.props} onChange={(props) => onChange({ ...block, props })} />
+                </div>
+              </details>
+            </>
+          ) : (
+            <FieldEditor fields={reg.fields} value={block.props} onChange={(props) => onChange({ ...block, props })} />
+          )}
         </div>
       )}
     </div>
@@ -79,8 +104,8 @@ export function BlocksEditor({ blocks, onChange, linkTargets }: { blocks: Block[
     setBlocks(arrayMove(blocks, from, to));
   }
 
-  function addBlock(type: BlockType) {
-    const b = createBlock(type);
+  function addBlock(entry: LibraryEntry) {
+    const b = createFromLibrary(entry);
     setBlocks([...blocks, b]);
     setOpenId(b.id);
     setAdding(false);
@@ -99,6 +124,12 @@ export function BlocksEditor({ blocks, onChange, linkTargets }: { blocks: Block[
                     open={openId === b.id}
                     onToggleOpen={() => setOpenId(openId === b.id ? null : b.id)}
                     onChange={(nb) => setBlocks(blocks.map((x) => (x.id === b.id ? nb : x)))}
+                    canUp={blocks[0]?.id !== b.id}
+                    canDown={blocks[blocks.length - 1]?.id !== b.id}
+                    onMove={(by) => {
+                      const i = blocks.findIndex((x) => x.id === b.id);
+                      setBlocks(arrayMove(blocks, i, i + by));
+                    }}
                     onRemove={() => { if (confirm("Delete this block?")) setBlocks(blocks.filter((x) => x.id !== b.id)); }}
                     onDuplicate={() => {
                       const i = blocks.findIndex((x) => x.id === b.id);
@@ -111,23 +142,10 @@ export function BlocksEditor({ blocks, onChange, linkTargets }: { blocks: Block[
             </SortableContext>
           </DndContext>
 
-          {adding ? (
-            <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-2">
-              {BLOCK_TYPES.map((t) => (
-                <button key={t} type="button" onClick={() => addBlock(t)} className="rounded-lg border border-slate-200 p-3 text-left hover:border-blue-400 hover:bg-blue-50">
-                  <p className="text-sm font-semibold text-slate-900">{BLOCK_REGISTRY[t].label}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">{BLOCK_REGISTRY[t].description}</p>
-                </button>
-              ))}
-              <button type="button" onClick={() => setAdding(false)} className="text-sm text-slate-500 sm:col-span-2">
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <button type="button" onClick={() => setAdding(true)} className="self-start rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-blue-600">
-              + Add block
-            </button>
-          )}
+          <button type="button" onClick={() => setAdding(true)} className="self-start rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-blue-600">
+            + Add block
+          </button>
+          <BlockLibrary open={adding} onClose={() => setAdding(false)} onAdd={addBlock} />
     </>
   );
   return linkTargets ? <LinkTargetsContext.Provider value={linkTargets}>{body}</LinkTargetsContext.Provider> : body;

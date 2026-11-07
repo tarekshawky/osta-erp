@@ -89,6 +89,13 @@ const blankValue = (f: FieldDef): unknown =>
   f.kind.startsWith("bi-") ? { en: "", ar: "" } : f.kind === "number" ? 0 : f.kind === "group" ? blankObject(f.fields) : f.kind === "select" ? f.options[0].value : f.kind === "list" ? [] : "";
 const blankObject = (fields: FieldDef[]): Obj => Object.fromEntries(fields.map((x) => [x.key, blankValue(x)]));
 
+function move<T>(items: T[], from: number, to: number): T[] {
+  const next = items.slice();
+  const [it] = next.splice(from, 1);
+  next.splice(to, 0, it);
+  return next;
+}
+
 export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; value: Obj; onChange: (v: Obj) => void }) {
   const set = (key: string, v: unknown) => onChange({ ...value, [key]: v });
 
@@ -130,7 +137,12 @@ export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; v
                 <span className="text-xs font-medium text-slate-600">{f.label}</span>
                 <div className="flex items-center gap-2">
                   <input type="color" aria-label={f.label} value={hex} onChange={(e) => set(f.key, e.target.value)} className="h-10 w-14 cursor-pointer rounded border border-slate-200 bg-white p-1" />
-                  <span className="text-xs text-slate-500" dir="ltr">{hex}</span>
+                  <span className="text-xs text-slate-500" dir="ltr">{typeof v === "string" && v ? hex : "not set"}</span>
+                  {typeof v === "string" && v && (
+                    <button type="button" onClick={() => onChange(Object.fromEntries(Object.entries(value).filter(([k]) => k !== f.key)))} className="text-xs font-medium text-slate-500 hover:text-red-600">
+                      Clear
+                    </button>
+                  )}
                 </div>
               </label>
             );
@@ -180,9 +192,17 @@ export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; v
                         <span>
                           {f.itemLabel} {i + 1}
                         </span>
-                        <button type="button" onClick={() => set(f.key, items.filter((_, idx) => idx !== i))} className="font-medium text-red-600">
-                          Remove
-                        </button>
+                        <span className="flex items-center gap-3">
+                          <button type="button" disabled={i === 0} onClick={() => set(f.key, move(items, i, i - 1))} aria-label={`Move ${f.itemLabel.toLowerCase()} ${i + 1} up`} className="font-medium text-slate-600 disabled:opacity-30">
+                            ↑
+                          </button>
+                          <button type="button" disabled={i === items.length - 1} onClick={() => set(f.key, move(items, i, i + 1))} aria-label={`Move ${f.itemLabel.toLowerCase()} ${i + 1} down`} className="font-medium text-slate-600 disabled:opacity-30">
+                            ↓
+                          </button>
+                          <button type="button" onClick={() => set(f.key, items.filter((_, idx) => idx !== i))} className="font-medium text-red-600">
+                            Remove
+                          </button>
+                        </span>
                       </div>
                       <FieldEditor fields={f.fields} value={item} onChange={(x) => set(f.key, items.map((it, idx) => (idx === i ? x : it)))} />
                     </div>
