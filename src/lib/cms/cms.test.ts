@@ -7,7 +7,7 @@ describe("block registry", () => {
     for (const type of BLOCK_TYPES) {
       const res = parseBlocks([createBlock(type)]);
       expect(res.ok, type).toBe(true);
-      if (type !== "homeSections") expect(BLOCK_REGISTRY[type].fields.length).toBeGreaterThan(0);
+      if (type !== "homeSections" && type !== "global") expect(BLOCK_REGISTRY[type].fields.length).toBeGreaterThan(0);
     }
   });
   it("rejects unknown block types and malformed props", () => {

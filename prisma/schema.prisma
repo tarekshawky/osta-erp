@@ -1438,6 +1438,21 @@ model CmsPage {
   @@index([parentId, sortOrder])
 }
 
+// A reusable block (Website → Global Blocks). A page that uses it ("Global Sync") shows its current content, so one edit updates
+// every page; "Independent copy" copies the content into the page instead and is never linked.
+model CmsGlobalBlock {
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  props       Json
+  createdById String?
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@index([name])
+}
+
 // Immutable snapshot (content + SEO) created on every manual save, publish and restore.
 model CmsPageVersion {
   id            String   @id @default(cuid())

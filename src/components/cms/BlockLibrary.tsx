@@ -2,20 +2,22 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  BadgeCheck, BadgePercent, Bot, BookOpen, BriefcaseBusiness, Calculator, CalendarCheck, ChartNoAxesColumn, CircleDollarSign, CircleHelp, ClipboardList,
+  BadgeCheck, BadgePercent, Bot, Droplets, Fan, FileCheck, PaintRoller, Snowflake, Wind, Zap, BookOpen, BriefcaseBusiness, Calculator, CalendarCheck, ChartNoAxesColumn, CircleDollarSign, CircleHelp, ClipboardList,
   CloudSun, Columns2, Columns3, Contact, FileText, GalleryHorizontal, GalleryThumbnails, Grid2x2, Heading, Headset, Highlighter, House, Image as ImageIcon, ImagePlus,
-  Layers, LayoutGrid, List, ListChecks, MapPin, Megaphone, MessageCircle, Monitor, MousePointerClick, Network, Newspaper, PanelLeft, PanelRight, PanelTop, PenLine,
+  Layers, LayoutGrid, Link as LinkIcon, List, ListChecks, MapPin, Megaphone, MessageCircle, Monitor, MousePointerClick, Network, Newspaper, PanelLeft, PanelRight, PanelTop, PenLine,
   Phone, Quote, Rocket, Search, ShoppingBag, Smartphone, Sparkles, SplitSquareHorizontal, Star, Table, Tablet, Type, Wrench, X,
   Award, Building2, CirclePlay, Clock, GitCommitVertical, ListOrdered, MessagesSquare, Minus, ShieldCheck, ThumbsUp, Users, Workflow,
   type LucideIcon,
 } from "lucide-react";
+import { listGlobalBlocks, type GlobalBlockRow } from "@/app/admin/website/global-blocks-actions";
 import { LIBRARY, LIBRARY_CATEGORIES, searchLibrary, type LibraryCategory, type LibraryEntry, type Wire, type WireCell } from "@/lib/cms/blockLibrary";
 
 // Every icon the library uses is imported by name (so the page does not ship the whole icon set).
 const ICONS: Record<string, LucideIcon> = {
+  Droplets, Fan, FileCheck, PaintRoller, Snowflake, Wind, Zap,
   BadgeCheck, BadgePercent, Bot, BookOpen, BriefcaseBusiness, Calculator, CalendarCheck, ChartNoAxesColumn, CircleDollarSign, CircleHelp, ClipboardList,
   CloudSun, Columns2, Columns3, Contact, FileText, GalleryHorizontal, GalleryThumbnails, Grid2x2, Heading, Headset, Highlighter, House, Image: ImageIcon, ImagePlus,
-  Layers, LayoutGrid, List, ListChecks, MapPin, Megaphone, MessageCircle, MousePointerClick, Network, Newspaper, PanelLeft, PanelRight, PanelTop, PenLine,
+  Layers, LayoutGrid, Link: LinkIcon, List, ListChecks, MapPin, Megaphone, MessageCircle, MousePointerClick, Network, Newspaper, PanelLeft, PanelRight, PanelTop, PenLine,
   Phone, Quote, Rocket, ShoppingBag, Sparkles, SplitSquareHorizontal, Star, Table, Type, Wrench,
   Award, Building2, CirclePlay, Clock, GitCommitVertical, ListOrdered, MessagesSquare, Minus, ShieldCheck, ThumbsUp, Users, Workflow,
 };
@@ -46,7 +48,7 @@ function writeIds(key: string, ids: string[]) {
   }
 }
 
-type View = LibraryCategory | "all" | "recent" | "favorites" | "recommended";
+type View = LibraryCategory | "all" | "recent" | "favorites" | "recommended" | "global";
 
 export type Device = "desktop" | "tablet" | "mobile";
 const DEVICES: { id: Device; label: string; Icon: LucideIcon; width: string }[] = [
@@ -145,11 +147,12 @@ function Thumb({ entry, device }: { entry: LibraryEntry; device: Device }) {
   );
 }
 
-export function BlockLibrary({ open, onClose, onAdd }: { open: boolean; onClose: () => void; onAdd: (entry: LibraryEntry) => void }) {
+export function BlockLibrary({ open, onClose, onAdd, onAddGlobal }: { open: boolean; onClose: () => void; onAdd: (entry: LibraryEntry) => void; onAddGlobal: (g: GlobalBlockRow, mode: "linked" | "copy") => void }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<View>("all");
   const [recent, setRecent] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [globals, setGlobals] = useState<GlobalBlockRow[] | "error" | null>(null);
   const [device, setDevice] = useState<Device>("desktop");
   const [rtl, setRtl] = useState(false);
   const [previewId, setPreviewId] = useState<string | null>(null);
@@ -162,6 +165,7 @@ export function BlockLibrary({ open, onClose, onAdd }: { open: boolean; onClose:
       setRecent(readIds(RECENT_KEY));
       setFavorites(readIds(FAVORITE_KEY));
     });
+    listGlobalBlocks().then(setGlobals).catch(() => setGlobals("error"));
     searchRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -171,7 +175,7 @@ export function BlockLibrary({ open, onClose, onAdd }: { open: boolean; onClose:
   }, [open, onClose]);
 
   const results = useMemo(() => {
-    const pool = searchLibrary(query, category === "all" || category === "recent" || category === "favorites" || category === "recommended" ? "all" : category);
+    const pool = searchLibrary(query, category === "all" || category === "recent" || category === "favorites" || category === "recommended" || category === "global" ? "all" : category);
     const ids = category === "recent" ? recent : category === "favorites" ? favorites : category === "recommended" ? RECOMMENDED : null;
     if (!ids) return pool;
     // Keep the saved order (most recent first).
@@ -226,16 +230,47 @@ export function BlockLibrary({ open, onClose, onAdd }: { open: boolean; onClose:
 
         <div className="flex min-h-0 flex-1 flex-col md:flex-row">
           <nav aria-label="Block categories" className="flex shrink-0 gap-1 overflow-x-auto border-b border-slate-200 p-2 md:w-56 md:flex-col md:overflow-visible md:border-b-0 md:border-r md:p-3">
-            {([{ id: "all", label: "All blocks" }, { id: "recommended", label: "Recommended" }, { id: "recent", label: "Recently used" }, { id: "favorites", label: "Favorites" }, ...LIBRARY_CATEGORIES] as { id: View; label: string }[]).map((c) => (
+            {([{ id: "all", label: "All blocks" }, { id: "recommended", label: "Recommended" }, { id: "recent", label: "Recently used" }, { id: "favorites", label: "Favorites" }, { id: "global", label: "Global blocks" }, ...LIBRARY_CATEGORIES] as { id: View; label: string }[]).map((c) => (
               <button key={c.id} type="button" onClick={() => setCategory(c.id)} aria-pressed={category === c.id} className={`flex shrink-0 items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm ${category === c.id ? "bg-blue-50 font-semibold text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
                 <span>{c.label}</span>
-                <span className="rounded-full bg-slate-100 px-2 text-[11px] text-slate-500">{counts[c.id] ?? 0}</span>
+                <span className="rounded-full bg-slate-100 px-2 text-[11px] text-slate-500">{c.id === "global" ? (Array.isArray(globals) ? globals.length : "–") : counts[c.id] ?? 0}</span>
               </button>
             ))}
           </nav>
 
           <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
-            {results.length === 0 ? (
+            {category === "global" ? (
+              <section>
+                <h3 className="text-sm font-semibold text-slate-900">Global blocks</h3>
+                <p className="mb-3 text-xs text-slate-500">Reusable blocks shared by many pages. “Add linked” follows later edits to the global block; “Add copy” is this page&apos;s own copy.</p>
+                {globals === null && <p className="py-10 text-center text-sm text-slate-400">Loading…</p>}
+                {globals === "error" && <p className="py-10 text-center text-sm text-slate-400">Global blocks are not available yet (the database update has not been applied).</p>}
+                {Array.isArray(globals) && globals.filter((g) => `${g.name} ${g.typeLabel}`.toLowerCase().includes(query.trim().toLowerCase())).length === 0 && (
+                  <p className="py-10 text-center text-sm text-slate-400">{globals.length === 0 ? "No global blocks yet. Open a block on a page and choose “Save as global block”." : `No global block matches “${query}”.`}</p>
+                )}
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {Array.isArray(globals) && globals.filter((g) => `${g.name} ${g.typeLabel}`.toLowerCase().includes(query.trim().toLowerCase())).map((g) => {
+                    const entry = LIBRARY.find((e) => e.type === g.type);
+                    return (
+                      <div key={g.id} className="flex flex-col gap-2.5 rounded-xl border border-slate-200 bg-white p-3">
+                        {entry && <Thumb entry={entry} device={device} />}
+                        <div className="flex items-start gap-2.5">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600"><LibraryIcon name={entry?.icon ?? "Link"} size={17} /></span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-slate-900">{g.name}</p>
+                            <p className="text-xs text-slate-500">{g.typeLabel} · used on {g.usedOn.length} page{g.usedOn.length === 1 ? "" : "s"}</p>
+                          </div>
+                        </div>
+                        <div className="mt-auto flex gap-2">
+                          <button type="button" onClick={() => onAddGlobal(g, "copy")} className="flex-1 rounded-lg border border-slate-200 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">Add copy</button>
+                          <button type="button" onClick={() => onAddGlobal(g, "linked")} className="flex-1 rounded-lg bg-blue-600 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">Add linked</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : results.length === 0 ? (
               <p className="py-16 text-center text-sm text-slate-400">
                 {query ? `No block matches “${query}”.` : category === "recent" ? "Blocks you add will show up here." : category === "favorites" ? "Tap the star on a block to keep it here." : "Nothing here yet."}
               </p>

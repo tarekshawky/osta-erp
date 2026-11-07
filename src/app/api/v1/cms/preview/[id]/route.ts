@@ -4,6 +4,7 @@ import { apiSuccess, apiError, corsPreflight } from "@/lib/apiResponse";
 import { verifyPreviewToken } from "@/lib/cms/pageRules";
 import { hasSubPagesBlock, loadSubPages, toPublicPage } from "@/lib/cms/publicPage";
 import { loadAreaPageContext } from "@/lib/locations/data";
+import { resolveGlobalBlocks } from "@/lib/cms/globalBlocks";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
   const page = await prisma.cmsPage.findFirst({ where: { id, deletedAt: null } });
   if (!page) return apiError("not_found", "Page not found.", 404);
-  const publicPage = toPublicPage(page, { slug: page.slug, titleEn: page.titleEn, titleAr: page.titleAr, blocks: page.draftBlocks, seo: page.draftSeo });
+  const publicPage = toPublicPage(page, { slug: page.slug, titleEn: page.titleEn, titleAr: page.titleAr, blocks: await resolveGlobalBlocks(page.draftBlocks, prisma), seo: page.draftSeo });
   if (!publicPage) return apiError("invalid_content", "This draft has invalid blocks.", 422);
   const ctx = await loadAreaPageContext(page);
   const subPages = hasSubPagesBlock(publicPage.blocks) ? await loadSubPages(prisma, page.id, false) : page.type === "area" && ctx.children.length ? ctx.children : undefined;

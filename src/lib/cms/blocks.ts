@@ -14,11 +14,12 @@ const text = z
   .refine((v) => !hasUnsafeInlineLink(v), "A link in this text has an address that is not allowed. Use a site path (/…), https://, tel: or mailto:.")
   .transform(cleanRichValue);
 const bi = z.object({ en: text, ar: text });
-// Links: site paths, http(s), tel: and mailto: only -- never javascript: or data:.
+// Links: site paths, http(s), tel: and mailto: only -- never javascript: or data:. "#name" jumps to a block on the same page
+// (a block's "Anchor ID").
 const link = z
   .string()
   .max(2000)
-  .refine((v) => v === "" || /^(\/|https?:\/\/|tel:|mailto:)/.test(v), "Use a site path (/…), https:// link, tel: or mailto:.");
+  .refine((v) => v === "" || /^(\/|https?:\/\/|tel:|mailto:|#[A-Za-z][A-Za-z0-9_-]*$)/.test(v), "Use a site path (/…), https:// link, tel:, mailto: or #anchor.");
 // Images: site paths, http(s) or an uploaded raster data URL. No SVG (can carry script).
 const image = z
   .string()
@@ -200,6 +201,9 @@ const RAW_SCHEMAS = {
     buttons: z.array(z.object({ kind: z.enum(["book", "call", "whatsapp", "quote", "custom"]), label: bi, url: link })).min(1).max(5),
   }),
   contactBanner: z.object({ heading: bi, subtitle: bi, showBook: yesNo, showCall: yesNo, showWhatsapp: yesNo, tone: z.enum(["dark", "blue", "light"]) }),
+  // A link to a Global Block (Website → Global Blocks). The website never sees this type: it is replaced by the global block's
+  // current content before the page is served (see globalBlocks.ts).
+  global: z.object({ globalId: z.string().max(40) }),
   divider: z.object({ variant: z.enum(["line", "dots", "space"]), size: z.enum(["sm", "md", "lg"]) }),
   // How it works / booking steps / process / timeline: 2-10 steps, each with an icon, title, text and optional picture.
   steps: z.object({
@@ -283,6 +287,7 @@ export const BLOCK_SCHEMAS = {
   promo: withStyle(RAW_SCHEMAS.promo),
   ctaButtons: withStyle(RAW_SCHEMAS.ctaButtons),
   contactBanner: withStyle(RAW_SCHEMAS.contactBanner),
+  global: RAW_SCHEMAS.global,
   divider: withStyle(RAW_SCHEMAS.divider),
   steps: withStyle(RAW_SCHEMAS.steps),
   testimonials: withStyle(RAW_SCHEMAS.testimonials),
@@ -953,6 +958,12 @@ export const BLOCK_REGISTRY: Record<
     ],
     defaults: () => ({ heading: { en: "Need help? We are one tap away", ar: "تحتاج مساعدة؟ نحن على بعد ضغطة" }, subtitle: biEmpty(), showBook: "yes", showCall: "yes", showWhatsapp: "yes", tone: "dark" }),
   },
+  global: {
+    label: "Global block",
+    description: "A reusable block shared by many pages. Edit it once under Website → Global Blocks and every page using it updates.",
+    fields: [],
+    defaults: () => ({ globalId: "" }),
+  },
   divider: {
     label: "Divider",
     description: "A line, dots or empty space between two parts of the page.",
@@ -1053,7 +1064,7 @@ const STYLE_FIELD: FieldDef = {
     { kind: "text", key: "cssClass", label: "Custom CSS class (advanced; the class must exist in Page Code)" },
   ],
 };
-for (const type of Object.keys(BLOCK_REGISTRY) as BlockType[]) if (type !== "hero") BLOCK_REGISTRY[type].fields.push(STYLE_FIELD);
+for (const type of Object.keys(BLOCK_REGISTRY) as BlockType[]) if (type !== "hero" && type !== "global") BLOCK_REGISTRY[type].fields.push(STYLE_FIELD);
 
 export function newBlockId(): string {
   return `blk_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;

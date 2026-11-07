@@ -4,6 +4,7 @@ import { promoteDueScheduledPages } from "@/lib/cms/publish";
 import { hasSubPagesBlock, loadSubPages, toPublicPage } from "@/lib/cms/publicPage";
 import { loadJsonLdArea, loadJsonLdSite } from "@/lib/seo/context";
 import { loadAreaPageContext } from "@/lib/locations/data";
+import { resolveGlobalBlocks } from "@/lib/cms/globalBlocks";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -21,7 +22,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
   if (page?.publishedVersion) {
     const [site, ctx] = await Promise.all([loadJsonLdSite(), loadAreaPageContext(page)]);
     const area = await loadJsonLdArea(page.areaId, ctx.branches.ld);
-    const publicPage = toPublicPage(page, page.publishedVersion, false, { ...site, area, parent: ctx.parent, publishedAt: page.publishedVersion.createdAt });
+    const publicPage = toPublicPage(page, { ...page.publishedVersion, blocks: await resolveGlobalBlocks(page.publishedVersion.blocks, prisma) }, false, { ...site, area, parent: ctx.parent, publishedAt: page.publishedVersion.createdAt });
     if (publicPage) {
       // An emirate page shows its real branch(es) automatically, and links to the pages under it.
       const subPages = hasSubPagesBlock(publicPage.blocks) ? await loadSubPages(prisma, page.id, true) : page.type === "area" && ctx.children.length ? ctx.children : undefined;
