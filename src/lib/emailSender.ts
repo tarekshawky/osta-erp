@@ -8,20 +8,23 @@
 // only TO the email address that owns the Resend account. Verify a domain (Resend
 // dashboard -> Domains) to notify any admin address and use a custom From address.
 export interface EmailSender {
-  send(params: { subject: string; html: string; text: string; to?: string[] }): Promise<void>;
+  // adminCopy (default true): the admin address also gets the message. Mail meant only for a customer, such as a password reset
+  // link, sets it to false.
+  send(params: { subject: string; html: string; text: string; to?: string[]; adminCopy?: boolean }): Promise<void>;
 }
 
 class ConsoleEmailSender implements EmailSender {
-  async send({ subject, text, to }: { subject: string; html: string; text: string; to?: string[] }) {
+  async send({ subject, text, to }: { subject: string; html: string; text: string; to?: string[]; adminCopy?: boolean }) {
     console.log(`[EMAIL to ${to?.length ? to.join(", ") : "admin"}] ${subject}\n${text}`);
   }
 }
 
 class ResendEmailSender implements EmailSender {
-  async send({ subject, html, text, to: extra }: { subject: string; html: string; text: string; to?: string[] }) {
+  async send({ subject, html, text, to: extra, adminCopy = true }: { subject: string; html: string; text: string; to?: string[]; adminCopy?: boolean }) {
     const apiKey = process.env.RESEND_API_KEY!;
     // The admin address always gets a copy; a form can add its own recipients.
-    const to = [...new Set([process.env.ADMIN_NOTIFICATION_EMAIL!, ...(extra ?? [])])];
+    const to = [...new Set([...(adminCopy ? [process.env.ADMIN_NOTIFICATION_EMAIL!] : []), ...(extra ?? [])])];
+    if (to.length === 0) return;
     const from = process.env.RESEND_FROM_EMAIL || "OSTA Services <onboarding@resend.dev>";
 
     const res = await fetch("https://api.resend.com/emails", {
