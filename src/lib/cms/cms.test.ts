@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { BLOCK_REGISTRY, BLOCK_TYPES, createBlock, parseBlocks } from "./blocks";
+import { BLOCK_REGISTRY, BLOCK_TYPES, STYLE_FIELDS, STYLE_TABS, createBlock, parseBlocks } from "./blocks";
 import { createPreviewToken, publishProblems, slugProblem, slugify, verifyPreviewToken } from "./pageRules";
 
 describe("block registry", () => {
@@ -114,6 +114,18 @@ describe("new block fields", () => {
     const ok = { textColor: "#112233", accentColor: "#ff6600", border: "thin", spacing: "lg", spacingTablet: "inherit", spacingMobile: "none", fontSizeDesktop: "lg", fontSizeTablet: "inherit", fontSizeMobile: "sm", animation: "fade", showFrom: "2026-12-01", showUntil: "2026-12-31" };
     expect(withProps("heading", { style: ok }).ok).toBe(true);
     for (const bad of [{ textColor: "red" }, { fontSizeDesktop: "huge" }, { spacingMobile: "giant" }, { animation: "spin" }, { showFrom: "tomorrow" }, { border: "dashed" }]) expect(withProps("heading", { style: bad }).ok, JSON.stringify(bad)).toBe(false);
+  });
+  it("typography settings validate, and bad values are refused", () => {
+    expect(withProps("heading", { style: { headingSize: "lg", headingSizeMobile: "inherit", textSize: "xl", textSizeMobile: "auto", headingWeight: "extrabold", lineHeight: "relaxed" } }).ok).toBe(true);
+    for (const bad of [{ headingSize: "inherit" }, { textSize: "huge" }, { headingWeight: "black" }, { lineHeight: "loose" }]) expect(withProps("heading", { style: bad }).ok, JSON.stringify(bad)).toBe(false);
+  });
+  it("every settings tab lists real style fields, and every style field sits in exactly one tab", () => {
+    const keys = STYLE_FIELDS.map((f) => f.key);
+    const tabbed = Object.values(STYLE_TABS).flat() as string[];
+    for (const k of tabbed) expect(keys, k).toContain(k);
+    // Section design fields not in a tab would be unreachable in the editor.
+    expect(keys.filter((k) => !tabbed.includes(k)), "fields missing from every tab").toEqual([]);
+    expect(new Set(tabbed).size).toBe(tabbed.length);
   });
   it("tablet visibility is optional so blocks saved before it still validate", () => {
     const b = createBlock("heading");

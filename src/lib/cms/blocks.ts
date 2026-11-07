@@ -205,6 +205,14 @@ const RAW_SCHEMAS = {
   // A link to a Global Block (Website → Global Blocks). The website never sees this type: it is replaced by the global block's
   // current content before the page is served (see globalBlocks.ts).
   global: z.object({ globalId: z.string().max(40) }),
+  // Google reviews shown on the site: the summary (overall rating and number of reviews) and a few chosen reviews are typed in by
+  // hand, with links to the Google listing and to "write a review". There is no automatic sync with Google.
+  googleReviews: z.object({
+    heading: bi, subtitle: bi, layout: z.enum(["grid", "carousel"]),
+    rating: z.number().min(0).max(5), total: z.number().int().min(0).max(10_000_000),
+    googleUrl: link, writeReviewUrl: link,
+    reviews: z.array(z.object({ author: z.string().max(80), rating: z.number().min(0).max(5), text: bi, date: z.string().max(40), imageUrl: image })).max(12),
+  }),
   divider: z.object({ variant: z.enum(["line", "dots", "space"]), size: z.enum(["sm", "md", "lg"]) }),
   // How it works / booking steps / process / timeline: 2-10 steps, each with an icon, title, text and optional picture.
   steps: z.object({
@@ -260,6 +268,13 @@ const sectionStyle = z.object({
   animation: z.enum(["none", "fade", "slideUp"]).optional(),
   showFrom: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use a date like 2026-12-01.").optional(),
   showUntil: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use a date like 2026-12-31.").optional(),
+  // Typography: heading and text size (separately), heading weight and line height; phones can have their own sizes.
+  headingSize: z.enum(["auto", "sm", "lg", "xl"]).optional(),
+  headingSizeMobile: z.enum(["inherit", "auto", "sm", "lg", "xl"]).optional(),
+  textSize: z.enum(["auto", "sm", "lg", "xl"]).optional(),
+  textSizeMobile: z.enum(["inherit", "auto", "sm", "lg", "xl"]).optional(),
+  headingWeight: z.enum(["auto", "medium", "bold", "extrabold"]).optional(),
+  lineHeight: z.enum(["auto", "tight", "relaxed"]).optional(),
   // Owner-only custom code for this block (see blockCode.ts for the rules and how it runs).
   customCss: z.string().superRefine((v, ctx) => { const p = cssProblem(v); if (p) ctx.addIssue({ code: "custom", message: p }); }).optional(),
   customJs: z.string().superRefine((v, ctx) => { const p = jsProblem(v); if (p) ctx.addIssue({ code: "custom", message: p }); }).optional(),
@@ -306,6 +321,7 @@ export const BLOCK_SCHEMAS = {
   ctaButtons: withStyle(RAW_SCHEMAS.ctaButtons),
   contactBanner: withStyle(RAW_SCHEMAS.contactBanner),
   global: RAW_SCHEMAS.global,
+  googleReviews: withStyle(RAW_SCHEMAS.googleReviews),
   divider: withStyle(RAW_SCHEMAS.divider),
   steps: withStyle(RAW_SCHEMAS.steps),
   testimonials: withStyle(RAW_SCHEMAS.testimonials),
@@ -983,6 +999,26 @@ export const BLOCK_REGISTRY: Record<
     fields: [],
     defaults: () => ({ globalId: "" }),
   },
+  googleReviews: {
+    label: "Google reviews",
+    description: "Your Google rating and number of reviews, a few chosen reviews, and buttons to see all reviews or write one.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle", rich: true },
+      { kind: "number", key: "rating", label: "Your Google rating (for example 4.8; 0 hides the summary)" },
+      { kind: "number", key: "total", label: "Number of Google reviews" },
+      { kind: "url", key: "googleUrl", label: "Link to your Google listing (“See all reviews”)" },
+      { kind: "url", key: "writeReviewUrl", label: "Link to “Write a review” (leave empty to hide the button)" },
+      { kind: "select", key: "layout", label: "Reviews layout", options: opts(["grid", "Grid"], ["carousel", "Carousel"]) },
+      { kind: "list", key: "reviews", label: "Chosen reviews (copy real ones from Google)", itemLabel: "Review", max: 12, fields: [{ kind: "text", key: "author", label: "Reviewer name" }, { kind: "number", key: "rating", label: "Stars, 0–5" }, { kind: "bi-textarea", key: "text", label: "Review text (in the language it was written)" }, { kind: "text", key: "date", label: "Date (for example “2 weeks ago”)" }, { kind: "image", key: "imageUrl", label: "Photo (optional)" }] },
+    ],
+    // The links are Osta's own Google listing. The rating and the count are left at 0: type today's numbers from the listing.
+    defaults: () => ({
+      heading: { en: "Rated by our customers on Google", ar: "تقييم عملائنا على Google" }, subtitle: biEmpty(), layout: "grid", rating: 0, total: 0,
+      googleUrl: "https://www.google.com/maps?cid=8049178210296539638", writeReviewUrl: "https://search.google.com/local/writereview?placeid=ChIJezA0kjb39T4R9imKlu9stG8",
+      reviews: [],
+    }),
+  },
   divider: {
     label: "Divider",
     description: "A line, dots or empty space between two parts of the page.",
@@ -1070,10 +1106,10 @@ const FONT_OPTIONS = [{ value: "auto", label: "As designed" }, { value: "sm", la
 
 // Which tab of a block's settings each section-design field belongs to (Content is the block's own fields).
 export const STYLE_TABS = {
-  design: ["bgImage", "overlay", "overlayColor", "bgColor", "textColor", "accentColor", "border", "radius", "shadow"],
+  design: ["bgImage", "overlay", "overlayColor", "bgColor", "textColor", "headingSize", "headingWeight", "textSize", "lineHeight", "accentColor", "border", "radius", "shadow"],
   layout: ["width", "spacing", "textAlign"],
   advanced: ["anchorId", "cssClass", "animation", "showFrom", "showUntil"],
-  responsive: ["spacingTablet", "spacingMobile", "fontSizeDesktop", "fontSizeTablet", "fontSizeMobile"],
+  responsive: ["spacingTablet", "spacingMobile", "headingSizeMobile", "textSizeMobile", "fontSizeDesktop", "fontSizeTablet", "fontSizeMobile"],
 } as const;
 export type StyleTab = keyof typeof STYLE_TABS;
 
@@ -1087,11 +1123,17 @@ const STYLE_FIELD: FieldDef = {
     { kind: "color", key: "overlayColor", label: "Overlay colour" },
     { kind: "color", key: "bgColor", label: "Plain background colour (used when there is no image)" },
     { kind: "color", key: "textColor", label: "Text colour" },
+    { kind: "select", key: "headingSize", label: "Heading size", options: [{ value: "auto", label: "As designed" }, { value: "sm", label: "Smaller" }, { value: "lg", label: "Larger" }, { value: "xl", label: "Much larger" }] },
+    { kind: "select", key: "headingWeight", label: "Heading weight", options: [{ value: "auto", label: "As designed" }, { value: "medium", label: "Medium" }, { value: "bold", label: "Bold" }, { value: "extrabold", label: "Extra bold" }] },
+    { kind: "select", key: "textSize", label: "Text size", options: [{ value: "auto", label: "As designed" }, { value: "sm", label: "Smaller" }, { value: "lg", label: "Larger" }, { value: "xl", label: "Much larger" }] },
+    { kind: "select", key: "lineHeight", label: "Line height", options: [{ value: "auto", label: "As designed" }, { value: "tight", label: "Tight" }, { value: "relaxed", label: "Relaxed" }] },
     { kind: "color", key: "accentColor", label: "Accent colour (buttons, icons and highlights)" },
     { kind: "select", key: "border", label: "Border", options: [{ value: "none", label: "None" }, { value: "thin", label: "Thin" }, { value: "accent", label: "Accent colour" }] },
     { kind: "select", key: "spacing", label: "Extra space above and below (desktop)", options: SPACING_OPTIONS },
     { kind: "select", key: "spacingTablet", label: "Extra space on tablets", options: [{ value: "inherit", label: "Same as desktop" }, ...SPACING_OPTIONS] },
     { kind: "select", key: "spacingMobile", label: "Extra space on phones", options: [{ value: "inherit", label: "Same as desktop" }, ...SPACING_OPTIONS] },
+    { kind: "select", key: "headingSizeMobile", label: "Heading size on phones", options: [{ value: "inherit", label: "Same as other devices" }, ...FONT_OPTIONS] },
+    { kind: "select", key: "textSizeMobile", label: "Text size on phones", options: [{ value: "inherit", label: "Same as other devices" }, ...FONT_OPTIONS] },
     { kind: "select", key: "fontSizeDesktop", label: "Content size on desktop", options: FONT_OPTIONS },
     { kind: "select", key: "fontSizeTablet", label: "Content size on tablets", options: [{ value: "inherit", label: "Same as desktop" }, ...FONT_OPTIONS] },
     { kind: "select", key: "fontSizeMobile", label: "Content size on phones", options: [{ value: "inherit", label: "Same as desktop" }, ...FONT_OPTIONS] },

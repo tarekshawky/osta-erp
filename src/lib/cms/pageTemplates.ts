@@ -288,6 +288,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     seo: { titleEn: "Customer Reviews | Osta Services", titleAr: "آراء العملاء | أوستا", descriptionEn: "What customers say about Osta Services.", descriptionAr: "ماذا يقول العملاء عن أوستا للخدمات." },
     build: () => [
       make("heading-subtitle", { eyebrow: bi("Reviews", "الآراء"), heading: bi("What our customers say", "آراء عملائنا"), subtitle: none }),
+      make("google-reviews"),
       make("testimonials", { heading: none, items: [0, 1, 2, 3, 4, 5].map(() => ({ text: none, name: none, role: none, rating: 5, imageUrl: "" })) }),
       make("trust-badges"),
       make("cta", { heading: bi("Share your experience", "شاركنا تجربتك"), subtitle: none, button: cta("Contact us", "تواصل معنا", CONTACT) }),

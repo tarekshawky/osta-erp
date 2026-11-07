@@ -94,6 +94,8 @@ export const LIBRARY: LibraryEntry[] = [
 
   // ---- Trust, process and extras ----
   { id: "testimonials", category: "trust", name: "Customer testimonials", description: "Customer reviews with stars, names and photos.", icon: "MessagesSquare", type: "testimonials", wire: { rows: [row("T"), row("q", "q", "q")] }, keywords: "reviews feedback" },
+  { id: "google-reviews", category: "trust", name: "Google reviews", description: "Your Google rating, review count and chosen reviews, with links to see all or write one.", icon: "Star", type: "googleReviews", wire: { rows: [row("s"), row("q", "q", "q")] }, keywords: "rating stars testimonials" },
+  { id: "star-rating", category: "trust", name: "Star rating display", description: "Just your Google rating and review count, with the buttons.", icon: "Star", type: "googleReviews", wire: { rows: [row("s"), row("bb")], center: true }, patch: set({ reviews: [] }), keywords: "google rating" },
   { id: "reviews-carousel", category: "trust", name: "Reviews carousel", description: "Customer reviews that slide across.", icon: "GalleryHorizontal", type: "testimonials", wire: { rows: [row("q"), row("d")] }, patch: set({ layout: "carousel" }), keywords: "testimonials" },
   { id: "logos", category: "trust", name: "Brands & partners", description: "A row of partner or customer logos.", icon: "Building2", type: "logos", wire: { rows: [row("g", "g", "g", "g")] }, keywords: "clients" },
   { id: "trust-badges", category: "trust", name: "Trust badges", description: "Icon badges such as warranty, licensed and guaranteed.", icon: "ShieldCheck", type: "logos", wire: { rows: [row("k", "k", "k")] }, keywords: "certifications licenses warranty" },

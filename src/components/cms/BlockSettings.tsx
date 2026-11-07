@@ -77,7 +77,7 @@ export function BlockSettings({
           {hasStyle && (
             <>
               <FieldEditor fields={styleFieldsFor("responsive")} value={style} onChange={(s) => onChange({ ...props, style: s })} />
-              <p className="text-xs text-slate-400">“Content size” scales the whole block (text, spacing and pictures together) on that device. Tablets and phones follow desktop until you set them.</p>
+              <p className="text-xs text-slate-400">Heading and text size on phones change only those parts. “Content size” scales the whole block (text, spacing and pictures together) on that device. Tablets and phones follow desktop until you set them.</p>
             </>
           )}
         </div>
