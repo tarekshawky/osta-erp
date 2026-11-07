@@ -109,6 +109,7 @@ export const LIBRARY: LibraryEntry[] = [
 
   // ---- E. Dynamic blocks (filled from the site's data) ----
   { id: "hero", category: "dynamic", name: "Hero", description: "Big heading, subtitle, image and up to 3 buttons.", icon: "PanelTop", type: "hero", wire: { rows: [row("T", "I"), row("bb")], tone: "dark" } },
+  { id: "maintenance-packages", category: "dynamic", name: "Maintenance packages", description: "Annual packages with prices, comparison table, terms and a Subscribe form, edited under Maintenance Packages.", icon: "CalendarCheck", type: "maintenancePackages", wire: { rows: [row("T"), row("n", "n", "n", "n"), row("r"), row("r")] }, keywords: "annual plans amc subscription pricing gold silver" },
   { id: "services-grid", category: "dynamic", name: "Services grid", description: "Service cards pulled from the Service Catalogue.", icon: "Layers", type: "servicesGrid", wire: { rows: [row("c", "c", "c"), row("c", "c", "c")] } },
   { id: "blog-posts", category: "dynamic", name: "Blog posts", description: "The latest blog posts.", icon: "Newspaper", type: "blogPreview", wire: { rows: [row("c", "c", "c")] } },
   { id: "open-jobs", category: "dynamic", name: "Open jobs", description: "Vacancies from Jobs & Workforce.", icon: "BriefcaseBusiness", type: "jobsList", wire: { rows: [row("r"), row("r"), row("r")] } },

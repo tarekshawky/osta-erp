@@ -114,3 +114,25 @@ export async function notifyFormSubmission(params: { formName: string; rows: [st
     text: `New website lead — ${params.formName}\n\n${text}`,
   });
 }
+
+// Sent right after a visitor asks to subscribe to an annual maintenance package.
+export async function notifyAdminOfMaintenanceSubscription(params: {
+  packageName: string; price: number; name: string; phone: string; email: string; emirate: string; location: string; propertyType: string; bedrooms: number; acUnits: number; activationDate: string;
+}) {
+  const { html, text } = renderRows([
+    ["Package", `${params.packageName} (AED ${params.price.toLocaleString("en-US")}/year)`],
+    ["Name", params.name],
+    ["Phone", params.phone],
+    ["Email", params.email],
+    ["Emirate", params.emirate],
+    ["Location", params.location || "-"],
+    ["Property", `${params.propertyType}, ${params.bedrooms === 0 ? "studio" : `${params.bedrooms} bedroom(s)`}`],
+    ["AC units", String(params.acUnits)],
+    ["Preferred activation", params.activationDate || "-"],
+  ]);
+  await emailSender.send({
+    subject: `New maintenance package request: ${params.packageName} — ${params.name}`,
+    html: `<h2>New maintenance package request</h2>${html}`,
+    text: `New maintenance package request\n\n${text}`,
+  });
+}

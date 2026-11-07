@@ -96,6 +96,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/website/pages", label: "Pages & SEO Settings", keywords: "page builder seo" },
       { href: "/admin/website/structure", label: "Website Structure", keywords: "page tree hierarchy parent child sub pages drag drop navigation" },
       { href: "/admin/website/global-blocks", label: "Global Blocks", keywords: "reusable shared blocks components sync" },
+      { href: "/admin/website/maintenance-packages", label: "Maintenance Packages", keywords: "annual home care packages subscriptions plans pricing amc" },
       { href: "/admin/website/seo", label: "SEO & Technical Files", keywords: "sitemap schema score structured data" },
       SERVICE_CATALOG,
       WEBSITE_SERVICES,

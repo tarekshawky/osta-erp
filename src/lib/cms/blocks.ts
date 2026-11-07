@@ -213,6 +213,9 @@ const RAW_SCHEMAS = {
     googleUrl: link, writeReviewUrl: link,
     reviews: z.array(z.object({ author: z.string().max(80), rating: z.number().min(0).max(5), text: bi, date: z.string().max(40), imageUrl: image })).max(12),
   }),
+  // The annual maintenance packages, filled automatically from Website → Maintenance Packages: pricing cards, comparison table,
+  // terms and the "Subscribe now" form. A heading or subtitle typed here replaces the one from the packages screen.
+  maintenancePackages: z.object({ heading: bi, subtitle: bi, showComparison: yesNo, showTerms: yesNo }),
   divider: z.object({ variant: z.enum(["line", "dots", "space"]), size: z.enum(["sm", "md", "lg"]) }),
   // How it works / booking steps / process / timeline: 2-10 steps, each with an icon, title, text and optional picture.
   steps: z.object({
@@ -322,6 +325,7 @@ export const BLOCK_SCHEMAS = {
   contactBanner: withStyle(RAW_SCHEMAS.contactBanner),
   global: RAW_SCHEMAS.global,
   googleReviews: withStyle(RAW_SCHEMAS.googleReviews),
+  maintenancePackages: withStyle(RAW_SCHEMAS.maintenancePackages),
   divider: withStyle(RAW_SCHEMAS.divider),
   steps: withStyle(RAW_SCHEMAS.steps),
   testimonials: withStyle(RAW_SCHEMAS.testimonials),
@@ -1018,6 +1022,17 @@ export const BLOCK_REGISTRY: Record<
       googleUrl: "https://www.google.com/maps?cid=8049178210296539638", writeReviewUrl: "https://search.google.com/local/writereview?placeid=ChIJezA0kjb39T4R9imKlu9stG8",
       reviews: [],
     }),
+  },
+  maintenancePackages: {
+    label: "Maintenance packages",
+    description: "The annual maintenance packages with prices, included services, comparison table, terms and a Subscribe form. Edit them under Website → Maintenance Packages.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading (empty = the one from Maintenance Packages)" },
+      { kind: "bi-textarea", key: "subtitle", label: "Subtitle (empty = the one from Maintenance Packages)", rich: true },
+      { kind: "select", key: "showComparison", label: "Comparison table", options: opts(["yes", "Show"], ["no", "Hide"]) },
+      { kind: "select", key: "showTerms", label: "Terms & conditions", options: opts(["yes", "Show"], ["no", "Hide"]) },
+    ],
+    defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), showComparison: "yes", showTerms: "yes" }),
   },
   divider: {
     label: "Divider",

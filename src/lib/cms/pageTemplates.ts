@@ -179,8 +179,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     build: () => [
       hero(["Annual Maintenance Contract", "عقد الصيانة السنوي"], ["Maintenance, planned for the year", "صيانة مخطط لها طوال العام"], ["Scheduled visits and priority support under one contract.", "زيارات مجدولة ودعم ذو أولوية في عقد واحد."]),
       benefits(["Why a contract", "لماذا عقد صيانة"], [["CalendarCheck", ["Scheduled visits", "زيارات مجدولة"], ["", ""]], ["Headphones", ["Priority support", "دعم ذو أولوية"], ["", ""]], ["ClipboardCheck", ["One provider", "مزوّد واحد"], ["", ""]]]),
-      make("pricing", { heading: bi("Choose a plan", "اختر الخطة"), plans: ["Basic|الأساسية", "Standard|القياسية", "Premium|المميزة"].map((n, i) => ({ name: bi(...(n.split("|") as [string, string])), price: "", period: bi("per year", "سنوياً"), description: none, features: [{ text: bi("Add what is included", "أضف ما تشمله الخطة") }], badge: i === 1 ? bi("Popular", "الأكثر طلباً") : none, highlighted: i === 1 ? "yes" : "no", cta: cta("Ask for a quote", "اطلب عرض سعر", CONTACT) })) }),
-      make("comparison"),
+      make("maintenance-packages"),
       steps([["ClipboardCheck", ["Tell us what you have", "أخبرنا بما لديك"], ["", ""]], ["FileCheck", ["We prepare your plan", "نجهز خطتك"], ["", ""]], ["CalendarCheck", ["Visits are scheduled", "تُجدول الزيارات"], ["", ""]]]),
       faq(["Frequently asked questions", "الأسئلة الشائعة"], [[["What does a contract cover?", "ماذا يشمل العقد؟"], GENERIC_ANSWER], [["How do I start?", "كيف أبدأ؟"], ["Send us an enquiry and we will get back to you.", "أرسل لنا استفساراً وسنتواصل معك."]]]),
       make("form", { heading: bi("Request a contract quote", "اطلب عرض سعر لعقد"), intro: none }),

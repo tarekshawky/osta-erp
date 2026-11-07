@@ -5,6 +5,8 @@ import { createHmac } from "crypto";
 export const LIMITS = {
   login: { windowMs: 15 * 60_000, perIp: 20, perAccount: 6 },
   forgot: { windowMs: 60 * 60_000, perIp: 8, perAccount: 3 },
+  // "Subscribe now" requests for the maintenance packages: per visitor and per e-mail address.
+  subscribe: { windowMs: 60 * 60_000, perIp: 6, perAccount: 3 },
 } as const;
 
 export type LimitKind = keyof typeof LIMITS;
