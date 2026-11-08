@@ -3,9 +3,10 @@ export type UploadedAsset = { id: string; name: string; width: number; height: n
 export const mediaThumb = (id: string, w = 480) => `/api/media/${id}?w=${w}`;
 export const mediaPublicUrl = (id: string) => `${window.location.origin}/api/media/${id}`;
 
-export async function uploadImage(file: File, folderId?: string | null): Promise<UploadedAsset> {
+export async function uploadImage(file: File, folderId?: string | null, replaceId?: string): Promise<UploadedAsset> {
   const form = new FormData();
   form.append("file", file);
+  if (replaceId) form.append("replaceId", replaceId);
   if (folderId) form.append("folderId", folderId);
   const res = await fetch("/api/admin/media", { method: "POST", body: form });
   const json = await res.json().catch(() => ({}));

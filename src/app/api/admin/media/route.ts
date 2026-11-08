@@ -6,7 +6,7 @@ import { MAX_UPLOAD_BYTES, MediaError, processImage, sanitizeFileName } from "@/
 
 export const runtime = "nodejs";
 
-// Upload one image (multipart field "file", optional "folderId"). Needs the media.manage permission.
+// Upload one image (multipart field "file", optional "folderId"; or "replaceId" to swap the picture of an existing image). Needs the media.manage permission.
 export async function POST(request: NextRequest) {
   const check = await peekPermission("media.manage");
   if ("error" in check) {
@@ -25,12 +25,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Folder not found." }, { status: 400 });
   }
 
+  // Replacing keeps the image's address, name, alt text and folder, so every page that uses it shows the new picture.
+  const replaceRaw = form?.get("replaceId");
+  const replaceId = typeof replaceRaw === "string" && replaceRaw ? replaceRaw : null;
+  const existing = replaceId ? await prisma.mediaAsset.findUnique({ where: { id: replaceId }, select: { id: true, name: true } }) : null;
+  if (replaceId && !existing) return NextResponse.json({ error: "The image to replace was not found." }, { status: 404 });
+
   let processed;
   try {
     processed = await processImage(Buffer.from(await file.arrayBuffer()));
   } catch (err) {
     if (err instanceof MediaError) return NextResponse.json({ error: err.message }, { status: 422 });
     throw err;
+  }
+
+  if (existing) {
+    const [, asset] = await prisma.$transaction([
+      prisma.mediaVariant.deleteMany({ where: { assetId: existing.id } }),
+      prisma.mediaAsset.update({
+        where: { id: existing.id },
+        data: {
+          originalMime: file.type || `image/${processed.originalFormat}`, width: processed.width, height: processed.height, originalBytes: file.size,
+          variants: { create: processed.variants.map((v) => ({ width: v.width, height: v.height, format: v.format, bytes: v.bytes, data: new Uint8Array(v.data) })) },
+        },
+        select: { id: true, name: true, width: true, height: true },
+      }),
+    ]);
+    await writeAudit(check.admin, "media.replace", "MediaAsset", asset.id, null, { name: asset.name, width: asset.width, height: asset.height });
+    return NextResponse.json({ asset: { ...asset, url: `${request.nextUrl.origin}/api/media/${asset.id}` } }, { status: 200 });
   }
 
   const name = sanitizeFileName(file.name);

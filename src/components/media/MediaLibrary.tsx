@@ -15,20 +15,24 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
   const [search, setSearch] = useState("");
   const [folder, setFolder] = useState<string>("");
   const [unusedOnly, setUnusedOnly] = useState(false);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<string | null>(null);
   const [selected, setSelected] = useState<MediaItem | null>(null);
   const [usages, setUsages] = useState<Usage[] | null>(null);
   const [draft, setDraft] = useState<MediaItem | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [version, setVersion] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+  const replaceRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
-    const res = await listMedia({ search, folderId: folder || null, unusedOnly });
+    const res = await listMedia({ search, folderId: folder || null, unusedOnly, from, to });
     setAssets(res.assets);
     setFolders(res.folders);
     setLoading(false);
-  }, [search, folder, unusedOnly]);
+  }, [search, folder, unusedOnly, from, to]);
 
   // Debounced so typing in the search box doesn't hit the server on every key.
   useEffect(() => {
@@ -68,6 +72,21 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
     const res = await updateMedia(draft.id, { name: draft.name, altEn: draft.altEn, altAr: draft.altAr, title: draft.title, caption: draft.caption, folderId: draft.folderId });
     showToast(res.ok ? "Saved." : res.error ?? "Could not save.", res.ok ? "success" : "error");
     if (res.ok) await refresh();
+  }
+
+  // Swaps the picture but keeps the address, name, alt text and folder: every page using it shows the new one.
+  async function replace(file: File | undefined) {
+    if (!file || !selected) return;
+    if (!confirm(`Replace the picture of "${selected.name}"? Every page that uses it will show the new picture.`)) return;
+    try {
+      await uploadImage(file, null, selected.id);
+      showToast("Picture replaced.");
+      await refresh();
+      setSelected({ ...selected }); // the thumbnail is reloaded below
+      setVersion((v) => v + 1);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Could not replace the picture.", "error");
+    }
   }
 
   async function remove() {
@@ -123,6 +142,8 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
             <option key={f.id} value={f.id}>{f.name} ({f.count})</option>
           ))}
         </select>
+        <label className="flex items-center gap-1 text-xs text-slate-500">From<input type="date" className={`${inputClassName} w-auto`} value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label className="flex items-center gap-1 text-xs text-slate-500">To<input type="date" className={`${inputClassName} w-auto`} value={to} onChange={(e) => setTo(e.target.value)} /></label>
         {!picking && (
           <label className="flex items-center gap-1.5 text-xs text-slate-600">
             <input type="checkbox" checked={unusedOnly} onChange={(e) => setUnusedOnly(e.target.checked)} /> Unused only
@@ -149,7 +170,7 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
             <p className="text-sm text-slate-400">Loading…</p>
           ) : assets.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-400">
-              {search || folder || unusedOnly ? "No images match." : "No images yet. Drop files here or click Upload images."}
+              {search || folder || unusedOnly || from || to ? "No images match." : "No images yet. Drop files here or click Upload images."}
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -171,7 +192,7 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
         {selected && draft && !picking && (
           <aside className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={mediaThumb(selected.id, 960)} alt="" className="max-h-48 w-full rounded-lg bg-slate-100 object-contain" />
+            <img src={`${mediaThumb(selected.id, 960)}&v=${version}`} alt="" className="max-h-48 w-full rounded-lg bg-slate-100 object-contain" />
             <p className="text-xs text-slate-400">{selected.width}×{selected.height} · {selected.kb} KB WebP · {selected.createdAt}{selected.uploadedBy ? ` · ${selected.uploadedBy}` : ""}</p>
             <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">Name</span><input className={inputClassName} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></label>
             <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">Alt text (English)</span><input className={inputClassName} value={draft.altEn} onChange={(e) => setDraft({ ...draft, altEn: e.target.value })} /></label>
@@ -188,6 +209,8 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
             <div className="flex flex-wrap gap-3">
               <button type="button" onClick={save} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Save</button>
               <button type="button" onClick={() => { void navigator.clipboard.writeText(mediaPublicUrl(selected.id)); showToast("Link copied."); }} className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700">Copy link</button>
+              <input ref={replaceRef} type="file" accept="image/*" className="hidden" onChange={(e) => { void replace(e.target.files?.[0]); e.target.value = ""; }} />
+              <button type="button" onClick={() => replaceRef.current?.click()} className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700">Replace picture</button>
               <button type="button" onClick={remove} className="ml-auto text-sm font-medium text-red-600">Delete</button>
             </div>
             <div className="border-t border-slate-100 pt-3">

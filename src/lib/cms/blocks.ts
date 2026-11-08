@@ -35,6 +35,12 @@ const currency = z.enum(CURRENCIES);
 const BADGES = ["none", "featured", "popular", "bestSeller", "new", "offer", "limited"] as const;
 const money = z.string().max(30);
 
+// What an advanced image can change on tablets and phones; 0 / "inherit" = the same as the desktop setting.
+const IMAGE_DEVICE = z.object({
+  width: z.number().min(0).max(5000), widthUnit: z.enum(["px", "%"]), maxWidth: z.number().min(0).max(5000), height: z.number().min(0).max(5000), maxHeight: z.number().min(0).max(5000),
+  align: z.enum(["inherit", "start", "center", "end"]), wrap: z.enum(["inherit", "none", "start", "end"]), space: z.enum(["inherit", "none", "sm", "md", "lg"]),
+});
+
 const RAW_SCHEMAS = {
   hero: z.object({
     eyebrow: bi,
@@ -231,6 +237,39 @@ const RAW_SCHEMAS = {
   // The Split AC installation packages (cards, price table, conditions) and the instant quotation calculator. Every package, price, extra and
   // text is edited under Self-Service Quotations → Split AC pricing.
   splitQuoteCalculator: z.object({ heading: bi, subtitle: bi, showPackages: yesNo, defaultLang: z.enum(["en", "ar"]) }),
+  // An advanced picture: its own size, fit, position, frame, effects (never changing the original file), any kind of link, optional
+  // banner text and button on top of it, bilingual alt / title / caption, and separate size / position settings for tablets and phones.
+  imagePro: z.object({
+    imageUrl: image, alt: bi, title: bi, caption: bi, description: bi, credit: bi, lazy: yesNo, body: bi,
+    size: z.object({
+      mode: z.enum(["auto", "original", "custom"]), width: z.number().min(0).max(5000), widthUnit: z.enum(["px", "%"]), maxWidth: z.number().min(0).max(5000),
+      height: z.number().min(0).max(5000), heightUnit: z.enum(["px", "%"]), maxHeight: z.number().min(0).max(5000),
+      fit: z.enum(["cover", "contain", "fill", "none"]), focusX: z.number().min(0).max(100), focusY: z.number().min(0).max(100),
+      cropTop: z.number().min(0).max(80), cropRight: z.number().min(0).max(80), cropBottom: z.number().min(0).max(80), cropLeft: z.number().min(0).max(80),
+      rotate: z.number().min(0).max(359), flipH: yesNo, flipV: yesNo,
+    }),
+    position: z.object({
+      align: z.enum(["start", "center", "end"]), wrap: z.enum(["none", "start", "end"]), shiftX: z.number().min(0).max(1000), shiftY: z.number().min(0).max(1000),
+      marginTop: z.number().min(0).max(300), marginBottom: z.number().min(0).max(300), marginStart: z.number().min(0).max(300), marginEnd: z.number().min(0).max(300), padding: z.number().min(0).max(200),
+    }),
+    frame: z.object({
+      style: z.enum(["none", "thin", "thick", "dashed", "round", "custom"]), width: z.number().min(0).max(30), color: hexColor.optional(), radius: z.number().min(0).max(500),
+      shadow: z.enum(["none", "sm", "md", "lg"]), bgColor: hexColor.optional(),
+    }),
+    effects: z.object({
+      opacity: z.number().min(0).max(100), grayscale: z.number().min(0).max(100), blur: z.number().min(0).max(30), overlayColor: hexColor.optional(), overlayOpacity: z.number().min(0).max(100),
+      hover: z.enum(["none", "zoom", "lift", "brighten", "color"]),
+    }),
+    link: z.object({
+      type: z.enum(["none", "external", "internal", "service", "product", "booking", "contact", "whatsapp", "phone", "custom"]), url: link, whatsappText: bi,
+      newTab: yesNo, nofollow: yesNo, sponsored: yesNo, title: bi,
+    }),
+    banner: z.object({
+      heading: bi, text: bi, buttonLabel: bi, buttonStyle: z.enum(["solid", "outline", "light"]), vertical: z.enum(["start", "center", "end"]), horizontal: z.enum(["start", "center", "end"]),
+      textColor: hexColor.optional(), panel: yesNo,
+    }),
+    tablet: IMAGE_DEVICE, mobile: IMAGE_DEVICE,
+  }),
   divider: z.object({ variant: z.enum(["line", "dots", "space"]), size: z.enum(["sm", "md", "lg"]) }),
   // How it works / booking steps / process / timeline: 2-10 steps, each with an icon, title, text and optional picture.
   steps: z.object({
@@ -350,6 +389,7 @@ export const BLOCK_SCHEMAS = {
   logos: withStyle(RAW_SCHEMAS.logos),
   team: withStyle(RAW_SCHEMAS.team),
   video: withStyle(RAW_SCHEMAS.video),
+  imagePro: withStyle(RAW_SCHEMAS.imagePro),
 } as const;
 
 export type BlockType = keyof typeof BLOCK_SCHEMAS;
@@ -373,7 +413,7 @@ type FieldDefBase =
   | { kind: "text" | "textarea" | "url" | "image" | "number" | "color"; key: string; label: string }
   | { kind: "select"; key: string; label: string; options: { value: string; label: string }[] }
   | { kind: "form-select"; key: string; label: string }
-  | { kind: "group"; key: string; label: string; fields: FieldDef[] }
+  | { kind: "group"; key: string; label: string; fields: FieldDef[]; collapsible?: boolean }
   | { kind: "list"; key: string; label: string; itemLabel: string; max: number; fields: FieldDef[] };
 
 const align: FieldDef = {
@@ -396,6 +436,17 @@ const badgeField: FieldDef = { kind: "select", key: "badge", label: "Badge", opt
 const cols234 = opts(["2", "2"], ["3", "3"], ["4", "4"]);
 const biEmpty = () => ({ en: "", ar: "" });
 const ctaEmpty = () => ({ label: biEmpty(), url: "" });
+
+const IMAGE_DEVICE_FIELDS: FieldDef[] = [
+  { kind: "number", key: "width", label: "Width (0 = same as desktop)" },
+  { kind: "select", key: "widthUnit", label: "Width unit", options: opts(["%", "Percent of the available width"], ["px", "Pixels"]) },
+  { kind: "number", key: "maxWidth", label: "Maximum width in pixels (0 = same as desktop)" },
+  { kind: "number", key: "height", label: "Height in pixels (0 = same as desktop)" },
+  { kind: "number", key: "maxHeight", label: "Maximum height in pixels (0 = same as desktop)" },
+  { kind: "select", key: "align", label: "Align", options: opts(["inherit", "Same as desktop"], ["start", "Left (start)"], ["center", "Centre"], ["end", "Right (end)"]) },
+  { kind: "select", key: "wrap", label: "Text wrap", options: opts(["inherit", "Same as desktop"], ["none", "None: its own line"], ["start", "Float left"], ["end", "Float right"]) },
+  { kind: "select", key: "space", label: "Space around it", options: opts(["inherit", "Same as desktop"], ["none", "None"], ["sm", "Small"], ["md", "Medium"], ["lg", "Large"]) },
+];
 
 export const BLOCK_REGISTRY: Record<
   BlockType,
@@ -1086,6 +1137,110 @@ export const BLOCK_REGISTRY: Record<
       { kind: "select", key: "defaultLang", label: "Language the calculator opens in (the customer can switch inside it)", options: opts(["en", "English"], ["ar", "Arabic"]) },
     ],
     defaults: () => ({ heading: { en: "Instant Split AC Installation Quotation", ar: "احسب تكلفة تركيب المكيف الآن" }, subtitle: biEmpty(), showPackages: "yes", defaultLang: "en" }),
+  },
+  imagePro: {
+    label: "Image (advanced)",
+    description: "A picture with full control: size, fit and crop, rotation, position and text wrap, frame, shadow and hover effects, any kind of link (page, WhatsApp, call, booking), optional title and button ON the picture (a clickable banner), bilingual alt text and caption, and separate settings for tablets and phones. Effects never change the original file.",
+    fields: [
+      { kind: "image", key: "imageUrl", label: "Image (choose from the media library or upload)" },
+      { kind: "bi-text", key: "alt", label: "Alt text (describes the picture for search engines and screen readers)" },
+      { kind: "bi-text", key: "title", label: "Image title (tooltip)" },
+      { kind: "bi-text", key: "caption", label: "Caption (shown under the picture)" },
+      { kind: "bi-textarea", key: "description", label: "Image description (for search engines, not shown)" },
+      { kind: "bi-text", key: "credit", label: "Image credit (optional, shown after the caption)" },
+      { kind: "select", key: "lazy", label: "Load the picture only when it comes into view (faster page)", options: opts(["yes", "Yes (recommended)"], ["no", "No (use for the first picture on the page)"]) },
+      {
+        kind: "group", key: "size", label: "Size, fit, crop and rotate", collapsible: true, fields: [
+          { kind: "select", key: "mode", label: "Size", options: opts(["auto", "Fill the available width"], ["original", "Original size (never larger than the screen)"], ["custom", "Custom width and height"]) },
+          { kind: "number", key: "width", label: "Width (0 = automatic)", showIf: { key: "mode", equals: "custom" } },
+          { kind: "select", key: "widthUnit", label: "Width unit", options: opts(["%", "Percent of the available width"], ["px", "Pixels"]), showIf: { key: "mode", equals: "custom" } },
+          { kind: "number", key: "height", label: "Height (0 = automatic)", showIf: { key: "mode", equals: "custom" } },
+          { kind: "select", key: "heightUnit", label: "Height unit", options: opts(["px", "Pixels"], ["%", "Percent of the width"]), showIf: { key: "mode", equals: "custom" } },
+          { kind: "number", key: "maxWidth", label: "Maximum width in pixels (0 = none)" },
+          { kind: "number", key: "maxHeight", label: "Maximum height in pixels (0 = none)" },
+          { kind: "select", key: "fit", label: "How the picture fills its box", options: opts(["cover", "Cover (fill the box, crop the edges)"], ["contain", "Contain (show all of it)"], ["fill", "Fill (stretch to the box)"], ["none", "Original (no scaling)"]) },
+          { kind: "number", key: "focusX", label: "Focus point, left to right, 0–100 (50 = middle)" },
+          { kind: "number", key: "focusY", label: "Focus point, top to bottom, 0–100 (50 = middle)" },
+          { kind: "number", key: "cropTop", label: "Crop from the top, % of the picture (0–80)" },
+          { kind: "number", key: "cropRight", label: "Crop from the right, % (0–80)" },
+          { kind: "number", key: "cropBottom", label: "Crop from the bottom, % (0–80)" },
+          { kind: "number", key: "cropLeft", label: "Crop from the left, % (0–80)" },
+          { kind: "number", key: "rotate", label: "Rotate by degrees clockwise (0–359; 90, 180 and 270 turn it)" },
+          { kind: "select", key: "flipH", label: "Flip left to right", options: opts(["no", "No"], ["yes", "Yes"]) },
+          { kind: "select", key: "flipV", label: "Flip top to bottom", options: opts(["no", "No"], ["yes", "Yes"]) },
+        ],
+      },
+      {
+        kind: "group", key: "position", label: "Position, text wrap and spacing", collapsible: true, fields: [
+          { kind: "select", key: "align", label: "Align", options: opts(["start", "Left (start)"], ["center", "Centre"], ["end", "Right (end)"]) },
+          { kind: "select", key: "wrap", label: "Text wrap", options: opts(["none", "None: the picture has its own line"], ["start", "Float left: text wraps on the right"], ["end", "Float right: text wraps on the left"]) },
+          { kind: "number", key: "shiftX", label: "Custom position: move toward the end by (px)" },
+          { kind: "number", key: "shiftY", label: "Custom position: move down by (px)" },
+          { kind: "number", key: "marginTop", label: "Margin above (px)" },
+          { kind: "number", key: "marginBottom", label: "Margin below (px)" },
+          { kind: "number", key: "marginStart", label: "Margin at the start side (px)" },
+          { kind: "number", key: "marginEnd", label: "Margin at the end side (px)" },
+          { kind: "number", key: "padding", label: "Padding inside the frame (px)" },
+        ],
+      },
+      {
+        kind: "group", key: "frame", label: "Frame, shadow and background", collapsible: true, fields: [
+          { kind: "select", key: "style", label: "Frame", options: opts(["none", "No frame"], ["thin", "Thin"], ["thick", "Thick"], ["dashed", "Dashed"], ["round", "Round (circle or oval)"], ["custom", "Custom (set below)"]) },
+          { kind: "number", key: "width", label: "Border width in pixels (custom frame)", showIf: { key: "style", equals: "custom" } },
+          { kind: "color", key: "color", label: "Border colour (thin, thick, dashed and custom frames)" },
+          { kind: "number", key: "radius", label: "Corner roundness in pixels (0 = square)" },
+          { kind: "select", key: "shadow", label: "Shadow", options: opts(["none", "None"], ["sm", "Soft"], ["md", "Medium"], ["lg", "Strong"]) },
+          { kind: "color", key: "bgColor", label: "Background colour behind the picture" },
+        ],
+      },
+      {
+        kind: "group", key: "effects", label: "Effects (the original file is never changed)", collapsible: true, fields: [
+          { kind: "number", key: "opacity", label: "Opacity, 0–100 (100 = solid)" },
+          { kind: "number", key: "grayscale", label: "Black and white, 0–100" },
+          { kind: "number", key: "blur", label: "Blur in pixels (0–30)" },
+          { kind: "color", key: "overlayColor", label: "Colour layer over the picture" },
+          { kind: "number", key: "overlayOpacity", label: "Colour layer strength, 0–100" },
+          { kind: "select", key: "hover", label: "When the mouse is over it", options: opts(["none", "Nothing"], ["zoom", "Zoom in"], ["lift", "Lift up"], ["brighten", "Brighten"], ["color", "Show full colour (undo black and white)"]) },
+        ],
+      },
+      {
+        kind: "group", key: "link", label: "Link: make the whole picture clickable", collapsible: true, fields: [
+          { kind: "select", key: "type", label: "What happens when a visitor clicks it", options: opts(["none", "Nothing"], ["external", "External website"], ["internal", "Page of this website"], ["service", "Service page"], ["product", "Product page"], ["booking", "Booking page"], ["contact", "Contact page"], ["whatsapp", "Open WhatsApp"], ["phone", "Call the company"], ["custom", "Custom link (https://, tel:, mailto:, #anchor)"]) },
+          { kind: "url", key: "url", label: "Address (for external, internal, service, product and custom links)" },
+          { kind: "bi-text", key: "whatsappText", label: "WhatsApp message (optional, WhatsApp links only)" },
+          { kind: "select", key: "newTab", label: "Open in", options: opts(["no", "The same tab"], ["yes", "A new tab"]) },
+          { kind: "select", key: "nofollow", label: "Add nofollow (tell search engines not to follow it)", options: opts(["no", "No"], ["yes", "Yes"]) },
+          { kind: "select", key: "sponsored", label: "Add sponsored (paid or advertising links)", options: opts(["no", "No"], ["yes", "Yes"]) },
+          { kind: "bi-text", key: "title", label: "Link title (tooltip and accessibility)" },
+        ],
+      },
+      {
+        kind: "group", key: "banner", label: "Banner: title, text and button on the picture", collapsible: true, fields: [
+          { kind: "bi-text", key: "heading", label: "Title on the picture" },
+          { kind: "bi-textarea", key: "text", label: "Text on the picture" },
+          { kind: "bi-text", key: "buttonLabel", label: "Button text (the button uses the link above; leave empty for no button)" },
+          { kind: "select", key: "buttonStyle", label: "Button style", options: opts(["solid", "Solid"], ["outline", "Outline"], ["light", "Light"]) },
+          { kind: "select", key: "vertical", label: "Vertical position", options: opts(["start", "Top"], ["center", "Middle"], ["end", "Bottom"]) },
+          { kind: "select", key: "horizontal", label: "Horizontal position", options: opts(["start", "Start"], ["center", "Centre"], ["end", "End"]) },
+          { kind: "color", key: "textColor", label: "Text colour (default white)" },
+          { kind: "select", key: "panel", label: "Dark panel behind the text (easier to read)", options: opts(["no", "No"], ["yes", "Yes"]) },
+        ],
+      },
+      { kind: "group", key: "tablet", label: "Tablet settings (leave on “same as desktop” to inherit)", collapsible: true, fields: IMAGE_DEVICE_FIELDS },
+      { kind: "group", key: "mobile", label: "Phone settings (leave on “same as desktop” to inherit)", collapsible: true, fields: IMAGE_DEVICE_FIELDS },
+      { kind: "bi-textarea", key: "body", label: "Text beside the picture (optional: with “Float left / right” in Position, this text wraps around the picture)", rich: true },
+    ],
+    defaults: () => ({
+      imageUrl: "", alt: biEmpty(), title: biEmpty(), caption: biEmpty(), description: biEmpty(), credit: biEmpty(), lazy: "yes", body: biEmpty(),
+      size: { mode: "auto", width: 0, widthUnit: "%", maxWidth: 0, height: 0, heightUnit: "px", maxHeight: 0, fit: "cover", focusX: 50, focusY: 50, cropTop: 0, cropRight: 0, cropBottom: 0, cropLeft: 0, rotate: 0, flipH: "no", flipV: "no" },
+      position: { align: "center", wrap: "none", shiftX: 0, shiftY: 0, marginTop: 0, marginBottom: 0, marginStart: 0, marginEnd: 0, padding: 0 },
+      frame: { style: "none", width: 2, radius: 12, shadow: "none" },
+      effects: { opacity: 100, grayscale: 0, blur: 0, overlayOpacity: 0, hover: "none" },
+      link: { type: "none", url: "", whatsappText: biEmpty(), newTab: "no", nofollow: "no", sponsored: "no", title: biEmpty() },
+      banner: { heading: biEmpty(), text: biEmpty(), buttonLabel: biEmpty(), buttonStyle: "solid", vertical: "center", horizontal: "center", panel: "no" },
+      tablet: { width: 0, widthUnit: "%", maxWidth: 0, height: 0, maxHeight: 0, align: "inherit", wrap: "inherit", space: "inherit" },
+      mobile: { width: 0, widthUnit: "%", maxWidth: 0, height: 0, maxHeight: 0, align: "inherit", wrap: "inherit", space: "inherit" },
+    }),
   },
   divider: {
     label: "Divider",

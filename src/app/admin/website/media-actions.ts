@@ -21,10 +21,16 @@ const done = (): ActionResult => {
 };
 
 // Browsing is open to any admin (editors need it to pick images); changing things needs media.manage.
-export async function listMedia(input: { search?: string; folderId?: string | null; unusedOnly?: boolean }): Promise<{ assets: MediaItem[]; folders: FolderItem[] }> {
+export async function listMedia(input: { search?: string; folderId?: string | null; unusedOnly?: boolean; from?: string; to?: string }): Promise<{ assets: MediaItem[]; folders: FolderItem[] }> {
   await requireEmployee("ADMIN");
   const search = input.search?.trim();
+  const day = /^\d{4}-\d{2}-\d{2}$/;
+  const created = {
+    ...(input.from && day.test(input.from) ? { gte: new Date(`${input.from}T00:00:00.000Z`) } : {}),
+    ...(input.to && day.test(input.to) ? { lte: new Date(`${input.to}T23:59:59.999Z`) } : {}),
+  };
   const where = {
+    ...(Object.keys(created).length ? { createdAt: created } : {}),
     ...(input.folderId === "none" ? { folderId: null } : input.folderId ? { folderId: input.folderId } : {}),
     ...(search ? { OR: [{ name: { contains: search, mode: "insensitive" as const } }, { altEn: { contains: search, mode: "insensitive" as const } }, { altAr: { contains: search } }, { caption: { contains: search, mode: "insensitive" as const } }] } : {}),
   };

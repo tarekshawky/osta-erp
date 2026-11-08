@@ -106,6 +106,7 @@ export const LIBRARY: LibraryEntry[] = [
   { id: "numbered-list", category: "text", name: "Numbered list", description: "A list with numbers.", icon: "ListOrdered", type: "list", wire: { rows: [row("T"), row("x")] }, patch: set({ variant: "number" }) },
   { id: "divider", category: "text", name: "Divider", description: "A line, dots or space between two parts.", icon: "Minus", type: "divider", wire: { rows: [row("a")] }, keywords: "separator spacer" },
   { id: "video", category: "images", name: "Video player", description: "A YouTube or Vimeo video, or a video file.", icon: "CirclePlay", type: "video", wire: { rows: [row("I")] }, keywords: "youtube vimeo mp4" },
+  { id: "image-pro", category: "images", name: "Image (advanced)", description: "Full control: size, crop, position, frame, effects, any link and a title and button on the picture.", icon: "Image", type: "imagePro", wire: { rows: [row("I")] }, keywords: "image picture banner photo link button whatsapp crop border shadow hover responsive clickable ad صورة بانر إعلان" },
 
   // ---- E. Dynamic blocks (filled from the site's data) ----
   { id: "hero", category: "dynamic", name: "Hero", description: "Big heading, subtitle, image and up to 3 buttons.", icon: "PanelTop", type: "hero", wire: { rows: [row("T", "I"), row("bb")], tone: "dark" } },

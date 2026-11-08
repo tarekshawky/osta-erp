@@ -165,6 +165,14 @@ export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; v
           case "form-select":
             return <FormPicker key={f.key} label={f.label} value={(v as string) ?? ""} onChange={(x) => set(f.key, x)} />;
           case "group":
+            // A long group (the advanced image's size, frame, effects…) folds away so the form stays short.
+            if (f.collapsible)
+              return (
+                <details key={f.key} className="rounded-lg border border-slate-200 p-3">
+                  <summary className="cursor-pointer text-xs font-semibold text-slate-600">{f.label}</summary>
+                  <div className="mt-3"><FieldEditor fields={f.fields} value={(v as Obj) ?? {}} onChange={(x) => set(f.key, x)} /></div>
+                </details>
+              );
             return (
               <fieldset key={f.key} className="rounded-lg border border-slate-200 p-3">
                 <legend className="px-1 text-xs font-semibold text-slate-500">{f.label}</legend>
