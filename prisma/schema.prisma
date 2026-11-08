@@ -191,6 +191,7 @@ model Customer {
   rentalAgreements  RentalAgreement[]
   customerPurchases CustomerPurchase[]
   contracts         Contract[]
+  selfQuotes        SelfQuote[]
   createdAt         DateTime             @default(now())
 }
 
@@ -1627,7 +1628,7 @@ model ContractTerms {
 model Contract {
   id               String                   @id @default(cuid())
   number           String                   @unique // OSTA-AGR-2026-000001
-  requestNumber    String @unique
+  requestNumber    String                   @unique
   version          Int                      @default(1)
   // PENDING_APPROVAL | DRAFT | CHANGES_REQUESTED | AWAITING_PAYMENT | ACTIVE | CANCELLED | REJECTED  (Expired is worked out from expiryDate)
   status           String                   @default("PENDING_APPROVAL")
@@ -2497,4 +2498,118 @@ model CustomerPurchaseItem {
   total             Float
   supplier          String?
   supplierInvoiceNo String?
+}
+
+// ---- Self-Service Quotations (the ducted / concealed / semi-central AC installation calculator) ----
+
+// Every price, package, optional service and text of the calculator, in one document edited in the dashboard (see lib/acquote/config.ts).
+model AcQuoteSettings {
+  id            String   @id @default("default")
+  config        Json     @default("{}")
+  updatedByName String   @default("")
+  updatedAt     DateTime @default(now()) @updatedAt
+}
+
+// A quotation a customer built on the website. `snapshot` holds the lines and totals exactly as they were worked out, so a later change
+// to the price list never alters it; changing it makes a new version.
+model SelfQuote {
+  id              String             @id @default(cuid())
+  number          String             @unique // OSTA-DQ-2026-000001 (ducted AC) / OSTA-DW-2026-000001 (ductwork)
+  // Which calculator built it: "ac-install" (ducted / concealed AC installation) or "ductwork" (HVAC duct fabrication & installation).
+  kind            String             @default("ac-install")
+  // What the customer asked for when they sent it: "book" | "inspection" | "final" | "inquiry".
+  requestType     String             @default("")
+  version         Int                @default(1)
+  // Draft | Generated | Submitted | Under Review | Site Inspection Required | Revised | Sent | Accepted | Rejected | Converted to Order  (Expired is worked out from expiresAt)
+  status          String             @default("Generated")
+  lang            String             @default("en")
+  customerName    String
+  phone           String
+  whatsapp        String             @default("")
+  email           String             @default("")
+  contactMethod   String             @default("")
+  preferredDate   DateTime?
+  emirate         String
+  location        String             @default("")
+  propertyType    String             @default("")
+  project         Json               @default("{}")
+  snapshot        Json
+  subtotal        Float              @default(0)
+  vatAmount       Float              @default(0)
+  total           Float              @default(0)
+  rfq             Boolean            @default(false)
+  // The secret in the customer's link to their quotation. Random and unguessable.
+  accessToken     String             @unique
+  expiresAt       DateTime
+  customerId      String?
+  customer        Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  orderId         String?            @unique
+  bookRequested   Boolean            @default(false)
+  submittedAt     DateTime?
+  sentAt          DateTime?
+  decidedAt       DateTime?
+  rejectionReason String             @default("")
+  internalNotes   String             @default("")
+  lastEditedBy    String             @default("")
+  versions        SelfQuoteVersion[]
+  events          SelfQuoteEvent[]
+  files           SelfQuoteFile[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @default(now()) @updatedAt
+
+  @@index([status, createdAt])
+  @@index([phone])
+  @@index([customerId])
+  @@index([kind, createdAt])
+}
+
+// Every earlier version of a quotation, kept as it was issued.
+model SelfQuoteVersion {
+  id        String    @id @default(cuid())
+  quoteId   String
+  quote     SelfQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  version   Int
+  snapshot  Json
+  total     Float     @default(0)
+  reason    String    @default("")
+  byType    String    @default("customer") // customer | admin
+  byName    String    @default("")
+  createdAt DateTime  @default(now())
+
+  @@unique([quoteId, version])
+}
+
+model SelfQuoteEvent {
+  id        String    @id @default(cuid())
+  quoteId   String
+  quote     SelfQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  kind      String
+  actorType String    @default("system") // customer | admin | system
+  actorId   String?
+  actorName String    @default("")
+  note      String    @default("")
+  data      Json      @default("{}")
+  createdAt DateTime  @default(now())
+
+  @@index([quoteId, createdAt])
+}
+
+// Drawings, BOQ and site photos sent with a quotation. Stored privately in the database (never public); a file uploaded before the
+// quotation exists waits under its uploadKey and is attached when the quotation is created.
+model SelfQuoteFile {
+  id        String     @id @default(cuid())
+  quoteId   String?
+  quote     SelfQuote? @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  uploadKey String
+  // "drawing" | "boq" | "" (ductwork quotations keep the two apart)
+  category  String     @default("")
+  ipHash    String     @default("")
+  name      String
+  mime      String
+  size      Int
+  bytes     Bytes
+  createdAt DateTime   @default(now())
+
+  @@index([uploadKey])
+  @@index([quoteId])
 }

@@ -48,13 +48,13 @@ export const MARKS: Record<DocKind, { en: string; ar: string }> = {
   final: { en: "FINAL – PAID & ACTIVATED", ar: "نهائي – مدفوع ومفعّل" },
 };
 
-function fmtMoney(n: number | null | undefined, currency: string, lang: Lang) {
+export function fmtMoney(n: number | null | undefined, currency: string, lang: Lang) {
   if (n == null) return lang === "ar" ? "عرض سعر مخصص" : "Custom quotation";
   const s = n.toLocaleString("en-US", { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
   return lang === "ar" ? `${s} ${currency === "AED" ? "د.إ" : currency}` : `${currency} ${s}`;
 }
 
-function fmtDate(d: Date | null, lang: Lang, withTime = false) {
+export function fmtDate(d: Date | null, lang: Lang, withTime = false) {
   if (!d) return "—";
   return new Intl.DateTimeFormat(lang === "ar" ? "ar-AE-u-nu-latn" : "en-GB", {
     timeZone: "Asia/Dubai", day: "2-digit", month: "long", year: "numeric", ...(withTime ? { hour: "2-digit", minute: "2-digit", hour12: false } : {}),
@@ -62,9 +62,9 @@ function fmtDate(d: Date | null, lang: Lang, withTime = false) {
 }
 
 // Latin text (numbers, phone, email) inside Arabic text keeps its own direction.
-const ltr = (v: string) => `<span dir="ltr">${esc(v)}</span>`;
+export const ltr = (v: string) => `<span dir="ltr">${esc(v)}</span>`;
 
-function bodyHtml(body: string) {
+export function bodyHtml(body: string) {
   const out: string[] = [];
   for (const block of body.split(/\n{2,}/)) {
     const lines = block.split("\n");
@@ -76,7 +76,7 @@ function bodyHtml(body: string) {
   return out.join("");
 }
 
-const CSS = `
+export const PDF_CSS = `
 @font-face{font-family:"OstaDoc";font-weight:400;src:url(data:font/woff2;base64,${CONTRACT_FONTS.latin400}) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"OstaDoc";font-weight:700;src:url(data:font/woff2;base64,${CONTRACT_FONTS.latin700}) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"OstaDoc";font-weight:400;src:url(data:font/woff2;base64,${CONTRACT_FONTS.arabic400}) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+0609,U+060C,U+061B,U+061F}
@@ -136,7 +136,7 @@ function clausesHtml(ctx: Ctx, clauses: Clause[]) {
   return clauses.map((c, i) => `<div class="clause"><h3>${i + 1}. ${esc(ctx.t(c.titleEn, c.titleAr))}</h3>${bodyHtml(ctx.t(c.bodyEn, c.bodyAr))}</div>`).join("");
 }
 
-function pageCss(ctx: Ctx, number: string) {
+export function pageCss(ctx: { lang: Lang }, number: string) {
   const dir = ctx.lang === "ar" ? "rtl" : "ltr";
   const left = `"${cssStr(`${COMPANY.brand} · ${COMPANY.phone}`)}"`;
   const mid = `"${cssStr(number)}"`;
@@ -254,7 +254,7 @@ export function renderContractHtml(d: ContractDocInput): string {
     [t("Status", "الحالة"), esc(t(mark.en, mark.ar))],
   ])}</div>`;
 
-  return `<!doctype html><html lang="${lang}" dir="${lang === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"/><title>${esc(title)} ${esc(d.number)}</title><style>${CSS}${pageCss(ctx, d.number)}</style></head><body>${body}</body></html>`;
+  return `<!doctype html><html lang="${lang}" dir="${lang === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"/><title>${esc(title)} ${esc(d.number)}</title><style>${PDF_CSS}${pageCss(ctx, d.number)}</style></head><body>${body}</body></html>`;
 }
 
 export function renderAddendumHtml(a: AddendumDocInput): string {
@@ -263,7 +263,7 @@ export function renderAddendumHtml(a: AddendumDocInput): string {
   const ctx: Ctx = { lang, t, cur: a.currency };
   const title = "OSTA – Contract Addendum";
   const delta = a.amountChange;
-  return `<!doctype html><html lang="${lang}" dir="${lang === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"/><title>${esc(title)} ${esc(a.number)}</title><style>${CSS}${pageCss(ctx, a.number)}</style></head><body>
+  return `<!doctype html><html lang="${lang}" dir="${lang === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"/><title>${esc(title)} ${esc(a.number)}</title><style>${PDF_CSS}${pageCss(ctx, a.number)}</style></head><body>
   <div class="wm final">${esc(t("CONTRACT ADDENDUM", "ملحق تعاقدي"))}</div>
   ${head(ctx, title, "final", a.number).replace(/<span class="mark final">[^<]*<\/span>/, `<span class="mark draft">${esc(t("ADDENDUM", "ملحق تعاقدي"))}</span>`)}
   <div class="sec" style="margin-top:0"><h2>${esc(t("Addendum Details", "بيانات الملحق"))}</h2>${kv([

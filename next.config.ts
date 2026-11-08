@@ -21,6 +21,12 @@ const nextConfig: NextConfig = {
     "/api/v1/me/contracts/*/pdf": ["./node_modules/@sparticuz/chromium/bin/**"],
     "/admin/contracts": ["./node_modules/@sparticuz/chromium/bin/**"],
     "/admin/contracts/**": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/v1/ac-quote": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/v1/ac-quote/*/pdf": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/v1/duct-quote": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/v1/duct-quote/*/pdf": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/admin/self-quotes": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/admin/self-quotes/**": ["./node_modules/@sparticuz/chromium/bin/**"],
   },
   // Long articles and pages are saved through server actions; the default 1 MB would cut them off.
   experimental: { serverActions: { bodySizeLimit: "4mb" } },

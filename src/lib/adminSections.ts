@@ -9,6 +9,7 @@ export const ADMIN_SECTIONS = [
   { key: "/admin/quotations", label: "Quotations" },
   { key: "/admin/orders", label: "Orders" },
   { key: "/admin/contracts", label: "Contracts & Agreements" },
+  { key: "/admin/self-quotes", label: "Self-Service Quotations" },
   { key: "/admin/expenses", label: "Expenses" },
   { key: "/admin/employees", label: "Employees" },
   { key: "/admin/jobs", label: "Jobs & Workforce" },

@@ -7,6 +7,9 @@ export const LIMITS = {
   forgot: { windowMs: 60 * 60_000, perIp: 8, perAccount: 3 },
   // "Subscribe now" requests for the maintenance packages: per visitor and per e-mail address.
   subscribe: { windowMs: 60 * 60_000, perIp: 6, perAccount: 3 },
+  // Quotations built with the AC installation calculator: per visitor and per mobile number. Uploads are counted per visitor and per upload batch.
+  quote: { windowMs: 60 * 60_000, perIp: 20, perAccount: 10 },
+  quoteUpload: { windowMs: 60 * 60_000, perIp: 60, perAccount: 20 },
 } as const;
 
 export type LimitKind = keyof typeof LIMITS;

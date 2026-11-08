@@ -222,6 +222,12 @@ const RAW_SCHEMAS = {
     group: z.string().max(40).regex(/^[a-z0-9-]*$/, "Use the group's key: lowercase letters, numbers and dashes.").optional(),
     showForm: yesNo.optional(),
   }),
+  // The ducted / concealed / semi-central AC installation: package cards, the price table and the interactive calculator that builds a
+  // quotation PDF for the customer. Every price, package and optional service is edited under Self-Service Quotations -> Pricing.
+  ductedCalculator: z.object({ heading: bi, subtitle: bi, showPricing: yesNo, defaultLang: z.enum(["en", "ar"]) }),
+  // The HVAC ductwork smart quotation calculator (system cards, ten steps, live summary, bilingual PDF). Every price, system, component,
+  // service and text is edited under Self-Service Quotations → Ductwork pricing.
+  ductQuoteCalculator: z.object({ heading: bi, subtitle: bi, showSystems: yesNo, defaultLang: z.enum(["en", "ar"]) }),
   divider: z.object({ variant: z.enum(["line", "dots", "space"]), size: z.enum(["sm", "md", "lg"]) }),
   // How it works / booking steps / process / timeline: 2-10 steps, each with an icon, title, text and optional picture.
   steps: z.object({
@@ -332,6 +338,8 @@ export const BLOCK_SCHEMAS = {
   global: RAW_SCHEMAS.global,
   googleReviews: withStyle(RAW_SCHEMAS.googleReviews),
   maintenancePackages: withStyle(RAW_SCHEMAS.maintenancePackages),
+  ductedCalculator: withStyle(RAW_SCHEMAS.ductedCalculator),
+  ductQuoteCalculator: withStyle(RAW_SCHEMAS.ductQuoteCalculator),
   divider: withStyle(RAW_SCHEMAS.divider),
   steps: withStyle(RAW_SCHEMAS.steps),
   testimonials: withStyle(RAW_SCHEMAS.testimonials),
@@ -1041,6 +1049,28 @@ export const BLOCK_REGISTRY: Record<
       { kind: "select", key: "showForm", label: "Request form at the bottom of the block", options: opts(["yes", "Show"], ["no", "Hide"]) },
     ],
     defaults: () => ({ heading: biEmpty(), subtitle: biEmpty(), group: "", showComparison: "yes", showTerms: "yes", showForm: "yes" }),
+  },
+  ductedCalculator: {
+    label: "AC installation calculator",
+    description: "Installation packages, the price table and a calculator that lets the customer build and download their own quotation. Prices are edited under Self-Service Quotations → Pricing.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading of the calculator section" },
+      { kind: "bi-textarea", key: "subtitle", label: "Text under the heading", rich: true },
+      { kind: "select", key: "showPricing", label: "Show the packages and the price table above the calculator", options: opts(["yes", "Show"], ["no", "Hide"]) },
+      { kind: "select", key: "defaultLang", label: "Language the calculator opens in (the customer can switch inside it)", options: opts(["en", "English"], ["ar", "Arabic"]) },
+    ],
+    defaults: () => ({ heading: { en: "Calculate Your Ducted AC Installation Cost", ar: "احسب تكلفة تركيب مكيف الدكت الآن" }, subtitle: biEmpty(), showPricing: "yes", defaultLang: "en" }),
+  },
+  ductQuoteCalculator: {
+    label: "Ductwork quotation calculator",
+    description: "The three duct systems with their prices and a ten-step calculator that lets the customer build, download and send a ductwork quotation. Everything is edited under Self-Service Quotations → Ductwork pricing.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading of the calculator section" },
+      { kind: "bi-textarea", key: "subtitle", label: "Text under the heading", rich: true },
+      { kind: "select", key: "showSystems", label: "Show the duct systems and their prices above the calculator", options: opts(["yes", "Show"], ["no", "Hide"]) },
+      { kind: "select", key: "defaultLang", label: "Language the calculator opens in (the customer can switch inside it)", options: opts(["en", "English"], ["ar", "Arabic"]) },
+    ],
+    defaults: () => ({ heading: { en: "HVAC Ductwork – Smart Quotation Calculator", ar: "حاسبة عروض أسعار تصنيع وتركيب الدكت" }, subtitle: biEmpty(), showSystems: "yes", defaultLang: "en" }),
   },
   divider: {
     label: "Divider",
