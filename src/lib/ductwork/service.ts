@@ -106,7 +106,7 @@ export async function afterCreateDuct(quoteId: string) {
   if (!q || !q.email) return;
   try {
     const pdf = await ductQuotePdf(q, q.lang === "ar" ? "ar" : "en");
-    await sendCustomerQuoteEmail(q.email, "generated", { lang: q.lang as "en" | "ar", name: q.customerName, number: q.number, url: ductQuoteUrl(q.accessToken), total: money(q.total), product: PRODUCT }, [{ filename: ductPdfName(q, q.lang === "ar" ? "ar" : "en"), content: pdf }]);
+    await sendCustomerQuoteEmail(q.email, "generated", { lang: q.lang as "en" | "ar", name: q.customerName, number: q.number, url: ductQuoteUrl(q.accessToken), total: money(q.total), product: PRODUCT, variant: "duct" }, [{ filename: ductPdfName(q, q.lang === "ar" ? "ar" : "en"), content: pdf }]);
     await log(prisma, q.id, "email_sent", { type: "system", name: "System" }, `Quotation emailed to ${q.email}`);
   } catch (e) {
     await log(prisma, q.id, "email_failed", { type: "system", name: "System" }, e instanceof Error ? e.message.slice(0, 200) : "Email failed").catch(() => undefined);

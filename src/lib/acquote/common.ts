@@ -18,8 +18,8 @@ export const token = () => randomBytes(24).toString("base64url");
 export const money = (n: number) => `AED ${n.toLocaleString("en-US", { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`;
 export const addDays = (d: Date, n: number) => new Date(d.getTime() + n * 864e5);
 
-// OSTA-DQ-2026-000001 (ducted AC) or OSTA-DW-2026-000001 (ductwork): the next number of this year for the prefix.
-export async function nextNumber(db: Db, code: "DQ" | "DW"): Promise<string> {
+// OSTA-DQ-2026-000001 (ducted AC) or OSTA-DW-2026-000001 (ductwork), OSTA-SQ-… (split AC): the next number of this year for the prefix.
+export async function nextNumber(db: Db, code: "DQ" | "DW" | "SQ"): Promise<string> {
   const prefix = `OSTA-${code}-${new Date().getUTCFullYear()}-`;
   const last = await db.selfQuote.findFirst({ where: { number: { startsWith: prefix } }, orderBy: { number: "desc" }, select: { number: true } });
   return `${prefix}${String((last ? parseInt(last.number.slice(prefix.length), 10) || 0 : 0) + 1).padStart(6, "0")}`;

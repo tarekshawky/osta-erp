@@ -16,6 +16,9 @@ import { linesFromEdit as ductLinesFromEdit } from "@/lib/ductwork/engine";
 import { withLines as ductWithLines, type DuctSnapshot } from "@/lib/ductwork/snapshot";
 import { ductPdfName, ductQuotePdf, ductQuoteUrl, loadConfig as loadDuctConfig } from "@/lib/ductwork/service";
 import type { PdfLang } from "@/lib/ductwork/html";
+import { linesFromEdit as splitLinesFromEdit } from "@/lib/splitquote/engine";
+import { withLines as splitWithLines, type SplitSnapshot } from "@/lib/splitquote/snapshot";
+import { loadConfig as loadSplitConfig, splitPdfName, splitQuotePdf, splitQuoteUrl } from "@/lib/splitquote/service";
 
 // A quotation's life: built by the customer on the website (the server works the prices out again), kept in versions, reviewed and revised
 // by the team, and, once approved, turned into a service order. Everything is written to an audit trail.
@@ -125,11 +128,12 @@ export async function afterCreate(quoteId: string) {
 // ---- the PDF ----
 
 export const pdfName = (q: { number: string; version?: number; kind?: string }, lang?: PdfLang) =>
-  q.kind === "ductwork" ? ductPdfName(q, lang ?? "en") : `OSTA-Quotation-${q.number}${q.version && q.version > 1 ? `-v${q.version}` : ""}.pdf`;
+  q.kind === "ductwork" ? ductPdfName(q, lang ?? "en") : q.kind === "split-ac" ? splitPdfName(q, lang ?? "en") : `OSTA-Quotation-${q.number}${q.version && q.version > 1 ? `-v${q.version}` : ""}.pdf`;
 
 // Either calculator's quotation as a PDF (the ductwork one can also be bilingual; an AC one follows its own language).
 export async function quotePdf(q: SelfQuote, lang?: PdfLang): Promise<Buffer> {
   if (q.kind === "ductwork") return ductQuotePdf(q, lang ?? (q.lang === "ar" ? "ar" : "en"));
+  if (q.kind === "split-ac") return splitQuotePdf(q, lang ?? (q.lang === "ar" ? "ar" : "en"));
   const cfg = await loadConfig();
   const snap = q.snapshot as unknown as QuoteSnapshot;
   const proj = q.project as unknown as QuoteProject;
@@ -147,7 +151,7 @@ export async function quotePdf(q: SelfQuote, lang?: PdfLang): Promise<Buffer> {
 
 export async function publicView(accessToken: string) {
   const q = await byToken(accessToken);
-  if (!q || q.kind === "ductwork") return null;
+  if (!q || q.kind !== "ac-install") return null;
   const status = displayStatus(q);
   const snap = q.snapshot as unknown as QuoteSnapshot;
   const files = await prisma.selfQuoteFile.findMany({ where: { quoteId: q.id }, select: { id: true, name: true, size: true } });
@@ -162,7 +166,7 @@ export async function publicView(accessToken: string) {
 
 export async function editByCustomer(accessToken: string, raw: unknown, ctx: { ip: string }): Promise<Result<{ number: string; version: number }>> {
   const q = await byToken(accessToken);
-  if (!q || q.kind === "ductwork") return fail("This link is not valid.");
+  if (!q || q.kind !== "ac-install") return fail("This link is not valid.");
   const snap0 = q.snapshot as unknown as QuoteSnapshot;
   const status = displayStatus(q);
   if (!customerCanEdit(status, snap0.manual)) return fail(snap0.manual ? "Our team has revised this quotation. Please contact us to change it." : "This quotation can no longer be changed. Please contact us.");
@@ -188,7 +192,7 @@ export async function editByCustomer(accessToken: string, raw: unknown, ctx: { i
 // "Send to Osta" or "Book Installation": the team is told. Neither confirms an appointment; the administration reviews and confirms.
 export async function submitByCustomer(accessToken: string, book: boolean): Promise<Result<{ number: string }>> {
   const q = await byToken(accessToken);
-  if (!q || q.kind === "ductwork") return fail("This link is not valid.");
+  if (!q || q.kind !== "ac-install") return fail("This link is not valid.");
   const status = displayStatus(q);
   // A quotation already sent to us can still be turned into a booking request (once).
   const upgrade = book && status === "Submitted" && !q.bookRequested;
@@ -218,11 +222,11 @@ export async function reviseByAdmin(id: string, admin: Actor, rawLines: unknown,
   if (!q) return fail("Quotation not found.");
   if (!adminCanRevise(displayStatus(q))) return fail(q.kind === "ductwork" ? "This quotation has become a project and can no longer be revised." : "This quotation has become an order and can no longer be revised.");
   if (reason.trim().length < 5) return fail("Write the reason for the change (it is kept in the record).");
-  const duct = q.kind === "ductwork";
-  const edited = duct ? ductLinesFromEdit(rawLines) : linesFromEdit(rawLines);
+  const duct = q.kind === "ductwork", split = q.kind === "split-ac";
+  const edited = duct ? ductLinesFromEdit(rawLines) : split ? splitLinesFromEdit(rawLines) : linesFromEdit(rawLines);
   if (!edited.ok) return edited;
-  const cfg = duct ? await loadDuctConfig() : await loadConfig();
-  const snap = duct ? ductWithLines(q.snapshot as unknown as DuctSnapshot, edited.lines as never) : withLines(q.snapshot as unknown as QuoteSnapshot, edited.lines as never);
+  const cfg = await configOf(q);
+  const snap = duct ? ductWithLines(q.snapshot as unknown as DuctSnapshot, edited.lines as never) : split ? splitWithLines(q.snapshot as unknown as SplitSnapshot, edited.lines as never) : withLines(q.snapshot as unknown as QuoteSnapshot, edited.lines as never);
   const version = q.version + 1;
   await prisma.$transaction(async (tx) => {
     await tx.selfQuote.update({ where: { id }, data: { snapshot: snap as never, subtotal: snap.totals.subtotal, vatAmount: snap.totals.vat, total: snap.totals.total, rfq: snap.totals.rfq, version, status: "Revised", expiresAt: addDays(new Date(), cfg.validityDays), lastEditedBy: admin.name, sentAt: null } });
@@ -243,16 +247,19 @@ export async function setStatus(id: string, admin: Actor, to: QuoteStatus, note:
     await log(tx, id, "status", admin, `${from} → ${to}${note.trim() ? `: ${note.trim()}` : ""}`, { from, to });
   });
   if (q.email && (to === "Accepted" || to === "Rejected")) {
-    await sendCustomerQuoteEmail(q.email, to === "Accepted" ? "accepted" : "rejected", { lang: q.lang as "en" | "ar", name: q.customerName, number: q.number, url: urlOf(q), note: note.trim(), product: productOf(q) }).catch(() => undefined);
+    await sendCustomerQuoteEmail(q.email, to === "Accepted" ? "accepted" : "rejected", { lang: q.lang as "en" | "ar", name: q.customerName, number: q.number, url: urlOf(q), note: note.trim(), ...msgOf(q) }).catch(() => undefined);
   }
   return { ok: true };
 }
 
-const urlOf = (q: SelfQuote) => (q.kind === "ductwork" ? ductQuoteUrl(q.accessToken) : quoteUrl(q.accessToken));
-const productOf = (q: SelfQuote) => (q.kind === "ductwork" ? { en: "ductwork", ar: "تصنيع وتركيب الدكت" } : undefined);
+const urlOf = (q: SelfQuote) => (q.kind === "ductwork" ? ductQuoteUrl(q.accessToken) : q.kind === "split-ac" ? splitQuoteUrl(q.accessToken) : quoteUrl(q.accessToken));
+// The wording of the customer's messages for each calculator (the AC installation one needs nothing extra).
+const msgOf = (q: SelfQuote) => (q.kind === "ductwork" ? { product: { en: "ductwork", ar: "تصنيع وتركيب الدكت" }, variant: "duct" as const } : q.kind === "split-ac" ? { product: { en: "split AC installation", ar: "تركيب مكيف سبليت" }, variant: "split" as const } : {});
+// Each calculator's own price list (the validity of a quotation comes from it).
+const configOf = (q: SelfQuote): Promise<{ validityDays: number }> => (q.kind === "ductwork" ? loadDuctConfig() : q.kind === "split-ac" ? loadSplitConfig() : loadConfig());
 
 export function messageLink(q: SelfQuote, kind: QuoteMessageKind, note = "") {
-  return quoteWhatsAppLink(q.whatsapp || q.phone, kind, { lang: q.lang as "en" | "ar", name: q.customerName, number: q.number, url: urlOf(q), total: money(q.total), note, product: productOf(q) });
+  return quoteWhatsAppLink(q.whatsapp || q.phone, kind, { lang: q.lang as "en" | "ar", name: q.customerName, number: q.number, url: urlOf(q), total: money(q.total), note, ...msgOf(q) });
 }
 
 // Sends the quotation (as it now stands) to the customer with its PDF, and marks it "Sent".
@@ -261,7 +268,7 @@ export async function sendToCustomer(id: string, admin: Actor, note: string): Pr
   if (!q) return fail("Quotation not found.");
   const from = displayStatus(q);
   if (["Accepted", "Rejected", "Converted to Order", "Converted to Project"].includes(from)) return fail(`A quotation that is "${from}" cannot be sent again.`);
-  const cfg = q.kind === "ductwork" ? await loadDuctConfig() : await loadConfig();
+  const cfg = await configOf(q);
   await prisma.$transaction(async (tx) => {
     await tx.selfQuote.update({ where: { id }, data: { status: "Sent", sentAt: new Date(), ...(from === "Expired" ? { expiresAt: addDays(new Date(), cfg.validityDays) } : {}) } });
     await log(tx, id, "sent", admin, note.trim() || "Quotation sent to the customer");
@@ -271,7 +278,7 @@ export async function sendToCustomer(id: string, admin: Actor, note: string): Pr
   if (fresh.email) {
     try {
       const pdf = await quotePdf(fresh);
-      await sendCustomerQuoteEmail(fresh.email, "sent", { lang: fresh.lang as "en" | "ar", name: fresh.customerName, number: fresh.number, url: urlOf(fresh), total: money(fresh.total), note: note.trim(), product: productOf(fresh) }, [{ filename: pdfName(fresh, fresh.lang === "ar" ? "ar" : "en"), content: pdf }]);
+      await sendCustomerQuoteEmail(fresh.email, "sent", { lang: fresh.lang as "en" | "ar", name: fresh.customerName, number: fresh.number, url: urlOf(fresh), total: money(fresh.total), note: note.trim(), ...msgOf(fresh) }, [{ filename: pdfName(fresh, fresh.lang === "ar" ? "ar" : "en"), content: pdf }]);
       await log(prisma, id, "email_sent", admin, `Quotation emailed to ${fresh.email}`);
       emailed = true;
     } catch (e) {
@@ -298,6 +305,7 @@ export async function convertToOrder(id: string, admin: Actor): Promise<Result<{
   if (!q) return fail("Quotation not found.");
   if (!canConvert(displayStatus(q))) return fail(q.kind === "ductwork" ? "Only an accepted quotation can be turned into a project." : "Only an accepted quotation can be turned into an order.");
   if (q.kind === "ductwork") return convertDuct(q, admin);
+  if (q.kind === "split-ac") return convertSplit(q, admin);
   const snap = q.snapshot as unknown as QuoteSnapshot;
   const customer = q.customerId ? await prisma.customer.findUnique({ where: { id: q.customerId } }) : await findCustomerByContact(q.phone, q.email);
   const customerId = customer?.id ?? (await findOrCreateCustomer({ type: "INDIVIDUAL", name: q.customerName, phone: q.phone.trim(), whatsapp: q.whatsapp || null, emirate: q.emirate, leadSource: "Website" }, admin.id ?? "")).id;
@@ -367,4 +375,46 @@ async function convertDuct(q: SelfQuote, admin: Actor): Promise<Result<{ orderId
     return o;
   });
   return { ok: true, orderId: order.id, orderNumber: order.number };
+}
+
+// An accepted Split AC quotation becomes a service order: created as a REQUEST ("Requested"), so an administrator still assigns the team and
+// confirms the appointment. Nothing is booked automatically.
+async function convertSplit(q: SelfQuote, admin: Actor): Promise<Result<{ orderId: string; orderNumber: string }>> {
+  const snap = q.snapshot as unknown as SplitSnapshot;
+  const proj = (q.project ?? {}) as { address?: string; notes?: string };
+  const customer = q.customerId ? await prisma.customer.findUnique({ where: { id: q.customerId } }) : await findCustomerByContact(q.phone, q.email);
+  const customerId = customer?.id ?? (await findOrCreateCustomer({ type: "INDIVIDUAL", name: q.customerName, phone: q.phone.trim(), whatsapp: null, emirate: q.emirate, leadSource: "Website" }, admin.id ?? "")).id;
+  const items = snap.lines.map((l) => `${l.qty}× ${l.labelEn}${l.kind === "unit" ? ` – ${l.detailEn}` : ""}${l.amount == null ? " (to be quoted)" : ` = ${l.kind === "discount" ? "− " : ""}${money(l.amount)}`}`).join("\n");
+  const notes = [`Split AC quotation ${q.number} (v${q.version}) — accepted.`, items, `Subtotal ${money(q.subtotal)}, VAT ${money(q.vatAmount)}, total incl. VAT ${money(q.total)}${q.rfq ? " + items still to be quoted" : ""}.`, `Installation: ${proj.address || q.location}, ${q.location}, ${q.emirate}.${proj.notes ? ` Notes: ${proj.notes}` : ""}`, "Confirm the appointment with the customer."].join("\n");
+  const number = await generateOrderNumber();
+  const order = await prisma.$transaction(async (tx) => {
+    const o = await tx.order.create({ data: { number, date: new Date(), customerId, orderType: "New Order", priceAgreed: "Yes", customerLanguage: q.lang === "ar" ? "Arabic" : "English", leadSource: "Website", notes, status: "Requested", createdById: admin.id ?? null } });
+    await tx.selfQuote.update({ where: { id: q.id }, data: { status: "Converted to Order", orderId: o.id, customerId } });
+    await log(tx, q.id, "converted", admin, `Converted to order ${o.number}`, { orderId: o.id });
+    return o;
+  });
+  return { ok: true, orderId: order.id, orderNumber: order.number };
+}
+
+// A copy of a quotation (any calculator) as a new DRAFT with its own number and link: the starting point for a similar quotation. The
+// original is never touched. The copy keeps the prices the original was issued with until it is revised.
+export async function duplicateQuote(id: string, admin: Actor): Promise<Result<{ id: string; number: string }>> {
+  const q = await load(id);
+  if (!q) return fail("Quotation not found.");
+  const cfg = await configOf(q);
+  const prefix = q.kind === "ductwork" ? "DW" : q.kind === "split-ac" ? "SQ" : "DQ";
+  const copy = await withNumber(() =>
+    prisma.$transaction(async (tx) => {
+      const n = await tx.selfQuote.create({ data: {
+        kind: q.kind, number: await nextNumber(tx, prefix), status: "Draft", lang: q.lang, accessToken: token(), customerId: q.customerId, lastEditedBy: admin.name,
+        customerName: q.customerName, phone: q.phone, whatsapp: q.whatsapp, email: q.email, contactMethod: q.contactMethod, preferredDate: q.preferredDate, emirate: q.emirate, location: q.location, propertyType: q.propertyType,
+        project: q.project as never, snapshot: q.snapshot as never, subtotal: q.subtotal, vatAmount: q.vatAmount, total: q.total, rfq: q.rfq, expiresAt: addDays(new Date(), cfg.validityDays),
+      } });
+      await tx.selfQuoteVersion.create({ data: { quoteId: n.id, version: 1, snapshot: q.snapshot as never, total: q.total, reason: `Duplicated from ${q.number}`, byType: "admin", byName: admin.name } });
+      await log(tx, n.id, "duplicated", admin, `Duplicated from ${q.number}`, { from: q.id });
+      await log(tx, q.id, "note", admin, `Duplicated as ${n.number}`);
+      return n;
+    }),
+  );
+  return { ok: true, id: copy.id, number: copy.number };
 }

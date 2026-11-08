@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
     "/api/v1/ac-quote/*/pdf": ["./node_modules/@sparticuz/chromium/bin/**"],
     "/api/v1/duct-quote": ["./node_modules/@sparticuz/chromium/bin/**"],
     "/api/v1/duct-quote/*/pdf": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/v1/split-quote": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/v1/split-quote/*/pdf": ["./node_modules/@sparticuz/chromium/bin/**"],
     "/admin/self-quotes": ["./node_modules/@sparticuz/chromium/bin/**"],
     "/admin/self-quotes/**": ["./node_modules/@sparticuz/chromium/bin/**"],
   },

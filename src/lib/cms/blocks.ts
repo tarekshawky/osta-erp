@@ -228,6 +228,9 @@ const RAW_SCHEMAS = {
   // The HVAC ductwork smart quotation calculator (system cards, ten steps, live summary, bilingual PDF). Every price, system, component,
   // service and text is edited under Self-Service Quotations → Ductwork pricing.
   ductQuoteCalculator: z.object({ heading: bi, subtitle: bi, showSystems: yesNo, defaultLang: z.enum(["en", "ar"]) }),
+  // The Split AC installation packages (cards, price table, conditions) and the instant quotation calculator. Every package, price, extra and
+  // text is edited under Self-Service Quotations → Split AC pricing.
+  splitQuoteCalculator: z.object({ heading: bi, subtitle: bi, showPackages: yesNo, defaultLang: z.enum(["en", "ar"]) }),
   divider: z.object({ variant: z.enum(["line", "dots", "space"]), size: z.enum(["sm", "md", "lg"]) }),
   // How it works / booking steps / process / timeline: 2-10 steps, each with an icon, title, text and optional picture.
   steps: z.object({
@@ -340,6 +343,7 @@ export const BLOCK_SCHEMAS = {
   maintenancePackages: withStyle(RAW_SCHEMAS.maintenancePackages),
   ductedCalculator: withStyle(RAW_SCHEMAS.ductedCalculator),
   ductQuoteCalculator: withStyle(RAW_SCHEMAS.ductQuoteCalculator),
+  splitQuoteCalculator: withStyle(RAW_SCHEMAS.splitQuoteCalculator),
   divider: withStyle(RAW_SCHEMAS.divider),
   steps: withStyle(RAW_SCHEMAS.steps),
   testimonials: withStyle(RAW_SCHEMAS.testimonials),
@@ -1071,6 +1075,17 @@ export const BLOCK_REGISTRY: Record<
       { kind: "select", key: "defaultLang", label: "Language the calculator opens in (the customer can switch inside it)", options: opts(["en", "English"], ["ar", "Arabic"]) },
     ],
     defaults: () => ({ heading: { en: "HVAC Ductwork – Smart Quotation Calculator", ar: "حاسبة عروض أسعار تصنيع وتركيب الدكت" }, subtitle: biEmpty(), showSystems: "yes", defaultLang: "en" }),
+  },
+  splitQuoteCalculator: {
+    label: "Split AC installation calculator",
+    description: "The installation packages with prices, the conditions, and a calculator that lets the customer build, download and share a quotation PDF. Everything is edited under Self-Service Quotations → Split AC pricing.",
+    fields: [
+      { kind: "bi-text", key: "heading", label: "Heading of the calculator section" },
+      { kind: "bi-textarea", key: "subtitle", label: "Text under the heading", rich: true },
+      { kind: "select", key: "showPackages", label: "Show the packages, the price table and the conditions above the calculator", options: opts(["yes", "Show"], ["no", "Hide"]) },
+      { kind: "select", key: "defaultLang", label: "Language the calculator opens in (the customer can switch inside it)", options: opts(["en", "English"], ["ar", "Arabic"]) },
+    ],
+    defaults: () => ({ heading: { en: "Instant Split AC Installation Quotation", ar: "احسب تكلفة تركيب المكيف الآن" }, subtitle: biEmpty(), showPackages: "yes", defaultLang: "en" }),
   },
   divider: {
     label: "Divider",

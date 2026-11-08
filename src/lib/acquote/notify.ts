@@ -9,12 +9,12 @@ export const quoteUrl = (token: string, path = "quote") => `${publicBase()}/${pa
 
 export type QuoteMessageKind = "generated" | "sent" | "accepted" | "rejected";
 // `product` is set for a quotation that is not an AC installation one (the ductwork calculator).
-export type QuoteMessageCtx = { lang: "en" | "ar"; name: string; number: string; url: string; total?: string; note?: string; product?: Bi };
+export type QuoteMessageCtx = { lang: "en" | "ar"; name: string; number: string; url: string; total?: string; note?: string; product?: Bi; variant?: "duct" | "split" };
 
 const COPY: Record<QuoteMessageKind, { subject: (c: QuoteMessageCtx) => Bi; lines: (c: QuoteMessageCtx) => Bi; link: boolean }> = {
   generated: {
     subject: (c) => (c.product ? { en: `Your ${c.product.en} quotation`, ar: `عرض سعر ${c.product.ar} الخاص بك` } : { en: "Your AC installation quotation", ar: "عرض سعر تركيب المكيفات الخاص بك" }),
-    lines: (c) => (c.product
+    lines: (c) => (c.variant === "duct"
       ? { en: `Hello ${c.name}, your quotation ${c.number}${c.total ? ` (${c.total} including VAT)` : ""} is attached. It is an estimate, subject to technical review and final site measurement. You can open it, change it, or ask for a site inspection or the final quotation from the link below.`, ar: `مرحباً ${c.name}، مرفق عرض السعر رقم ${c.number}${c.total ? ` (${c.total} شامل الضريبة)` : ""}. وهو تقديري ويخضع للمراجعة الفنية والقياسات النهائية بالموقع. يمكنك فتحه أو تعديله أو طلب معاينة الموقع أو عرض السعر النهائي من الرابط أدناه.` }
       : { en: `Hello ${c.name}, your quotation ${c.number}${c.total ? ` (${c.total} including VAT)` : ""} is attached. It is an estimate, subject to site inspection. You can open it, change it or send it to OSTA from the link below.`, ar: `مرحباً ${c.name}، مرفق عرض السعر رقم ${c.number}${c.total ? ` (${c.total} شامل الضريبة)` : ""}. وهو تقديري ويخضع لمعاينة الموقع. يمكنك فتحه أو تعديله أو إرساله إلى اسطا من الرابط أدناه.` }),
     link: true,
@@ -26,7 +26,7 @@ const COPY: Record<QuoteMessageKind, { subject: (c: QuoteMessageCtx) => Bi; line
   },
   accepted: {
     subject: () => ({ en: "Your quotation is approved", ar: "تم اعتماد عرض السعر" }),
-    lines: (c) => (c.product
+    lines: (c) => (c.variant === "duct"
       ? { en: `Hello ${c.name}, quotation ${c.number} has been approved. Our team will contact you to agree the next steps.`, ar: `مرحباً ${c.name}، تم اعتماد عرض السعر رقم ${c.number}. سيتواصل معك فريقنا للاتفاق على الخطوات التالية.` }
       : { en: `Hello ${c.name}, quotation ${c.number} has been approved. Our team will contact you to confirm the installation appointment.`, ar: `مرحباً ${c.name}، تم اعتماد عرض السعر رقم ${c.number}. سيتواصل معك فريقنا لتأكيد موعد التركيب.` }),
     link: false,

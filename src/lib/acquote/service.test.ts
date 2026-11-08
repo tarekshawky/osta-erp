@@ -9,7 +9,7 @@ vi.mock("@/lib/prisma", () => {
     selfQuote: {
       findUnique: async ({ where }: { where: R }) => mem.quotes.find((q) => match(q, where)) ?? null,
       findFirst: async ({ where }: { where: R }) => [...mem.quotes.filter((q) => match(q, where))].sort((a, b) => String(b.number).localeCompare(String(a.number)))[0] ?? null,
-      create: async ({ data }: { data: R }) => { const q = { id: `q${++mem.seq}`, version: 1, createdAt: new Date(), internalNotes: "", rejectionReason: "", bookRequested: false, ...data }; mem.quotes.push(q); return q; },
+      create: async ({ data }: { data: R }) => { const q = { id: `q${++mem.seq}`, version: 1, createdAt: new Date(), internalNotes: "", rejectionReason: "", bookRequested: false, kind: "ac-install", ...data }; mem.quotes.push(q); return q; },
       update: async ({ where, data }: { where: R; data: R }) => { const q = mem.quotes.find((x) => match(x, where))!; Object.assign(q, data); return q; },
     },
     selfQuoteVersion: { create: async ({ data }: { data: R }) => { mem.versions.push(data); return data; } },

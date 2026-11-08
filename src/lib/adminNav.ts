@@ -55,7 +55,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/quotations", label: "Quotations", keywords: "quotes estimates" },
       { href: "/admin/invoices", label: "Invoices", keywords: "billing payments" },
       { href: "/admin/contracts", label: "Contracts & Agreements", keywords: "maintenance service agreement amc subscriptions pending approval payment link terms conditions pdf contract عقود اتفاقيات", children: [{ href: "/admin/contracts/terms", label: "Terms & Conditions" }, { href: "/admin/contracts/settings", label: "Payment settings" }] },
-      { href: "/admin/self-quotes", label: "Self-Service Quotations", keywords: "ducted concealed semi central ac installation calculator quotation quote pdf price plenum ductwork duct insulation fabrication boq عروض أسعار تركيب مكيفات دكت تصنيع", children: [{ href: "/admin/self-quotes/pricing", label: "Pricing & Packages" }, { href: "/admin/self-quotes/ductwork-pricing", label: "Ductwork pricing" }] },
+      { href: "/admin/self-quotes", label: "Self-Service Quotations", keywords: "ducted concealed semi central ac installation calculator quotation quote pdf price plenum ductwork duct insulation fabrication boq split ac installation packages faq عروض أسعار تركيب مكيفات دكت تصنيع", children: [{ href: "/admin/self-quotes/pricing", label: "Pricing & Packages" }, { href: "/admin/self-quotes/ductwork-pricing", label: "Ductwork pricing" }, { href: "/admin/self-quotes/split-pricing", label: "Split AC pricing" }] },
       { href: "/admin/warranty-certificates", label: "Warranty Certificates", keywords: "guarantee" },
       WORK_REPORTS,
     ],

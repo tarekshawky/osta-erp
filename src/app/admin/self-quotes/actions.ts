@@ -7,6 +7,8 @@ import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { DUCTED_PAGE, DUCTED_SLUG } from "@/lib/cms/ductedPage";
 import { DUCT_SLUG, withDuctCalculator } from "@/lib/cms/ductPage";
 import * as duct from "@/lib/ductwork/service";
+import * as split from "@/lib/splitquote/service";
+import { SPLIT_SLUG, mergeSeo, withSplitBlocks, type RelatedLink } from "@/lib/cms/splitPage";
 import { revalidateSite } from "@/lib/cms/publish";
 import * as svc from "@/lib/acquote/service";
 import { QUOTE_STATUSES, type QuoteStatus } from "@/lib/acquote/status";
@@ -140,4 +142,44 @@ export async function addDuctCalculatorToPage(): Promise<QResult> {
   await writeAudit(g.admin, "cms.duct.calculator", "CmsPage", page.id, null, { slug: DUCT_SLUG });
   revalidatePath("/admin/website/pages");
   return { ok: true, id: page.id };
+}
+
+// ---- the Split AC calculator ----
+
+export async function saveSplitPricing(config: unknown): Promise<QResult> {
+  const g = await guard();
+  if ("error" in g) return fail(g.error);
+  const r = await split.saveConfig(config, g.admin.name);
+  if (!r.ok) return fail(r.error);
+  await writeAudit(g.admin, "quote.split.pricing", "AcQuoteSettings", "split", null, null);
+  revalidatePath("/admin/self-quotes/split-pricing");
+  void revalidateSite([SPLIT_SLUG]);
+  return { ok: true };
+}
+
+// Upgrades the DRAFT of the existing /split-ac-installation page: adds the calculator, the FAQ and links to the related AC services after what is
+// already there, and fills the SEO fields that are still empty. Nothing else on the page is touched and nothing is published.
+export async function addSplitToPage(): Promise<QResult & { added?: string[] }> {
+  const g = await guard("pages.edit");
+  if ("error" in g) return fail(g.error);
+  const page = await prisma.cmsPage.findFirst({ where: { slug: SPLIT_SLUG, deletedAt: null } });
+  if (!page) return fail(`The page /${SPLIT_SLUG} does not exist yet. Create it under Website → Pages first, then come back here.`);
+  const others = await prisma.cmsPage.findMany({ where: { status: "PUBLISHED", deletedAt: null, id: { not: page.id }, OR: [{ slug: { contains: "ac-repair" } }, { slug: { contains: "ac-maintenance" } }, { slug: { contains: "ac-service" } }, { slug: { contains: "maintenance" } }] }, select: { slug: true, titleEn: true, titleAr: true }, take: 4 });
+  const related: RelatedLink[] = others.map((o) => ({ slug: o.slug, titleEn: o.titleEn, titleAr: o.titleAr }));
+  const r = withSplitBlocks(page.draftBlocks, related);
+  if (!r.ok) return fail(r.error);
+  await prisma.cmsPage.update({ where: { id: page.id }, data: { draftBlocks: r.blocks as unknown as Prisma.InputJsonValue, draftSeo: mergeSeo(page.draftSeo) as Prisma.InputJsonValue, updatedById: g.admin.id } });
+  await writeAudit(g.admin, "cms.split.upgrade", "CmsPage", page.id, null, { slug: SPLIT_SLUG, added: r.added });
+  revalidatePath("/admin/website/pages");
+  return { ok: true, id: page.id, added: r.added };
+}
+
+export async function duplicateQuoteAction(id: string): Promise<QResult> {
+  const g = await guard();
+  if ("error" in g) return fail(g.error);
+  const r = await svc.duplicateQuote(id, g.actor);
+  if (!r.ok) return fail(r.error);
+  await writeAudit(g.admin, "quote.duplicate", "SelfQuote", id, null, { copy: r.number });
+  refresh();
+  return { ok: true, id: r.id };
 }

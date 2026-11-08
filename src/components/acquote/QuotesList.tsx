@@ -35,7 +35,7 @@ export function QuotesList({ rows }: { rows: QuoteRow[] }) {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        {([["all", "Both calculators"], ["ac-install", "AC installation"], ["ductwork", "Ductwork"]] as const).map(([k, label]) => (
+        {([["all", "All calculators"], ["split-ac", "Split AC"], ["ac-install", "Ducted AC"], ["ductwork", "Ductwork"]] as const).map(([k, label]) => (
           <button key={k} type="button" onClick={() => setKind(k)} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${kind === k ? "border-slate-800 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-700"}`}>{label}</button>
         ))}
       </div>
@@ -58,7 +58,7 @@ export function QuotesList({ rows }: { rows: QuoteRow[] }) {
             {shown.map((r) => (
               <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
                 <td className="px-3 py-2"><Link href={`/admin/self-quotes/${r.id}`} className="font-semibold text-blue-700 hover:underline">{r.number}</Link><div className="text-xs text-slate-400">v{r.version}{r.files ? ` · ${r.files} file${r.files > 1 ? "s" : ""}` : ""}</div></td>
-                <td className="px-3 py-2 text-xs text-slate-600">{r.kind === "ductwork" ? "Ductwork" : "AC installation"}</td>
+                <td className="px-3 py-2 text-xs text-slate-600">{r.kind === "ductwork" ? "Ductwork" : r.kind === "split-ac" ? "Split AC" : "Ducted AC"}</td>
                 <td className="px-3 py-2"><div className="font-medium text-slate-900">{r.customer}</div><div className="text-xs text-slate-500">{r.phone}</div></td>
                 <td className="px-3 py-2 text-slate-700">{r.emirate}</td>
                 <td className="px-3 py-2 text-right font-medium text-slate-900">{money(r.total)}{r.rfq && <div className="text-[11px] font-normal text-amber-700">+ items to be quoted</div>}</td>

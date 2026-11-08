@@ -28,9 +28,16 @@ export const ADMIN_NEXT: Record<QuoteStatus, QuoteStatus[]> = {
   "Converted to Project": [],
 };
 
-export type QuoteKind = "ac-install" | "ductwork";
+export type QuoteKind = "ac-install" | "ductwork" | "split-ac";
 // What the administrator may move a quotation to, for the calculator it came from.
+// The Split AC calculator has no review or inspection steps: its statuses are Draft, Generated, Sent, Accepted, Rejected, Expired and Converted
+// (plus "Submitted" while a booking request waits for the team, and "Revised" after the team edits it).
+const SPLIT_NEXT: Partial<Record<QuoteStatus, QuoteStatus[]>> = {
+  Draft: ["Generated", "Sent", "Rejected"], Generated: ["Sent", "Accepted", "Rejected"], Submitted: ["Sent", "Accepted", "Rejected"], Revised: ["Sent", "Accepted", "Rejected"],
+  Sent: ["Accepted", "Rejected"], Accepted: ["Rejected"], Rejected: ["Generated"], Expired: ["Generated"],
+};
 export function adminNextFor(kind: string, status: QuoteStatus): QuoteStatus[] {
+  if (kind === "split-ac") return SPLIT_NEXT[status] ?? [];
   const review: QuoteStatus = kind === "ductwork" ? "Under Technical Review" : "Under Review";
   const from = status === "Under Technical Review" ? "Under Review" : status;
   return (ADMIN_NEXT[from] ?? []).map((x) => (x === "Under Review" ? review : x));
@@ -38,7 +45,8 @@ export function adminNextFor(kind: string, status: QuoteStatus): QuoteStatus[] {
 const AC_ORDER: QuoteStatus[] = ["Draft", "Generated", "Submitted", "Under Review", "Site Inspection Required", "Revised", "Sent", "Accepted", "Rejected", "Expired", "Converted to Order"];
 const DUCT_ORDER: QuoteStatus[] = ["Draft", "Generated", "Submitted", "Under Technical Review", "Site Inspection Required", "Revised", "Sent", "Accepted", "Rejected", "Expired", "Converted to Project"];
 // The statuses of one calculator, in the order they are listed.
-export const orderedStatuses = (kind: string): QuoteStatus[] => (kind === "ductwork" ? DUCT_ORDER : AC_ORDER);
+const SPLIT_ORDER: QuoteStatus[] = ["Draft", "Generated", "Submitted", "Revised", "Sent", "Accepted", "Rejected", "Expired", "Converted to Order"];
+export const orderedStatuses = (kind: string): QuoteStatus[] => (kind === "ductwork" ? DUCT_ORDER : kind === "split-ac" ? SPLIT_ORDER : AC_ORDER);
 
 // The customer's own buttons.
 export const customerCanEdit = (status: QuoteStatus, manual: boolean) => !manual && ["Generated", "Submitted", "Sent", "Expired"].includes(status);
