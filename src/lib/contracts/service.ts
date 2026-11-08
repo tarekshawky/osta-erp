@@ -10,6 +10,9 @@ import { htmlToPdf } from "./pdf";
 import { agreementUrl, composeMessage, sendCustomerEmail, whatsappLink, type MessageKind } from "./notify";
 import { applyAdjustments, type Adjustment, type ContractSnapshot } from "./snapshot";
 import { activeTerms } from "./terms";
+import { loadPublicPackages, loadServices, loadTax, toPkg } from "@/lib/maintenance/data";
+import { defaultBuilder, priceRequest, type Breakdown } from "@/lib/maintenance/builder";
+import { buildSnapshot } from "./snapshot";
 import { ALTERNATIVE_ARRANGEMENT, REQUEST_STATUS_OF, allowedActions, displayStatus, expiryFrom, paymentProblem, type ContractAction, type ContractStatus } from "./workflow";
 
 // The agreement's life in the ERP: created when the customer accepts and sends the request, then reviewed, approved, paid and
@@ -177,6 +180,70 @@ export async function afterSubmission(contractId: string) {
   return { documentId: doc?.id ?? null };
 }
 
+// ---- 1b. an existing request (made before agreements, or on the simple form) gets its agreement and PDF ----
+
+export async function createFromRequest(subscriptionId: string, admin: Actor): Promise<Result<{ id: string; number: string; created: boolean }>> {
+  const sub = await prisma.maintenanceSubscription.findUnique({ where: { id: subscriptionId }, include: { contract: { select: { id: true, number: true } } } });
+  if (!sub) return fail("Request not found.");
+  if (sub.contract) return { ok: true, id: sub.contract.id, number: sub.contract.number, created: false };
+  if (!sub.packageId) return fail("The package of this request no longer exists, so its agreement cannot be built.");
+  const row = await prisma.maintenancePackage.findUnique({ where: { id: sub.packageId } });
+  if (!row) return fail("The package of this request no longer exists, so its agreement cannot be built.");
+  const group = sub.groupKey ? await prisma.maintenanceGroup.findUnique({ where: { key: sub.groupKey }, select: { id: true } }) : null;
+  const [services, tax, pub, terms] = await Promise.all([loadServices(group?.id ?? null), loadTax(), loadPublicPackages(sub.groupKey), activeTerms(sub.groupKey)]);
+  const pkg = toPkg(row);
+
+  // The price: what the Smart builder worked out and stored, or for a simple request the package's own price (VAT per the settings).
+  const stored = (sub.details as { lines?: { label?: string; qty?: number; unitPrice?: number | null; amount?: number | null; note?: Breakdown["lines"][number]["note"] }[]; vatPercent?: number; pricesIncludeVat?: boolean; quoteReasons?: string[] } | null) ?? {};
+  const breakdown: Breakdown = Array.isArray(stored.lines) && stored.lines.length > 0 && sub.subtotal != null
+    ? {
+        packageId: pkg.id, quote: sub.quoteRequested, quoteReasons: stored.quoteReasons ?? [], subtotal: sub.subtotal, vat: sub.vatAmount ?? 0, total: sub.total ?? sub.subtotal,
+        vatPercent: stored.vatPercent ?? tax.vatRatePercent, pricesIncludeVat: stored.pricesIncludeVat ?? tax.pricesIncludeVat,
+        lines: stored.lines.map((l, i) => ({ key: i === 0 ? "base" : `line${i}`, labelEn: l.label ?? "", labelAr: l.label ?? "", qty: l.qty ?? 1, unitPrice: l.unitPrice ?? null, amount: l.amount ?? null, note: l.note ?? "extra" })),
+      }
+    : priceRequest(pkg, services, [], defaultBuilder(), tax, { acUnits: 0, handymanHours: 0, optionIds: [], extras: {} });
+
+  const lang: Lang = /[\u0600-\u06FF]/.test(`${sub.name} ${sub.location} ${sub.message}`) ? "ar" : "en";
+  const snapshot = buildSnapshot({
+    groupKey: sub.groupKey,
+    customer: { name: sub.name, phone: sub.phone, whatsapp: sub.whatsapp, email: sub.email },
+    property: { emirate: sub.emirate, area: sub.area, address: sub.address || sub.location, type: sub.propertyType, bedrooms: sub.bedrooms, bathrooms: sub.bathrooms, floors: sub.floors, size: sub.propertySize, acUnits: sub.acUnits, notes: [sub.company ? `Company: ${sub.company}` : "", sub.message].filter(Boolean).join(" · ") },
+    pkg, services, breakdown, pageTerms: pub.terms, terms,
+  });
+  const customer = await findCustomerByContact(sub.phone, sub.email);
+  const contract = await withNumbers(() =>
+    prisma.$transaction(async (tx) => {
+      const number = await nextNumber(tx, "agreement");
+      const requestNumber = await nextNumber(tx, "request");
+      const c = await tx.contract.create({ data: { number, requestNumber, status: "DRAFT", lang, groupKey: sub.groupKey, subscriptionId: sub.id, customerId: customer?.id ?? null, snapshot: snapshot as never, termsId: terms.id, termsVersion: terms.version, accessToken: token() } });
+      await log(tx, c.id, "created", admin, `Agreement created from the customer's request (${sub.packageName}); waiting for the customer's acceptance`, { subscriptionId: sub.id });
+      await syncRequest(tx, c, "DRAFT");
+      return c;
+    }),
+  );
+  const doc = await generateDocument(contract.id, "draft", admin);
+  await emailCustomer(contract, "invite", admin, { attach: doc ? { filename: pdfName(contract, "draft"), content: doc.bytes } : undefined });
+  return { ok: true, id: contract.id, number: contract.number, created: true };
+}
+
+// The customer agreed outside the website (a WhatsApp message, a signed paper, a call). The admin records how, so the agreement can go on
+// to approval; the PDF then says the acceptance was recorded by OSTA on the customer's behalf, never that the customer ticked the statements.
+export async function recordAcceptance(id: string, admin: Actor, how: string): Promise<Result> {
+  const c = await load(id);
+  if (!c) return fail("Agreement not found.");
+  const blocked = notAllowed(c, "recordAcceptance");
+  if (blocked) return blocked;
+  if (c.acceptedAt) return fail("The customer has already accepted this agreement.");
+  if (how.trim().length < 8) return fail("Describe how and when the customer agreed (for example: WhatsApp message on 7 Nov, or signed copy received).");
+  await prisma.$transaction(async (tx) => {
+    await tx.contract.update({ where: { id: c.id }, data: { status: "PENDING_APPROVAL", acceptedAt: new Date(), acceptanceMethod: `Recorded by ${admin.name}: ${how.trim()}`.slice(0, 400), acceptanceIp: "", acceptanceAgent: "" } });
+    await log(tx, c.id, "accepted", admin, `Acceptance recorded by the admin on the customer's behalf: ${how.trim()}`, { method: "Recorded by admin", version: c.version, termsVersion: c.termsVersion });
+    await syncRequest(tx, c, "PENDING_APPROVAL");
+  });
+  await generateDocument(c.id, "draft", admin);
+  return { ok: true };
+}
+
 // ---- 2. the customer accepts a new or revised version (renewal, price change, quotation) ----
 
 export async function acceptByLink(accessToken: string, ctx: { ip: string; agent: string }): Promise<Result<{ number: string }>> {
@@ -284,6 +351,43 @@ export async function revise(id: string, admin: Actor, input: { adjustments: Adj
   return { ok: true, version };
 }
 
+export type DetailsInput = { customer: ContractSnapshot["customer"]; property: ContractSnapshot["property"] };
+
+// Correcting the customer's or the property's details. While the customer has not accepted yet it simply updates the draft; once they have
+// (or it is approved) it is a NEW version they must accept again, because the registered property is part of what they agreed to.
+export async function editDetails(id: string, admin: Actor, input: DetailsInput, reason: string): Promise<Result<{ version: number }>> {
+  const c = await load(id);
+  if (!c) return fail("Agreement not found.");
+  const blocked = notAllowed(c, "editDetails");
+  if (blocked) return blocked;
+  const { customer, property } = input;
+  const digits = customer.phone.replace(/\D/g, "");
+  if (customer.name.trim().length < 2) return fail("Enter the customer's name.");
+  if (digits.length < 8 || digits.length > 15) return fail("Enter a valid mobile number.");
+  if (customer.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email.trim())) return fail("Enter a valid email address.");
+  if (!property.emirate.trim()) return fail("Choose the emirate.");
+  const open = c.status === "DRAFT";
+  if (!open && reason.trim().length < 5) return fail("Write the reason for the change; the customer will see it.");
+  const clean: DetailsInput = {
+    customer: { name: customer.name.trim(), phone: customer.phone.trim(), whatsapp: customer.whatsapp.trim(), email: customer.email.trim().toLowerCase() },
+    property: { emirate: property.emirate.trim(), area: property.area.trim(), address: property.address.trim(), type: property.type.trim(), bedrooms: Math.max(0, Math.floor(property.bedrooms) || 0), bathrooms: Math.max(0, Math.floor(property.bathrooms) || 0), floors: Math.max(0, Math.floor(property.floors) || 0), size: property.size && property.size > 0 ? property.size : null, acUnits: Math.max(0, Math.floor(property.acUnits) || 0), notes: property.notes.trim() },
+  };
+  const next: ContractSnapshot = { ...snapOf(c), ...clean };
+  const version = open ? c.version : c.version + 1;
+  await prisma.$transaction(async (tx) => {
+    await tx.contract.update({ where: { id: c.id }, data: open ? { snapshot: next as never } : { snapshot: next as never, version, status: "DRAFT", acceptedAt: null, acceptanceMethod: "", approvedAt: null, approvedByName: "", approvedTotal: null } });
+    await log(tx, c.id, open ? "edited" : "revised", admin, open ? "Customer or property details corrected" : reason.trim(), { fromVersion: c.version, version, details: true });
+    if (!open) await syncRequest(tx, c, "DRAFT");
+  });
+  await generateDocument(c.id, "draft", admin);
+  if (!open) {
+    const fresh = (await load(id))!;
+    const doc = await latestDocument(c.id, "draft");
+    await emailCustomer(fresh, "review", admin, { note: reason.trim(), attach: doc ? { filename: pdfName(fresh, "draft"), content: Buffer.from(doc.bytes) } : undefined });
+  }
+  return { ok: true, version };
+}
+
 export async function reject(id: string, admin: Actor, reason: string): Promise<Result> {
   const c = await load(id);
   if (!c) return fail("Agreement not found.");
@@ -310,6 +414,36 @@ export async function cancel(id: string, admin: Actor, reason: string): Promise<
     await log(tx, c.id, "cancelled", admin, reason.trim(), { wasPaid: c.paymentStatus === "paid", note: "Refunds, if any, follow the agreement's non-refundable clause and UAE law and are handled separately." });
     await syncRequest(tx, c, "CANCELLED");
   });
+  return { ok: true };
+}
+
+// Putting an active agreement on hold (for example unpaid or disputed) and back. The expiry date does not move: time on hold is not added.
+export async function suspend(id: string, admin: Actor, reason: string): Promise<Result> {
+  const c = await load(id);
+  if (!c) return fail("Agreement not found.");
+  const blocked = notAllowed(c, "suspend");
+  if (blocked) return blocked;
+  if (reason.trim().length < 5) return fail("Write the reason for suspending (the customer will see it).");
+  await prisma.$transaction(async (tx) => {
+    await tx.contract.update({ where: { id: c.id }, data: { status: "SUSPENDED" } });
+    await log(tx, c.id, "suspended", admin, reason.trim());
+    await syncRequest(tx, c, "SUSPENDED");
+  });
+  await emailCustomer((await load(id))!, "suspended", admin, { note: reason.trim() });
+  return { ok: true };
+}
+
+export async function reactivate(id: string, admin: Actor, note: string): Promise<Result> {
+  const c = await load(id);
+  if (!c) return fail("Agreement not found.");
+  const blocked = notAllowed(c, "reactivate");
+  if (blocked) return blocked;
+  await prisma.$transaction(async (tx) => {
+    await tx.contract.update({ where: { id: c.id }, data: { status: "ACTIVE" } });
+    await log(tx, c.id, "reactivated", admin, note.trim());
+    await syncRequest(tx, c, "ACTIVE");
+  });
+  await emailCustomer((await load(id))!, "reactivated", admin, { note: note.trim() });
   return { ok: true };
 }
 
@@ -461,7 +595,7 @@ export const CONTRACT_INCLUDE = { events: { orderBy: { createdAt: "desc" as cons
 
 // What the customer's own link shows (no internal notes, no other customers' data).
 export async function publicView(accessToken: string) {
-  const c = await prisma.contract.findUnique({ where: { accessToken }, include: { events: { where: { kind: { in: ["changes_requested", "revised", "rejected"] } }, orderBy: { createdAt: "desc" }, take: 1 } } });
+  const c = await prisma.contract.findUnique({ where: { accessToken }, include: { events: { where: { kind: { in: ["changes_requested", "revised", "rejected", "suspended"] } }, orderBy: { createdAt: "desc" }, take: 1 } } });
   if (!c) return null;
   const s = snapOf(c);
   const settings = await prisma.contractSettings.findUnique({ where: { id: "default" } });

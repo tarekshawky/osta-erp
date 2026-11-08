@@ -2,7 +2,7 @@ import type { Bi } from "./clauses";
 
 // The life of an agreement, and what each person may do at each step. Kept free of the database so the rules can be tested.
 
-export const CONTRACT_STATUSES = ["DRAFT", "PENDING_APPROVAL", "CHANGES_REQUESTED", "AWAITING_PAYMENT", "ACTIVE", "CANCELLED", "REJECTED"] as const;
+export const CONTRACT_STATUSES = ["DRAFT", "PENDING_APPROVAL", "CHANGES_REQUESTED", "AWAITING_PAYMENT", "ACTIVE", "SUSPENDED", "CANCELLED", "REJECTED"] as const;
 export type ContractStatus = (typeof CONTRACT_STATUSES)[number];
 // An active agreement whose end date has passed.
 export type DisplayStatus = ContractStatus | "EXPIRED";
@@ -13,6 +13,7 @@ export const STATUS_LABEL: Record<DisplayStatus, Bi> = {
   CHANGES_REQUESTED: { en: "Changes requested", ar: "مطلوب تعديل" },
   AWAITING_PAYMENT: { en: "Awaiting payment", ar: "بانتظار الدفع" },
   ACTIVE: { en: "Contract activated", ar: "العقد مفعّل" },
+  SUSPENDED: { en: "Suspended (not active)", ar: "موقوف (غير مفعّل)" },
   EXPIRED: { en: "Expired", ar: "منتهي" },
   CANCELLED: { en: "Cancelled", ar: "ملغي" },
   REJECTED: { en: "Rejected", ar: "مرفوض" },
@@ -25,6 +26,7 @@ export const REQUEST_STATUS_OF: Record<ContractStatus, string> = {
   CHANGES_REQUESTED: "Under Review",
   AWAITING_PAYMENT: "Payment Pending",
   ACTIVE: "Contract Activated",
+  SUSPENDED: "Suspended",
   CANCELLED: "Rejected",
   REJECTED: "Rejected",
 };
@@ -35,6 +37,7 @@ export const TABS = [
   { key: "pending", label: "Pending Approval" },
   { key: "payment", label: "Awaiting Payment" },
   { key: "active", label: "Active Contracts" },
+  { key: "suspended", label: "Suspended" },
   { key: "expired", label: "Expired Contracts" },
   { key: "cancelled", label: "Cancelled Contracts" },
   { key: "rejected", label: "Rejected Requests" },
@@ -43,7 +46,7 @@ export type TabKey = (typeof TABS)[number]["key"];
 
 export function displayStatus(c: { status: string; expiryDate: Date | null }, now = new Date()): DisplayStatus {
   const s = (CONTRACT_STATUSES as readonly string[]).includes(c.status) ? (c.status as ContractStatus) : "PENDING_APPROVAL";
-  return s === "ACTIVE" && c.expiryDate && c.expiryDate.getTime() < now.getTime() ? "EXPIRED" : s;
+  return (s === "ACTIVE" || s === "SUSPENDED") && c.expiryDate && c.expiryDate.getTime() < now.getTime() ? "EXPIRED" : s;
 }
 
 export function tabOf(c: { status: string; expiryDate: Date | null }, now = new Date()): Exclude<TabKey, "all"> {
@@ -53,6 +56,7 @@ export function tabOf(c: { status: string; expiryDate: Date | null }, now = new 
     case "CHANGES_REQUESTED": return "pending";
     case "AWAITING_PAYMENT": return "payment";
     case "ACTIVE": return "active";
+    case "SUSPENDED": return "suspended";
     case "EXPIRED": return "expired";
     case "CANCELLED": return "cancelled";
     case "REJECTED": return "rejected";
@@ -61,17 +65,18 @@ export function tabOf(c: { status: string; expiryDate: Date | null }, now = new 
 
 export type ContractAction =
   | "approve" | "requestChanges" | "revise" | "reject" | "recordPayment" | "cancel" | "renew" | "addendum"
-  | "resendAgreement" | "resendPaymentLink" | "regeneratePdf" | "note";
+  | "resendAgreement" | "resendPaymentLink" | "regeneratePdf" | "recordAcceptance" | "editDetails" | "suspend" | "reactivate" | "note";
 
 // What the admin may do now. Payment can only be recorded after approval, and an agreement is activated only by a recorded payment.
 export function allowedActions(c: { status: string; expiryDate: Date | null }, now = new Date()): Set<ContractAction> {
   const out = new Set<ContractAction>(["note"]);
   const s = displayStatus(c, now);
-  if (s === "DRAFT") ["revise", "resendAgreement", "cancel", "regeneratePdf"].forEach((a) => out.add(a as ContractAction));
-  if (s === "PENDING_APPROVAL") ["approve", "requestChanges", "revise", "reject", "cancel", "regeneratePdf"].forEach((a) => out.add(a as ContractAction));
-  if (s === "CHANGES_REQUESTED") ["approve", "revise", "reject", "cancel", "resendAgreement", "regeneratePdf"].forEach((a) => out.add(a as ContractAction));
-  if (s === "AWAITING_PAYMENT") ["recordPayment", "resendPaymentLink", "revise", "reject", "cancel", "regeneratePdf"].forEach((a) => out.add(a as ContractAction));
-  if (s === "ACTIVE") ["addendum", "cancel", "regeneratePdf", "resendAgreement"].forEach((a) => out.add(a as ContractAction));
+  if (s === "DRAFT") ["revise", "editDetails", "resendAgreement", "recordAcceptance", "cancel", "regeneratePdf"].forEach((a) => out.add(a as ContractAction));
+  if (s === "PENDING_APPROVAL") ["approve", "requestChanges", "revise", "editDetails", "reject", "cancel", "regeneratePdf"].forEach((a) => out.add(a as ContractAction));
+  if (s === "CHANGES_REQUESTED") ["approve", "revise", "editDetails", "reject", "cancel", "resendAgreement", "regeneratePdf"].forEach((a) => out.add(a as ContractAction));
+  if (s === "AWAITING_PAYMENT") ["recordPayment", "resendPaymentLink", "revise", "editDetails", "reject", "cancel", "regeneratePdf"].forEach((a) => out.add(a as ContractAction));
+  if (s === "ACTIVE") ["addendum", "suspend", "cancel", "regeneratePdf", "resendAgreement"].forEach((a) => out.add(a as ContractAction));
+  if (s === "SUSPENDED") ["reactivate", "cancel", "regeneratePdf", "resendAgreement"].forEach((a) => out.add(a as ContractAction));
   if (s === "EXPIRED") ["renew", "regeneratePdf"].forEach((a) => out.add(a as ContractAction));
   if (s === "ACTIVE") out.add("renew");
   return out;

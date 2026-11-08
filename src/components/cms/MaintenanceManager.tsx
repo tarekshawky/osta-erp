@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createAgreementFromRequest } from "@/app/admin/contracts/actions";
 import { inputClassName } from "@/components/FormField";
 import {
   deleteGroup, deletePackage, deleteService, duplicatePackage, loadReadySet, movePackage, moveService, savePackage, saveGroup, saveService, saveSettings, setPackageActive, updateSubscription,
@@ -15,7 +18,7 @@ import { REQUEST_STATUSES, buildComparison, formatPrice, type CtaMode, type Pkg,
 type Group = PkgSettings & { id: string | null; key: string; nameEn: string; nameAr: string; ctaMode: CtaMode };
 type GPkg = Pkg & { groupId: string | null };
 type GService = PkgService & { groupId: string | null; metric?: string };
-type Request = { whatsapp: string; area: string; suggestedPackage: string; total: number | null; subtotal: number | null; vatAmount: number | null; quoteRequested: boolean; details: Record<string, unknown>; id: string; packageName: string; packagePrice: number | null; kind: string; groupKey: string; company: string; message: string; name: string; phone: string; email: string; emirate: string; location: string; propertyType: string; bedrooms: number; acUnits: number; activationDate: string | null; status: string; notes: string; createdAt: string };
+type Request = { whatsapp: string; area: string; suggestedPackage: string; total: number | null; subtotal: number | null; vatAmount: number | null; quoteRequested: boolean; details: Record<string, unknown>; id: string; packageName: string; packagePrice: number | null; kind: string; groupKey: string; company: string; message: string; name: string; phone: string; email: string; emirate: string; location: string; propertyType: string; bedrooms: number; acUnits: number; activationDate: string | null; status: string; notes: string; createdAt: string; contract?: { id: string; number: string; status: string; hasFinal: boolean } | null };
 type Tab = "packages" | "services" | "texts" | "builder" | "requests";
 type OptRow = { id: string; groupId: string | null; category: string; nameEn: string; nameAr: string; serviceId: string | null; extraPrice: number | null; upgradeTrigger: boolean; active: boolean };
 
@@ -325,6 +328,7 @@ function TextsTab({ groupId, settings }: { groupId: string | null; settings: Pkg
 // ---------------- Requests ----------------
 function RequestsTab({ requests }: { requests: Request[] }) {
   const { run, pending } = useRun();
+  const router = useRouter();
   const [edits, setEdits] = useState<Record<string, { status: string; notes: string }>>({});
   if (requests.length === 0) return <p className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-400">No subscription requests yet. They appear here when a customer presses “Subscribe now”.</p>;
   return (
@@ -355,6 +359,24 @@ function RequestsTab({ requests }: { requests: Request[] }) {
               </select>
               <textarea className={`${inputClassName} resize-y`} rows={2} placeholder="Notes (only you see these)" value={e.notes} onChange={(ev) => setEdits({ ...edits, [r.id]: { ...e, notes: ev.target.value } })} />
               <button type="button" disabled={pending || !dirty} onClick={() => run(() => updateSubscription(r.id, e.status, e.notes), "Saved.", () => setEdits((x) => { const n = { ...x }; delete n[r.id]; return n; }))} className="self-start rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40">Save</button>
+              <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
+                {r.contract ? (
+                  <>
+                  <p className="text-slate-600">Agreement <Link href={`/admin/contracts/${r.contract.id}`} className="font-semibold text-blue-700 hover:underline">{r.contract.number}</Link> · {r.contract.status.replace(/_/g, " ").toLowerCase()}. Open it to edit it, approve it and record the payment.</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <a href={`/admin/contracts/${r.contract.id}/pdf?kind=${r.contract.hasFinal ? "final" : "draft"}&inline=1`} target="_blank" rel="noreferrer" className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white">View PDF{r.contract.hasFinal ? " (final)" : " (draft)"}</a>
+                    <a href={`/admin/contracts/${r.contract.id}/pdf?kind=${r.contract.hasFinal ? "final" : "draft"}`} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">Download</a>
+                    {r.contract.hasFinal && <a href={`/admin/contracts/${r.contract.id}/pdf?kind=draft&inline=1`} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">View draft</a>}
+                    <Link href={`/admin/contracts/${r.contract.id}`} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">Open &amp; edit</Link>
+                  </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mb-2 text-slate-600">This request has no agreement yet. Create it to get the PDF and to send the customer the link to review and accept it.</p>
+                    <button type="button" disabled={pending} onClick={() => run(() => createAgreementFromRequest(r.id), "Agreement created and sent to the customer.", (res) => res.id && router.push(`/admin/contracts/${res.id}`))} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40">Create agreement &amp; PDF</button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         );

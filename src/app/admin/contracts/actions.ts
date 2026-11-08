@@ -40,6 +40,27 @@ export async function approveContract(id: string): Promise<CResult> {
   return { ok: true, whatsapp: r.whatsapp, url: r.paymentUrl };
 }
 
+// Builds the agreement and its PDF for a request that has none yet, and sends the customer the link to review and accept it.
+export async function createAgreementFromRequest(subscriptionId: string): Promise<CResult> {
+  const g = await guard();
+  if ("error" in g) return fail(g.error);
+  const r = await svc.createFromRequest(subscriptionId, g.actor);
+  if (!r.ok) return fail(r.error);
+  if (r.created) await writeAudit(g.admin, "contract.create-from-request", "Contract", r.id, null, { subscriptionId });
+  refresh(r.id);
+  return { ok: true, id: r.id };
+}
+
+export async function recordCustomerAcceptance(id: string, how: string): Promise<CResult> {
+  const g = await guard();
+  if ("error" in g) return fail(g.error);
+  const r = await svc.recordAcceptance(id, g.actor, how);
+  if (!r.ok) return fail(r.error);
+  await writeAudit(g.admin, "contract.record-acceptance", "Contract", id, null, { how });
+  refresh(id);
+  return { ok: true };
+}
+
 export async function requestChanges(id: string, message: string): Promise<CResult> {
   const g = await guard();
   if ("error" in g) return fail(g.error);
@@ -55,6 +76,16 @@ export async function reviseContract(id: string, input: { adjustments: Adjustmen
   const r = await svc.revise(id, g.actor, input);
   if (!r.ok) return fail(r.error);
   await writeAudit(g.admin, "contract.revise", "Contract", id, null, { version: r.version });
+  refresh(id);
+  return { ok: true };
+}
+
+export async function editContractDetails(id: string, input: svc.DetailsInput, reason: string): Promise<CResult> {
+  const g = await guard();
+  if ("error" in g) return fail(g.error);
+  const r = await svc.editDetails(id, g.actor, input, reason);
+  if (!r.ok) return fail(r.error);
+  await writeAudit(g.admin, "contract.edit-details", "Contract", id, null, { version: r.version });
   refresh(id);
   return { ok: true };
 }
@@ -124,6 +155,26 @@ export async function approveAddendum(contractId: string, addendumId: string, no
   return { ok: true };
 }
 
+export async function suspendContract(id: string, reason: string): Promise<CResult> {
+  const g = await guard();
+  if ("error" in g) return fail(g.error);
+  const r = await svc.suspend(id, g.actor, reason);
+  if (!r.ok) return fail(r.error);
+  await writeAudit(g.admin, "contract.suspend", "Contract", id, null, { reason });
+  refresh(id);
+  return { ok: true };
+}
+
+export async function reactivateContract(id: string, note: string): Promise<CResult> {
+  const g = await guard();
+  if ("error" in g) return fail(g.error);
+  const r = await svc.reactivate(id, g.actor, note);
+  if (!r.ok) return fail(r.error);
+  await writeAudit(g.admin, "contract.reactivate", "Contract", id, null, { note });
+  refresh(id);
+  return { ok: true };
+}
+
 export async function addContractNote(id: string, note: string): Promise<CResult> {
   const g = await guard();
   if ("error" in g) return fail(g.error);
@@ -139,7 +190,7 @@ export async function regenerateDocument(id: string, kind: "draft" | "final"): P
   if ("error" in g) return fail(g.error);
   const c = await prisma.contract.findUnique({ where: { id } });
   if (!c) return fail("Agreement not found.");
-  if (kind === "final" && c.status !== "ACTIVE") return fail("The final agreement exists only once the agreement is active.");
+  if (kind === "final" && c.status !== "ACTIVE" && c.status !== "SUSPENDED") return fail("The final agreement exists only once the agreement is active.");
   const doc = await svc.generateDocument(id, kind, g.actor);
   if (!doc) return fail("The PDF could not be built. Try again in a moment.");
   refresh(id);

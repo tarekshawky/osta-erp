@@ -58,6 +58,10 @@ describe("the agreement document", () => {
     const strip = (s: string) => s.replace(/Issued on<\/td><td>[^<]*/, "");
     expect(strip(renderContractHtml(doc()))).toBe(strip(renderContractHtml(doc())));
   });
+  it("an acceptance recorded by the admin says so and never shows the customer's statements as ticked", () => {
+    const h = renderContractHtml(doc({ acceptanceMethod: "Recorded by Layla: WhatsApp message on 7 Nov" }));
+    expect(h).toContain("recorded by OSTA Services on the customer"); expect(h).toContain("WhatsApp message on 7 Nov"); expect(h).not.toContain("I confirm everything is accurate."); expect(h).not.toContain("Accepted electronically on");
+  });
   it("an unaccepted agreement says so, an accepted one lists the statements and when", () => {
     expect(renderContractHtml(doc({ acceptedAt: null }))).toContain("has not yet accepted");
     expect(renderContractHtml(doc())).toContain("I confirm everything is accurate."); expect(renderContractHtml(doc())).toContain("Accepted electronically on");

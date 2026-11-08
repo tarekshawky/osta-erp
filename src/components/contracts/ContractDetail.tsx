@@ -24,7 +24,7 @@ export type DetailProps = {
   documents: { id: string; kind: string; lang: string; size: number; createdAt: string; addendumId: string | null }[];
 };
 
-type Panel = "changes" | "revise" | "reject" | "payment" | "cancel" | "addendum" | "note" | null;
+type Panel = "changes" | "revise" | "reject" | "payment" | "cancel" | "addendum" | "note" | "accepted" | "details" | "suspend" | "reactivate" | null;
 
 const card = "rounded-xl border border-slate-200 bg-white p-4";
 const h3 = "mb-2 text-sm font-semibold text-slate-900";
@@ -42,7 +42,7 @@ const EVENT_LABEL: Record<string, string> = {
   submitted: "Request submitted", accepted: "Customer accepted the agreement", draft_pdf: "Draft PDF created", final_pdf: "Final PDF created", approved: "Approved · payment link issued",
   changes_requested: "Changes requested", revised: "New version issued", rejected: "Rejected", cancelled: "Cancelled", payment_recorded: "Payment recorded", activated: "Agreement activated",
   renewed: "Renewal created", created: "Created", addendum_issued: "Addendum issued", addendum_accepted: "Addendum approved", email_sent: "Email sent", email_failed: "Email failed",
-  resent: "Sent again", note: "Note", pdf_failed: "PDF could not be built",
+  resent: "Sent again", suspended: "Suspended (on hold)", reactivated: "Reactivated", edited: "Details corrected", note: "Note", pdf_failed: "PDF could not be built",
 };
 
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
@@ -77,6 +77,7 @@ export function ContractDetail(p: DetailProps) {
   const [rows, setRows] = useState<{ labelEn: string; labelAr: string; amount: string }[]>([{ labelEn: "", labelAr: "", amount: "" }]);
   const [pkgPrice, setPkgPrice] = useState("");
   const [settle, setSettle] = useState(true);
+  const [det, setDet] = useState({ name: "", phone: "", whatsapp: "", email: "", emirate: "", area: "", address: "", type: "", bedrooms: "", bathrooms: "", floors: "", size: "", acUnits: "", notes: "" });
   const [add, setAdd] = useState({ titleEn: "", titleAr: "", bodyEn: "", bodyAr: "", amountChange: "" });
 
   const open = (x: Panel) => { setText(""); setPanel(panel === x ? null : x); };
@@ -99,7 +100,7 @@ export function ContractDetail(p: DetailProps) {
           </div>
           <div className="flex flex-wrap gap-2">
             <a className={btn} href={pdfHref("kind=draft&inline=1")} target="_blank" rel="noreferrer">Open draft PDF</a>
-            {p.status === "ACTIVE" || p.status === "EXPIRED" ? <a className={primary} href={pdfHref("kind=final&inline=1")} target="_blank" rel="noreferrer">Open final PDF</a> : null}
+            {p.documents.some((d) => d.kind === "final") ? <a className={primary} href={pdfHref("kind=final&inline=1")} target="_blank" rel="noreferrer">Open final PDF</a> : null}
           </div>
         </div>
         {p.rejectionReason && <p className="mt-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">{p.status === "CANCELLED" ? "Cancelled" : "Rejected"}: {p.rejectionReason}</p>}
@@ -107,6 +108,8 @@ export function ContractDetail(p: DetailProps) {
         <div className="mt-4 flex flex-wrap gap-2">
           {can("approve") && <button type="button" className={primary} disabled={pending || s.pricing.quote} onClick={() => { if (window.confirm(`Approve ${p.number} at ${money(s.pricing.total)} and send the payment link to ${s.customer.name}?`)) act(() => actions.approveContract(p.id), "Approved. The payment link was emailed to the customer."); }}>Approve &amp; Send Payment Link</button>}
           {can("recordPayment") && <button type="button" className={primary} onClick={() => open("payment")}>Record payment</button>}
+          {can("recordAcceptance") && <button type="button" className={btn} onClick={() => open("accepted")}>Customer agreed outside the website</button>}
+          {can("editDetails") && <button type="button" className={btn} onClick={() => { setDet({ name: s.customer.name, phone: s.customer.phone, whatsapp: s.customer.whatsapp, email: s.customer.email, emirate: s.property.emirate, area: s.property.area, address: s.property.address, type: s.property.type, bedrooms: String(s.property.bedrooms || ""), bathrooms: String(s.property.bathrooms || ""), floors: String(s.property.floors || ""), size: s.property.size ? String(s.property.size) : "", acUnits: String(s.property.acUnits || ""), notes: s.property.notes }); open("details"); }}>Edit details</button>}
           {can("requestChanges") && <button type="button" className={btn} onClick={() => open("changes")}>Request changes</button>}
           {can("revise") && <button type="button" className={btn} onClick={() => open("revise")}>Revise price</button>}
           {can("resendAgreement") && p.status !== "ACTIVE" && <button type="button" className={btn} disabled={pending} onClick={() => sent("agreement")}>Resend agreement</button>}
@@ -115,8 +118,10 @@ export function ContractDetail(p: DetailProps) {
           {can("addendum") && <button type="button" className={btn} onClick={() => open("addendum")}>Issue addendum</button>}
           {can("renew") && <button type="button" className={btn} disabled={pending} onClick={() => { if (window.confirm("Create a renewal agreement? The customer will be asked to review and accept it.")) act(() => actions.renewContract(p.id), "Renewal created.", (r) => r.id && router.push(`/admin/contracts/${r.id}`)); }}>Renew</button>}
           {can("reject") && <button type="button" className={btn} onClick={() => open("reject")}>Reject</button>}
+          {can("suspend") && <button type="button" className={btn} onClick={() => open("suspend")}>Suspend (set not active)</button>}
+          {can("reactivate") && <button type="button" className={primary} onClick={() => open("reactivate")}>Reactivate</button>}
           {can("cancel") && <button type="button" className={btn} onClick={() => open("cancel")}>Cancel agreement</button>}
-          {can("regeneratePdf") && <button type="button" className={btn} disabled={pending} onClick={() => act(() => actions.regenerateDocument(p.id, p.status === "ACTIVE" || p.status === "EXPIRED" ? "final" : "draft"), "PDF rebuilt from the agreement's record.")}>Rebuild PDF</button>}
+          {can("regeneratePdf") && <button type="button" className={btn} disabled={pending} onClick={() => act(() => actions.regenerateDocument(p.id, p.status === "ACTIVE" || p.status === "EXPIRED" || p.status === "SUSPENDED" ? "final" : "draft"), "PDF rebuilt from the agreement's record.")}>Rebuild PDF</button>}
           <button type="button" className={btn} onClick={() => open("note")}>Add note</button>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
@@ -131,6 +136,20 @@ export function ContractDetail(p: DetailProps) {
 
       {panel && (
         <div className={`${card} border-blue-200 bg-blue-50/40`}>
+          {panel === "details" && (
+            <div className="max-w-4xl">
+              <p className="mb-2 text-sm font-semibold text-slate-900">Edit the customer and property details.{p.status === "DRAFT" ? " The customer has not accepted yet, so the draft is simply updated." : " The customer has already accepted, so this issues a NEW version they must accept again (the registered property is part of what they agreed to)."}</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {([["name", "Name"], ["phone", "Phone"], ["whatsapp", "WhatsApp"], ["email", "Email"], ["emirate", "Emirate"], ["area", "Area"], ["type", "Property type"], ["bedrooms", "Bedrooms"], ["bathrooms", "Bathrooms"], ["floors", "Floors"], ["size", "Size (sq ft)"], ["acUnits", "AC units"]] as const).map(([k, l]) => (
+                  <div key={k}><label className={lab}>{l}</label><input className={input} value={det[k]} onChange={(e) => setDet({ ...det, [k]: e.target.value })} /></div>
+                ))}
+                <div className="sm:col-span-3"><label className={lab}>Full address</label><input className={input} value={det.address} onChange={(e) => setDet({ ...det, address: e.target.value })} /></div>
+                <div className="sm:col-span-3"><label className={lab}>Additional information</label><input className={input} value={det.notes} onChange={(e) => setDet({ ...det, notes: e.target.value })} /></div>
+              </div>
+              {p.status !== "DRAFT" && <><label className={`${lab} mt-3`}>Reason (the customer will see this)</label><textarea className={input} rows={2} value={text} onChange={(e) => setText(e.target.value)} /></>}
+              <div className="mt-3"><button type="button" className={primary} disabled={pending} onClick={() => act(() => actions.editContractDetails(p.id, { customer: { name: det.name, phone: det.phone, whatsapp: det.whatsapp, email: det.email }, property: { emirate: det.emirate, area: det.area, address: det.address, type: det.type, bedrooms: Number(det.bedrooms) || 0, bathrooms: Number(det.bathrooms) || 0, floors: Number(det.floors) || 0, size: Number(det.size) || null, acUnits: Number(det.acUnits) || 0, notes: det.notes } }, text), p.status === "DRAFT" ? "Details saved. The PDF was rebuilt." : "New version sent to the customer for acceptance.")}>{p.status === "DRAFT" ? "Save details" : "Issue new version"}</button></div>
+            </div>
+          )}
           {panel === "payment" && (
             <div className="grid max-w-3xl gap-3 sm:grid-cols-2">
               <p className="text-sm font-semibold text-slate-900 sm:col-span-2">Record the payment of {money(s.pricing.total)}. This activates the agreement, creates the ERP invoice and issues the final PDF.</p>
@@ -142,17 +161,20 @@ export function ContractDetail(p: DetailProps) {
               <div className="sm:col-span-2"><button type="button" className={primary} disabled={pending} onClick={() => act(() => actions.recordPayment(p.id, pay), "Payment recorded. The agreement is active.")}>Confirm &amp; activate</button></div>
             </div>
           )}
-          {(panel === "changes" || panel === "reject" || panel === "cancel" || panel === "note") && (
+          {(panel === "changes" || panel === "reject" || panel === "cancel" || panel === "note" || panel === "accepted" || panel === "suspend" || panel === "reactivate") && (
             <div className="max-w-2xl">
-              <label className={lab}>{panel === "changes" ? "What does the customer need to change? (they will see this)" : panel === "reject" ? "Reason for rejecting (the customer will see this)" : panel === "cancel" ? "Reason for cancelling (kept in the audit trail). Refunds follow the agreement's non-refundable clause and UAE law and are handled separately." : "Internal note (customers never see it)"}</label>
+              <label className={lab}>{panel === "suspend" ? "Reason for suspending (the customer will see this). Services not yet carried out are on hold until you reactivate it. The expiry date does not change." : panel === "reactivate" ? "Note for the customer (optional). The agreement becomes active again with the same expiry date." : panel === "accepted" ? "How and when did the customer agree? (for example: WhatsApp message on 7 Nov, signed copy received, phone call). This is kept in the record and printed on the PDF; it is not the same as the customer accepting on the website." : panel === "changes" ? "What does the customer need to change? (they will see this)" : panel === "reject" ? "Reason for rejecting (the customer will see this)" : panel === "cancel" ? "Reason for cancelling (kept in the audit trail). Refunds follow the agreement's non-refundable clause and UAE law and are handled separately." : "Internal note (customers never see it)"}</label>
               <textarea className={input} rows={3} value={text} onChange={(e) => setText(e.target.value)} />
               <div className="mt-2">
-                <button type="button" className={panel === "reject" || panel === "cancel" ? danger : primary} disabled={pending} onClick={() => {
+                <button type="button" className={panel === "reject" || panel === "cancel" || panel === "suspend" ? danger : primary} disabled={pending} onClick={() => {
+                  if (panel === "suspend") act(() => actions.suspendContract(p.id, text), "Agreement suspended. It now shows as not active.");
+                  if (panel === "reactivate") act(() => actions.reactivateContract(p.id, text), "Agreement is active again.");
+                  if (panel === "accepted") act(() => actions.recordCustomerAcceptance(p.id, text), "Acceptance recorded. The agreement is now pending your approval.");
                   if (panel === "changes") act(() => actions.requestChanges(p.id, text), "The customer was asked for the change.");
                   if (panel === "reject") act(() => actions.rejectContract(p.id, text), "Rejected.");
                   if (panel === "cancel") { if (window.confirm("Cancel this agreement?")) act(() => actions.cancelContract(p.id, text), "Cancelled."); }
                   if (panel === "note") act(() => actions.addContractNote(p.id, text), "Note saved.");
-                }}>{panel === "changes" ? "Send request" : panel === "reject" ? "Reject request" : panel === "cancel" ? "Cancel agreement" : "Save note"}</button>
+                }}>{panel === "suspend" ? "Suspend agreement" : panel === "reactivate" ? "Reactivate agreement" : panel === "accepted" ? "Record acceptance" : panel === "changes" ? "Send request" : panel === "reject" ? "Reject request" : panel === "cancel" ? "Cancel agreement" : "Save note"}</button>
               </div>
             </div>
           )}

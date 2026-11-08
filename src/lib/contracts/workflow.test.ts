@@ -14,8 +14,8 @@ describe("agreement status", () => {
   });
   it("every agreement lands in exactly one of the admin's tabs", () => {
     const keys = TABS.map((t) => t.key);
-    expect(keys).toEqual(["all", "draft", "pending", "payment", "active", "expired", "cancelled", "rejected"]);
-    const cases: [string, Date | null, string][] = [["DRAFT", null, "draft"], ["PENDING_APPROVAL", null, "pending"], ["CHANGES_REQUESTED", null, "pending"], ["AWAITING_PAYMENT", null, "payment"], ["ACTIVE", future, "active"], ["ACTIVE", past, "expired"], ["CANCELLED", null, "cancelled"], ["REJECTED", null, "rejected"]];
+    expect(keys).toEqual(["all", "draft", "pending", "payment", "active", "suspended", "expired", "cancelled", "rejected"]);
+    const cases: [string, Date | null, string][] = [["DRAFT", null, "draft"], ["PENDING_APPROVAL", null, "pending"], ["CHANGES_REQUESTED", null, "pending"], ["AWAITING_PAYMENT", null, "payment"], ["ACTIVE", future, "active"], ["ACTIVE", past, "expired"], ["SUSPENDED", future, "suspended"], ["SUSPENDED", past, "expired"], ["CANCELLED", null, "cancelled"], ["REJECTED", null, "rejected"]];
     for (const [status, expiryDate, tab] of cases) expect(tabOf({ status, expiryDate })).toBe(tab);
   });
 });
@@ -27,6 +27,22 @@ describe("what the admin may do at each step", () => {
     expect(can("DRAFT").has("approve")).toBe(false); // the customer has not accepted it yet
     expect(can("AWAITING_PAYMENT").has("recordPayment")).toBe(true);
     expect(can("AWAITING_PAYMENT").has("approve")).toBe(false);
+  });
+  it("the admin can record an acceptance given outside the website only while the customer has not accepted", () => {
+    expect(can("DRAFT").has("recordAcceptance")).toBe(true);
+    for (const s of ["PENDING_APPROVAL", "AWAITING_PAYMENT", "REJECTED"]) expect(can(s).has("recordAcceptance"), s).toBe(false);
+  });
+  it("customer and property details can be corrected while the agreement is open, never on an active one (that needs an addendum)", () => {
+    for (const s of ["DRAFT", "PENDING_APPROVAL", "CHANGES_REQUESTED", "AWAITING_PAYMENT"]) expect(can(s).has("editDetails"), s).toBe(true);
+    for (const s of ["ACTIVE", "CANCELLED", "REJECTED"]) expect(can(s, s === "ACTIVE" ? future : null).has("editDetails"), s).toBe(false);
+  });
+  it("an active agreement can be suspended and reactivated; a suspended one is not active and cannot be renewed, edited or paid", () => {
+    expect(can("ACTIVE", future).has("suspend")).toBe(true); expect(can("ACTIVE", future).has("reactivate")).toBe(false);
+    const s = can("SUSPENDED", future);
+    expect(s.has("reactivate")).toBe(true); expect(s.has("cancel")).toBe(true);
+    for (const a of ["suspend", "renew", "editDetails", "recordPayment", "revise", "addendum"] as const) expect(s.has(a), a).toBe(false);
+    expect(displayStatus({ status: "SUSPENDED", expiryDate: future })).toBe("SUSPENDED");
+    expect(can("PENDING_APPROVAL").has("suspend")).toBe(false); // only an agreement that is active can be put on hold
   });
   it("a price change is possible while the agreement is still open, never on an active one (that needs an addendum)", () => {
     for (const s of ["DRAFT", "PENDING_APPROVAL", "CHANGES_REQUESTED", "AWAITING_PAYMENT"]) expect(can(s).has("revise"), s).toBe(true);

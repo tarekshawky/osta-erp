@@ -17,7 +17,7 @@ export function whatsappLink(phone: string, text: string): string | null {
   return digits.length >= 11 && digits.length <= 15 ? `https://wa.me/${digits}?text=${encodeURIComponent(text)}` : null;
 }
 
-export type MessageKind = "received" | "payment" | "final" | "changes" | "rejected" | "review" | "addendum" | "renewal";
+export type MessageKind = "received" | "payment" | "final" | "changes" | "rejected" | "review" | "addendum" | "renewal" | "invite" | "suspended" | "reactivated";
 export type MessageCtx = { lang: "en" | "ar"; customerName: string; number: string; url: string; note?: string; total?: string; packageName?: string };
 
 const COPY: Record<MessageKind, { subject: Bi; lines: (c: MessageCtx) => Bi }> = {
@@ -55,6 +55,18 @@ const COPY: Record<MessageKind, { subject: Bi; lines: (c: MessageCtx) => Bi }> =
     subject: { en: "A contract addendum for your maintenance agreement", ar: "ملحق تعاقدي لاتفاقية الصيانة" },
     lines: (c) => ({ en: `An addendum to agreement ${c.number} has been issued${c.note ? `: ${c.note}` : ""}. The PDF is attached.`, ar: `تم إصدار ملحق للاتفاقية رقم ${c.number}${c.note ? `: ${c.note}` : ""}. مرفق ملف PDF.` }),
   },
+  suspended: {
+    subject: { en: "Your maintenance agreement is on hold", ar: "اتفاقية الصيانة الخاصة بك موقوفة مؤقتاً" },
+    lines: (c) => ({ en: `Agreement ${c.number} has been suspended.${c.note ? ` Reason: ${c.note}` : ""} Services not yet carried out are on hold until it is reactivated. Please contact us to resolve it.`, ar: `تم إيقاف الاتفاقية رقم ${c.number} مؤقتاً.${c.note ? ` السبب: ${c.note}` : ""} الخدمات التي لم تُنفَّذ بعد معلّقة إلى حين إعادة تفعيلها. يرجى التواصل معنا لحل الأمر.` }),
+  },
+  reactivated: {
+    subject: { en: "Your maintenance agreement is active again", ar: "تمت إعادة تفعيل اتفاقية الصيانة الخاصة بك" },
+    lines: (c) => ({ en: `Agreement ${c.number} is active again.${c.note ? ` ${c.note}` : ""} Thank you.`, ar: `تمت إعادة تفعيل الاتفاقية رقم ${c.number}.${c.note ? ` ${c.note}` : ""} شكراً لك.` }),
+  },
+  invite: {
+    subject: { en: "Your OSTA maintenance agreement is ready", ar: "اتفاقية الصيانة الخاصة بك جاهزة" },
+    lines: (c) => ({ en: `Hello ${c.customerName}, your maintenance agreement ${c.number} for ${c.packageName ?? "your package"} is ready. The agreement PDF is attached. Please open the link below, read it and accept it so our team can approve it and send you the payment link.`, ar: `مرحباً ${c.customerName}، اتفاقية الصيانة رقم ${c.number} لـ ${c.packageName ?? "باقتك"} جاهزة. مرفق ملف الاتفاقية. يرجى فتح الرابط أدناه وقراءتها والموافقة عليها ليتمكن فريقنا من اعتمادها وإرسال رابط الدفع.` }),
+  },
   renewal: {
     subject: { en: "Renew your OSTA maintenance agreement", ar: "جدّد اتفاقية الصيانة الخاصة بك" },
     lines: (c) => ({ en: `Your agreement is due for renewal. A renewal agreement ${c.number} is ready for you to review and accept using the link below.`, ar: `حان موعد تجديد اتفاقيتك. اتفاقية التجديد رقم ${c.number} جاهزة لمراجعتك وموافقتك عبر الرابط أدناه.` }),
@@ -70,7 +82,7 @@ export function composeMessage(kind: MessageKind, c: MessageCtx) {
   const second = first === "ar" ? "en" : "ar";
   const body = copy.lines(c);
   const subject = `${copy.subject[first]} | ${copy.subject[second]}`;
-  const showLink = kind !== "rejected" && kind !== "final" && kind !== "addendum";
+  const showLink = !["rejected", "final", "addendum", "suspended", "reactivated"].includes(kind);
   const plain = [body[first], ...(showLink ? [c.url] : []), "", body[second]].join("\n");
   const block = (lang: "en" | "ar") => `<div dir="${lang === "ar" ? "rtl" : "ltr"}" style="font-family:Tahoma,Arial,sans-serif;font-size:15px;line-height:1.7;color:#0f172a">${esc(body[lang])}</div>`;
   const html = `<div style="max-width:560px;margin:auto;padding:20px;border:1px solid #e2e8f0;border-radius:10px">

@@ -19,7 +19,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   const { id } = await context.params;
   const c = await prisma.contract.findFirst({ where: { id, customerId: auth.customer.id } });
   if (!c) return apiError("not_found", "Agreement not found.", 404);
-  const kind = c.status === "ACTIVE" && (c.paymentStatus === "paid" || c.paymentStatus === "arrangement") ? "final" : "draft";
+  const kind = (c.status === "ACTIVE" || c.status === "SUSPENDED") && (c.paymentStatus === "paid" || c.paymentStatus === "arrangement") ? "final" : "draft";
   const bytes = await documentBytes(c, kind, { type: "customer", id: auth.customer.id, name: auth.customer.name });
   if (!bytes) return apiError("server_error", "The PDF could not be prepared right now. Please try again.", 500);
   return pdfResponse(bytes, pdfName(c, kind));

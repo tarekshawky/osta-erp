@@ -108,7 +108,7 @@ export function serviceProblem(nameEn: string, nameAr: string): string | null {
 export const EMIRATES = ["Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Al Ain", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"] as const;
 export const PROPERTY_TYPES = ["Apartment", "Villa"] as const;
 // The request statuses. The first four are the older ones, still valid for requests made before the Smart Package Builder.
-export const REQUEST_STATUSES = ["New Request", "Under Review", "Upgrade Suggested", "Quotation Sent", "Customer Approved", "Payment Pending", "Paid", "Contract Activated", "Rejected"] as const;
+export const REQUEST_STATUSES = ["New Request", "Under Review", "Upgrade Suggested", "Quotation Sent", "Customer Approved", "Payment Pending", "Paid", "Contract Activated", "Suspended", "Rejected"] as const;
 export const SUBSCRIPTION_STATUSES = [...REQUEST_STATUSES, "New", "Contacted", "Activated", "Cancelled"] as const;
 
 const base = {

@@ -181,7 +181,10 @@ export function renderContractHtml(d: ContractDocInput): string {
     <tr class="total"><td>${esc(t("Total contract value", "إجمالي قيمة العقد"))}</td><td class="num">${money(s.pricing.total)}</td></tr>
     <tr><td>${esc(t("Payment status", "حالة الدفع"))}</td><td class="num">${esc(pay)}</td></tr></table><p class="note">${esc(vatNote)}</p>`;
 
-  const accepted = d.acceptedAt
+  const byAdmin = (d.acceptanceMethod ?? "").startsWith("Recorded by");
+  const accepted = d.acceptedAt && byAdmin
+    ? `<p>${esc(t("The customer's acceptance of this agreement and its terms was recorded by OSTA Services on the customer's behalf:", "تم تسجيل موافقة العميل على هذه الاتفاقية وشروطها بواسطة شركة OSTA نيابةً عن العميل:"))}</p><p><b>${esc(d.acceptanceMethod.replace(/^Recorded by[^:]*:\s*/, ""))}</b></p><p class="note">${esc(fmtDate(d.acceptedAt, lang, true))} · ${esc(t("Terms version", "إصدار الشروط"))} ${s.terms.version}</p>`
+    : d.acceptedAt
     ? `${s.checks.map((c) => `<div class="check"><b>✓</b><span>${esc(t(c.en, c.ar))}</span></div>`).join("")}<p class="note">${esc(t("Accepted electronically on", "تمت الموافقة إلكترونياً بتاريخ"))} ${esc(fmtDate(d.acceptedAt, lang, true))} · ${esc(d.acceptanceMethod || t("website", "الموقع الإلكتروني"))} · ${esc(t("Terms version", "إصدار الشروط"))} ${s.terms.version}</p>`
     : `<p class="muted">${esc(t("The customer has not yet accepted this agreement.", "لم يوافق العميل على هذه الاتفاقية بعد."))}</p>`;
 

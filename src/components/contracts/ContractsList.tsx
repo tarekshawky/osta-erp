@@ -11,7 +11,7 @@ export type ContractRow = {
 
 export const STATUS_TONE: Record<DisplayStatus, string> = {
   DRAFT: "bg-slate-100 text-slate-700", PENDING_APPROVAL: "bg-amber-100 text-amber-800", CHANGES_REQUESTED: "bg-orange-100 text-orange-800", AWAITING_PAYMENT: "bg-blue-100 text-blue-800",
-  ACTIVE: "bg-emerald-100 text-emerald-800", EXPIRED: "bg-zinc-200 text-zinc-700", CANCELLED: "bg-zinc-200 text-zinc-600", REJECTED: "bg-red-100 text-red-700",
+  ACTIVE: "bg-emerald-100 text-emerald-800", SUSPENDED: "bg-orange-100 text-orange-800", EXPIRED: "bg-zinc-200 text-zinc-700", CANCELLED: "bg-zinc-200 text-zinc-600", REJECTED: "bg-red-100 text-red-700",
 };
 
 export const StatusBadge = ({ status }: { status: DisplayStatus }) => <span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_TONE[status]}`}>{STATUS_LABEL[status].en}</span>;
