@@ -1,5 +1,6 @@
 "use server";
 
+import { checkOrderSlot, syncOrder } from "@/lib/calendar/service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -58,10 +59,15 @@ export async function createOrder(
   const error = validateOrderInput(customer, details);
   if (error) return { ok: false, error };
 
+  const parsedScheduledAt = details.scheduledAt ? parseUaeDateTimeLocal(details.scheduledAt) : null;
+
+  // A team the calendar manages can never be booked twice at the same time. Checked before anything is created, so a refused order leaves no customer behind.
+  const slot = await checkOrderSlot({ teamId: details.teamId || null, scheduledAt: parsedScheduledAt });
+  if (!slot.ok) return { ok: false, error: slot.error };
+
   const dbCustomer = await findOrCreateCustomer({ ...customer, leadSource: details.leadSource }, admin.id);
 
   const number = await generateOrderNumber();
-  const parsedScheduledAt = details.scheduledAt ? parseUaeDateTimeLocal(details.scheduledAt) : null;
 
   const order = await prisma.order.create({
     data: {
@@ -82,7 +88,15 @@ export async function createOrder(
     },
   });
 
+  const placed = await syncOrder(order.id, { id: admin.id, name: admin.name });
+  if (!placed.ok) {
+    // Someone booked the same team and time a moment ago: nothing is created.
+    await prisma.order.delete({ where: { id: order.id } });
+    return { ok: false, error: placed.error };
+  }
+
   revalidatePath("/admin/orders");
+  revalidatePath("/admin/calendar");
   revalidatePath("/employee/orders");
   return { ok: true, id: order.id };
 }
@@ -100,6 +114,11 @@ export async function updateOrder(
   const error = validateOrderInput(customer, details);
   if (error) return { ok: false, error };
 
+  const parsedScheduledAt = details.scheduledAt ? parseUaeDateTimeLocal(details.scheduledAt) : null;
+
+  const slot = await checkOrderSlot({ orderId, teamId: details.teamId || null, scheduledAt: parsedScheduledAt, bookableServiceId: existing.bookableServiceId, quantity: existing.quantity });
+  if (!slot.ok) return { ok: false, error: slot.error };
+
   // existing.createdById is null for customer self-booked ("Requested") orders --
   // fall back to the admin doing this edit as the attribution if a new Customer
   // record ends up being created here (rare in the edit flow, but findOrCreateCustomer
@@ -108,7 +127,6 @@ export async function updateOrder(
     { ...customer, leadSource: details.leadSource },
     existing.createdById ?? admin.id
   );
-  const parsedScheduledAt = details.scheduledAt ? parseUaeDateTimeLocal(details.scheduledAt) : null;
 
   await prisma.order.update({
     where: { id: orderId },
@@ -129,7 +147,11 @@ export async function updateOrder(
     },
   });
 
+  const placed = await syncOrder(orderId, { id: admin.id, name: admin.name });
+  if (!placed.ok) return { ok: false, id: orderId, error: `The order was saved, but ${placed.error}` };
+
   revalidatePath("/admin/orders");
+  revalidatePath("/admin/calendar");
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath("/employee/orders");
   revalidatePath(`/employee/orders/${orderId}`);
@@ -169,6 +191,8 @@ export async function setOrderStatus(
     newScheduledAt = options.newScheduledAt ? parseUaeDateTimeLocal(options.newScheduledAt) : null;
     if (!newScheduledAt) return { ok: false, error: "Enter a valid new date and time." };
     previousScheduledAt = order.scheduledAt;
+    const slot = await checkOrderSlot({ orderId, teamId: order.teamId, scheduledAt: newScheduledAt, bookableServiceId: order.bookableServiceId, quantity: order.quantity });
+    if (!slot.ok) return { ok: false, error: slot.error };
     updateData.rescheduledAt = now;
     updateData.rescheduledBy = { connect: { id: session.employeeId } };
     updateData.rescheduleReason = reason;
@@ -190,7 +214,15 @@ export async function setOrderStatus(
     }),
   ]);
 
+  // Cancelling frees the team's time; rescheduling moves the booking; a completed order stays on the calendar as done.
+  if (status === "Cancelled" || status === "Reschedule") {
+    const who = await prisma.employee.findUnique({ where: { id: session.employeeId }, select: { name: true } });
+    const placed = await syncOrder(orderId, { id: session.employeeId, name: who?.name ?? "Admin" });
+    if (!placed.ok) return { ok: false, id: orderId, error: `The status was saved, but ${placed.error}` };
+  }
+
   revalidatePath("/admin/orders");
+  revalidatePath("/admin/calendar");
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath("/employee/orders");
   revalidatePath(`/employee/orders/${orderId}`);

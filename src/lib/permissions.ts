@@ -20,6 +20,8 @@ export const PERMISSIONS = [
   "jobs.manage",
   "contracts.manage",
   "quotes.manage",
+  "calendar.manage",
+  "calendar.override",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -33,7 +35,7 @@ export const ROLE_DEFINITIONS: { key: string; name: string; permissions: Permiss
   },
   { key: "EDITOR", name: "Editor", permissions: ["pages.create", "pages.edit", "media.manage"] },
   { key: "SEO", name: "SEO", permissions: ["seo.edit", "pages.edit"] },
-  { key: "OPERATIONS", name: "Operations", permissions: ["orders.view", "orders.manage", "visitFee.review", "leads.view"] },
+  { key: "OPERATIONS", name: "Operations", permissions: ["orders.view", "orders.manage", "visitFee.review", "leads.view", "calendar.manage"] },
   { key: "VIEWER", name: "Viewer", permissions: ["orders.view", "leads.view"] },
 ];
 

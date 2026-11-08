@@ -31,6 +31,12 @@ describe("hasPermission", () => {
     expect(hasPermission({ role: "ADMIN" }, o, "visitFee.review")).toBe(true);
     expect(hasPermission({ role: "ADMIN" }, o, "pricing.edit")).toBe(false);
   });
+  it("calendar: operations can manage bookings but only owner and admin can book past a conflict", () => {
+    expect(perms("OPERATIONS")).toContain("calendar.manage");
+    for (const key of ["OWNER", "ADMIN"]) expect(perms(key)).toEqual(expect.arrayContaining(["calendar.manage", "calendar.override"]));
+    for (const key of ["OPERATIONS", "VIEWER", "EDITOR", "SEO"]) expect(perms(key)).not.toContain("calendar.override");
+    expect(hasPermission({ role: "ADMIN" }, perms("VIEWER"), "calendar.manage")).toBe(false);
+  });
   it("only the owner holds integrations.manage", () => {
     expect(perms("OWNER")).toContain("integrations.manage");
     for (const r of ROLE_DEFINITIONS.filter((x) => x.key !== "OWNER")) expect(r.permissions).not.toContain("integrations.manage");

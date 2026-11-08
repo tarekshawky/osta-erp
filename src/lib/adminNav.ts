@@ -51,6 +51,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "orders", label: "Orders & Bookings", icon: "orders",
     items: [
       { href: "/admin/orders", label: "Service Orders", keywords: "bookings requests jobs" },
+      { href: "/admin/calendar", label: "Calendar & Scheduling", keywords: "bookings appointments schedule teams availability slots diary day week month block time التقويم المواعيد حجز جدول", children: [{ href: "/admin/calendar/teams", label: "Team schedules" }, { href: "/admin/calendar/settings", label: "Calendar settings" }] },
       { href: "/admin/customers", label: "Customers", keywords: "clients" },
       { href: "/admin/quotations", label: "Quotations", keywords: "quotes estimates" },
       { href: "/admin/invoices", label: "Invoices", keywords: "billing payments" },

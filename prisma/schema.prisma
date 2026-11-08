@@ -62,6 +62,8 @@ model Team {
   quotations           Quotation[]
   warrantyCertificates WarrantyCertificate[]
   orders               Order[]
+  schedule             TeamSchedule?
+  calendarEntries      CalendarEntry[]
 }
 
 model Employee {
@@ -375,6 +377,7 @@ model Order {
   idempotencyKey    String?          @unique
   events            OrderEvent[]
   visitFeeCharges   VisitFeeCharge[]
+  calendarEntry     CalendarEntry?
 
   // Admin-only status overrides (Done / Cancelled / Reschedule) -- see OrderStatusChange
   // for the full audit trail, including the before/after appointment on each reschedule.
@@ -2612,4 +2615,73 @@ model SelfQuoteFile {
 
   @@index([uploadKey])
   @@index([quoteId])
+}
+
+
+// ---- Calendar & Scheduling ----
+// A team's own working schedule. A team with no row (or active = false) is not managed by the calendar: its orders behave exactly as before.
+model TeamSchedule {
+  teamId        String   @id
+  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  active        Boolean  @default(true)
+  regionIds     String[] @default([]) // the emirates (Region ids) the team covers
+  serviceIds    String[] @default([]) // the bookable services it can do (empty = every service)
+  workDays      Int[]    @default([1, 2, 3, 4, 5, 6]) // 0 = Sunday ... 6 = Saturday
+  startTime     String   @default("08:00") // UAE time
+  endTime       String   @default("18:00")
+  breaks        Json     @default("[]") // [{ "start": "13:00", "end": "14:00" }]
+  travelMinutes Int      @default(30) // gap kept after each booking
+  maxPerDay     Int      @default(0) // 0 = no limit
+  updatedAt     DateTime @updatedAt
+}
+
+// Global calendar rules (advance days, minimum notice, same-day, default duration, holidays, closures, service durations).
+model CalendarSettings {
+  id            String   @id @default("default")
+  config        Json
+  updatedByName String   @default("")
+  updatedAt     DateTime @updatedAt
+}
+
+// One busy period of one team: a booking (linked to its order) or a block (leave, maintenance, ...). All times are UTC instants; the
+// calendar shows them in UAE time. busyUntil = endsAt + the team's travel time. The database refuses two active, non-overridden periods
+// of the same team that overlap (see prisma/calendar-constraints.sql), so no channel can double-book a team.
+model CalendarEntry {
+  id            String          @id @default(cuid())
+  kind          String          @default("BOOKING") // BOOKING | BLOCK
+  teamId        String
+  team          Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  orderId       String?         @unique
+  order         Order?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  startsAt      DateTime
+  endsAt        DateTime
+  busyUntil     DateTime
+  state         String          @default("ACTIVE") // ACTIVE | CANCELLED
+  override      Boolean         @default(false) // booked past a conflict by an authorised admin (outside the database protection)
+  reason        String          @default("")
+  serviceId     String?
+  regionId      String?
+  area          String          @default("")
+  quantity      Int?
+  notes         String          @default("")
+  createdByName String          @default("")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  events        CalendarEvent[]
+
+  @@index([teamId, startsAt])
+  @@index([startsAt])
+}
+
+// The full history of a booking: created, moved, reassigned, cancelled, completed...
+model CalendarEvent {
+  id        String        @id @default(cuid())
+  entryId   String
+  entry     CalendarEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  action    String
+  actorName String        @default("")
+  detail    String        @default("")
+  createdAt DateTime      @default(now())
+
+  @@index([entryId, createdAt])
 }
