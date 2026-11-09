@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
 import { createHash, createHmac, timingSafeEqual } from "crypto";
 
-const SECRET = process.env.AUTH_SECRET ?? "insecure-dev-secret";
+// While the app runs on the alternate (EMERGENCY) database it can sign in with its own secret, so the original AUTH_SECRET (which the old database's
+// PINs depend on, and which Vercel keeps unreadable) is never touched. With EMERGENCY_AUTH_SECRET unset, nothing changes.
+const SECRET = process.env.EMERGENCY_AUTH_SECRET || process.env.AUTH_SECRET || "insecure-dev-secret";
 const COOKIE_NAME = "osta_session";
 
 export type SessionPayload = {
