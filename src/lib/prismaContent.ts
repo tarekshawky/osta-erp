@@ -9,6 +9,6 @@ const contentUrl = process.env.CONTENT_DATABASE_URL || process.env.CONTENT_POSTG
 
 export const contentDbIsSeparate = !!contentUrl;
 
-export const contentDb = globalForContent.prismaContent ?? new PrismaClient({ datasourceUrl: contentUrl || process.env.DATABASE_URL });
+export const contentDb = globalForContent.prismaContent ?? new PrismaClient({ datasourceUrl: contentUrl || process.env.EMERGENCY_DATABASE_URL || process.env.EMERGENCY_POSTGRES_URL || process.env.DATABASE_URL });
 
 if (process.env.NODE_ENV !== "production") globalForContent.prismaContent = contentDb;
