@@ -10,6 +10,7 @@ import { DownloadPdfButton } from "@/components/invoice/DownloadPdfButton";
 import { CustomerPurchaseInvoice, type PurchaseDoc } from "@/components/expense/CustomerPurchaseInvoice";
 import { PurchaseActions } from "@/components/expense/PurchaseActions";
 import { marginFor, PURCHASE_STATUS_STYLE } from "@/lib/customerPurchaseData";
+import { contentDb } from "@/lib/prismaContent";
 
 export default async function CustomerPurchasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,7 +23,7 @@ export default async function CustomerPurchasePage({ params }: { params: Promise
   const [margin, approver, history] = await Promise.all([
     marginFor(p.orderId, p.total),
     p.approvedById ? prisma.employee.findUnique({ where: { id: p.approvedById }, select: { name: true } }) : null,
-    prisma.auditLog.findMany({ where: { entity: "CustomerPurchase", entityId: id }, orderBy: { createdAt: "desc" }, take: 20 }),
+    contentDb.auditLog.findMany({ where: { entity: "CustomerPurchase", entityId: id }, orderBy: { createdAt: "desc" }, take: 20 }),
   ]);
 
   const doc: PurchaseDoc = {

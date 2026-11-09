@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { peekPermission } from "@/lib/adminGuard";
 import { writeAudit } from "@/lib/adminGuard";
 import { MAX_UPLOAD_BYTES, MediaError, processImage, sanitizeFileName } from "@/lib/media/process";
+import { contentDb } from "@/lib/prismaContent";
 
 export const runtime = "nodejs";
 
@@ -21,14 +21,14 @@ export async function POST(request: NextRequest) {
   if (!(file instanceof File)) return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
   const folderRaw = form?.get("folderId");
   const folderId = typeof folderRaw === "string" && folderRaw ? folderRaw : null;
-  if (folderId && !(await prisma.mediaFolder.findUnique({ where: { id: folderId } }))) {
+  if (folderId && !(await contentDb.mediaFolder.findUnique({ where: { id: folderId } }))) {
     return NextResponse.json({ error: "Folder not found." }, { status: 400 });
   }
 
   // Replacing keeps the image's address, name, alt text and folder, so every page that uses it shows the new picture.
   const replaceRaw = form?.get("replaceId");
   const replaceId = typeof replaceRaw === "string" && replaceRaw ? replaceRaw : null;
-  const existing = replaceId ? await prisma.mediaAsset.findUnique({ where: { id: replaceId }, select: { id: true, name: true } }) : null;
+  const existing = replaceId ? await contentDb.mediaAsset.findUnique({ where: { id: replaceId }, select: { id: true, name: true } }) : null;
   if (replaceId && !existing) return NextResponse.json({ error: "The image to replace was not found." }, { status: 404 });
 
   let processed;
@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
   }
 
   if (existing) {
-    const [, asset] = await prisma.$transaction([
-      prisma.mediaVariant.deleteMany({ where: { assetId: existing.id } }),
-      prisma.mediaAsset.update({
+    const [, asset] = await contentDb.$transaction([
+      contentDb.mediaVariant.deleteMany({ where: { assetId: existing.id } }),
+      contentDb.mediaAsset.update({
         where: { id: existing.id },
         data: {
           originalMime: file.type || `image/${processed.originalFormat}`, width: processed.width, height: processed.height, originalBytes: file.size,
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
   }
 
   const name = sanitizeFileName(file.name);
-  const asset = await prisma.mediaAsset.create({
+  const asset = await contentDb.mediaAsset.create({
     data: {
       folderId, name, originalName: name, originalMime: file.type || `image/${processed.originalFormat}`,
       width: processed.width, height: processed.height, originalBytes: file.size,

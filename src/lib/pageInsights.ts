@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { revenueByMonth, expensesByMonth } from "./monthlySeries";
 import { getPaymentTotals } from "./reportData";
+import { contentDb } from "@/lib/prismaContent";
 
 // Chart data for the "insight" band at the top of each admin page: monthly trends and share breakdowns, all read from the
 // same tables the page itself lists. Nothing here writes anything.
@@ -155,7 +156,7 @@ export async function getInsight(kind: InsightKind): Promise<Insight> {
       return { donut: { title: "Services by group", slices: group(svcs.map((s) => s.groupEn), "Ungrouped"), unit: "services" }, bars: { title: "Services by state", points: group(svcs.map((s) => (s.active ? "Active" : "Inactive"))), tone: "teal", unit: "services", subtitle: "All services" } };
     }
     case "audit": {
-      const bars = await monthly((from) => prisma.auditLog.findMany({ where: { createdAt: { gte: from } }, select: { createdAt: true } }).then((r) => r.map((x) => ({ date: x.createdAt }))));
+      const bars = await monthly((from) => contentDb.auditLog.findMany({ where: { createdAt: { gte: from } }, select: { createdAt: true } }).then((r) => r.map((x) => ({ date: x.createdAt }))));
       return { bars: { title: "Admin activity", points: bars, tone: "blue", unit: "actions" } };
     }
   }

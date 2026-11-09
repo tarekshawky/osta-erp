@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import { blockingUsages, usagesFor, type Usage } from "@/lib/media/usage";
 import { sanitizeFileName } from "@/lib/media/process";
+import { contentDb } from "@/lib/prismaContent";
 
 export type ActionResult = { ok: boolean; error?: string };
 export type MediaItem = {
@@ -35,9 +35,9 @@ export async function listMedia(input: { search?: string; folderId?: string | nu
     ...(search ? { OR: [{ name: { contains: search, mode: "insensitive" as const } }, { altEn: { contains: search, mode: "insensitive" as const } }, { altAr: { contains: search } }, { caption: { contains: search, mode: "insensitive" as const } }] } : {}),
   };
   const [rows, folders, counts] = await Promise.all([
-    prisma.mediaAsset.findMany({ where, orderBy: { createdAt: "desc" }, take: 300, include: { variants: { select: { bytes: true, width: true } } } }),
-    prisma.mediaFolder.findMany({ orderBy: { name: "asc" } }),
-    prisma.mediaAsset.groupBy({ by: ["folderId"], _count: true }),
+    contentDb.mediaAsset.findMany({ where, orderBy: { createdAt: "desc" }, take: 300, include: { variants: { select: { bytes: true, width: true } } } }),
+    contentDb.mediaFolder.findMany({ orderBy: { name: "asc" } }),
+    contentDb.mediaAsset.groupBy({ by: ["folderId"], _count: true }),
   ]);
   const usages = await usagesFor(rows.map((r) => r.id));
 
@@ -59,12 +59,12 @@ export async function getAssetUsages(id: string): Promise<Usage[]> {
 export async function updateMedia(id: string, input: { name: string; altEn: string; altAr: string; title: string; caption: string; folderId: string | null }): Promise<ActionResult> {
   const g = await guardPermission("media.manage");
   if (!g.ok) return fail(g.error);
-  const before = await prisma.mediaAsset.findUnique({ where: { id } });
+  const before = await contentDb.mediaAsset.findUnique({ where: { id } });
   if (!before) return fail("Image not found.");
-  if (input.folderId && !(await prisma.mediaFolder.findUnique({ where: { id: input.folderId } }))) return fail("Folder not found.");
+  if (input.folderId && !(await contentDb.mediaFolder.findUnique({ where: { id: input.folderId } }))) return fail("Folder not found.");
   const name = sanitizeFileName(input.name);
   const data = { name, altEn: input.altEn.trim().slice(0, 300), altAr: input.altAr.trim().slice(0, 300), title: input.title.trim().slice(0, 200), caption: input.caption.trim().slice(0, 500), folderId: input.folderId };
-  await prisma.mediaAsset.update({ where: { id }, data });
+  await contentDb.mediaAsset.update({ where: { id }, data });
   await writeAudit(g.admin, "media.update", "MediaAsset", id, { name: before.name, altEn: before.altEn, folderId: before.folderId }, { name, altEn: data.altEn, folderId: data.folderId });
   return done();
 }
@@ -73,14 +73,14 @@ export async function updateMedia(id: string, input: { name: string; altEn: stri
 export async function deleteMedia(id: string): Promise<ActionResult & { usages?: Usage[] }> {
   const g = await guardPermission("media.manage");
   if (!g.ok) return fail(g.error);
-  const asset = await prisma.mediaAsset.findUnique({ where: { id } });
+  const asset = await contentDb.mediaAsset.findUnique({ where: { id } });
   if (!asset) return fail("Image not found.");
   const usages = (await usagesFor([id])).get(id) ?? [];
   const live = blockingUsages(usages);
   if (live.length) {
     return { ok: false, usages, error: `This image is used in ${live.length} live place${live.length === 1 ? "" : "s"} (${live.slice(0, 3).map((u) => u.label).join(", ")}${live.length > 3 ? "…" : ""}). Replace it there first.` };
   }
-  await prisma.mediaAsset.delete({ where: { id } });
+  await contentDb.mediaAsset.delete({ where: { id } });
   await writeAudit(g.admin, "media.delete", "MediaAsset", id, { name: asset.name, draftUsages: usages.length }, null);
   return { ...done(), usages };
 }
@@ -90,8 +90,8 @@ export async function createFolder(name: string): Promise<ActionResult> {
   if (!g.ok) return fail(g.error);
   const clean = name.trim().slice(0, 60);
   if (!clean) return fail("Folder name is required.");
-  if (await prisma.mediaFolder.findUnique({ where: { name: clean } })) return fail("A folder with this name already exists.");
-  const folder = await prisma.mediaFolder.create({ data: { name: clean } });
+  if (await contentDb.mediaFolder.findUnique({ where: { name: clean } })) return fail("A folder with this name already exists.");
+  const folder = await contentDb.mediaFolder.create({ data: { name: clean } });
   await writeAudit(g.admin, "media.folder.create", "MediaFolder", folder.id, null, { name: clean });
   return done();
 }
@@ -101,9 +101,9 @@ export async function renameFolder(id: string, name: string): Promise<ActionResu
   if (!g.ok) return fail(g.error);
   const clean = name.trim().slice(0, 60);
   if (!clean) return fail("Folder name is required.");
-  const clash = await prisma.mediaFolder.findUnique({ where: { name: clean } });
+  const clash = await contentDb.mediaFolder.findUnique({ where: { name: clean } });
   if (clash && clash.id !== id) return fail("A folder with this name already exists.");
-  await prisma.mediaFolder.update({ where: { id }, data: { name: clean } });
+  await contentDb.mediaFolder.update({ where: { id }, data: { name: clean } });
   await writeAudit(g.admin, "media.folder.rename", "MediaFolder", id, null, { name: clean });
   return done();
 }
@@ -111,8 +111,8 @@ export async function renameFolder(id: string, name: string): Promise<ActionResu
 export async function deleteFolder(id: string): Promise<ActionResult> {
   const g = await guardPermission("media.manage");
   if (!g.ok) return fail(g.error);
-  if ((await prisma.mediaAsset.count({ where: { folderId: id } })) > 0) return fail("Move or delete the images in this folder first.");
-  await prisma.mediaFolder.delete({ where: { id } });
+  if ((await contentDb.mediaAsset.count({ where: { folderId: id } })) > 0) return fail("Move or delete the images in this folder first.");
+  await contentDb.mediaFolder.delete({ where: { id } });
   await writeAudit(g.admin, "media.folder.delete", "MediaFolder", id, null, null);
   return done();
 }

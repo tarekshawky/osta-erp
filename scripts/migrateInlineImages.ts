@@ -8,6 +8,7 @@
 // addresses won't exist yet. The origin is the public address of the admin app (the one serving /api/media/...).
 import { prisma } from "../src/lib/prisma";
 import { processImage } from "../src/lib/media/process";
+import { contentDb } from "../src/lib/prismaContent";
 
 const apply = process.argv.includes("--apply");
 const originArg = process.argv.indexOf("--origin");
@@ -48,7 +49,7 @@ async function main() {
   for (const t of targets) {
     const base64 = t.value.slice(t.value.indexOf(",") + 1);
     const processed = await processImage(Buffer.from(base64, "base64"));
-    const asset = await prisma.mediaAsset.create({
+    const asset = await contentDb.mediaAsset.create({
       data: {
         name: `migrated-${t.table.toLowerCase()}-${t.id.slice(-6)}`, originalName: `${t.table}-${t.id}`, originalMime: "image/jpeg", width: processed.width, height: processed.height,
         originalBytes: Math.round(base64.length * 0.75), uploadedByName: "migration",

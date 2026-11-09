@@ -121,7 +121,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     id: "system", label: "System Administration", icon: "system",
-    items: [{ href: "/admin/settings", label: "Settings", keywords: "tax logo company" }, { href: "/admin/audit-log", label: "Audit Log", keywords: "history changes security" }],
+    items: [{ href: "/admin/settings", label: "Settings", keywords: "tax logo company", children: [{ href: "/admin/settings/content-database", label: "Content database" }] }, { href: "/admin/audit-log", label: "Audit Log", keywords: "history changes security" }],
   },
 ];
 

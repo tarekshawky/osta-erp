@@ -10,6 +10,7 @@ import type { ApplicationInput } from "./schema";
 import { isOpenForApplications } from "./status";
 import { createJobNotification, getJobSettings, JobError, type Actor } from "./service";
 import { jobPublicUrl } from "./urls";
+import { contentDb } from "@/lib/prismaContent";
 
 export const APPLY_RATE = { perIp: 5, perPhone: 5, windowMs: 60 * 60_000 };
 export const UPLOADS_PER_HOUR = 40;
@@ -219,7 +220,7 @@ export async function anonymizeApplicant(applicantId: string, actor: Actor | nul
     prisma.jobApplicant.update({ where: { id: applicantId }, data: { fullName: "Deleted applicant", phone: `deleted-${applicantId}`, whatsapp: null, area: null, skills: [], otherSkills: null, experienceYears: null, anonymizedAt: new Date() } }),
   ]);
   if (actor) await writeAudit(actor, "jobs.applicant.delete-data", "JobApplicant", applicantId, null, { reason });
-  else await prisma.auditLog.create({ data: { actorName: "System (retention)", action: "jobs.applicant.delete-data", entity: "JobApplicant", entityId: applicantId, after: { reason } } });
+  else await contentDb.auditLog.create({ data: { actorName: "System (retention)", action: "jobs.applicant.delete-data", entity: "JobApplicant", entityId: applicantId, after: { reason } } });
   return true;
 }
 

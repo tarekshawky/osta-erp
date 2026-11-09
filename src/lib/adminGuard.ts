@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { requireEmployee } from "./auth";
 import { hasPermission, type Permission } from "./permissions";
 import type { Employee } from "@/generated/prisma";
+import { contentDb } from "@/lib/prismaContent";
 
 export type Guard =
   | { ok: true; admin: Employee; can: (permission: Permission) => boolean }
@@ -30,7 +31,7 @@ export async function writeAudit(
   before: unknown,
   after: unknown
 ) {
-  await prisma.auditLog.create({
+  await contentDb.auditLog.create({
     data: {
       actorId: admin.id,
       actorName: admin.name,

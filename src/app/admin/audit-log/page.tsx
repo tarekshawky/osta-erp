@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma";
 import { PageInsight } from "@/components/admin/PageInsight";
 import { guardPermission } from "@/lib/adminGuard";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
+import { contentDb } from "@/lib/prismaContent";
 
 const stamp = (d: Date) => d.toISOString().slice(0, 16).replace("T", " ");
 
@@ -26,8 +26,8 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Pro
   }
 
   const [entries, entities] = await Promise.all([
-    prisma.auditLog.findMany({ where: entity ? { entity } : undefined, orderBy: { createdAt: "desc" }, take: 200 }),
-    prisma.auditLog.findMany({ distinct: ["entity"], select: { entity: true }, orderBy: { entity: "asc" } }),
+    contentDb.auditLog.findMany({ where: entity ? { entity } : undefined, orderBy: { createdAt: "desc" }, take: 200 }),
+    contentDb.auditLog.findMany({ distinct: ["entity"], select: { entity: true }, orderBy: { entity: "asc" } }),
   ]);
 
   return (

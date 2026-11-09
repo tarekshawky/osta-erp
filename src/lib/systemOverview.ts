@@ -5,6 +5,7 @@ import { getEmployeesRequiringStock } from "./inventoryData";
 import { getCollectMoneyTotal } from "./walletData";
 import { partialCollectedTotal } from "./invoiceCollections";
 import type { InsightKind } from "./pageInsights";
+import { contentDb } from "@/lib/prismaContent";
 
 // What each system's overview page shows: a few stat cards, the charts, and one recent list -- all read from the tables the
 // system's own pages already use. Nothing here is written anywhere.
@@ -179,8 +180,8 @@ export async function getSystemOverview(id: string): Promise<Overview | null> {
       const [active, admins, audit, recent] = await Promise.all([
         prisma.employee.count({ where: { status: { equals: "active", mode: "insensitive" } } }),
         prisma.employee.count({ where: { role: { in: ["ADMIN", "SUPER_ADMIN"] } } }),
-        prisma.auditLog.count({ where: { createdAt: { gte: THIRTY() } } }),
-        prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
+        contentDb.auditLog.count({ where: { createdAt: { gte: THIRTY() } } }),
+        contentDb.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
       ]);
       return {
         stats: [

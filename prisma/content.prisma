@@ -1,0 +1,75 @@
+// The "content" database: the website's media library and the audit log, kept apart from the main system database so the heavy, growing
+// data (image bytes, history) does not use up the main database's allowance.
+//
+// These models are copied word for word from schema.prisma (a test, contentSchema.test.ts, keeps the two in step). In the
+// main schema they stay too, so with no CONTENT_DATABASE_URL set everything keeps working on the one database exactly as before.
+//   Create / update the content database:  CONTENT_DATABASE_URL="..." npx prisma db push --schema prisma/content.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma-content"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CONTENT_DATABASE_URL")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorName String?
+  action    String // e.g. "pricing.price.set"
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, createdAt])
+  @@index([createdAt])
+}
+
+model MediaFolder {
+  id        String       @id @default(cuid())
+  name      String
+  assets    MediaAsset[]
+  createdAt DateTime     @default(now())
+
+  @@unique([name])
+}
+
+model MediaAsset {
+  id             String         @id @default(cuid())
+  folderId       String?
+  folder         MediaFolder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  name           String // display / file name, editable
+  originalName   String
+  originalMime   String
+  width          Int
+  height         Int
+  originalBytes  Int
+  altEn          String         @default("")
+  altAr          String         @default("")
+  title          String         @default("")
+  caption        String         @default("")
+  variants       MediaVariant[]
+  uploadedById   String?
+  uploadedByName String?
+  createdAt      DateTime       @default(now())
+
+  @@index([folderId, createdAt])
+}
+
+model MediaVariant {
+  id      String     @id @default(cuid())
+  assetId String
+  asset   MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  width   Int
+  height  Int
+  format  String     @default("webp")
+  bytes   Int
+  data    Bytes
+
+  @@unique([assetId, width, format])
+}
