@@ -538,13 +538,14 @@ export function InvoicePreviewCard({
           <ol className="flex flex-col gap-2" dir="rtl">
             {terms.map((term, i) => (
               <li key={i} className="flex items-start gap-2 text-xs text-gray-600 text-right">
-                <span>{term.ar}</span>
+                {/* Number first: in this right-to-left list it sits at the right edge, so the numbers line up and read from the right. */}
                 <span
                   className="h-4 w-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5"
                   style={{ backgroundColor: NAVY }}
                 >
                   {i + 1}
                 </span>
+                <span>{term.ar}</span>
               </li>
             ))}
           </ol>
