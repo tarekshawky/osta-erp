@@ -1,4 +1,5 @@
 import { requireEmployee } from "@/lib/auth";
+import { getInvoiceTerms } from "@/lib/invoiceTermsDb";
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
@@ -101,10 +102,12 @@ export default async function AdminNewInvoicePage({
       }
     : undefined;
 
+  const termsConfig = await getInvoiceTerms();
   return (
     <div className="pb-10">
       <AdminTopBar title="Invoices" />
       <InvoiceWizard
+        termsConfig={termsConfig}
         basePath="/admin"
         createdByName={employee.name}
         createdByCode={employee.code}

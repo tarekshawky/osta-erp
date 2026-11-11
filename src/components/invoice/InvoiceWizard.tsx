@@ -12,6 +12,7 @@ import { InvoicePreviewCard } from "./InvoicePreviewCard";
 import { createInvoiceFromWizard, updateInvoiceFromWizard } from "@/app/actions/invoice";
 import { emptyCustomer, emptyService, emptyPayment, type CustomerFormData, type ServiceFormData, type PaymentFormData } from "./types";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
+import type { InvoiceTermsConfig } from "@/lib/invoiceTerms";
 import { LEGACY_WARRANTY_DAYS, addDays, warrantyDates, type WarrantyDisplay } from "@/lib/warranty";
 import { formatAed, formatUaePhone } from "@/lib/format";
 import { tajawal } from "@/lib/fonts";
@@ -81,6 +82,7 @@ export function InvoiceWizard({
   labourPriceModification = "Allowed",
   labourMaxDiscountPercent = null,
   legacyWarrantyUntil = null,
+  termsConfig,
   lang = "en",
 }: {
   basePath: "/admin" | "/employee";
@@ -106,6 +108,8 @@ export function InvoiceWizard({
   labourMaxDiscountPercent?: number | null;
   // Editing an invoice made before the warranty became a choice: its original warranty can be kept as it is.
   legacyWarrantyUntil?: Date | null;
+  // The invoice terms from Settings, so the preview prints what the saved invoice will.
+  termsConfig?: InvoiceTermsConfig;
   lang?: EmployeeLang;
 }) {
   const router = useRouter();
@@ -285,6 +289,7 @@ export function InvoiceWizard({
               items={previewItems}
               payment={payment.method}
               warranty={previewWarranty}
+              termsConfig={termsConfig}
               createdByName={createdByName}
               createdByCode={createdByCode}
             />

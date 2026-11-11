@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getInvoiceTerms } from "@/lib/invoiceTermsDb";
 import { warrantyDisplayOf } from "@/lib/warranty";
 import { amountReceived, collectionOf, remainingBalance } from "@/lib/invoicePayment";
 import { PaymentUpdatePanel } from "@/components/invoice/PaymentUpdatePanel";
@@ -31,6 +32,7 @@ export default async function AdminInvoiceDetailPage({
   if (!invoice) notFound();
   const canToggleStatus = invoice.status === "Paid" || invoice.status === "Unpaid";
 
+  const termsConfig = await getInvoiceTerms();
   return (
     <div className="pb-10">
       <AdminTopBar title="Invoices" />
@@ -171,6 +173,7 @@ export default async function AdminInvoiceDetailPage({
             items={invoice.items}
             payment={invoice.payment}
             warranty={warrantyDisplayOf(invoice)}
+            termsConfig={termsConfig}
             createdByName={invoice.createdBy.name}
             createdByCode={invoice.createdBy.code}
             createdAt={invoice.createdAt}

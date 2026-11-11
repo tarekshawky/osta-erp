@@ -124,20 +124,6 @@ export function termsWarrantyDays(display: WarrantyDisplay): number | null {
   return display.kind === "WITH" ? display.days : null;
 }
 
-// Added to every invoice that carries a warranty. The wording is the company's own.
-export const WARRANTY_TERMS = {
-  en: [
-    "Warranty applies strictly to the specific work performed and services explicitly listed in this invoice. It covers only defects directly related to the workmanship of the completed services during the selected warranty period.",
-    "This warranty does not cover any other faults, breakdowns, defects, or problems outside the scope of the work performed and listed in this invoice. It does not cover unrelated components, newly developed issues, misuse, physical damage, or external factors.",
-    "Any additional work, repairs, replacement parts, or services not specified in this invoice are excluded from this warranty and may be charged separately.",
-  ],
-  ar: [
-    "يسري الضمان حصرياً على الأعمال والخدمات التي تم تنفيذها فعلياً والمثبتة بوضوح في هذه الفاتورة، ويغطي فقط العيوب الناتجة مباشرة عن جودة تنفيذ الأعمال المشمولة بالضمان، وذلك خلال فترة الضمان المحددة.",
-    "لا يشمل الضمان أي أعطال أو تلفيات أو مشاكل أخرى خارج نطاق الأعمال المنفذة والمذكورة في الفاتورة، كما لا يشمل الأعطال غير المرتبطة بالخدمة المقدمة أو سوء الاستخدام أو الأضرار الناتجة عن عوامل خارجية.",
-    "أي أعمال إضافية أو إصلاحات أو قطع غيار أو خدمات غير موضحة في هذه الفاتورة لا تدخل ضمن هذا الضمان، ويتم احتسابها بشكل منفصل عند الحاجة.",
-  ],
-} as const;
-
 // A short, readable line for the activity log.
 export function describeWarranty(record: WarrantyRecord): string {
   const d = warrantyDisplayOf(record);

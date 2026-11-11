@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { getInvoiceTerms } from "@/lib/invoiceTermsDb";
 import { warrantyDisplayOf } from "@/lib/warranty";
 import { collectionOf } from "@/lib/invoicePayment";
 import { requireEmployee } from "@/lib/auth";
@@ -32,6 +33,7 @@ export default async function EmployeeInvoiceDetailPage({
   const canViewThis = employee.invoicesAccess === "All Records" || invoice?.createdById === employee.id;
   if (!invoice || !canViewThis) notFound();
 
+  const termsConfig = await getInvoiceTerms();
   return (
     <div className="pb-10">
       <TopBar title={{ ar: "الفاتورة", en: "Invoice" }} />
@@ -86,6 +88,7 @@ export default async function EmployeeInvoiceDetailPage({
             items={invoice.items}
             payment={invoice.payment}
             warranty={warrantyDisplayOf(invoice)}
+            termsConfig={termsConfig}
             createdByName={invoice.createdBy.name}
             createdByCode={invoice.createdBy.code}
             createdAt={invoice.createdAt}

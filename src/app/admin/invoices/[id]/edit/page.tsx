@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getInvoiceTerms } from "@/lib/invoiceTermsDb";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
@@ -102,10 +103,12 @@ export default async function AdminInvoiceEditPage({
     paymentLink: invoice.paymentLink ?? "",
   };
 
+  const termsConfig = await getInvoiceTerms();
   return (
     <div className="pb-10">
       <AdminTopBar title="Invoices" />
       <InvoiceWizard
+        termsConfig={termsConfig}
         basePath="/admin"
         createdByName={admin.name}
         createdByCode={admin.code}

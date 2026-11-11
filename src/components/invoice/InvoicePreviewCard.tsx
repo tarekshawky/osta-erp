@@ -1,8 +1,9 @@
 import { Inter } from "next/font/google";
 import { LogoImage } from "@/components/LogoImage";
 import { formatNumber2, formatDateSlash, formatDateTimeSlash } from "@/lib/format";
-import { COMPANY_INFO, INVOICE_NOTE, invoiceTerms } from "@/lib/invoiceData";
-import { WARRANTY_TERMS, termsWarrantyDays, type WarrantyDisplay } from "@/lib/warranty";
+import { COMPANY_INFO, INVOICE_NOTE } from "@/lib/invoiceData";
+import { termsWarrantyDays, type WarrantyDisplay } from "@/lib/warranty";
+import { DEFAULT_INVOICE_TERMS, termsForInvoice, type InvoiceTermsConfig } from "@/lib/invoiceTerms";
 import { amountInWordsAed } from "@/lib/numberToWords";
 import type { PaymentState } from "@/lib/invoicePayment";
 
@@ -195,6 +196,7 @@ export function InvoicePreviewCard({
   items,
   payment,
   warranty,
+  termsConfig = DEFAULT_INVOICE_TERMS,
   createdByName,
   createdByCode,
   createdAt,
@@ -208,6 +210,8 @@ export function InvoicePreviewCard({
   items: PreviewItem[];
   payment: string;
   warranty: WarrantyDisplay;
+  // The Terms & Conditions and Warranty Terms to print (edited in Settings > Invoice terms).
+  termsConfig?: InvoiceTermsConfig;
   createdByName: string;
   createdByCode?: string;
   createdAt?: Date;
@@ -216,7 +220,7 @@ export function InvoicePreviewCard({
 }) {
   const total = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
   const billToName = customer.type === "COMPANY" ? customer.companyName || customer.name : customer.name;
-  const terms = invoiceTerms(termsWarrantyDays(warranty));
+  const { general: terms, warranty: warrantyTerms } = termsForInvoice(termsConfig, termsWarrantyDays(warranty));
 
   return (
     <div
@@ -468,7 +472,7 @@ export function InvoicePreviewCard({
       </div>
 
       {/* Warranty terms -- only on invoices that carry a warranty */}
-      {warranty.kind === "WITH" && (
+      {warranty.kind === "WITH" && warrantyTerms.length > 0 && (
         <div className="mt-6">
           <div className="flex items-center justify-between gap-4">
             <div className="text-xs font-bold tracking-wide" style={{ color: NAVY }}>
@@ -480,16 +484,16 @@ export function InvoicePreviewCard({
           </div>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
             <div className="flex flex-col gap-2">
-              {WARRANTY_TERMS.en.map((text, i) => (
+              {warrantyTerms.map((term, i) => (
                 <p key={i} className="text-xs text-gray-600">
-                  {text}
+                  {term.en}
                 </p>
               ))}
             </div>
             <div className="flex flex-col gap-2" dir="rtl">
-              {WARRANTY_TERMS.ar.map((text, i) => (
+              {warrantyTerms.map((term, i) => (
                 <p key={i} className="text-xs text-gray-600 text-right">
-                  {text}
+                  {term.ar}
                 </p>
               ))}
             </div>

@@ -9,7 +9,7 @@ import {
   termsWarrantyDays,
   type WarrantyFormData,
 } from "./warranty";
-import { invoiceTerms } from "./invoiceData";
+import { DEFAULT_INVOICE_TERMS, termsForInvoice } from "./invoiceTerms";
 
 const invoiceDate = new Date("2026-11-10T12:00:00Z");
 const form = (patch: Partial<WarrantyFormData>): WarrantyFormData => ({ ...emptyWarranty, ...patch });
@@ -89,11 +89,12 @@ describe("what the invoice shows and says", () => {
   });
 
   it("names the chosen days in the invoice's own terms and drops the line when there is no warranty", () => {
-    const withDays = (d: number) => invoiceTerms(d).map((t) => t.en).join(" | ");
+    const withDays = (d: number) => termsForInvoice(DEFAULT_INVOICE_TERMS, d).general.map((t) => t.en).join(" | ");
     expect(withDays(30)).toContain("voids the 30-day warranty");
     expect(withDays(7)).toContain("voids the 7-day warranty");
-    expect(invoiceTerms(null).some((t) => /warranty/i.test(t.en))).toBe(false);
-    expect(invoiceTerms(null)).toHaveLength(invoiceTerms(14).length - 1);
+    const none = termsForInvoice(DEFAULT_INVOICE_TERMS, null);
+    expect(none.general.some((t) => /warranty/i.test(t.en))).toBe(false);
+    expect(none.general).toHaveLength(DEFAULT_INVOICE_TERMS.general.length - 1);
     expect(termsWarrantyDays({ kind: "NONE" })).toBeNull();
     expect(termsWarrantyDays({ kind: "LEGACY", until: invoiceDate })).toBe(14);
   });

@@ -101,34 +101,3 @@ export const INVOICE_NOTE = {
   en: "Thank you for choosing OSTA Services. We appreciate your trust and look forward to serving you again.",
   ar: "شكرًا لاختياركم خدمات أسطا. نقدّر ثقتكم ونتطلع لخدمتكم مجددًا.",
 };
-
-// The invoice's numbered terms. The warranty line follows the warranty chosen for the invoice: it names that many days, and is left out
-// altogether when the invoice has no warranty (warrantyDays null).
-export function invoiceTerms(warrantyDays: number | null): { en: string; ar: string }[] {
-  return [
-    {
-      en: "The payment for any maintenance is non-refundable under any circumstances.",
-      ar: "المبلغ المدفوع لاي صيانة غير قابل للاسترداد تحت أي ظرف من الظروف.",
-    },
-    {
-      en: "The company is responsible only for the work specified in this invoice.",
-      ar: "الشركة مسئولة فقط عن العمل المثبت بالفاتورة فقط.",
-    },
-    ...(warrantyDays
-      ? [
-          {
-            en: `Any intervention by another company voids the ${warrantyDays}-day warranty.`,
-            ar: `اي تدخل شركة اخري يسقط ضمان ${warrantyDays} يوم.`,
-          },
-        ]
-      : []),
-    {
-      en: "The company is not responsible for misuse or improper handling in case of malfunction.",
-      ar: "الشركة غير مسئولة عن سوء الاستخدام او سوء التعامل في حين حدوث عطل.",
-    },
-    {
-      en: `To view the full terms and conditions, please visit: ${TERMS_URL}`,
-      ar: `للاطلاع على الشروط والأحكام زر الرابط: ${TERMS_URL}`,
-    },
-  ];
-}

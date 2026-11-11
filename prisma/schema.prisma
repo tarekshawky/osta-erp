@@ -24,6 +24,9 @@ model Setting {
   logoData            String?
   certificateLogoData String?
   collectMoneyTotal   Float   @default(0)
+  // The numbered Terms & Conditions and the Warranty Terms printed on invoices, as { general: {en, ar}[], warranty: {en, ar}[] }, edited in
+  // Settings > Invoice terms. null = the built-in wording (see src/lib/invoiceTerms.ts).
+  invoiceTerms        Json?
 
   // Tax Information. taxRegistrationEffectiveDate (NOT taxCertificateIssueDate, NOT
   // "today") is what defines the start of every dynamic Financial Report period --
