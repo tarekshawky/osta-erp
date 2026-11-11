@@ -274,6 +274,12 @@ model Invoice {
   paymentDate           DateTime?
   refundedAmount        Float                   @default(0)
   leadSource            String                  @default("Organic")
+  // Warranty is chosen per invoice. warrantyMode: null = an invoice made before the choice existed (the old fixed 14 days, kept as it
+  // was); "NONE" = no warranty; "WITH" = warranty of warrantyDays (7 | 14 | 30) counted from warrantyStartDate, the day the work was
+  // completed. warrantyStartDate stays null while the work is not finished (status Pending). warrantyUntil is the expiry date.
+  warrantyMode          String?
+  warrantyDays          Int?
+  warrantyStartDate     DateTime?
   warrantyUntil         DateTime?
   teamId                String?
   team                  Team?                   @relation(fields: [teamId], references: [id])
@@ -2648,7 +2654,7 @@ model CalendarSettings {
 // of the same team that overlap (see prisma/calendar-constraints.sql), so no channel can double-book a team.
 model CalendarEntry {
   id            String          @id @default(cuid())
-  kind          String          @default("BOOKING") // BOOKING | BLOCK
+  kind          String          @default("BOOKING") // BOOKING | BLOCK | HOLD (a customer's chosen time, kept for a few minutes while they finish booking)
   teamId        String
   team          Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
   orderId       String?         @unique
@@ -2665,10 +2671,15 @@ model CalendarEntry {
   quantity      Int?
   notes         String          @default("")
   createdByName String          @default("")
+  // A HOLD stops counting the moment it expires; holdKey is the secret the customer's booking quotes to claim it.
+  expiresAt        DateTime?
+  holdKey          String?         @unique
+  heldByCustomerId String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   events        CalendarEvent[]
 
+  @@index([heldByCustomerId])
   @@index([teamId, startsAt])
   @@index([startsAt])
 }

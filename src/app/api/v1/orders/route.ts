@@ -8,6 +8,8 @@ import { z } from "zod";
 import { resolveQuote } from "@/lib/pricing/resolve";
 import { isPaid } from "@/lib/orders/customerFlow";
 import { QuoteError } from "@/lib/pricing/priceQuote";
+import { attachHold, claimHold, peekHold, visitMinutes } from "@/lib/calendar/public";
+import { loadSettings as loadCalendarSettings } from "@/lib/calendar/service";
 
 export function OPTIONS() {
   return corsPreflight();
@@ -83,6 +85,8 @@ const pricedBookingSchema = z.object({
     .optional(),
   consent: z.literal(true),
   idempotencyKey: z.string().min(8).max(100),
+  // The time the customer chose on the calendar: the booking takes its time (and a team) from this hold, never from scheduledAt.
+  holdKey: z.string().min(8).max(100).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -157,6 +161,13 @@ export async function POST(request: NextRequest) {
   return apiSuccess(order, { status: 201 });
 }
 
+// Thrown inside the booking's transaction so a lost hold rolls everything back.
+class HoldLost extends Error {
+  constructor(readonly code: string, message: string) {
+    super(message);
+  }
+}
+
 async function createPricedOrder(
   raw: unknown,
   customer: { id: string; name: string; phone: string; language: string; locationUrl: string | null }
@@ -180,9 +191,20 @@ async function createPricedOrder(
     return apiSuccess({ ...existing, extraOrders }, { status: 200 });
   }
 
-  const scheduledAt = input.scheduledAt ? parseUaeDateTimeLocal(input.scheduledAt) : null;
+  let scheduledAt = input.scheduledAt ? parseUaeDateTimeLocal(input.scheduledAt) : null;
   if (input.scheduledAt && !scheduledAt) {
     return apiError("invalid_request", "scheduledAt must be formatted as YYYY-MM-DDTHH:mm.", 400);
+  }
+
+  // A held calendar time decides the visit time. It must still be the customer's, unexpired, and for exactly what they are booking.
+  if (input.holdKey) {
+    const held = await peekHold(input.holdKey, customer.id);
+    if (!held.ok) return apiError(held.code, held.error, 409);
+    const minutes = Math.round((held.end.getTime() - held.start.getTime()) / 60000);
+    const cfg = await loadCalendarSettings();
+    if (held.regionId !== input.regionId || minutes !== visitMinutes(cfg, [{ serviceId: input.serviceId, quantity: input.quantity }, ...extras.map((e) => ({ serviceId: e.serviceId, quantity: e.quantity }))]))
+      return apiError("hold_mismatch", "Your booking changed after you chose the time. Please choose the time again.", 409);
+    scheduledAt = held.start;
   }
 
   // Price every service first: if any one is unavailable, nothing is created.
@@ -209,8 +231,12 @@ async function createPricedOrder(
 
   const now = new Date();
   const numbers = await generateOrderNumbers(lines.length);
-  const created = await prisma.$transaction(async (tx) => {
+  let created;
+  try {
+  created = await prisma.$transaction(async (tx) => {
     const out = [];
+    const claimed = input.holdKey ? await claimHold(tx, { holdKey: input.holdKey, customerId: customer.id }) : null;
+    if (claimed && !claimed.ok) throw new HoldLost(claimed.code, claimed.error);
     for (const [i, l] of lines.entries()) {
       const resolved = resolvedLines[i];
       const order = await tx.order.create({
@@ -218,6 +244,8 @@ async function createPricedOrder(
           number: numbers[i],
           date: now,
           scheduledAt,
+          // The time was held on a team's calendar: the first order takes that team (it stays "Requested" until the office confirms it).
+          ...(i === 0 && claimed?.ok ? { teamId: claimed.claim.teamId } : {}),
           customerId: customer.id,
           locationUrl: input.locationUrl?.trim() || customer.locationUrl || null,
           customerLanguage: input.customerLanguage ?? customer.language,
@@ -237,10 +265,15 @@ async function createPricedOrder(
         select: orderSelect,
       });
       await tx.orderEvent.create({ data: { orderId: order.id, type: "CREATED" } });
+      if (i === 0 && claimed?.ok) await attachHold(tx, claimed.claim, { id: order.id, number: order.number });
       out.push(order);
     }
     return out;
   });
+  } catch (err) {
+    if (err instanceof HoldLost) return apiError(err.code, err.message, 409);
+    throw err;
+  }
   const [order, ...extraOrders] = created;
 
   try {

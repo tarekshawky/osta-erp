@@ -2,59 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type R = Record<string, any>;
-const mem = vi.hoisted(() => ({ schedules: [] as R[], entries: [] as R[], events: [] as R[], orders: [] as R[], customers: [] as R[], changes: [] as R[], settings: null as R | null, seq: 0, raceOnce: false }));
 
-vi.mock("@/lib/prisma", () => {
-  const overlap = (a: R, b: R) => a.startsAt < b.busyUntil && b.startsAt < a.busyUntil;
-  const entryWhere = (e: R, w: R): boolean => Object.entries(w).every(([k, v]) => {
-    if (k === "startsAt" && v && typeof v === "object" && "lt" in (v as object)) return e.startsAt < (v as R).lt;
-    if (k === "endsAt" && v && typeof v === "object" && "gt" in (v as object)) return e.endsAt > (v as R).gt;
-    if (k === "busyUntil" && v && typeof v === "object" && "gt" in (v as object)) return e.busyUntil > (v as R).gt;
-    if (k === "id" && v && typeof v === "object" && "not" in (v as object)) return e.id !== (v as R).not;
-    if (k === "OR") return true;
-    return e[k] === v;
-  });
-  const db: R = {
-    team: { findUnique: async ({ where }: R) => (where.id === "t1" || where.id === "t2" ? { id: where.id, name: where.id === "t1" ? "Ajman Team 1" : "Ajman Team 2" } : null) },
-    region: { findUnique: async ({ where }: R) => (where.id === "r1" ? { id: "r1", nameEn: "Ajman" } : null) },
-    bookableService: { findUnique: async ({ where }: R) => (where.id === "s1" ? { id: "s1" } : null) },
-    teamSchedule: {
-      findUnique: async ({ where }: R) => mem.schedules.find((s) => s.teamId === where.teamId) ?? null,
-      findMany: async ({ where }: R) => mem.schedules.filter((s) => (where?.active === undefined || s.active === where.active)),
-      upsert: async ({ where, create, update }: R) => { const i = mem.schedules.findIndex((s) => s.teamId === where.teamId); if (i >= 0) Object.assign(mem.schedules[i], update); else mem.schedules.push({ ...create }); return {}; },
-    },
-    calendarSettings: { findUnique: async () => mem.settings, upsert: async ({ create, update }: R) => { mem.settings = mem.settings ? { ...mem.settings, ...update } : create; return mem.settings; } },
-    calendarEntry: {
-      findUnique: async ({ where }: R) => mem.entries.find((e) => (where.id ? e.id === where.id : e.orderId === where.orderId)) ?? null,
-      findMany: async ({ where }: R) => { if (mem.raceOnce) { mem.raceOnce = false; return []; } return mem.entries.filter((e) => entryWhere(e, where)); },
-      create: async ({ data }: R) => {
-        // The database's own protection: an active, non-override period may not overlap another of the same team.
-        if (data.state !== "CANCELLED" && !data.override && mem.entries.some((e) => e.teamId === data.teamId && e.state === "ACTIVE" && !e.override && overlap(e, data))) throw new Error('conflicting key value violates exclusion constraint "CalendarEntry_no_overlap"');
-        const e = { id: `e${++mem.seq}`, state: "ACTIVE", override: false, reason: "", notes: "", area: "", quantity: null, orderId: null, ...data }; mem.entries.push(e); return e;
-      },
-      update: async ({ where, data }: R) => {
-        const e = mem.entries.find((x) => x.id === where.id)!; const next = { ...e, ...data };
-        if (next.state === "ACTIVE" && !next.override && mem.entries.some((o) => o.id !== e.id && o.teamId === next.teamId && o.state === "ACTIVE" && !o.override && overlap(o, next))) throw new Error("violates exclusion constraint");
-        Object.assign(e, data); return e;
-      },
-    },
-    calendarEvent: { create: async ({ data }: R) => { mem.events.push({ ...data, createdAt: new Date() }); return data; }, findMany: async ({ where }: R) => mem.events.filter((e) => e.entryId === where.entryId) },
-    order: {
-      findUnique: async ({ where }: R) => { const o = mem.orders.find((x) => x.id === where.id); return o ? { ...o } : null; },
-      findMany: async ({ where }: R) => mem.orders.filter((o) => (!where.teamId || where.teamId.in.includes(o.teamId)) && o.scheduledAt && o.status !== "Cancelled" && !mem.entries.some((e) => e.orderId === o.id)),
-      create: async ({ data }: R) => { const o = { id: `o${++mem.seq}`, ...data }; mem.orders.push(o); return o; },
-      update: async ({ where, data }: R) => { const o = mem.orders.find((x) => x.id === where.id)!; Object.assign(o, data); return o; },
-    },
-    orderStatusChange: { create: async ({ data }: R) => { mem.changes.push(data); return data; } },
-    $queryRaw: async () => [],
-  };
-  db.$transaction = async (cb: (tx: unknown) => unknown) => cb(db);
-  return { prisma: db };
-});
+vi.mock("@/lib/prisma", async () => ({ prisma: (await import("./testDb")).db }));
 // The real function needs an emirate for a new customer; the mock enforces the same so a missing one cannot slip through.
 vi.mock("@/lib/customerMatch", () => ({ findOrCreateCustomer: async (i: R) => { if (!i.emirate) throw new Error("emirate is required"); mem.customers.push(i); return { id: "c1" }; } }));
 vi.mock("@/lib/orderData", () => ({ generateOrderNumber: async () => `ORD-2026-00000${mem.seq + 1}` }));
 
+import { mem } from "./testDb";
 import * as cal from "./service";
 import { at } from "./time";
 import { DEFAULT_SETTINGS } from "./config";

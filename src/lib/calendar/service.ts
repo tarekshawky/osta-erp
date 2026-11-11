@@ -33,7 +33,7 @@ export async function saveSettings(raw: unknown, adminName: string): Promise<Res
 }
 
 export type TeamSchedule = { teamId: string; active: boolean; regionIds: string[]; serviceIds: string[]; rules: TeamRules };
-type ScheduleRow = { teamId: string; active: boolean; regionIds: string[]; serviceIds: string[]; workDays: number[]; startTime: string; endTime: string; breaks: unknown; travelMinutes: number; maxPerDay: number };
+export type ScheduleRow = { teamId: string; active: boolean; regionIds: string[]; serviceIds: string[]; workDays: number[]; startTime: string; endTime: string; breaks: unknown; travelMinutes: number; maxPerDay: number };
 export const toSchedule = (r: ScheduleRow): TeamSchedule => ({
   teamId: r.teamId, active: r.active, regionIds: r.regionIds, serviceIds: r.serviceIds,
   rules: { workDays: r.workDays, startTime: r.startTime, endTime: r.endTime, breaks: parseBreaks(r.breaks), travelMinutes: r.travelMinutes, maxPerDay: r.maxPerDay },
@@ -69,7 +69,7 @@ type EntryRow = {
 
 export async function listItems(input: { from: Date; to: Date; teamId?: string; regionId?: string }): Promise<CalendarItem[]> {
   const rows = (await prisma.calendarEntry.findMany({
-    where: { startsAt: { lt: input.to }, endsAt: { gt: input.from }, ...(input.teamId ? { teamId: input.teamId } : {}), ...(input.regionId ? { OR: [{ regionId: input.regionId }, { kind: "BLOCK" }] } : {}) },
+    where: { kind: { not: "HOLD" }, startsAt: { lt: input.to }, endsAt: { gt: input.from }, ...(input.teamId ? { teamId: input.teamId } : {}), ...(input.regionId ? { OR: [{ regionId: input.regionId }, { kind: "BLOCK" }] } : {}) },
     orderBy: { startsAt: "asc" },
     include: { team: { select: { name: true } }, order: { select: { number: true, status: true, customer: { select: { name: true, phone: true } }, bookableService: { select: { nameEn: true } }, region: { select: { nameEn: true } } } } },
   })) as unknown as EntryRow[];
@@ -82,13 +82,14 @@ export async function listItems(input: { from: Date; to: Date; teamId?: string; 
 
 // ---- the checked write ----
 
-const EXCLUSION = /exclusion constraint|23P01|CalendarEntry_no_overlap/i;
-type Tx = Prisma.TransactionClient;
+export const EXCLUSION = /exclusion constraint|23P01|CalendarEntry_no_overlap/i;
+export type Tx = Prisma.TransactionClient;
 
-async function busyOf(tx: Tx, teamId: string, start: Date, excludeId?: string): Promise<Busy[]> {
+export async function busyOf(tx: Tx, teamId: string, start: Date, excludeId?: string): Promise<Busy[]> {
   const day = startOfDay(dayKey(start));
   const rows = await tx.calendarEntry.findMany({
-    where: { teamId, state: "ACTIVE", startsAt: { lt: new Date(day.getTime() + 2 * DAY_MS) }, busyUntil: { gt: new Date(day.getTime() - DAY_MS) }, ...(excludeId ? { id: { not: excludeId } } : {}) },
+    // A customer's held time counts only until it expires.
+    where: { teamId, state: "ACTIVE", OR: [{ kind: { not: "HOLD" } }, { expiresAt: { gt: new Date() } }], startsAt: { lt: new Date(day.getTime() + 2 * DAY_MS) }, busyUntil: { gt: new Date(day.getTime() - DAY_MS) }, ...(excludeId ? { id: { not: excludeId } } : {}) },
     select: { startsAt: true, endsAt: true, busyUntil: true, kind: true },
   });
   return rows as Busy[];
@@ -109,18 +110,20 @@ export async function checkSlot(tx: Tx, slot: Slot, now = new Date()): Promise<{
 }
 
 // Only an authorised override may ignore a conflict; every other rule is for the customer channel (ignoreLimits relaxes those for the team).
-const HARD = new Set(["conflict"]);
+export const HARD = new Set(["conflict"]);
 export const describe = (p: Problem[]) => p.map((x) => x.message).join(" ");
 
-async function lock(tx: Tx, teamId: string) {
+// Every write takes this lock first. Holds that have run out are released here, so the database constraint never blocks on a stale hold.
+export async function lock(tx: Tx, teamId: string) {
   await tx.$queryRaw`SELECT "teamId" FROM "TeamSchedule" WHERE "teamId" = ${teamId} FOR UPDATE`;
+  await tx.calendarEntry.updateMany({ where: { teamId, kind: "HOLD", state: "ACTIVE", expiresAt: { lte: new Date() } }, data: { state: "CANCELLED" } });
 }
 
-async function log(tx: Tx, entryId: string, action: string, actor: Actor, detail = "") {
+export async function log(tx: Tx, entryId: string, action: string, actor: Actor, detail = "") {
   await tx.calendarEvent.create({ data: { entryId, action, actorName: actor.name, detail } });
 }
 
-const fmt = (d: Date) => new Date(d.getTime() + 4 * 60 * MIN).toISOString().slice(0, 16).replace("T", " ");
+export const fmt = (d: Date) => new Date(d.getTime() + 4 * 60 * MIN).toISOString().slice(0, 16).replace("T", " ");
 
 // ---- orders and the calendar ----
 
