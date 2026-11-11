@@ -5,6 +5,7 @@ import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { QuotationWizard } from "@/components/quotation/QuotationWizard";
 import { CATEGORIES, SERVICE_CATALOG, CUSTOM_SERVICE_VALUE, type Category } from "@/lib/invoiceData";
 import type { CustomerFormData, ServiceFormData } from "@/components/invoice/types";
+import { emptyWarranty } from "@/lib/warranty";
 import { emptyServiceItem } from "@/components/invoice/types";
 
 function detectCategory(serviceNames: string[]): Category {
@@ -64,6 +65,7 @@ export default async function AdminQuotationEditPage({
       : [{ ...emptyServiceItem }],
     inventoryEmployeeId: "",
     inventoryUsage: [],
+    warranty: { ...emptyWarranty },
   };
 
   return (

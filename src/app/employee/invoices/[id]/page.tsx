@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { warrantyDisplayOf } from "@/lib/warranty";
 import { collectionOf } from "@/lib/invoicePayment";
 import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -84,7 +85,7 @@ export default async function EmployeeInvoiceDetailPage({
             }}
             items={invoice.items}
             payment={invoice.payment}
-            warrantyUntil={invoice.warrantyUntil}
+            warranty={warrantyDisplayOf(invoice)}
             createdByName={invoice.createdBy.name}
             createdByCode={invoice.createdBy.code}
             createdAt={invoice.createdAt}

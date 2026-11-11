@@ -7,6 +7,7 @@ import { SERVICE_CATALOG, CUSTOM_SERVICE_VALUE, type Category } from "@/lib/invo
 import { getInventoryItemDisplayName, getBulkLocationQuantities } from "@/lib/inventoryData";
 import type { CustomerFormData, ServiceFormData, PaymentFormData } from "@/components/invoice/types";
 import { emptyServiceItem } from "@/components/invoice/types";
+import { warrantyFormOf } from "@/lib/warranty";
 
 export default async function AdminInvoiceEditPage({
   params,
@@ -88,6 +89,8 @@ export default async function AdminInvoiceEditPage({
       : [{ ...emptyServiceItem }],
     inventoryEmployeeId,
     inventoryUsage: existingUsage.map((u) => ({ inventoryItemId: u.inventoryItemId, quantity: String(u.quantity) })),
+    // The stored choice comes back as it was saved; an invoice from before the choice existed offers keeping its original warranty.
+    warranty: warrantyFormOf(invoice, invoice.date),
   };
 
   const initialPayment: PaymentFormData = {
@@ -117,6 +120,7 @@ export default async function AdminInvoiceEditPage({
         inventoryOptions={inventoryOptions}
         sparePartOptions={sparePartOptions}
         labourOptions={labourOptions}
+        legacyWarrantyUntil={invoice.warrantyMode === null ? invoice.warrantyUntil : null}
       />
     </div>
   );

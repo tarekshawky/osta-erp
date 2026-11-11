@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { warrantyDisplayOf } from "@/lib/warranty";
 import { amountReceived, collectionOf, remainingBalance } from "@/lib/invoicePayment";
 import { PaymentUpdatePanel } from "@/components/invoice/PaymentUpdatePanel";
 import { formatDateSlash } from "@/lib/format";
@@ -169,7 +170,7 @@ export default async function AdminInvoiceDetailPage({
             }}
             items={invoice.items}
             payment={invoice.payment}
-            warrantyUntil={invoice.warrantyUntil}
+            warranty={warrantyDisplayOf(invoice)}
             createdByName={invoice.createdBy.name}
             createdByCode={invoice.createdBy.code}
             createdAt={invoice.createdAt}

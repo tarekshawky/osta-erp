@@ -5,6 +5,8 @@ import { inputClassName } from "@/components/FormField";
 import type { ServiceFormData, ServiceItemFormData, InventoryUsageItemFormData } from "./types";
 import { emptyServiceItem, emptyInventoryUsageItem } from "./types";
 import { InvoiceItemLine, type SparePartOption, type LabourOption } from "./InvoiceItemLine";
+import { WarrantyOptions } from "./WarrantyOptions";
+import { warrantyChoiceComplete } from "@/lib/warranty";
 import { tajawal } from "@/lib/fonts";
 import type { EmployeeLang } from "@/lib/employeeLang";
 
@@ -92,6 +94,9 @@ export function ServiceStep({
   sparePartMaxDiscountPercent = null,
   labourPriceModification = "Allowed",
   labourMaxDiscountPercent = null,
+  showWarranty = false,
+  invoiceDate = "",
+  legacyWarrantyUntil = null,
   lang = "en",
 }: {
   value: ServiceFormData;
@@ -110,6 +115,10 @@ export function ServiceStep({
   sparePartMaxDiscountPercent?: number | null;
   labourPriceModification?: string;
   labourMaxDiscountPercent?: number | null;
+  // Invoices pick No Warranty / With Warranty here, after the items and prices; quotations carry no warranty.
+  showWarranty?: boolean;
+  invoiceDate?: string;
+  legacyWarrantyUntil?: Date | null;
   lang?: EmployeeLang;
 }) {
   const s = T[lang];
@@ -123,7 +132,8 @@ export function ServiceStep({
       const hasService = item.service === CUSTOM_SERVICE_VALUE ? item.customName.trim().length > 0 : item.service.length > 0;
       return hasService && Number(item.unitPrice) > 0;
     }) &&
-    value.inventoryUsage.every((line) => !line.inventoryItemId || Number(line.quantity) > 0);
+    value.inventoryUsage.every((line) => !line.inventoryItemId || Number(line.quantity) > 0) &&
+    (!showWarranty || warrantyChoiceComplete(value.warranty));
 
   const inventoryById = new Map(inventoryOptions.map((i) => [i.id, i]));
 
@@ -305,6 +315,16 @@ export function ServiceStep({
             {s.addInventoryItem}
           </button>
         </div>
+      )}
+
+      {showWarranty && (
+        <WarrantyOptions
+          value={value.warranty}
+          onChange={(warranty) => onChange({ ...value, warranty })}
+          invoiceDate={invoiceDate}
+          legacyUntil={legacyWarrantyUntil}
+          lang={lang}
+        />
       )}
 
       <button

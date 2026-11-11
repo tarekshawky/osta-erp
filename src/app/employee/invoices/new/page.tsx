@@ -6,6 +6,7 @@ import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
 import { getInventoryItemDisplayName, getBulkLocationQuantities } from "@/lib/inventoryData";
 import type { CustomerFormData, ServiceFormData } from "@/components/invoice/types";
+import { emptyWarranty } from "@/lib/warranty";
 import { getEmployeeLang } from "@/lib/employeeLang";
 
 export default async function NewInvoicePage({
@@ -94,6 +95,7 @@ export default async function NewInvoicePage({
         })),
         inventoryEmployeeId: employee.id,
         inventoryUsage: [],
+        warranty: { ...emptyWarranty },
       }
     : undefined;
 

@@ -1,4 +1,5 @@
 import type { Category, LeadSource } from "@/lib/invoiceData";
+import { emptyWarranty, type WarrantyFormData } from "@/lib/warranty";
 
 export type CustomerFormData = {
   type: "INDIVIDUAL" | "COMPANY";
@@ -44,6 +45,8 @@ export type ServiceFormData = {
   items: ServiceItemFormData[];
   inventoryEmployeeId: string;
   inventoryUsage: InventoryUsageItemFormData[];
+  // Chosen per invoice (invoices only; a quotation carries no warranty). Starts empty: nothing is picked for the employee.
+  warranty: WarrantyFormData;
 };
 
 export type PaymentFormData = {
@@ -90,6 +93,7 @@ export const emptyService: ServiceFormData = {
   items: [{ ...emptyServiceItem }],
   inventoryEmployeeId: "",
   inventoryUsage: [],
+  warranty: { ...emptyWarranty },
 };
 
 export const emptyPayment: PaymentFormData = {

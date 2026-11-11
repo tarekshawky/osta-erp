@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSession, isAdminRole } from "@/lib/session";
-import { CUSTOM_SERVICE_VALUE, WARRANTY_DAYS } from "@/lib/invoiceData";
+import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
+import { LEGACY_WARRANTY_DAYS, addDays, describeWarranty, resolveWarranty, type WarrantyFields } from "@/lib/warranty";
+import { writeAudit } from "@/lib/adminGuard";
 import { findOrCreateCustomer } from "@/lib/customerMatch";
 import { recordInventoryUsage, reverseInventoryUsage, InsufficientStockError } from "@/lib/inventoryData";
 import { validatePriceModification } from "@/lib/pricePermissions";
@@ -134,6 +136,21 @@ async function resolveInvoiceTeamId(teamId: string, isAdmin: boolean, employeeTe
   return team?.id ?? null;
 }
 
+type WarrantyAuditSource = Parameters<typeof describeWarranty>[0];
+
+function warrantyAuditOf(w: WarrantyAuditSource) {
+  return { warranty: describeWarranty(w), mode: w.warrantyMode, days: w.warrantyDays, startDate: w.warrantyStartDate, until: w.warrantyUntil };
+}
+
+// Who set or changed an invoice's warranty, and when (the log stamps the time). A logging failure must not undo an invoice that is saved.
+async function auditWarranty(actor: { id: string; name: string }, action: string, invoiceId: string, before: unknown, after: unknown) {
+  try {
+    await writeAudit(actor, action, "Invoice", invoiceId, before, after);
+  } catch (err) {
+    console.error("Could not write the warranty activity log entry", err);
+  }
+}
+
 export async function createInvoiceFromWizard(
   customer: CustomerFormData,
   service: ServiceFormData,
@@ -167,9 +184,10 @@ export async function createInvoiceFromWizard(
   if (!date) return { ok: false, error: "Enter a valid invoice date." };
   const teamId = await resolveInvoiceTeamId(payment.teamId, isAdminRole(session.role), employee.teamId);
   if (isAdminRole(session.role) && !teamId) return { ok: false, error: "Select Ajman or Al Ain team." };
+  // The warranty is always chosen on the invoice (no automatic default): No Warranty, or With Warranty and a duration.
+  const warranty = resolveWarranty(service.warranty, date);
+  if (!warranty.ok) return { ok: false, error: warranty.error };
   const dbCustomer = await findOrCreateCustomer(customer, employee.id);
-  const warrantyUntil = new Date(date);
-  warrantyUntil.setUTCDate(warrantyUntil.getUTCDate() + WARRANTY_DAYS);
 
   const numberPrefix = `INV-${date.getUTCFullYear()}-`;
   const lastInvoice = await prisma.invoice.findFirst({
@@ -209,7 +227,7 @@ export async function createInvoiceFromWizard(
           paymentDate: paidNow ? date : null,
           paymentLink: payment.paymentLink.trim() || null,
           leadSource: customer.leadSource,
-          warrantyUntil,
+          ...warranty.value,
           teamId,
           createdById: employee.id,
           items: {
@@ -241,6 +259,7 @@ export async function createInvoiceFromWizard(
   }
 
   if (usageLines.length > 0) revalidateInventoryPaths();
+  await auditWarranty(employee, "invoice.warranty.set", invoice.id, null, { number: invoice.number, ...warrantyAuditOf(warranty.value) });
 
   if (orderId) {
     await prisma.order.update({
@@ -295,8 +314,17 @@ export async function updateInvoiceFromWizard(
   const teamId = await resolveInvoiceTeamId(payment.teamId, true, null);
   if (!teamId) return { ok: false, error: "Select Ajman or Al Ain team." };
   const dbCustomer = await findOrCreateCustomer(customer, existing.createdById);
-  const warrantyUntil = new Date(date);
-  warrantyUntil.setUTCDate(warrantyUntil.getUTCDate() + WARRANTY_DAYS);
+  // An invoice made before the warranty became a choice can keep its original fixed warranty (still counted from the invoice date, as
+  // it always was); anything else must carry an explicit choice, and a change is written to the activity log below.
+  const keepLegacy = service.warranty.mode === "LEGACY" && existing.warrantyMode === null;
+  let warrantyData: Partial<WarrantyFields> & { warrantyUntil?: Date | null };
+  if (keepLegacy) {
+    warrantyData = { warrantyUntil: addDays(date, LEGACY_WARRANTY_DAYS) };
+  } else {
+    const warranty = resolveWarranty(service.warranty, date);
+    if (!warranty.ok) return { ok: false, error: warranty.error };
+    warrantyData = warranty.value;
+  }
 
   // No price-permission check here -- this action is already admin-only (see
   // the guard above), and Admins bypass price-modification restrictions
@@ -326,7 +354,7 @@ export async function updateInvoiceFromWizard(
           paymentLink: payment.paymentLink.trim() || null,
           leadSource: customer.leadSource,
           date,
-          warrantyUntil,
+          ...warrantyData,
           teamId,
           items: { create: items },
         },
@@ -340,8 +368,17 @@ export async function updateInvoiceFromWizard(
     throw err;
   }
 
+  const after = { ...existing, ...warrantyData };
+  if (describeWarranty(existing) !== describeWarranty(after)) {
+    const actor = await prisma.employee.findUnique({ where: { id: session.employeeId }, select: { id: true, name: true } });
+    if (actor) {
+      await auditWarranty(actor, "invoice.warranty.change", invoiceId, { number: existing.number, ...warrantyAuditOf(existing) }, { number: existing.number, ...warrantyAuditOf(after) });
+    }
+  }
+
   revalidatePath(`/admin/invoices/${invoiceId}`);
   revalidatePath("/admin/invoices");
+  revalidatePath("/admin/warranty-certificates/invoices");
   revalidatePath("/admin/wallets");
   revalidatePath("/admin/marketing");
   revalidateInventoryPaths();

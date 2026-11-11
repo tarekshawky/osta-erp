@@ -12,6 +12,7 @@ import { InvoicePreviewCard } from "./InvoicePreviewCard";
 import { createInvoiceFromWizard, updateInvoiceFromWizard } from "@/app/actions/invoice";
 import { emptyCustomer, emptyService, emptyPayment, type CustomerFormData, type ServiceFormData, type PaymentFormData } from "./types";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
+import { LEGACY_WARRANTY_DAYS, addDays, warrantyDates, type WarrantyDisplay } from "@/lib/warranty";
 import { formatAed, formatUaePhone } from "@/lib/format";
 import { tajawal } from "@/lib/fonts";
 import type { EmployeeLang } from "@/lib/employeeLang";
@@ -79,6 +80,7 @@ export function InvoiceWizard({
   sparePartMaxDiscountPercent = null,
   labourPriceModification = "Allowed",
   labourMaxDiscountPercent = null,
+  legacyWarrantyUntil = null,
   lang = "en",
 }: {
   basePath: "/admin" | "/employee";
@@ -102,6 +104,8 @@ export function InvoiceWizard({
   sparePartMaxDiscountPercent?: number | null;
   labourPriceModification?: string;
   labourMaxDiscountPercent?: number | null;
+  // Editing an invoice made before the warranty became a choice: its original warranty can be kept as it is.
+  legacyWarrantyUntil?: Date | null;
   lang?: EmployeeLang;
 }) {
   const router = useRouter();
@@ -203,6 +207,15 @@ export function InvoiceWizard({
       unitPrice: Number(item.unitPrice) || 0,
     }));
 
+  const invoiceDay = new Date(`${payment.date}T12:00:00Z`);
+  const w = service.warranty;
+  const previewWarranty: WarrantyDisplay = (() => {
+    if (w.mode === "LEGACY") return { kind: "LEGACY", until: addDays(invoiceDay, LEGACY_WARRANTY_DAYS) };
+    if (w.mode !== "WITH" || !w.days) return { kind: "NONE" };
+    const dates = warrantyDates(Number(w.days), w.startMode, w.startDate, invoiceDay);
+    return { kind: "WITH", days: Number(w.days), start: dates?.start ?? null, until: dates?.until ?? null };
+  })();
+
   return (
     <div className="px-5 py-4 pb-10">
       <StepHeader
@@ -234,6 +247,9 @@ export function InvoiceWizard({
           sparePartMaxDiscountPercent={sparePartMaxDiscountPercent}
           labourPriceModification={labourPriceModification}
           labourMaxDiscountPercent={labourMaxDiscountPercent}
+          showWarranty
+          invoiceDate={payment.date}
+          legacyWarrantyUntil={legacyWarrantyUntil}
           lang={lang}
         />
       )}
@@ -268,6 +284,7 @@ export function InvoiceWizard({
               }}
               items={previewItems}
               payment={payment.method}
+              warranty={previewWarranty}
               createdByName={createdByName}
               createdByCode={createdByCode}
             />

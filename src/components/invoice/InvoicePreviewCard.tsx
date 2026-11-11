@@ -1,7 +1,8 @@
 import { Inter } from "next/font/google";
 import { LogoImage } from "@/components/LogoImage";
 import { formatNumber2, formatDateSlash, formatDateTimeSlash } from "@/lib/format";
-import { COMPANY_INFO, INVOICE_NOTE, INVOICE_TERMS, WARRANTY_DAYS } from "@/lib/invoiceData";
+import { COMPANY_INFO, INVOICE_NOTE, invoiceTerms } from "@/lib/invoiceData";
+import { WARRANTY_TERMS, termsWarrantyDays, type WarrantyDisplay } from "@/lib/warranty";
 import { amountInWordsAed } from "@/lib/numberToWords";
 import type { PaymentState } from "@/lib/invoicePayment";
 
@@ -193,7 +194,7 @@ export function InvoicePreviewCard({
   customer,
   items,
   payment,
-  warrantyUntil,
+  warranty,
   createdByName,
   createdByCode,
   createdAt,
@@ -206,7 +207,7 @@ export function InvoicePreviewCard({
   customer: PreviewCustomer;
   items: PreviewItem[];
   payment: string;
-  warrantyUntil?: Date | null;
+  warranty: WarrantyDisplay;
   createdByName: string;
   createdByCode?: string;
   createdAt?: Date;
@@ -215,6 +216,7 @@ export function InvoicePreviewCard({
 }) {
   const total = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
   const billToName = customer.type === "COMPANY" ? customer.companyName || customer.name : customer.name;
+  const terms = invoiceTerms(termsWarrantyDays(warranty));
 
   return (
     <div
@@ -388,13 +390,29 @@ export function InvoicePreviewCard({
           <div className="h-9 w-9 rounded-full flex items-center justify-center shrink-0" style={{ color: NAVY }}>
             <ShieldIcon />
           </div>
-          <div>
-            <div className="text-[10px] font-bold tracking-wide text-gray-500">WARRANTY UNTIL</div>
-            <div className="text-sm font-bold text-gray-900">
-              {warrantyUntil ? formatDateSlash(warrantyUntil) : "—"}
+          {warranty.kind === "LEGACY" ? (
+            <div>
+              <div className="text-[10px] font-bold tracking-wide text-gray-500">WARRANTY UNTIL</div>
+              <div className="text-sm font-bold text-gray-900">{formatDateSlash(warranty.until)}</div>
+              <div className="text-xs text-gray-400">({termsWarrantyDays(warranty)} Days Warranty)</div>
             </div>
-            <div className="text-xs text-gray-400">({WARRANTY_DAYS} Days Warranty)</div>
-          </div>
+          ) : warranty.kind === "WITH" ? (
+            <div>
+              <div className="text-[10px] font-bold tracking-wide text-gray-500">WARRANTY / الضمان</div>
+              <div className="text-sm font-bold text-gray-900">{warranty.days} Days</div>
+              <div className="text-xs text-gray-500">
+                Start Date: {warranty.start ? formatDateSlash(warranty.start) : "Pending (work not completed)"}
+              </div>
+              <div className="text-xs text-gray-500">
+                Expiry Date: {warranty.until ? formatDateSlash(warranty.until) : "Pending"}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="text-[10px] font-bold tracking-wide text-gray-500">WARRANTY / الضمان</div>
+              <div className="text-sm font-bold text-gray-900">Not Included – بدون ضمان</div>
+            </div>
+          )}
         </div>
         <div className="p-4 flex items-center gap-3">
           <div className="h-9 w-9 rounded-full flex items-center justify-center shrink-0" style={{ color: NAVY }}>
@@ -449,6 +467,36 @@ export function InvoicePreviewCard({
       )}
       </div>
 
+      {/* Warranty terms -- only on invoices that carry a warranty */}
+      {warranty.kind === "WITH" && (
+        <div className="mt-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-xs font-bold tracking-wide" style={{ color: NAVY }}>
+              WARRANTY TERMS &amp; CONDITIONS
+            </div>
+            <div className="text-xs font-bold tracking-wide" style={{ color: NAVY }} dir="rtl">
+              شروط وأحكام الضمان
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+            <div className="flex flex-col gap-2">
+              {WARRANTY_TERMS.en.map((text, i) => (
+                <p key={i} className="text-xs text-gray-600">
+                  {text}
+                </p>
+              ))}
+            </div>
+            <div className="flex flex-col gap-2" dir="rtl">
+              {WARRANTY_TERMS.ar.map((text, i) => (
+                <p key={i} className="text-xs text-gray-600 text-right">
+                  {text}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Terms & Conditions */}
       <div className="mt-6">
         <div className="flex items-center justify-between gap-4">
@@ -461,7 +509,7 @@ export function InvoicePreviewCard({
         </div>
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 items-start">
           <ol className="flex flex-col gap-2">
-            {INVOICE_TERMS.map((term, i) => (
+            {terms.map((term, i) => (
               <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
                 <span
                   className="h-4 w-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5"
@@ -484,7 +532,7 @@ export function InvoicePreviewCard({
             </div>
           </div>
           <ol className="flex flex-col gap-2" dir="rtl">
-            {INVOICE_TERMS.map((term, i) => (
+            {terms.map((term, i) => (
               <li key={i} className="flex items-start gap-2 text-xs text-gray-600 text-right">
                 <span>{term.ar}</span>
                 <span
