@@ -55,6 +55,8 @@ export type PaymentFormData = {
   status: "Paid" | "Unpaid";
   date: string;
   teamId: string;
+  // The technician who did the work, picked from the invoice's team.
+  technicianId: string;
   paymentLink: string;
 };
 
@@ -101,6 +103,7 @@ export const emptyPayment: PaymentFormData = {
   status: "Paid",
   date: new Date().toISOString().slice(0, 10),
   teamId: "",
+  technicianId: "",
   paymentLink: "",
 };
 

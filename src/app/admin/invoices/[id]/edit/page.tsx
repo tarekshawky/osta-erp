@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getInvoiceTerms } from "@/lib/invoiceTermsDb";
+import { loadCrewTeams } from "@/lib/invoiceCrewDb";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
@@ -100,15 +101,19 @@ export default async function AdminInvoiceEditPage({
     status: invoice.status === "Unpaid" ? "Unpaid" : "Paid",
     date: invoice.date.toISOString().slice(0, 10),
     teamId: invoice.teamId ?? "",
+    technicianId: invoice.technicianId ?? "",
     paymentLink: invoice.paymentLink ?? "",
   };
 
-  const termsConfig = await getInvoiceTerms();
+  const [termsConfig, crewTeams] = await Promise.all([getInvoiceTerms(), loadCrewTeams(undefined, invoice.technicianId ? [invoice.technicianId] : [])]);
   return (
     <div className="pb-10">
       <AdminTopBar title="Invoices" />
       <InvoiceWizard
         termsConfig={termsConfig}
+        crewTeams={crewTeams}
+        // An old invoice with no technician can be saved as it is; once one is picked, it stays required.
+        technicianOptional={!invoice.technicianId}
         basePath="/admin"
         createdByName={admin.name}
         createdByCode={admin.code}

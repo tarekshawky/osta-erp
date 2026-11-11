@@ -6,6 +6,7 @@ import { getSession, isAdminRole } from "@/lib/session";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
 import { LEGACY_WARRANTY_DAYS, addDays, describeWarranty, resolveWarranty, type WarrantyFields } from "@/lib/warranty";
 import { writeAudit } from "@/lib/adminGuard";
+import { resolveCrew } from "@/lib/invoiceCrewDb";
 import { findOrCreateCustomer } from "@/lib/customerMatch";
 import { recordInventoryUsage, reverseInventoryUsage, InsufficientStockError } from "@/lib/inventoryData";
 import { validatePriceModification } from "@/lib/pricePermissions";
@@ -187,6 +188,14 @@ export async function createInvoiceFromWizard(
   // The warranty is always chosen on the invoice (no automatic default): No Warranty, or With Warranty and a duration.
   const warranty = resolveWarranty(service.warranty, date);
   if (!warranty.ok) return { ok: false, error: warranty.error };
+  // The technician is picked from the invoice's team (required, except for an employee who has no team to pick from); the supervisor is that
+  // team's Team Leader. Both are kept on the invoice.
+  let crew: { technicianId: string | null; supervisorId: string | null } = { technicianId: null, supervisorId: null };
+  if (teamId || isAdminRole(session.role)) {
+    const resolved = await resolveCrew(teamId, payment.technicianId);
+    if (!resolved.ok) return { ok: false, error: resolved.error };
+    crew = resolved;
+  }
   const dbCustomer = await findOrCreateCustomer(customer, employee.id);
 
   const numberPrefix = `INV-${date.getUTCFullYear()}-`;
@@ -229,6 +238,8 @@ export async function createInvoiceFromWizard(
           leadSource: customer.leadSource,
           ...warranty.value,
           teamId,
+          technicianId: crew.technicianId,
+          supervisorId: crew.supervisorId,
           createdById: employee.id,
           items: {
             create: items,
@@ -313,6 +324,15 @@ export async function updateInvoiceFromWizard(
   if (!date) return { ok: false, error: "Enter a valid invoice date." };
   const teamId = await resolveInvoiceTeamId(payment.teamId, true, null);
   if (!teamId) return { ok: false, error: "Select Ajman or Al Ain team." };
+  // An invoice made before the technician was chosen can stay without one; otherwise the technician must be picked from the invoice's team.
+  // The supervisor is only looked up again when the team or technician changes, so editing an invoice never rewrites who supervised it.
+  let crew = { technicianId: existing.technicianId, supervisorId: existing.supervisorId };
+  if (payment.technicianId || existing.technicianId) {
+    const resolved = await resolveCrew(teamId, payment.technicianId, existing.technicianId);
+    if (!resolved.ok) return { ok: false, error: resolved.error };
+    const unchanged = resolved.technicianId === existing.technicianId && teamId === existing.teamId && existing.supervisorId;
+    crew = { technicianId: resolved.technicianId, supervisorId: unchanged ? existing.supervisorId : resolved.supervisorId };
+  }
   const dbCustomer = await findOrCreateCustomer(customer, existing.createdById);
   // An invoice made before the warranty became a choice can keep its original fixed warranty (still counted from the invoice date, as
   // it always was); anything else must carry an explicit choice, and a change is written to the activity log below.
@@ -356,6 +376,8 @@ export async function updateInvoiceFromWizard(
           date,
           ...warrantyData,
           teamId,
+          technicianId: crew.technicianId,
+          supervisorId: crew.supervisorId,
           items: { create: items },
         },
       });

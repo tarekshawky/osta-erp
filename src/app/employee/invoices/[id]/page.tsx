@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getInvoiceTerms } from "@/lib/invoiceTermsDb";
 import { warrantyDisplayOf } from "@/lib/warranty";
+import { crewDisplayOf } from "@/lib/invoiceCrew";
 import { collectionOf } from "@/lib/invoicePayment";
 import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -28,7 +29,7 @@ export default async function EmployeeInvoiceDetailPage({
 
   const invoice = await prisma.invoice.findUnique({
     where: { id },
-    include: { customer: true, items: true, createdBy: true },
+    include: { customer: true, items: true, createdBy: true, team: true, technician: true, supervisor: true },
   });
   const canViewThis = employee.invoicesAccess === "All Records" || invoice?.createdById === employee.id;
   if (!invoice || !canViewThis) notFound();
@@ -90,7 +91,7 @@ export default async function EmployeeInvoiceDetailPage({
             warranty={warrantyDisplayOf(invoice)}
             termsConfig={termsConfig}
             createdByName={invoice.createdBy.name}
-            createdByCode={invoice.createdBy.code}
+            crew={crewDisplayOf(invoice)}
             createdAt={invoice.createdAt}
             collection={collectionOf(invoice)}
           />

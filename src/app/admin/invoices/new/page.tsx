@@ -1,5 +1,6 @@
 import { requireEmployee } from "@/lib/auth";
 import { getInvoiceTerms } from "@/lib/invoiceTermsDb";
+import { loadCrewTeams } from "@/lib/invoiceCrewDb";
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { InvoiceWizard } from "@/components/invoice/InvoiceWizard";
@@ -102,12 +103,13 @@ export default async function AdminNewInvoicePage({
       }
     : undefined;
 
-  const termsConfig = await getInvoiceTerms();
+  const [termsConfig, crewTeams] = await Promise.all([getInvoiceTerms(), loadCrewTeams()]);
   return (
     <div className="pb-10">
       <AdminTopBar title="Invoices" />
       <InvoiceWizard
         termsConfig={termsConfig}
+        crewTeams={crewTeams}
         basePath="/admin"
         createdByName={employee.name}
         createdByCode={employee.code}

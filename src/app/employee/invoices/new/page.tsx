@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getInvoiceTerms } from "@/lib/invoiceTermsDb";
+import { loadCrewTeams } from "@/lib/invoiceCrewDb";
 import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { TopBar } from "@/components/TopBar";
@@ -100,12 +101,15 @@ export default async function NewInvoicePage({
       }
     : undefined;
 
-  const termsConfig = await getInvoiceTerms();
+  const [termsConfig, crewTeams] = await Promise.all([getInvoiceTerms(), employee.teamId ? loadCrewTeams(employee.teamId) : Promise.resolve([])]);
   return (
     <div className="pb-8">
       <TopBar title={{ ar: "الفواتير", en: "Invoices" }} />
       <InvoiceWizard
         termsConfig={termsConfig}
+        crewTeams={crewTeams}
+        fixedTeamId={employee.teamId}
+        technicianOptional={crewTeams.length === 0}
         basePath="/employee"
         createdByName={employee.name}
         createdByCode={employee.code}

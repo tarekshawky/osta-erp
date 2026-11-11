@@ -102,6 +102,8 @@ model Employee {
   teamId                       String?
   team                         Team?                          @relation(fields: [teamId], references: [id])
   invoices                     Invoice[]
+  invoicesAsTechnician         Invoice[]                      @relation("InvoiceTechnician")
+  invoicesAsSupervisor         Invoice[]                      @relation("InvoiceSupervisor")
   jobsCreated                  Job[]                          @relation("JobCreatedBy")
   expenses                     Expense[]
   payrollEntries               PayrollEntry[]                 @relation("PayrollFor")
@@ -286,6 +288,13 @@ model Invoice {
   warrantyUntil         DateTime?
   teamId                String?
   team                  Team?                   @relation(fields: [teamId], references: [id])
+  // Who did the work and who supervised it, shown on the invoice under the team. The technician is picked from the team when the invoice
+  // is made; the supervisor is the team's Team Leader at that moment, kept so later staff changes never rewrite an old invoice. Both are
+  // null on invoices made before this existed (they show the creator as the technician, as they always did).
+  technicianId          String?
+  technician            Employee?               @relation("InvoiceTechnician", fields: [technicianId], references: [id])
+  supervisorId          String?
+  supervisor            Employee?               @relation("InvoiceSupervisor", fields: [supervisorId], references: [id])
   createdById           String
   createdBy             Employee                @relation(fields: [createdById], references: [id])
   items                 InvoiceItem[]
@@ -2626,7 +2635,6 @@ model SelfQuoteFile {
   @@index([quoteId])
 }
 
-
 // ---- Calendar & Scheduling ----
 // A team's own working schedule. A team with no row (or active = false) is not managed by the calendar: its orders behave exactly as before.
 model TeamSchedule {
@@ -2656,31 +2664,31 @@ model CalendarSettings {
 // calendar shows them in UAE time. busyUntil = endsAt + the team's travel time. The database refuses two active, non-overridden periods
 // of the same team that overlap (see prisma/calendar-constraints.sql), so no channel can double-book a team.
 model CalendarEntry {
-  id            String          @id @default(cuid())
-  kind          String          @default("BOOKING") // BOOKING | BLOCK | HOLD (a customer's chosen time, kept for a few minutes while they finish booking)
-  teamId        String
-  team          Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  orderId       String?         @unique
-  order         Order?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  startsAt      DateTime
-  endsAt        DateTime
-  busyUntil     DateTime
-  state         String          @default("ACTIVE") // ACTIVE | CANCELLED
-  override      Boolean         @default(false) // booked past a conflict by an authorised admin (outside the database protection)
-  reason        String          @default("")
-  serviceId     String?
-  regionId      String?
-  area          String          @default("")
-  quantity      Int?
-  notes         String          @default("")
-  createdByName String          @default("")
+  id               String          @id @default(cuid())
+  kind             String          @default("BOOKING") // BOOKING | BLOCK | HOLD (a customer's chosen time, kept for a few minutes while they finish booking)
+  teamId           String
+  team             Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  orderId          String?         @unique
+  order            Order?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  startsAt         DateTime
+  endsAt           DateTime
+  busyUntil        DateTime
+  state            String          @default("ACTIVE") // ACTIVE | CANCELLED
+  override         Boolean         @default(false) // booked past a conflict by an authorised admin (outside the database protection)
+  reason           String          @default("")
+  serviceId        String?
+  regionId         String?
+  area             String          @default("")
+  quantity         Int?
+  notes            String          @default("")
+  createdByName    String          @default("")
   // A HOLD stops counting the moment it expires; holdKey is the secret the customer's booking quotes to claim it.
   expiresAt        DateTime?
   holdKey          String?         @unique
   heldByCustomerId String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  events        CalendarEvent[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  events           CalendarEvent[]
 
   @@index([heldByCustomerId])
   @@index([teamId, startsAt])

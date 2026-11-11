@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getInvoiceTerms } from "@/lib/invoiceTermsDb";
 import { warrantyDisplayOf } from "@/lib/warranty";
+import { crewDisplayOf } from "@/lib/invoiceCrew";
 import { amountReceived, collectionOf, remainingBalance } from "@/lib/invoicePayment";
 import { PaymentUpdatePanel } from "@/components/invoice/PaymentUpdatePanel";
 import { formatDateSlash } from "@/lib/format";
@@ -25,6 +26,9 @@ export default async function AdminInvoiceDetailPage({
       customer: true,
       items: true,
       createdBy: true,
+      team: true,
+      technician: true,
+      supervisor: true,
       statusChanges: { orderBy: { createdAt: "desc" }, include: { changedBy: true } },
       payments: { orderBy: { createdAt: "desc" }, include: { changedBy: true } },
     },
@@ -175,7 +179,7 @@ export default async function AdminInvoiceDetailPage({
             warranty={warrantyDisplayOf(invoice)}
             termsConfig={termsConfig}
             createdByName={invoice.createdBy.name}
-            createdByCode={invoice.createdBy.code}
+            crew={crewDisplayOf(invoice)}
             createdAt={invoice.createdAt}
             collection={collectionOf(invoice)}
           />

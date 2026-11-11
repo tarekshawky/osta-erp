@@ -13,6 +13,7 @@ import { createInvoiceFromWizard, updateInvoiceFromWizard } from "@/app/actions/
 import { emptyCustomer, emptyService, emptyPayment, type CustomerFormData, type ServiceFormData, type PaymentFormData } from "./types";
 import { CUSTOM_SERVICE_VALUE } from "@/lib/invoiceData";
 import type { InvoiceTermsConfig } from "@/lib/invoiceTerms";
+import { teamLabel, type CrewDisplay, type CrewTeam } from "@/lib/invoiceCrew";
 import { LEGACY_WARRANTY_DAYS, addDays, warrantyDates, type WarrantyDisplay } from "@/lib/warranty";
 import { formatAed, formatUaePhone } from "@/lib/format";
 import { tajawal } from "@/lib/fonts";
@@ -83,6 +84,9 @@ export function InvoiceWizard({
   labourMaxDiscountPercent = null,
   legacyWarrantyUntil = null,
   termsConfig,
+  crewTeams = [],
+  fixedTeamId = null,
+  technicianOptional = false,
   lang = "en",
 }: {
   basePath: "/admin" | "/employee";
@@ -110,6 +114,11 @@ export function InvoiceWizard({
   legacyWarrantyUntil?: Date | null;
   // The invoice terms from Settings, so the preview prints what the saved invoice will.
   termsConfig?: InvoiceTermsConfig;
+  // The teams with their supervisor and technician choices. An employee is fixed to their own team; an admin picks the team.
+  crewTeams?: CrewTeam[];
+  fixedTeamId?: string | null;
+  // True when there is nothing to pick (an old invoice with no technician, or an employee with no team).
+  technicianOptional?: boolean;
   lang?: EmployeeLang;
 }) {
   const router = useRouter();
@@ -220,6 +229,15 @@ export function InvoiceWizard({
     return { kind: "WITH", days: Number(w.days), start: dates?.start ?? null, until: dates?.until ?? null };
   })();
 
+  const crewTeam = crewTeams.find((t) => t.id === (fixedTeamId ?? payment.teamId));
+  const pickedTechnician = crewTeam?.technicians.find((t) => t.id === payment.technicianId);
+  const previewCrew: CrewDisplay = {
+    teamName: crewTeam ? teamLabel(crewTeam.name) : null,
+    supervisor: pickedTechnician ? (crewTeam?.supervisor?.name ?? null) : null,
+    // With no technician picked (only possible when it is optional) the creator is shown, as invoices always did.
+    technician: pickedTechnician ? { name: pickedTechnician.name, code: pickedTechnician.code } : { name: createdByName, code: createdByCode ?? "" },
+  };
+
   return (
     <div className="px-5 py-4 pb-10">
       <StepHeader
@@ -266,6 +284,9 @@ export function InvoiceWizard({
           onNext={() => setStep(3)}
           showInvoiceControls={basePath === "/admin"}
           teamOptions={teamOptions}
+          crewTeams={crewTeams}
+          fixedTeamId={fixedTeamId}
+          technicianOptional={technicianOptional}
           lang={lang}
         />
       )}
@@ -291,7 +312,7 @@ export function InvoiceWizard({
               warranty={previewWarranty}
               termsConfig={termsConfig}
               createdByName={createdByName}
-              createdByCode={createdByCode}
+              crew={previewCrew}
             />
             <button
               type="button"

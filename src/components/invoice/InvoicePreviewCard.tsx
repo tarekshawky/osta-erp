@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import { LogoImage } from "@/components/LogoImage";
 import { formatNumber2, formatDateSlash, formatDateTimeSlash } from "@/lib/format";
 import { COMPANY_INFO, INVOICE_NOTE } from "@/lib/invoiceData";
+import type { CrewDisplay } from "@/lib/invoiceCrew";
 import { termsWarrantyDays, type WarrantyDisplay } from "@/lib/warranty";
 import { DEFAULT_INVOICE_TERMS, termsForInvoice, type InvoiceTermsConfig } from "@/lib/invoiceTerms";
 import { amountInWordsAed } from "@/lib/numberToWords";
@@ -198,7 +199,7 @@ export function InvoicePreviewCard({
   warranty,
   termsConfig = DEFAULT_INVOICE_TERMS,
   createdByName,
-  createdByCode,
+  crew,
   createdAt,
   collection,
   innerRef,
@@ -213,7 +214,8 @@ export function InvoicePreviewCard({
   // The Terms & Conditions and Warranty Terms to print (edited in Settings > Invoice terms).
   termsConfig?: InvoiceTermsConfig;
   createdByName: string;
-  createdByCode?: string;
+  // The team, its supervisor and the technician, printed in the box beside Bill To.
+  crew: CrewDisplay;
   createdAt?: Date;
   collection?: PreviewCollection;
   innerRef?: React.Ref<HTMLDivElement>;
@@ -280,9 +282,19 @@ export function InvoicePreviewCard({
             {[customer.buildingName, customer.flatNo, customer.emirate].filter(Boolean).join(", ")}
           </div>
         </InfoCard>
-        <InfoCard title="TECHNICIAN" icon={<HardHatIcon />}>
-          <div className="font-bold text-gray-900">{createdByName}</div>
-          {createdByCode && <div className="text-sm text-gray-500 mt-0.5">ID: {createdByCode}</div>}
+        <InfoCard title="TEAM / الفريق" icon={<HardHatIcon />}>
+          <div className="font-bold text-gray-900">{crew.teamName ?? "—"}</div>
+          {crew.supervisor && (
+            <div className="text-sm text-gray-500 mt-0.5">
+              Supervisor: <span className="font-semibold text-gray-700">{crew.supervisor}</span>
+            </div>
+          )}
+          {crew.technician && (
+            <div className="text-sm text-gray-500 mt-0.5">
+              Technician: <span className="font-semibold text-gray-700">{crew.technician.name}</span>
+              <span className="text-gray-400"> (ID: {crew.technician.code})</span>
+            </div>
+          )}
         </InfoCard>
       </div>
 

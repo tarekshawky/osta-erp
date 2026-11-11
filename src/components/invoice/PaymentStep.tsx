@@ -6,6 +6,7 @@ import { Field, inputClassName } from "@/components/FormField";
 import type { PaymentFormData, ServiceFormData } from "./types";
 import { tajawal } from "@/lib/fonts";
 import type { EmployeeLang } from "@/lib/employeeLang";
+import { teamLabel, type CrewTeam } from "@/lib/invoiceCrew";
 
 type TeamOption = { id: string; name: string };
 
@@ -53,6 +54,12 @@ const T = {
     team: "الفريق",
     selectTeam: "اختر فريقاً",
     teamSuffix: "فريق",
+    supervisor: "المشرف",
+    technician: "الفني",
+    selectTechnician: "اختر الفني",
+    pickTeamFirst: "اختر الفريق أولاً لاختيار الفني.",
+    noSupervisor: "لا يوجد مشرف (قائد فريق) لهذا الفريق",
+    noTechnicians: "لا يوجد أعضاء نشطون في هذا الفريق",
     paymentLink: "رابط الدفع (اختياري)",
     paymentLinkHelp: "مثال: رابط دفع من Ziina. إذا تم إدخاله، الفاتورة تبقى \"غير مدفوعة\" حتى يتم تأكيد استلام الدفع.",
     subtotal: "المجموع الفرعي",
@@ -69,6 +76,12 @@ const T = {
     team: "Team",
     selectTeam: "Select a team",
     teamSuffix: "Team",
+    supervisor: "Supervisor",
+    technician: "Technician",
+    selectTechnician: "Select the technician",
+    pickTeamFirst: "Select the team first to choose the technician.",
+    noSupervisor: "This team has no supervisor (Team Leader)",
+    noTechnicians: "This team has no active members",
     paymentLink: "Payment Link (optional)",
     paymentLinkHelp:
       "e.g. a Ziina payment link. If set, the invoice stays \"Unpaid\" until the payment is confirmed.",
@@ -86,6 +99,9 @@ export function PaymentStep({
   showInvoiceControls = false,
   showStatus = true,
   teamOptions = [],
+  crewTeams = [],
+  fixedTeamId = null,
+  technicianOptional = false,
   lang = "en",
 }: {
   value: PaymentFormData;
@@ -96,11 +112,17 @@ export function PaymentStep({
   // Hidden when editing: an existing invoice's payment is changed with "Update Payment Status" so it is recorded in the history.
   showStatus?: boolean;
   teamOptions?: TeamOption[];
+  // The team, its supervisor and the technicians to pick from. An employee is fixed to their own team; an admin picks the team above.
+  crewTeams?: CrewTeam[];
+  fixedTeamId?: string | null;
+  technicianOptional?: boolean;
   lang?: EmployeeLang;
 }) {
   const s = T[lang];
   const dir = lang === "ar" ? "rtl" : "ltr";
   const font = lang === "ar" ? tajawal.className : "";
+
+  const crewTeam = crewTeams.find((t) => t.id === (fixedTeamId ?? value.teamId));
 
   const total = service.items.reduce((sum, item) => {
     const hasItem =
@@ -180,7 +202,7 @@ export function PaymentStep({
             <select
               className={inputClassName}
               value={value.teamId}
-              onChange={(event) => onChange({ ...value, teamId: event.target.value })}
+              onChange={(event) => onChange({ ...value, teamId: event.target.value, technicianId: "" })}
             >
               <option value="">{s.selectTeam}</option>
               {teamOptions.map((team) => (
@@ -190,6 +212,37 @@ export function PaymentStep({
               ))}
             </select>
           </Field>
+        </div>
+      )}
+
+      {/* The team behind the invoice: its supervisor is the team's Team Leader, and the technician is picked from the team. */}
+      {(crewTeam || !technicianOptional) && (
+        <div className="rounded-xl border border-slate-200 p-3 flex flex-col gap-3">
+          <div className={`text-sm font-semibold text-slate-800 ${font}`} dir={dir}>
+            {s.team}
+            {crewTeam ? `: ${lang === "ar" ? `${s.teamSuffix} ${crewTeam.name}` : teamLabel(crewTeam.name)}` : ""}
+          </div>
+          {crewTeam ? (
+            <>
+              <div className={`text-xs text-slate-500 ${font}`} dir={dir}>
+                {s.supervisor}:{" "}
+                {crewTeam.supervisor ? <span className="font-semibold text-slate-700">{crewTeam.supervisor.name}</span> : <span className="text-amber-600">{s.noSupervisor}</span>}
+              </div>
+              <Field label={s.technician} dir={dir} labelClassName={font}>
+                <select className={inputClassName} value={value.technicianId} onChange={(event) => onChange({ ...value, technicianId: event.target.value })}>
+                  <option value="">{s.selectTechnician}</option>
+                  {crewTeam.technicians.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.code})
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              {crewTeam.technicians.length === 0 && <p className={`text-xs text-amber-600 ${font}`} dir={dir}>{s.noTechnicians}</p>}
+            </>
+          ) : (
+            <p className={`text-xs text-slate-400 ${font}`} dir={dir}>{s.pickTeamFirst}</p>
+          )}
         </div>
       )}
 
@@ -229,7 +282,7 @@ export function PaymentStep({
 
       <button
         type="button"
-        disabled={showInvoiceControls && (!value.date || !value.teamId)}
+        disabled={(showInvoiceControls && (!value.date || !value.teamId)) || (!technicianOptional && !value.technicianId)}
         onClick={onNext}
         className={`mt-2 w-full rounded-xl bg-blue-700 disabled:bg-blue-300 text-white font-medium text-sm py-3.5 flex items-center justify-center gap-2 ${font}`}
       >
