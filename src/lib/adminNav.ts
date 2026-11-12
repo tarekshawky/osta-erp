@@ -121,7 +121,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     id: "system", label: "System Administration", icon: "system",
-    items: [{ href: "/admin/settings", label: "Settings", keywords: "tax logo company invoice terms conditions warranty شروط واحكام", children: [{ href: "/admin/settings/invoice-terms", label: "Invoice terms" }, { href: "/admin/settings/content-database", label: "Content database" }] }, { href: "/admin/audit-log", label: "Audit Log", keywords: "history changes security" }],
+    items: [{ href: "/admin/settings", label: "Settings", keywords: "tax logo company invoice terms conditions warranty شروط واحكام", children: [{ href: "/admin/settings/invoice-terms", label: "Invoice terms & words" }, { href: "/admin/settings/content-database", label: "Content database" }] }, { href: "/admin/audit-log", label: "Audit Log", keywords: "history changes security" }],
   },
 ];
 

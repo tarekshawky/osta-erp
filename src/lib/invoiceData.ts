@@ -96,8 +96,3 @@ export const TERMS_AND_CONDITIONS = [
 ];
 
 export const TERMS_URL = "www.ostaservices.com/terms-and-conditions";
-
-export const INVOICE_NOTE = {
-  en: "Thank you for choosing OSTA Services. We appreciate your trust and look forward to serving you again.",
-  ar: "شكرًا لاختياركم خدمات أسطا. نقدّر ثقتكم ونتطلع لخدمتكم مجددًا.",
-};

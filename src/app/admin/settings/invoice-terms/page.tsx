@@ -12,8 +12,8 @@ export default async function InvoiceTermsPage() {
     <div className="pb-10">
       <AdminTopBar title="Settings" />
       <div className="px-6 py-6 max-w-4xl">
-        <h2 className="text-2xl font-bold text-slate-900">Invoice terms</h2>
-        <p className="text-sm text-slate-500 mt-0.5">The Terms &amp; Conditions and Warranty Terms printed on invoices, in English and Arabic. Add, edit, reorder or delete them.</p>
+        <h2 className="text-2xl font-bold text-slate-900">Invoice terms &amp; words</h2>
+        <p className="text-sm text-slate-500 mt-0.5">Every word printed on invoices, in English and Arabic: the Terms &amp; Conditions, the Warranty Terms, their headings and all the labels. Edit them here.</p>
         <div className="mt-6">
           <InvoiceTermsEditor initial={config} isDefault={isDefaultTerms(config)} />
         </div>

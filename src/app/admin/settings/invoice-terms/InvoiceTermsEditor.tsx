@@ -5,6 +5,7 @@ import { useToast } from "@/components/Toast";
 import { inputClassName } from "@/components/FormField";
 import { saveInvoiceTerms, resetInvoiceTerms } from "./actions";
 import { DAYS_TOKEN, MAX_TERMS, type InvoiceTermsConfig, type TermPair } from "@/lib/invoiceTerms";
+import { DEFAULT_LABELS, LABEL_GROUPS, type LabelKey } from "@/lib/invoiceLabels";
 
 type ListKey = "general" | "warranty";
 
@@ -33,6 +34,8 @@ export function InvoiceTermsEditor({ initial, isDefault }: { initial: InvoiceTer
   }
   const edit = (key: ListKey, i: number, patch: Partial<TermPair>) => change(key, config[key].map((t, j) => (j === i ? { ...t, ...patch } : t)));
   const remove = (key: ListKey, i: number) => change(key, config[key].filter((_, j) => j !== i));
+  const editTitle = (key: ListKey, patch: Partial<TermPair>) => setConfig((c) => ({ ...c, titles: { ...c.titles, [key]: { ...c.titles[key], ...patch } } }));
+  const editLabel = (key: LabelKey, patch: Partial<TermPair>) => setConfig((c) => ({ ...c, labels: { ...c.labels, [key]: { ...c.labels[key], ...patch } } }));
   const add = (key: ListKey) => change(key, [...config[key], { en: "", ar: "" }]);
   function move(key: ListKey, i: number, by: -1 | 1) {
     const list = [...config[key]];
@@ -70,6 +73,20 @@ export function InvoiceTermsEditor({ initial, isDefault }: { initial: InvoiceTer
         <div key={section.key} className="rounded-xl border border-slate-200 bg-white p-5">
           <h3 className="font-semibold text-slate-900">{section.title}</h3>
           <p className="text-sm text-slate-500 mt-0.5">{section.hint}</p>
+
+          <div className="mt-4 rounded-lg border border-slate-200 p-3">
+            <span className="text-xs font-semibold text-blue-700">Heading printed above this list</span>
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-slate-500">English</label>
+                <input type="text" className={inputClassName} value={config.titles[section.key].en} onChange={(e) => editTitle(section.key, { en: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">العربية</label>
+                <input type="text" dir="rtl" className={inputClassName} value={config.titles[section.key].ar} onChange={(e) => editTitle(section.key, { ar: e.target.value })} />
+              </div>
+            </div>
+          </div>
 
           <div className="mt-4 flex flex-col gap-4">
             {config[section.key].map((term, i) => (
@@ -115,6 +132,58 @@ export function InvoiceTermsEditor({ initial, isDefault }: { initial: InvoiceTer
           </button>
         </div>
       ))}
+
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <h3 className="font-semibold text-slate-900">Invoice words</h3>
+        <p className="text-sm text-slate-500 mt-0.5">
+          Every other fixed word printed on the invoice. Each one prints as &ldquo;English / العربية&rdquo;; leave one language empty to print only the other. Write {DAYS_TOKEN} where the
+          warranty days should appear.
+        </p>
+        {LABEL_GROUPS.map((group) => (
+          <div key={group.title} className="mt-5">
+            <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">{group.title}</div>
+            <div className="mt-2 flex flex-col gap-3">
+              {group.keys.map(([name]) => {
+                const key = name as LabelKey;
+                const value = config.labels[key];
+                const original = DEFAULT_LABELS[key];
+                const changed = value.en !== original.en || value.ar !== original.ar;
+                const long = key === "thankYou";
+                const field = (lang: "en" | "ar") =>
+                  long ? (
+                    <textarea rows={3} dir={lang === "ar" ? "rtl" : undefined} className={inputClassName} value={value[lang]} onChange={(e) => editLabel(key, { [lang]: e.target.value })} />
+                  ) : (
+                    <input type="text" dir={lang === "ar" ? "rtl" : undefined} className={inputClassName} value={value[lang]} onChange={(e) => editLabel(key, { [lang]: e.target.value })} />
+                  );
+                return (
+                  <div key={key} className="rounded-lg border border-slate-200 p-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-slate-500">English</label>
+                        {field("en")}
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-500">العربية</label>
+                        {field("ar")}
+                      </div>
+                    </div>
+                    {changed && (
+                      <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-400">
+                        <span className="truncate">
+                          Original: {original.en} / {original.ar}
+                        </span>
+                        <button type="button" onClick={() => editLabel(key, original)} className="shrink-0 text-blue-600">
+                          Restore
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 

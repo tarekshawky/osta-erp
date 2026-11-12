@@ -1,7 +1,8 @@
 import { Inter } from "next/font/google";
 import { LogoImage } from "@/components/LogoImage";
 import { formatNumber2, formatDateSlash, formatDateTimeSlash } from "@/lib/format";
-import { COMPANY_INFO, INVOICE_NOTE } from "@/lib/invoiceData";
+import { COMPANY_INFO } from "@/lib/invoiceData";
+import { fillLabelDays, type LabelPair } from "@/lib/invoiceLabels";
 import type { CrewDisplay } from "@/lib/invoiceCrew";
 import { termsWarrantyDays, type WarrantyDisplay } from "@/lib/warranty";
 import { DEFAULT_INVOICE_TERMS, termsForInvoice, type InvoiceTermsConfig } from "@/lib/invoiceTerms";
@@ -34,11 +35,29 @@ export type PreviewCollection = {
   paymentDateIsEstimate?: boolean;
 };
 
-const STAMP: Record<PaymentState, { color: string; label: string }> = {
-  PAID: { color: "#15803D", label: "PAID" },
-  UNPAID: { color: "#DC2626", label: "UNPAID" },
-  "PARTIALLY PAID": { color: "#EA580C", label: "PARTIALLY PAID" },
+const STAMP: Record<PaymentState, { color: string; key: "stampPaid" | "stampUnpaid" | "stampPartial" }> = {
+  PAID: { color: "#15803D", key: "stampPaid" },
+  UNPAID: { color: "#DC2626", key: "stampUnpaid" },
+  "PARTIALLY PAID": { color: "#EA580C", key: "stampPartial" },
 };
+
+// One editable word as "English / العربية". The Arabic part gets no letter-spacing (spacing pulls Arabic letters apart so they stop joining)
+// and is isolated so brackets inside it stay where they belong. A word left empty in one language prints only the other.
+export function Bi({ t, upper = false }: { t: LabelPair; upper?: boolean }) {
+  return (
+    <>
+      {t.en && <span className={upper ? "uppercase" : undefined}>{t.en}</span>}
+      {t.en && t.ar && " / "}
+      {t.ar && (
+        <span className="tracking-normal" dir="rtl" style={{ unicodeBidi: "isolate" }}>
+          {t.ar}
+        </span>
+      )}
+    </>
+  );
+}
+
+const plain = (t: LabelPair) => [t.en, t.ar].filter(Boolean).join(" / ");
 
 export type PreviewItem = {
   serviceName: string;
@@ -145,7 +164,7 @@ export function PinIcon() {
   );
 }
 
-export function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+export function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: React.ReactNode; value: string }) {
   return (
     <div className="flex items-center gap-3">
       <div
@@ -167,7 +186,7 @@ export function InfoCard({
   icon,
   children,
 }: {
-  title: string;
+  title: React.ReactNode;
   icon: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -222,7 +241,8 @@ export function InvoicePreviewCard({
 }) {
   const total = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
   const billToName = customer.type === "COMPANY" ? customer.companyName || customer.name : customer.name;
-  const { general: terms, warranty: warrantyTerms } = termsForInvoice(termsConfig, termsWarrantyDays(warranty));
+  const { general: terms, warranty: warrantyTerms, labels: L } = termsForInvoice(termsConfig, termsWarrantyDays(warranty));
+  const money = <span className="text-xs text-gray-400"><Bi t={L.currency} /></span>;
 
   return (
     <div
@@ -245,7 +265,7 @@ export function InvoicePreviewCard({
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
             <DocIcon />
             <span>
-              License No: {COMPANY_INFO.license} &nbsp;|&nbsp; TRN: {COMPANY_INFO.trn}
+              <Bi t={L.licenseNo} />: {COMPANY_INFO.license} &nbsp;|&nbsp; <Bi t={L.trn} />: {COMPANY_INFO.trn}
             </span>
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
@@ -256,13 +276,13 @@ export function InvoicePreviewCard({
 
         <div className="text-right shrink-0 mx-auto sm:mx-0">
           <div className="text-3xl sm:text-4xl font-extrabold tracking-wide" style={{ color: NAVY }}>
-            INVOICE
+            <Bi t={L.invoice} />
           </div>
           <div className="h-1 w-16 rounded-full mt-1.5 ml-auto" style={{ backgroundColor: BLUE }} />
           <div className="mt-4 flex flex-col gap-2.5 rounded-xl border border-gray-200 p-3">
-            <InfoRow icon={<DocIcon />} label="INVOICE NO." value={isDraft ? "DRAFT" : number} />
-            <InfoRow icon={<CalendarIcon />} label="INVOICE DATE" value={formatDateSlash(date)} />
-            <InfoRow icon={<CardIcon />} label="TRN" value={COMPANY_INFO.trn} />
+            <InfoRow icon={<DocIcon />} label={<Bi t={L.invoiceNo} />} value={isDraft ? plain(L.draft) : number} />
+            <InfoRow icon={<CalendarIcon />} label={<Bi t={L.invoiceDate} />} value={formatDateSlash(date)} />
+            <InfoRow icon={<CardIcon />} label={<Bi t={L.trn} />} value={COMPANY_INFO.trn} />
           </div>
         </div>
       </div>
@@ -271,28 +291,35 @@ export function InvoicePreviewCard({
 
       {/* Bill To / Technician */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <InfoCard title="BILL TO" icon={<PersonIcon />}>
+        <InfoCard title={<Bi t={L.billTo} />} icon={<PersonIcon />}>
           <div className="font-bold text-gray-900">{billToName}</div>
           {customer.type === "COMPANY" && customer.name && (
             <div className="text-sm text-gray-500 mt-0.5">{customer.name}</div>
           )}
-          {customer.trn && <div className="text-sm text-gray-500 mt-0.5">TRN: {customer.trn}</div>}
+          {customer.trn && (
+            <div className="text-sm text-gray-500 mt-0.5">
+              <Bi t={L.trn} />: {customer.trn}
+            </div>
+          )}
           <div className="text-sm text-gray-500 mt-0.5">{customer.phone}</div>
           <div className="text-sm text-gray-500">
             {[customer.buildingName, customer.flatNo, customer.emirate].filter(Boolean).join(", ")}
           </div>
         </InfoCard>
-        <InfoCard title="TEAM / الفريق" icon={<HardHatIcon />}>
+        <InfoCard title={<Bi t={L.team} />} icon={<HardHatIcon />}>
           <div className="font-bold text-gray-900">{crew.teamName ?? "—"}</div>
           {crew.supervisor && (
             <div className="text-sm text-gray-500 mt-0.5">
-              Supervisor: <span className="font-semibold text-gray-700">{crew.supervisor}</span>
+              <Bi t={L.supervisor} />: <span className="font-semibold text-gray-700">{crew.supervisor}</span>
             </div>
           )}
           {crew.technician && (
             <div className="text-sm text-gray-500 mt-0.5">
-              Technician: <span className="font-semibold text-gray-700">{crew.technician.name}</span>
-              <span className="text-gray-400"> (ID: {crew.technician.code})</span>
+              <Bi t={L.technician} />: <span className="font-semibold text-gray-700">{crew.technician.name}</span>
+              <span className="text-gray-400">
+                {" "}
+                (<Bi t={L.idLabel} />: {crew.technician.code})
+              </span>
             </div>
           )}
         </InfoCard>
@@ -304,12 +331,24 @@ export function InvoicePreviewCard({
           <thead>
             <tr className="text-white text-[10px] font-bold tracking-wide whitespace-nowrap" style={{ backgroundColor: NAVY }}>
               <th className="px-3 py-3 text-center w-8">#</th>
-              <th className="px-3 py-3 text-left">DESCRIPTION</th>
-              <th className="px-3 py-3 text-center">QTY</th>
-              <th className="px-3 py-3 text-center">UNIT</th>
-              <th className="px-3 py-3 text-right">UNIT PRICE (AED)</th>
-              <th className="px-3 py-3 text-right">DISCOUNT (AED)</th>
-              <th className="px-3 py-3 text-right">TOTAL (AED)</th>
+              <th className="px-3 py-3 text-left">
+                <Bi t={L.description} upper />
+              </th>
+              <th className="px-3 py-3 text-center">
+                <Bi t={L.qty} upper />
+              </th>
+              <th className="px-3 py-3 text-center">
+                <Bi t={L.unit} upper />
+              </th>
+              <th className="px-3 py-3 text-right">
+                <Bi t={L.unitPrice} upper />
+              </th>
+              <th className="px-3 py-3 text-right">
+                <Bi t={L.discount} upper />
+              </th>
+              <th className="px-3 py-3 text-right">
+                <Bi t={L.total} upper />
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -321,7 +360,9 @@ export function InvoicePreviewCard({
                   {item.description && <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>}
                 </td>
                 <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">{item.qty}</td>
-                <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">Unit</td>
+                <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
+                  <Bi t={L.unitValue} />
+                </td>
                 <td className="px-3 py-3 text-right text-gray-600 whitespace-nowrap">{formatNumber2(item.unitPrice)}</td>
                 <td className="px-3 py-3 text-right text-gray-600 whitespace-nowrap">0.00</td>
                 <td className="px-3 py-3 text-right font-bold text-gray-900 whitespace-nowrap">
@@ -344,15 +385,27 @@ export function InvoicePreviewCard({
             <div className="p-3">
               {item.description && <div className="text-xs text-gray-500 mb-2">{item.description}</div>}
               <div className="grid grid-cols-2 gap-y-1.5 text-xs">
-                <div className="text-gray-500">Qty</div>
+                <div className="text-gray-500">
+                  <Bi t={L.qty} />
+                </div>
                 <div className="text-right text-gray-900">{item.qty}</div>
-                <div className="text-gray-500">Unit</div>
-                <div className="text-right text-gray-900">Unit</div>
-                <div className="text-gray-500">Unit Price (AED)</div>
+                <div className="text-gray-500">
+                  <Bi t={L.unit} />
+                </div>
+                <div className="text-right text-gray-900">
+                  <Bi t={L.unitValue} />
+                </div>
+                <div className="text-gray-500">
+                  <Bi t={L.unitPrice} />
+                </div>
                 <div className="text-right text-gray-900">{formatNumber2(item.unitPrice)}</div>
-                <div className="text-gray-500">Discount (AED)</div>
+                <div className="text-gray-500">
+                  <Bi t={L.discount} />
+                </div>
                 <div className="text-right text-gray-900">0.00</div>
-                <div className="text-gray-700 font-semibold pt-1.5 border-t border-gray-100 mt-1.5">Total (AED)</div>
+                <div className="text-gray-700 font-semibold pt-1.5 border-t border-gray-100 mt-1.5">
+                  <Bi t={L.total} />
+                </div>
                 <div className="text-right font-bold text-gray-900 pt-1.5 border-t border-gray-100 mt-1.5">
                   {formatNumber2(item.qty * item.unitPrice)}
                 </div>
@@ -364,37 +417,57 @@ export function InvoicePreviewCard({
 
       {/* Notes + Summary */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-        <InfoCard title="NOTES" icon={<NotesIcon />}>
-          <p className="text-sm text-gray-600">
-            {INVOICE_NOTE.en.split("OSTA Services.")[0]}
-            <span className="font-semibold text-gray-900">OSTA Services.</span>
-            {INVOICE_NOTE.en.split("OSTA Services.")[1]}
-          </p>
+        <InfoCard title={<Bi t={L.notes} />} icon={<NotesIcon />}>
+          {L.thankYou.en && (
+            <p className="text-sm text-gray-600">
+              {L.thankYou.en.split("OSTA Services.")[0]}
+              {L.thankYou.en.includes("OSTA Services.") && (
+                <>
+                  <span className="font-semibold text-gray-900">OSTA Services.</span>
+                  {L.thankYou.en.split("OSTA Services.")[1]}
+                </>
+              )}
+            </p>
+          )}
+          {L.thankYou.ar && (
+            <p className="mt-2 text-sm text-gray-600 text-right" dir="rtl">
+              {L.thankYou.ar}
+            </p>
+          )}
         </InfoCard>
 
         <div className="rounded-xl border border-gray-200 overflow-hidden">
           <div className="p-4 flex flex-col gap-2 text-sm">
             <div className="flex justify-between text-gray-600">
-              <span>SUBTOTAL</span>
               <span>
-                {formatNumber2(total)} <span className="text-xs text-gray-400">AED</span>
+                <Bi t={L.subtotal} />
+              </span>
+              <span>
+                {formatNumber2(total)} {money}
               </span>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>DISCOUNT</span>
               <span>
-                0.00 <span className="text-xs text-gray-400">AED</span>
+                <Bi t={L.discountTotal} />
+              </span>
+              <span>
+                0.00 {money}
               </span>
             </div>
           </div>
           <div className="px-4 py-4 flex items-center justify-between text-white" style={{ backgroundColor: NAVY }}>
-            <span className="text-sm font-bold tracking-wide">GRAND TOTAL</span>
+            <span className="text-sm font-bold tracking-wide">
+              <Bi t={L.grandTotal} />
+            </span>
             <span className="text-2xl font-extrabold">
-              {formatNumber2(total)} <span className="text-sm font-medium">AED</span>
+              {formatNumber2(total)}{" "}
+              <span className="text-sm font-medium">
+                <Bi t={L.currency} />
+              </span>
             </span>
           </div>
           <div className="p-4 text-xs text-gray-500">
-            Amount in Words:
+            <Bi t={L.amountInWords} />:
             <div className="font-semibold text-gray-900 mt-0.5">{amountInWordsAed(total)}</div>
           </div>
         </div>
@@ -408,25 +481,37 @@ export function InvoicePreviewCard({
           </div>
           {warranty.kind === "LEGACY" ? (
             <div>
-              <div className="text-[10px] font-bold tracking-wide text-gray-500">WARRANTY UNTIL</div>
+              <div className="text-[10px] font-bold tracking-wide text-gray-500">
+                <Bi t={L.warrantyUntil} />
+              </div>
               <div className="text-sm font-bold text-gray-900">{formatDateSlash(warranty.until)}</div>
-              <div className="text-xs text-gray-400">({termsWarrantyDays(warranty)} Days Warranty)</div>
+              <div className="text-xs text-gray-400">
+                <Bi t={fillLabelDays(L.legacyWarrantyNote, termsWarrantyDays(warranty) ?? 0)} />
+              </div>
             </div>
           ) : warranty.kind === "WITH" ? (
             <div>
-              <div className="text-[10px] font-bold tracking-wide text-gray-500">WARRANTY / الضمان</div>
-              <div className="text-sm font-bold text-gray-900">{warranty.days} Days</div>
-              <div className="text-xs text-gray-500">
-                Start Date: {warranty.start ? formatDateSlash(warranty.start) : "Pending (work not completed)"}
+              <div className="text-[10px] font-bold tracking-wide text-gray-500">
+                <Bi t={L.warranty} />
+              </div>
+              <div className="text-sm font-bold text-gray-900">
+                <Bi t={fillLabelDays(L.warrantyDuration, warranty.days)} />
               </div>
               <div className="text-xs text-gray-500">
-                Expiry Date: {warranty.until ? formatDateSlash(warranty.until) : "Pending"}
+                <Bi t={L.startDate} />: {warranty.start ? formatDateSlash(warranty.start) : <Bi t={L.pendingStart} />}
+              </div>
+              <div className="text-xs text-gray-500">
+                <Bi t={L.expiryDate} />: {warranty.until ? formatDateSlash(warranty.until) : <Bi t={L.pending} />}
               </div>
             </div>
           ) : (
             <div>
-              <div className="text-[10px] font-bold tracking-wide text-gray-500">WARRANTY / الضمان</div>
-              <div className="text-sm font-bold text-gray-900">Not Included – بدون ضمان</div>
+              <div className="text-[10px] font-bold tracking-wide text-gray-500">
+                <Bi t={L.warranty} />
+              </div>
+              <div className="text-sm font-bold text-gray-900">
+                <Bi t={L.notIncluded} />
+              </div>
             </div>
           )}
         </div>
@@ -435,7 +520,9 @@ export function InvoicePreviewCard({
             <PersonIcon />
           </div>
           <div>
-            <div className="text-[10px] font-bold tracking-wide text-gray-500">CREATED BY</div>
+            <div className="text-[10px] font-bold tracking-wide text-gray-500">
+              <Bi t={L.createdBy} />
+            </div>
             <div className="text-sm font-bold text-gray-900">{createdByName}</div>
             <div className="text-xs text-gray-400">{formatDateTimeSlash(createdAt ?? date)}</div>
           </div>
@@ -446,39 +533,64 @@ export function InvoicePreviewCard({
       <div className="relative mt-6 border-t border-gray-100 pt-4">
         {collection && (
           <div
-            aria-label={`Payment status: ${STAMP[collection.state].label}`}
+            aria-label={`Payment status: ${plain(L[STAMP[collection.state].key])}`}
             className="pointer-events-none absolute left-[60%] top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap rounded-md border-[3px] px-2 py-0.5 text-base font-extrabold tracking-[0.15em] sm:left-1/2 sm:border-[5px] sm:px-6 sm:py-2 sm:text-4xl sm:tracking-[0.2em]"
             style={{ color: STAMP[collection.state].color, borderColor: STAMP[collection.state].color, rotate: "-8deg", opacity: 0.82 }}
           >
-            {STAMP[collection.state].label}
+            <div>{L[STAMP[collection.state].key].en}</div>
+            {L[STAMP[collection.state].key].ar && (
+              <div className="text-[0.5em] leading-tight tracking-normal" dir="rtl">
+                {L[STAMP[collection.state].key].ar}
+              </div>
+            )}
           </div>
         )}
       <div className="flex justify-between text-sm">
-        <span className="text-gray-500">Payment Method</span>
+        <span className="text-gray-500">
+          <Bi t={L.paymentMethod} />
+        </span>
         <span className="font-semibold text-gray-900">{payment}</span>
       </div>
       {collection && (
         <div className="mt-2 space-y-1.5 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-500">Payment Status</span>
-            <span className="font-bold" style={{ color: STAMP[collection.state].color }}>{STAMP[collection.state].label}</span>
+            <span className="text-gray-500">
+              <Bi t={L.paymentStatus} />
+            </span>
+            <span className="font-bold" style={{ color: STAMP[collection.state].color }}>
+              <Bi t={L[STAMP[collection.state].key]} />
+            </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Payment Date</span>
+            <span className="text-gray-500">
+              <Bi t={L.paymentDate} />
+            </span>
             <span className="font-semibold text-gray-900">
               {collection.paymentDate ? formatDateSlash(collection.paymentDate) : "—"}
               {collection.paymentDate && collection.paymentDateIsEstimate ? " *" : ""}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Paid Amount</span>
-            <span className="font-semibold text-gray-900">AED {formatNumber2(collection.received)}</span>
+            <span className="text-gray-500">
+              <Bi t={L.paidAmount} />
+            </span>
+            <span className="font-semibold text-gray-900">
+              {formatNumber2(collection.received)} {money}
+            </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Remaining Balance</span>
-            <span className="font-semibold text-gray-900">AED {formatNumber2(collection.remaining)}</span>
+            <span className="text-gray-500">
+              <Bi t={L.remainingBalance} />
+            </span>
+            <span className="font-semibold text-gray-900">
+              {formatNumber2(collection.remaining)} {money}
+            </span>
           </div>
-          {collection.paymentDateIsEstimate && <div className="text-[10px] text-gray-400">* Collected when the invoice was issued.</div>}
+          {collection.paymentDateIsEstimate && (
+            <div className="text-[10px] text-gray-400">
+              <Bi t={L.collectedAtIssue} />
+            </div>
+          )}
         </div>
       )}
       </div>
@@ -488,10 +600,11 @@ export function InvoicePreviewCard({
         <div className="mt-6">
           <div className="flex items-center justify-between gap-4">
             <div className="text-xs font-bold tracking-wide" style={{ color: NAVY }}>
-              WARRANTY TERMS &amp; CONDITIONS
+              {termsConfig.titles.warranty.en}
             </div>
-            <div className="text-xs font-bold tracking-wide" style={{ color: NAVY }} dir="rtl">
-              شروط وأحكام الضمان
+            {/* No letter-spacing on Arabic: it pulls the letters apart so they stop joining. */}
+            <div className="text-xs font-bold" style={{ color: NAVY }} dir="rtl">
+              {termsConfig.titles.warranty.ar}
             </div>
           </div>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
@@ -517,10 +630,10 @@ export function InvoicePreviewCard({
       <div className="mt-6">
         <div className="flex items-center justify-between gap-4">
           <div className="text-xs font-bold tracking-wide" style={{ color: NAVY }}>
-            TERMS &amp; CONDITIONS
+            {termsConfig.titles.general.en}
           </div>
-          <div className="text-xs font-bold tracking-wide" style={{ color: NAVY }} dir="rtl">
-            الشروط والأحكام
+          <div className="text-xs font-bold" style={{ color: NAVY }} dir="rtl">
+            {termsConfig.titles.general.ar}
           </div>
         </div>
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 items-start">

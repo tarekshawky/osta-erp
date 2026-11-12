@@ -112,7 +112,7 @@ export function CustomerPurchaseInvoice({ doc, innerRef }: { doc: PurchaseDoc; i
       <div className="mt-4 flex justify-end">
         <div className="w-full max-w-xs rounded-lg px-4 py-3 text-white" style={{ background: NAVY }}>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs font-bold tracking-wide">TOTAL · الإجمالي النهائي</span>
+            <span className="text-xs font-bold tracking-wide">TOTAL · <span className="tracking-normal">الإجمالي النهائي</span></span>
             <span className="text-lg font-bold">{formatAed(doc.total)}</span>
           </div>
         </div>
@@ -127,7 +127,7 @@ export function CustomerPurchaseInvoice({ doc, innerRef }: { doc: PurchaseDoc; i
 
       {isImage && (
         <div className="mt-4">
-          <div className="mb-1 text-[10px] font-bold tracking-wide text-gray-400">ORIGINAL SUPPLIER INVOICE · فاتورة المورد الأصلية</div>
+          <div className="mb-1 text-[10px] font-bold tracking-wide text-gray-400">ORIGINAL SUPPLIER INVOICE · <span className="tracking-normal">فاتورة المورد الأصلية</span></div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={doc.supplierInvoiceUrl!} alt="Original supplier invoice" className="max-h-80 w-auto rounded-lg border border-gray-200" />
         </div>
