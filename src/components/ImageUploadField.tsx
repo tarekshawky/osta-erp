@@ -37,7 +37,7 @@ export function ImageUploadField({ label, value, onChange, allowCrop = true }: {
       {value && (
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt="" className="h-32 w-full object-cover" />
+          <img src={value} alt="" className="h-32 w-full bg-slate-50 object-contain" />
         </div>
       )}
       {error && <p className="text-xs text-red-500">{error}</p>}
