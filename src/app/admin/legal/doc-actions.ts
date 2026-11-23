@@ -18,13 +18,12 @@ export type DraftInput = {
 
 const text = (s: unknown, max: number) => (typeof s === "string" ? s.trim().slice(0, max) : "");
 
-// Saves the working draft. The published text is never touched: only Publish creates a new version.
+// Saves the working draft. The published text is never touched: only Publish creates a new version. An archived (hidden) document can be edited too; it stays hidden until it is restored and published.
 export async function saveLegalDraft(id: string, input: DraftInput): Promise<DocResult> {
   const g = await guardPermission("legal.edit");
   if (!g.ok) return { ok: false, error: g.error };
   const doc = await prisma.legalDocument.findUnique({ where: { id } });
   if (!doc) return { ok: false, error: "This document no longer exists." };
-  if (doc.status === "ARCHIVED") return { ok: false, error: "This document is archived. Restore it before editing." };
   const titleEn = text(input.titleEn, 200), titleAr = text(input.titleAr, 200);
   if (!titleEn || !titleAr) return { ok: false, error: "Both the English and the Arabic title are required." };
   const kind: DocKind = (DOC_KINDS as readonly string[]).includes(input.kind) ? (input.kind as DocKind) : "POLICY";
@@ -171,7 +170,6 @@ export async function restoreVersionAsDraft(id: string, version: number): Promis
   if (!g.ok) return { ok: false, error: g.error };
   const doc = await prisma.legalDocument.findUnique({ where: { id } });
   if (!doc) return { ok: false, error: "This document no longer exists." };
-  if (doc.status === "ARCHIVED") return { ok: false, error: "This document is archived. Restore it before editing." };
   const v = await prisma.legalDocumentVersion.findUnique({ where: { documentId_version: { documentId: id, version } } });
   if (!v) return { ok: false, error: "That version no longer exists." };
   await prisma.legalDocument.update({ where: { id }, data: { titleEn: v.titleEn, titleAr: v.titleAr, summaryEn: v.summaryEn, summaryAr: v.summaryAr, draftIntroEn: v.introEn, draftIntroAr: v.introAr, draftSections: json(v.sections), draftSeo: json(v.seo), updatedByName: g.admin.name } });

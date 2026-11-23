@@ -19,7 +19,7 @@ export default async function EditLegalDocumentPage({ params }: { params: Promis
       <AdminTopBar title="Legal Center" />
       <div className="px-6 py-4">
         <h2 className="mb-1 text-xl font-bold text-slate-900">Edit: {doc.titleEn}</h2>
-        {doc.status === "ARCHIVED" && <p className="mb-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">This document is archived. Restore it from the document page before editing.</p>}
+        {doc.status === "ARCHIVED" && <p className="mb-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">This document is archived, so customers cannot see it. You can edit it here; it stays hidden until you restore it and publish it.</p>}
         <Editor
           id={doc.id} slug={doc.slug} categories={categories} others={others}
           initial={{

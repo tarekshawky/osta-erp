@@ -19,7 +19,7 @@ export function DocActions({ id, status, canPublishNow, everPublished }: { id: s
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        {status !== "ARCHIVED" && <Link href={`/admin/legal/${id}/edit`} className={`${btn} bg-slate-900 text-white`}>Edit</Link>}
+        <Link href={`/admin/legal/${id}/edit`} className={`${btn} bg-slate-900 text-white`}>Edit</Link>
         {status !== "ARCHIVED" && <button type="button" disabled={pending || !canPublishNow} onClick={() => setShowPublish((v) => !v)} className={`${btn} bg-blue-600 text-white`} title={canPublishNow ? "" : "Confirm the open decisions and fix what is listed first"}>Publish…</button>}
         <button type="button" disabled={pending} onClick={() => run(() => duplicateLegalDocument(id), (r) => router.push(`/admin/legal/${r.id}`))} className={`${btn} border border-slate-300 bg-white text-slate-800`}>Duplicate</button>
         {status === "ARCHIVED"

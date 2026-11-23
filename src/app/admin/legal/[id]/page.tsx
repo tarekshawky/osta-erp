@@ -77,7 +77,7 @@ export default async function LegalDocumentPage({ params, searchParams }: { para
               {doc.versions.map((v) => (
                 <li key={v.version} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <span><strong>v{v.version}</strong> · {v.publishedAt.toLocaleDateString("en-GB")}{doc.publishedVersionId && v.version === doc.versions[0].version ? " · live" : ""}{v.changeNote ? ` · ${v.changeNote}` : ""}</span>
-                  {doc.status !== "ARCHIVED" && <RestoreVersionButton id={doc.id} version={v.version} />}
+                  <RestoreVersionButton id={doc.id} version={v.version} />
                 </li>
               ))}
             </ul>
