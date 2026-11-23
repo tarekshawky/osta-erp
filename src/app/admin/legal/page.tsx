@@ -33,7 +33,7 @@ export default async function LegalCenterPage() {
             <h2 className="text-2xl font-bold text-slate-900">Legal Center</h2>
             <p className="mt-1 max-w-2xl text-sm text-slate-600">Policies and legal documents in English and Arabic. Every document starts as a draft and nothing is shown to customers until it is reviewed and published.</p>
           </div>
-          <Link href="/admin/legal/fields" className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800">Decisions to confirm ({open.length})</Link>
+          <div className="flex flex-wrap gap-2"><Link href="/admin/legal/new" className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">+ New document</Link><Link href="/admin/legal/fields" className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800">Decisions to confirm ({open.length})</Link></div>
         </div>
 
         {documents.length < 30 && (

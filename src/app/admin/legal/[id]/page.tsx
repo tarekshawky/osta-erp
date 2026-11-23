@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { LegalBody } from "@/components/legal/LegalBody";
+import { DocActions, RestoreVersionButton } from "./DocActions";
 import { KIND_LABEL, arabicProgress, fillKnownFields, numberSections, publishProblems, readSections, readSeo, readingMinutes, sectionFieldKeys, type DocKind, type FieldValue } from "@/lib/legal/content";
 
 export default async function LegalDocumentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ lang?: string }> }) {
@@ -49,8 +50,10 @@ export default async function LegalDocumentPage({ params, searchParams }: { para
           <p className="text-sm font-semibold text-slate-900">{problems.length ? `Not ready to publish (${problems.length})` : "Ready to publish"}</p>
           {problems.length > 0 && <ul className="mt-2 list-disc space-y-1 ps-5 text-sm text-slate-700">{problems.slice(0, 8).map((p, i) => <li key={i}>{p}</li>)}{problems.length > 8 && <li>…and {problems.length - 8} more.</li>}</ul>}
           {used.length > 0 && <p className="mt-2 text-xs text-slate-600">Decisions used: {used.map((k) => `{{${k}}}`).join(", ")}. <Link href="/admin/legal/fields" className="font-medium text-blue-600">Confirm them</Link></p>}
-          <p className="mt-2 text-xs text-slate-500">Publishing, editing and version history are added in the next step. This page shows the draft as it is stored.</p>
+          <p className="mt-2 text-xs text-slate-500">Below is the working draft. Customers only ever see the last published version.</p>
         </div>
+
+        <DocActions id={doc.id} status={doc.status} canPublishNow={problems.length === 0} everPublished={doc.versions.length > 0 || !!doc.publishedVersionId} />
 
         <article dir={ar ? "rtl" : "ltr"} className="rounded-xl border border-slate-200 bg-white p-6">
           {(ar ? doc.draftIntroAr : doc.draftIntroEn) && <div className="mb-6 border-b border-slate-100 pb-5"><LegalBody text={show(ar ? doc.draftIntroAr : doc.draftIntroEn)} /></div>}
@@ -68,7 +71,17 @@ export default async function LegalDocumentPage({ params, searchParams }: { para
         </article>
 
         {doc.versions.length > 0 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-sm font-semibold text-slate-900">Published versions</p><ul className="mt-2 text-sm text-slate-600">{doc.versions.map((v) => <li key={v.version}>v{v.version} · {v.publishedAt.toLocaleDateString("en-GB")} {v.changeNote && `· ${v.changeNote}`}</li>)}</ul></div>
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <p className="text-sm font-semibold text-slate-900">Published versions (never changed or deleted)</p>
+            <ul className="mt-2 divide-y divide-slate-100 text-sm text-slate-700">
+              {doc.versions.map((v) => (
+                <li key={v.version} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span><strong>v{v.version}</strong> · {v.publishedAt.toLocaleDateString("en-GB")}{doc.publishedVersionId && v.version === doc.versions[0].version ? " · live" : ""}{v.changeNote ? ` · ${v.changeNote}` : ""}</span>
+                  {doc.status !== "ARCHIVED" && <RestoreVersionButton id={doc.id} version={v.version} />}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </div>
