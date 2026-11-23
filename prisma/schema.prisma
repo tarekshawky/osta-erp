@@ -2707,3 +2707,98 @@ model CalendarEvent {
 
   @@index([entryId, createdAt])
 }
+
+// ===== Legal Center (policies & legal documents) =====
+
+// A group of documents (A Customer legal, B Service policies...). Owners can add their own.
+model LegalCategory {
+  id        String          @id @default(cuid())
+  key       String          @unique // the short letter shown in the menu: A, B, C...
+  slug      String          @unique
+  nameEn    String
+  nameAr    String
+  sortOrder Int             @default(0)
+  documents LegalDocument[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+// One legal document. draftSections / draftIntro* are what the editor works on; the public site only ever reads the published
+// LegalDocumentVersion snapshot, so editing never changes what visitors see until Publish. Published versions are never changed or deleted.
+model LegalDocument {
+  id                 String                 @id @default(cuid())
+  code               String                 @unique // OSTA-LEG-001
+  number             Int                    @default(0) // position in the menu
+  slug               String                 @unique
+  categoryId         String
+  category           LegalCategory          @relation(fields: [categoryId], references: [id])
+  status             String                 @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  kind               String                 @default("POLICY") // POLICY (binding) | NOTICE (informational) | INTERNAL (never shown to customers)
+  countries          String[]               @default(["AE"])
+  titleEn            String
+  titleAr            String
+  summaryEn          String                 @default("")
+  summaryAr          String                 @default("")
+  draftIntroEn       String                 @default("")
+  draftIntroAr       String                 @default("")
+  // [{ id, level: 1|2|3, headingEn, headingAr, bodyEn, bodyAr }]
+  draftSections      Json                   @default("[]")
+  // { titleEn, titleAr, descriptionEn, descriptionAr }
+  draftSeo           Json                   @default("{}")
+  effectiveDate      DateTime?
+  related            String[]               @default([]) // slugs of related documents
+  attachments        Json                   @default("[]") // [{ label, url }]
+  sortOrder          Int                    @default(0)
+  publishedVersionId String?                @unique
+  publishedVersion   LegalDocumentVersion?  @relation("LegalPublished", fields: [publishedVersionId], references: [id])
+  versions           LegalDocumentVersion[] @relation("LegalVersions")
+  createdById        String?
+  createdByName      String?
+  updatedByName      String?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([categoryId, sortOrder])
+  @@index([status])
+}
+
+// A published version: an exact, immutable copy of the document as customers saw it (with every {{field}} already filled in).
+model LegalDocumentVersion {
+  id            String         @id @default(cuid())
+  documentId    String
+  document      LegalDocument  @relation("LegalVersions", fields: [documentId], references: [id], onDelete: Restrict)
+  version       Int
+  kind          String         @default("PUBLISH") // PUBLISH
+  titleEn       String
+  titleAr       String
+  summaryEn     String         @default("")
+  summaryAr     String         @default("")
+  introEn       String         @default("")
+  introAr       String         @default("")
+  sections      Json
+  seo           Json           @default("{}")
+  effectiveDate DateTime?
+  changeNote    String         @default("")
+  editorName    String         @default("")
+  approverName  String         @default("")
+  publishedAt   DateTime       @default(now())
+  publishedFor  LegalDocument? @relation("LegalPublished")
+
+  @@unique([documentId, version])
+}
+
+// A commercial decision that has not been written into the policies yet (cancellation fee, refund days...). Documents refer to it as {{key}}.
+// A document cannot be published while a field it uses is still unconfirmed.
+model LegalField {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  labelEn       String
+  labelAr       String
+  hintEn        String   @default("")
+  valueEn       String   @default("")
+  valueAr       String   @default("")
+  confirmed     Boolean  @default(false)
+  updatedByName String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
