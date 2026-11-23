@@ -117,6 +117,11 @@ export function fillFields(text: string, values: Record<string, string>): string
   return clean(text).replace(FIELD_RE, (_m, k: string) => values[k.toLowerCase()] ?? "");
 }
 
+// Like fillFields, but a {{field}} with no value is left as it is (so a preview can still highlight what is open).
+export function fillKnownFields(text: string, values: Record<string, string>): string {
+  return clean(text).replace(FIELD_RE, (m, k: string) => (values[k.toLowerCase()] ? values[k.toLowerCase()] : m));
+}
+
 // ---- reading what the editor sends (never trust it) -----------------------------------------------------------------------------------
 
 export const MAX_SECTIONS = 400;

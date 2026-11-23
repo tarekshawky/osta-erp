@@ -44,6 +44,7 @@ const RENTAL_EXPENSES: NavLeaf = { href: "/admin/rental-expenses", label: "Renta
 const SERVICE_CATALOG: NavLeaf = { href: "/admin/catalog", label: "Service Catalogue", keywords: "services categories master list دليل الخدمات الأقسام import export csv" };
 const WEBSITE_SERVICES: NavLeaf = { href: "/admin/services", label: "Website Services", keywords: "service pages" };
 const BLOG: NavLeaf = { href: "/admin/blog", label: "Blog Management", keywords: "articles posts" };
+const LEGAL: NavLeaf = { href: "/admin/legal", label: "Legal Center", keywords: "policies terms conditions privacy warranty cancellation refund legal documents سياسات شروط أحكام خصوصية" };
 const BLOG_CATEGORIES: NavLeaf = { href: "/admin/blog/categories", label: "Blog Categories", keywords: "sections topics" };
 
 export const NAV_GROUPS: NavGroup[] = [
@@ -106,6 +107,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/home-sections", label: "Homepage Sections", keywords: "home" },
       BLOG,
       BLOG_CATEGORIES,
+      LEGAL,
       { href: "/admin/website/technical", label: "Technical Files & AI Management", keywords: "robots.txt llms.txt ads.txt ai crawlers" },
       { href: "/admin/website/code", label: "Global Header & Footer Code", keywords: "scripts tracking pixel head body custom code" },
       { href: "/admin/website/page-code", label: "Page-Level Header & Footer Code", keywords: "scripts per page custom code" },

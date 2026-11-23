@@ -21,6 +21,7 @@ export const ADMIN_SECTIONS = [
   { key: "/admin/financial-reports", label: "Financial Reports" },
   { key: "/admin/marketing", label: "Marketing" },
   { key: "/admin/blog", label: "Blog" },
+  { key: "/admin/legal", label: "Legal Center" },
   { key: "/admin/services", label: "Website Services" },
   { key: "/admin/catalog", label: "Service Catalogue" },
   { key: "/admin/website", label: "Website" },

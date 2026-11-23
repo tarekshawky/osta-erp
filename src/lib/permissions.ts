@@ -22,6 +22,8 @@ export const PERMISSIONS = [
   "quotes.manage",
   "calendar.manage",
   "calendar.override",
+  "legal.edit",
+  "legal.publish",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
