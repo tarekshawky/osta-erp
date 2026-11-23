@@ -5,6 +5,7 @@ import { ImageUploadField } from "@/components/ImageUploadField";
 import { useEffect, useRef, useState } from "react";
 import { LinkInserter, LinkPreview } from "@/components/cms/LinkInserter";
 import { RichTextEditor } from "@/components/cms/RichTextEditor";
+import { ImageMouseEditor } from "@/components/cms/ImageMouseEditor";
 import { listForms } from "@/app/admin/website/forms-actions";
 import type { FieldDef } from "@/lib/cms/blocks";
 import { ICON_NAMES } from "@/lib/cms/icons";
@@ -162,6 +163,8 @@ export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; v
                 </select>
               </label>
             );
+          case "imageTools":
+            return <ImageMouseEditor key={f.key} label={f.label} imageUrl={typeof value.imageUrl === "string" ? value.imageUrl : ""} props={value} onChange={onChange} />;
           case "form-select":
             return <FormPicker key={f.key} label={f.label} value={(v as string) ?? ""} onChange={(x) => set(f.key, x)} />;
           case "group":

@@ -35,6 +35,9 @@ const currency = z.enum(CURRENCIES);
 const BADGES = ["none", "featured", "popular", "bestSeller", "new", "offer", "limited"] as const;
 const money = z.string().max(30);
 
+export const IMAGE_SHAPES = ["none", "square", "rectangle", "landscape", "portrait", "circle", "rounded", "custom"] as const;
+export const IMAGE_CLIPS = ["none", "hexagon", "diamond", "arch", "leaf"] as const;
+
 // What an advanced image can change on tablets and phones; 0 / "inherit" = the same as the desktop setting.
 const IMAGE_DEVICE = z.object({
   width: z.number().min(0).max(5000), widthUnit: z.enum(["px", "%"]), maxWidth: z.number().min(0).max(5000), height: z.number().min(0).max(5000), maxHeight: z.number().min(0).max(5000),
@@ -255,6 +258,11 @@ const RAW_SCHEMAS = {
     frame: z.object({
       style: z.enum(["none", "thin", "thick", "dashed", "round", "custom"]), width: z.number().min(0).max(30), color: hexColor.optional(), radius: z.number().min(0).max(500),
       shadow: z.enum(["none", "sm", "md", "lg"]), bgColor: hexColor.optional(),
+      // The picture's shape: a preset box ("none" = the size settings decide), or "custom" with its own aspect ratio, corner roundness and cut-out.
+      // Optional so pictures saved before shapes existed stay valid.
+      shape: z.enum(IMAGE_SHAPES).optional(), ratioW: z.number().min(1).max(100).optional(), ratioH: z.number().min(1).max(100).optional(),
+      radiusTL: z.number().min(0).max(500).optional(), radiusTR: z.number().min(0).max(500).optional(), radiusBR: z.number().min(0).max(500).optional(), radiusBL: z.number().min(0).max(500).optional(),
+      clip: z.enum(IMAGE_CLIPS).optional(),
     }),
     effects: z.object({
       opacity: z.number().min(0).max(100), grayscale: z.number().min(0).max(100), blur: z.number().min(0).max(30), overlayColor: hexColor.optional(), overlayOpacity: z.number().min(0).max(100),
@@ -413,6 +421,8 @@ type FieldDefBase =
   | { kind: "text" | "textarea" | "url" | "image" | "number" | "color"; key: string; label: string }
   | { kind: "select"; key: string; label: string; options: { value: string; label: string }[] }
   | { kind: "form-select"; key: string; label: string }
+  // The mouse editor for the advanced image: drag to crop, resize and align. It reads and writes the block's own size and position settings, so it stores no value of its own.
+  | { kind: "imageTools"; key: string; label: string }
   | { kind: "group"; key: string; label: string; fields: FieldDef[]; collapsible?: boolean }
   | { kind: "list"; key: string; label: string; itemLabel: string; max: number; fields: FieldDef[] };
 
@@ -1143,6 +1153,7 @@ export const BLOCK_REGISTRY: Record<
     description: "A picture with full control: size, fit and crop, rotation, position and text wrap, frame, shadow and hover effects, any kind of link (page, WhatsApp, call, booking), optional title and button ON the picture (a clickable banner), bilingual alt text and caption, and separate settings for tablets and phones. Effects never change the original file.",
     fields: [
       { kind: "image", key: "imageUrl", label: "Image (choose from the media library or upload)" },
+      { kind: "imageTools", key: "imageTools", label: "Resize and crop with the mouse" },
       { kind: "bi-text", key: "alt", label: "Alt text (describes the picture for search engines and screen readers)" },
       { kind: "bi-text", key: "title", label: "Image title (tooltip)" },
       { kind: "bi-text", key: "caption", label: "Caption (shown under the picture)" },
@@ -1184,11 +1195,25 @@ export const BLOCK_REGISTRY: Record<
         ],
       },
       {
-        kind: "group", key: "frame", label: "Frame, shadow and background", collapsible: true, fields: [
+        kind: "group", key: "frame", label: "Shape, frame, shadow and background", collapsible: true, fields: [
+          {
+            kind: "select", key: "shape", label: "Picture shape (the picture fills the shape; choose the visible part with the focus point under Size. Crop is ignored while a shape is set)",
+            options: opts(["none", "As set under Size (no shape)"], ["square", "Square (1:1)"], ["rectangle", "Rectangle (4:3)"], ["landscape", "Landscape (16:9)"], ["portrait", "Portrait (3:4)"], ["circle", "Circle"], ["rounded", "Rounded rectangle (4:3, uses the corner roundness below)"], ["custom", "Custom shape (set below)"]),
+          },
+          { kind: "number", key: "ratioW", label: "Custom shape: width of the aspect ratio (for example 21)", showIf: { key: "shape", equals: "custom" } },
+          { kind: "number", key: "ratioH", label: "Custom shape: height of the aspect ratio (for example 9)", showIf: { key: "shape", equals: "custom" } },
+          { kind: "number", key: "radiusTL", label: "Custom shape: roundness of the top-left corner (px)", showIf: { key: "shape", equals: "custom" } },
+          { kind: "number", key: "radiusTR", label: "Custom shape: roundness of the top-right corner (px)", showIf: { key: "shape", equals: "custom" } },
+          { kind: "number", key: "radiusBR", label: "Custom shape: roundness of the bottom-right corner (px)", showIf: { key: "shape", equals: "custom" } },
+          { kind: "number", key: "radiusBL", label: "Custom shape: roundness of the bottom-left corner (px)", showIf: { key: "shape", equals: "custom" } },
+          {
+            kind: "select", key: "clip", label: "Custom shape: cut-out (replaces the corner roundness above)", showIf: { key: "shape", equals: "custom" },
+            options: opts(["none", "None (use the corner roundness)"], ["hexagon", "Hexagon"], ["diamond", "Diamond"], ["arch", "Arch (rounded top)"], ["leaf", "Leaf (two rounded corners)"]),
+          },
           { kind: "select", key: "style", label: "Frame", options: opts(["none", "No frame"], ["thin", "Thin"], ["thick", "Thick"], ["dashed", "Dashed"], ["round", "Round (circle or oval)"], ["custom", "Custom (set below)"]) },
           { kind: "number", key: "width", label: "Border width in pixels (custom frame)", showIf: { key: "style", equals: "custom" } },
           { kind: "color", key: "color", label: "Border colour (thin, thick, dashed and custom frames)" },
-          { kind: "number", key: "radius", label: "Corner roundness in pixels (0 = square)" },
+          { kind: "number", key: "radius", label: "Corner roundness in pixels (0 = square; used when there is no shape, or the rounded rectangle)" },
           { kind: "select", key: "shadow", label: "Shadow", options: opts(["none", "None"], ["sm", "Soft"], ["md", "Medium"], ["lg", "Strong"]) },
           { kind: "color", key: "bgColor", label: "Background colour behind the picture" },
         ],
@@ -1234,7 +1259,7 @@ export const BLOCK_REGISTRY: Record<
       imageUrl: "", alt: biEmpty(), title: biEmpty(), caption: biEmpty(), description: biEmpty(), credit: biEmpty(), lazy: "yes", body: biEmpty(),
       size: { mode: "auto", width: 0, widthUnit: "%", maxWidth: 0, height: 0, heightUnit: "px", maxHeight: 0, fit: "cover", focusX: 50, focusY: 50, cropTop: 0, cropRight: 0, cropBottom: 0, cropLeft: 0, rotate: 0, flipH: "no", flipV: "no" },
       position: { align: "center", wrap: "none", shiftX: 0, shiftY: 0, marginTop: 0, marginBottom: 0, marginStart: 0, marginEnd: 0, padding: 0 },
-      frame: { style: "none", width: 2, radius: 12, shadow: "none" },
+      frame: { style: "none", width: 2, radius: 12, shadow: "none", shape: "none", ratioW: 16, ratioH: 9, radiusTL: 24, radiusTR: 24, radiusBR: 24, radiusBL: 24, clip: "none" },
       effects: { opacity: 100, grayscale: 0, blur: 0, overlayOpacity: 0, hover: "none" },
       link: { type: "none", url: "", whatsappText: biEmpty(), newTab: "no", nofollow: "no", sponsored: "no", title: biEmpty() },
       banner: { heading: biEmpty(), text: biEmpty(), buttonLabel: biEmpty(), buttonStyle: "solid", vertical: "center", horizontal: "center", panel: "no" },
