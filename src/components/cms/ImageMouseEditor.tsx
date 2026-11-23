@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { alignFromOffset, cropFromRect, dragBox, dragCrop, fitRatio, rectFromCrop, sizeFromBox, type BoxHandle, type Handle, type Rect } from "@/lib/cms/imageEdit";
+import { CropStage } from "@/components/cms/CropStage";
+import { alignFromOffset, cropFromRect, dragBox, fitRatio, rectFromCrop, sizeFromBox, type BoxHandle, type Rect } from "@/lib/cms/imageEdit";
 
 type Obj = Record<string, unknown>;
 const num = (v: unknown, d = 0) => (typeof v === "number" && Number.isFinite(v) ? v : d);
@@ -9,7 +10,6 @@ const num = (v: unknown, d = 0) => (typeof v === "number" && Number.isFinite(v) 
 // How wide a block's content can get on the website, and how wide the preview that stands for it is.
 const PAGE_W = 1100;
 const STAGE_MAX_W = 620;
-const STAGE_MAX_H = 380;
 
 // Preset shapes the crop can be locked to (width over height).
 const RATIOS: { label: string; value: number | null }[] = [
@@ -31,13 +31,6 @@ function shapeRatio(frame: Obj): number | null {
     default: return null;
   }
 }
-
-const HANDLES: { h: Handle; style: React.CSSProperties; cursor: string }[] = [
-  { h: "nw", style: { left: 0, top: 0 }, cursor: "nwse-resize" }, { h: "n", style: { left: "50%", top: 0 }, cursor: "ns-resize" },
-  { h: "ne", style: { left: "100%", top: 0 }, cursor: "nesw-resize" }, { h: "e", style: { left: "100%", top: "50%" }, cursor: "ew-resize" },
-  { h: "se", style: { left: "100%", top: "100%" }, cursor: "nwse-resize" }, { h: "s", style: { left: "50%", top: "100%" }, cursor: "ns-resize" },
-  { h: "sw", style: { left: 0, top: "100%" }, cursor: "nesw-resize" }, { h: "w", style: { left: 0, top: "50%" }, cursor: "ew-resize" },
-];
 
 const handleClass = "absolute z-10 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-sm border-2 border-blue-600 bg-white shadow";
 
@@ -75,29 +68,24 @@ function Editor({ imageUrl, props, onApply, onClose }: { imageUrl: string; props
   const [offsetX, setOffsetX] = useState(() => (position.align === "start" ? 0 : position.align === "end" ? pw - startW : (pw - startW) / 2));
   const [sizeTouched, setSizeTouched] = useState(false);
 
-  const stage = nat ? Math.min(avail / nat.w, STAGE_MAX_H / nat.h) : 1;
-  const dw = nat ? nat.w * stage : avail, dh = nat ? nat.h * stage : Math.min(STAGE_MAX_H, (avail * 2) / 3);
   const natural = nat ?? { w: 3, h: 2 };
   const cropRatio = (natural.w * rect.w) / (natural.h * rect.h); // shape of the visible part
   const ratio = forced ?? cropRatio;
   const effectiveH = keepShape ? boxW / ratio : boxH ?? boxW / ratio;
 
   // The drag in progress (what was grabbed, and the state when it was grabbed), or null.
-  const [drag, setDrag] = useState<{ kind: "crop" | "box" | "move"; handle: Handle | BoxHandle | "move"; x: number; y: number; rect: Rect; w: number; h: number; off: number } | null>(null);
-  const begin = (kind: "crop" | "box" | "move", handle: Handle | BoxHandle | "move") => (e: React.PointerEvent) => {
+  const [drag, setDrag] = useState<{ kind: "box" | "move"; handle: BoxHandle | "move"; x: number; y: number; w: number; h: number; off: number } | null>(null);
+  const begin = (kind: "box" | "move", handle: BoxHandle | "move") => (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    setDrag({ kind, handle, x: e.clientX, y: e.clientY, rect, w: boxW, h: effectiveH, off: offsetX });
+    setDrag({ kind, handle, x: e.clientX, y: e.clientY, w: boxW, h: effectiveH, off: offsetX });
   };
   const move = (e: React.PointerEvent) => {
     const d = drag;
     if (!d) return;
     const dxp = e.clientX - d.x, dyp = e.clientY - d.y;
-    if (d.kind === "crop") {
-      setRect(dragCrop(d.rect, d.handle as Handle, dxp / dw, dyp / dh, lock && nat ? { ratio: lock, nat } : undefined));
-      setCropTouched(true);
-    } else if (d.kind === "box") {
+    if (d.kind === "box") {
       const next = dragBox({ w: d.w, h: d.h }, d.handle as BoxHandle, dxp, dyp, { maxW: pw }, keepShape ? ratio : undefined);
       setBoxW(next.w);
       setBoxH(next.h);
@@ -149,7 +137,6 @@ function Editor({ imageUrl, props, onApply, onClose }: { imageUrl: string; props
     setSizeTouched(true);
   };
 
-  const cropPx = { left: rect.x * dw, top: rect.y * dh, width: rect.w * dw, height: rect.h * dh };
   return (
     <div role="dialog" aria-modal="true" aria-label="Resize and crop the picture" className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 p-3" onPointerMove={move} onPointerUp={end}>
       <div className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
@@ -179,20 +166,7 @@ function Editor({ imageUrl, props, onApply, onClose }: { imageUrl: string; props
                   </button>
                 ))}
               </div>
-              <div className="relative touch-none select-none" style={{ width: dw, height: dh }} data-testid="crop-stage">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl} alt="" draggable={false} onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} className="absolute inset-0 h-full w-full select-none" />
-                <div className="pointer-events-none absolute left-0 top-0 w-full bg-slate-900/55" style={{ height: cropPx.top }} />
-                <div className="pointer-events-none absolute left-0 w-full bg-slate-900/55" style={{ top: cropPx.top + cropPx.height, height: dh - cropPx.top - cropPx.height }} />
-                <div className="pointer-events-none absolute bg-slate-900/55" style={{ left: 0, top: cropPx.top, width: cropPx.left, height: cropPx.height }} />
-                <div className="pointer-events-none absolute bg-slate-900/55" style={{ left: cropPx.left + cropPx.width, top: cropPx.top, width: dw - cropPx.left - cropPx.width, height: cropPx.height }} />
-                <div data-testid="crop-rect" onPointerDown={begin("crop", "move")} className="absolute cursor-move border-2 border-white shadow-[0_0_0_1px_rgba(37,99,235,.9)]" style={cropPx}>
-                  <div className="pointer-events-none absolute inset-0" style={{ backgroundImage: "linear-gradient(to right, transparent 33%, rgba(255,255,255,.45) 33%, rgba(255,255,255,.45) calc(33% + 1px), transparent calc(33% + 1px), transparent 66%, rgba(255,255,255,.45) 66%, rgba(255,255,255,.45) calc(66% + 1px), transparent calc(66% + 1px)), linear-gradient(to bottom, transparent 33%, rgba(255,255,255,.45) 33%, rgba(255,255,255,.45) calc(33% + 1px), transparent calc(33% + 1px), transparent 66%, rgba(255,255,255,.45) 66%, rgba(255,255,255,.45) calc(66% + 1px), transparent calc(66% + 1px))" }} />
-                  {HANDLES.map(({ h, style, cursor }) => (
-                    <span key={h} data-handle={h} onPointerDown={begin("crop", h)} className={handleClass} style={{ ...style, cursor }} />
-                  ))}
-                </div>
-              </div>
+              <CropStage src={imageUrl} rect={rect} onRect={(r) => { setRect(r); setCropTouched(true); }} lock={lock} nat={nat} onNat={setNat} avail={avail} />
               <p className="text-[11px] text-slate-500">Drag the frame to move it, and its corners or edges to resize. The bright part is what visitors see.</p>
             </div>
           )}

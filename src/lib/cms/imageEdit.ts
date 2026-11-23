@@ -82,6 +82,20 @@ export function fitRatio(r: Rect, ratio: number, nat: Nat): Rect {
   return { x: clamp(cx - w / 2, 0, 1 - w), y: clamp(cy - h / 2, 0, 1 - h), w, h };
 }
 
+// The largest stored size of a media-library picture, so cropping starts from the sharpest version. Any other address is used as it is.
+export function sharpestSource(src: string): string {
+  return /\/api\/media\/[a-z0-9]+$/.test(src) ? `${src}?w=4000` : src;
+}
+
+// The pixels to cut from the picture for a visible rectangle, and how large the new picture will be. `maxWidth` (0 = keep the size) shrinks the
+// result when it is wider; a picture is never enlarged, so nothing is made blurrier.
+export function cropOutput(nat: Nat, r: Rect, maxWidth: number) {
+  const sx = Math.round(r.x * nat.w), sy = Math.round(r.y * nat.h);
+  const sw = Math.max(1, Math.min(nat.w - sx, Math.round(r.w * nat.w))), sh = Math.max(1, Math.min(nat.h - sy, Math.round(r.h * nat.h)));
+  const scale = maxWidth > 0 && sw > maxWidth ? maxWidth / sw : 1;
+  return { sx, sy, sw, sh, outW: Math.max(1, Math.round(sw * scale)), outH: Math.max(1, Math.round(sh * scale)) };
+}
+
 // ---- size of the picture's box on the page ----
 
 export type Box = { w: number; h: number };

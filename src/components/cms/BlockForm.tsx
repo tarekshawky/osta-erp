@@ -149,7 +149,7 @@ export function FieldEditor({ fields, value, onChange }: { fields: FieldDef[]; v
             );
           }
           case "image":
-            return <ImageUploadField key={f.key} label={f.label} value={(v as string) ?? ""} onChange={(x) => set(f.key, x)} />;
+            return <ImageUploadField key={f.key} label={f.label} value={(v as string) ?? ""} onChange={(x) => set(f.key, x)} allowCrop={!fields.some((x) => x.kind === "imageTools")} />;
           case "select":
             return (
               <label key={f.key} className="flex flex-col gap-1.5">

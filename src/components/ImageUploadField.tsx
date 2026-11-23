@@ -3,12 +3,16 @@
 import { useRef, useState } from "react";
 import { MediaLibrary } from "@/components/media/MediaLibrary";
 import { uploadImage, mediaPublicUrl } from "@/components/media/mediaClient";
+import { ImageCropDialog } from "@/components/media/ImageCropDialog";
 
 // Every image field in the admin goes through the media library: pick an existing image or upload a new one
 // (which lands in the library, converted to WebP). Older values (pasted URLs, inline data) still display and can be replaced.
-export function ImageUploadField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+// "Crop and resize" works on any picture here with the mouse and saves the result as a new picture in the library. `allowCrop` is turned off where the
+// block already has its own non-destructive resize and crop tools (the advanced image).
+export function ImageUploadField({ label, value, onChange, allowCrop = true }: { label: string; value: string; onChange: (value: string) => void; allowCrop?: boolean }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [picking, setPicking] = useState(false);
+  const [cropping, setCropping] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,12 +50,19 @@ export function ImageUploadField({ label, value, onChange }: { label: string; va
         <button type="button" disabled={busy} onClick={() => fileInputRef.current?.click()} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 disabled:opacity-60">
           {busy ? "Uploading…" : "Upload new"}
         </button>
+        {value && allowCrop && (
+          <button type="button" onClick={() => setCropping(true)} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
+            Crop and resize
+          </button>
+        )}
         {value && (
           <button type="button" onClick={() => onChange("")} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-red-600">
             Remove
           </button>
         )}
       </div>
+
+      {cropping && <ImageCropDialog src={value} onClose={() => setCropping(false)} onDone={onChange} />}
 
       {picking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label="Choose an image">

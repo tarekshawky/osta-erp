@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MIN_SIDE, alignFromOffset, cropFromRect, dragBox, dragCrop, fitRatio, focusFromPoint, rectFromCrop, sizeFromBox, type Rect } from "./imageEdit";
+import { MIN_SIDE, alignFromOffset, cropOutput, sharpestSource, cropFromRect, dragBox, dragCrop, fitRatio, focusFromPoint, rectFromCrop, sizeFromBox, type Rect } from "./imageEdit";
 import { parseBlocks, createBlock } from "./blocks";
 
 const full: Rect = { x: 0, y: 0, w: 1, h: 1 };
@@ -75,6 +75,32 @@ describe("fit to a chosen shape", () => {
     const off = fitRatio({ x: 0.7, y: 0.1, w: 0.3, h: 0.5 }, 1, nat);
     expect(off.x + off.w).toBeLessThanOrEqual(1 + 1e-9); expect(off.x).toBeGreaterThanOrEqual(0); expect(off.y + off.h).toBeLessThanOrEqual(1 + 1e-9);
     close((off.w * nat.w) / (off.h * nat.h), 1);
+  });
+});
+
+describe("cutting a new picture", () => {
+  it("takes exactly the visible part, at full size unless asked to shrink", () => {
+    expect(cropOutput(nat, full, 0)).toEqual({ sx: 0, sy: 0, sw: 1200, sh: 800, outW: 1200, outH: 800 });
+    expect(cropOutput(nat, { x: 0.25, y: 0.125, w: 0.5, h: 0.75 }, 0)).toEqual({ sx: 300, sy: 100, sw: 600, sh: 600, outW: 600, outH: 600 });
+  });
+  it("shrinks to a chosen width keeping the shape, and never enlarges", () => {
+    expect(cropOutput(nat, full, 600)).toEqual({ sx: 0, sy: 0, sw: 1200, sh: 800, outW: 600, outH: 400 });
+    expect(cropOutput(nat, { x: 0, y: 0, w: 0.25, h: 0.25 }, 1600)).toMatchObject({ sw: 300, sh: 200, outW: 300, outH: 200 }); // asked for 1600, only 300 exist
+  });
+  it("stays inside the picture even when rounding would push it over the edge", () => {
+    const o = cropOutput({ w: 999, h: 333 }, { x: 0.3337, y: 0.3337, w: 0.6663, h: 0.6663 }, 0);
+    expect(o.sx + o.sw).toBeLessThanOrEqual(999); expect(o.sy + o.sh).toBeLessThanOrEqual(333);
+    expect(o.sw).toBeGreaterThan(0); expect(o.sh).toBeGreaterThan(0);
+  });
+});
+
+describe("which version of a picture is cropped", () => {
+  it("starts from the sharpest stored size of a media-library picture, and leaves any other address alone", () => {
+    expect(sharpestSource("https://osta-invoices.vercel.app/api/media/cmwt805s70002s6y9l8rvgdae")).toBe("https://osta-invoices.vercel.app/api/media/cmwt805s70002s6y9l8rvgdae?w=4000");
+    expect(sharpestSource("/api/media/abc123")).toBe("/api/media/abc123?w=4000");
+    expect(sharpestSource("https://osta-invoices.vercel.app/api/media/abc123?w=480")).toBe("https://osta-invoices.vercel.app/api/media/abc123?w=480"); // already a chosen size
+    expect(sharpestSource("https://www.ostaservices.com/photo.webp")).toBe("https://www.ostaservices.com/photo.webp");
+    expect(sharpestSource("data:image/png;base64,AAAA")).toBe("data:image/png;base64,AAAA");
   });
 });
 
