@@ -102,6 +102,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/website/global-blocks", label: "Global Blocks", keywords: "reusable shared blocks components sync" },
       { href: "/admin/website/maintenance-packages", label: "Maintenance Packages", keywords: "annual home care packages subscriptions plans pricing amc" },
       { href: "/admin/website/seo", label: "SEO & Technical Files", keywords: "sitemap schema score structured data" },
+      { href: "/admin/website/backlinks", label: "Backlink Monitor", keywords: "seo backlinks links referring domains disavow toxic scan روابط خلفية" },
       SERVICE_CATALOG,
       WEBSITE_SERVICES,
       { href: "/admin/home-sections", label: "Homepage Sections", keywords: "home" },
