@@ -8,6 +8,10 @@ const menuRows = [
   row({ id: "h3", menu: "header", parentId: null, labelEn: "Services", url: "/services" }),
   row({ id: "h4", menu: "header", parentId: null, labelEn: "Sharjah", url: "/services-in-sharjah" }), // its page is only a draft
   row({ id: "f1", menu: "footer", parentId: null, labelEn: "Areas", url: "#areas" }),
+  row({ id: "h5", menu: "header", parentId: null, labelEn: "All services", url: "#services", style: "link", badgeEn: "New", badgeAr: "جديد" }),
+  row({ id: "h6", menu: "header", parentId: null, labelEn: "Book", url: "/pricing", style: "button", badgeEn: "", badgeAr: "" }),
+  row({ id: "s1", menu: "services", parentId: null, labelEn: "Auto", url: "#services" }),
+  row({ id: "l1", menu: "locations", parentId: null, labelEn: "Auto", url: "#areas" }),
 ];
 
 vi.mock("@/lib/prisma", () => ({
@@ -30,6 +34,7 @@ vi.mock("@/lib/prisma", () => ({
         { id: "p5", type: "service", menuParent: "parent", parentId: "not-in-menu", sortOrder: 0, areaId: null, publishedVersion: { slug: "orphan-page", titleEn: "Orphan", titleAr: "ع" } },
       ],
     },
+    servicePage: { findMany: async () => [{ slug: "ac-repair-service", nameEn: "AC Repair Service", nameAr: "تصليح" }, { slug: "plumbing", nameEn: "Plumbing", nameAr: "سباكة" }] },
     serviceArea: { findMany: async () => [{ slug: "dubai", nameEn: "Dubai", nameAr: "د", pages: [{ publishedVersion: { slug: "services-in-dubai" } }] }] },
   },
 }));
@@ -53,6 +58,19 @@ describe("GET /api/v1/cms/site", () => {
     expect(header.some((m) => m.url === "/about-us")).toBe(true);
     expect(header.some((m) => m.url === "/services-in-sharjah")).toBe(false); // a link to a draft page is hidden
     expect(header.filter((m) => m.url === "/services-in-dubai")).toHaveLength(0); // not duplicated at top level
+  });
+
+  it("fills the automatic services list, and keeps badges and buttons", async () => {
+    const { GET } = await import("./route");
+    const menus = (await (await GET()).json()).data.menus as Record<string, { labelEn: string; url: string; style?: string; badgeEn?: string; badgeAr?: string; children: { url: string }[] }[]>;
+    const auto = menus.header.find((m) => m.labelEn === "All services")!;
+    expect(auto.url).toBe("");
+    expect(auto.children.map((c) => c.url)).toEqual(["/services/ac-repair-service", "/services/plumbing"]);
+    expect(auto).toMatchObject({ badgeEn: "New", badgeAr: "جديد" });
+    expect(menus.header.find((m) => m.labelEn === "Book")).toMatchObject({ style: "button", url: "/pricing" });
+    // in the footer columns the automatic links take the item's place
+    expect(menus.services.map((m) => m.url)).toEqual(["/services/ac-repair-service", "/services/plumbing"]);
+    expect(menus.locations.map((m) => m.url)).toEqual(["/services-in-dubai"]);
   });
 
   it("drops the special link from the footer", async () => {

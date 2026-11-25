@@ -10,8 +10,11 @@ export type MenuKey = (typeof MENUS)[number];
 
 export const isSafeLink = (v: string) => SAFE_LINK.test(v.trim());
 
-// A header item with this link becomes the "Areas We Cover" dropdown (filled from the Service Areas screen).
-export const AREAS_MENU_URL = "#areas";
+// An item with one of these links is an "auto list": its sub-items are filled in on the website from another screen.
+export const AREAS_MENU_URL = "#areas"; // the Service Areas screen
+export const SERVICES_MENU_URL = "#services"; // the published Website Services
+export const isAutoUrl = (v: string) => v.trim() === AREAS_MENU_URL || v.trim() === SERVICES_MENU_URL;
+export const MAX_BADGE = 20;
 
 export type SettingsInput = {
   siteNameEn: string; siteNameAr: string; taglineEn: string; taglineAr: string; descriptionEn: string; descriptionAr: string;
@@ -49,6 +52,8 @@ import { MENU_MAX_DEPTH } from "./menuTree";
 
 export type MenuItemInput = {
   labelEn: string; labelAr: string; url: string; visible: boolean; showDesktop: boolean; showMobile: boolean; newTab: boolean;
+  // Optional so that older website backups (which have no badge or button) still restore.
+  style?: string; badgeEn?: string; badgeAr?: string;
   children: MenuItemInput[];
 };
 
@@ -58,9 +63,15 @@ export function menuProblem(items: MenuItemInput[]): string | null {
     for (const item of list) {
       count++;
       if (!item.labelEn.trim() || !item.labelAr.trim()) return "Every menu item needs an English and Arabic label.";
-      if (item.url.trim() === AREAS_MENU_URL) {
-        if (depth > 1) return "\"Areas We Cover\" can only be a top-level item.";
-        if (item.children.some((c) => c.url.trim() === AREAS_MENU_URL)) return "\"Areas We Cover\" can't be nested.";
+      if (item.style && item.style !== "link" && item.style !== "button") return "Unknown item type.";
+      const badgeEn = (item.badgeEn ?? "").trim(), badgeAr = (item.badgeAr ?? "").trim();
+      if (badgeEn.length > MAX_BADGE || badgeAr.length > MAX_BADGE) return `A badge can be at most ${MAX_BADGE} characters.`;
+      if (!!badgeEn !== !!badgeAr) return `The badge of "${item.labelEn || "Item"}" needs both an English and an Arabic word.`;
+      if (item.style === "button" && !item.url.trim()) return `The button "${item.labelEn || "Item"}" needs a link.`;
+      if (isAutoUrl(item.url)) {
+        const title = item.url.trim() === AREAS_MENU_URL ? "Areas We Cover" : "The automatic services list";
+        if (depth > 1) return `"${title}" can only be a top-level item.`;
+        if (item.children.some((c) => isAutoUrl(c.url))) return `"${title}" can't be nested.`;
       } else if (!item.url.trim()) {
         // A top-level item may have no link when it is a heading for a dropdown; it then needs sub-items to be useful.
         if (depth > 2 || item.children.length === 0) return `"${item.labelEn || "Item"}" needs a link, or sub-items if it is only a heading.`;

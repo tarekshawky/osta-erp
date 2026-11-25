@@ -1846,6 +1846,9 @@ model MenuItem {
   showDesktop Boolean    @default(true)
   showMobile  Boolean    @default(true)
   newTab      Boolean    @default(false)
+  style       String     @default("link") // link | button (a highlighted call to action)
+  badgeEn     String     @default("") // a small tag next to the name, e.g. "New"
+  badgeAr     String     @default("")
 
   @@index([menu, sortOrder])
 }

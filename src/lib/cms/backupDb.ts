@@ -19,6 +19,7 @@ export async function buildExport(): Promise<Bundle> {
 
   const item = (m: (typeof menuRows)[number]): Omit<MenuItemInput, "children"> => ({
     labelEn: m.labelEn, labelAr: m.labelAr, url: m.url, visible: m.visible, showDesktop: m.showDesktop, showMobile: m.showMobile, newTab: m.newTab,
+    style: m.style, badgeEn: m.badgeEn, badgeAr: m.badgeAr,
   });
   const tree = (menu: string) => buildMenuTree(menuRows, menu, item) as MenuItemInput[];
 
@@ -103,7 +104,7 @@ export async function applyBundle(bundle: Bundle, admin: { id: string; name: str
         if (!items.length) continue; // an empty menu in the file never wipes the live one
         await tx.menuItem.deleteMany({ where: { menu } });
         for (const [i, top] of items.entries()) {
-          const row = (m: MenuItemInput, o: number) => ({ menu, labelEn: m.labelEn, labelAr: m.labelAr, url: m.url, sortOrder: o, visible: m.visible, showDesktop: m.showDesktop, showMobile: m.showMobile, newTab: m.newTab });
+          const row = (m: MenuItemInput, o: number) => ({ menu, labelEn: m.labelEn, labelAr: m.labelAr, url: m.url, sortOrder: o, visible: m.visible, showDesktop: m.showDesktop, showMobile: m.showMobile, newTab: m.newTab, style: m.style === "button" ? "button" : "link", badgeEn: m.badgeEn ?? "", badgeAr: m.badgeAr ?? "" });
           await tx.menuItem.create({ data: nestedCreate(top, i, row) });
         }
         bump(report.updated, "menus");

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, corsPreflight } from "@/lib/apiResponse";
-import { AREAS_MENU_URL, MENUS } from "@/lib/site/siteRules";
+import { AREAS_MENU_URL, MENUS, SERVICES_MENU_URL, isAutoUrl } from "@/lib/site/siteRules";
 import { buildMenuTree } from "@/lib/site/menuTree";
 import { hideUnpublishedLinks } from "@/lib/site/menuLinks";
 
@@ -10,7 +10,7 @@ export function OPTIONS() {
 
 // Everything the public header, footer and contact details need, in one cacheable call.
 export async function GET() {
-  const [settings, menuRows, social, integrations, menuPages, areaRows, allPages] = await Promise.all([
+  const [settings, menuRows, social, integrations, menuPages, areaRows, allPages, serviceRows] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "default" } }),
     prisma.menuItem.findMany({ where: { visible: true }, orderBy: [{ sortOrder: "asc" }] }),
     prisma.socialLink.findMany({ where: { visible: true }, orderBy: { sortOrder: "asc" } }),
@@ -29,36 +29,47 @@ export async function GET() {
     }),
     // Every page, to know which addresses exist only as unpublished drafts.
     prisma.cmsPage.findMany({ where: { deletedAt: null }, select: { slug: true, publishedVersion: { select: { slug: true } } } }),
+    // The automatic services list: the published Website Services, in their display order.
+    prisma.servicePage.findMany({ where: { published: true }, orderBy: { displayOrder: "asc" }, select: { slug: true, nameEn: true, nameAr: true } }),
   ]);
   if (!settings) return apiSuccess(null);
 
   const shape = (m: (typeof menuRows)[number]) => ({
     labelEn: m.labelEn, labelAr: m.labelAr, url: m.url, newTab: m.newTab, showDesktop: m.showDesktop, showMobile: m.showMobile,
+    style: m.style, badgeEn: m.badgeEn, badgeAr: m.badgeAr,
   });
   const menus: Record<string, unknown[]> = Object.fromEntries(MENUS.map((m) => [m, []]));
   for (const key of Object.keys(menus)) {
     menus[key] = buildMenuTree(menuRows, key, shape);
   }
-  type NavItem = { labelEn: string; labelAr: string; url: string; newTab: boolean; showDesktop: boolean; showMobile: boolean; children: NavItem[] };
+  type NavItem = { labelEn: string; labelAr: string; url: string; newTab: boolean; showDesktop: boolean; showMobile: boolean; style?: string; badgeEn?: string; badgeAr?: string; children: NavItem[] };
   const header = menus.header as NavItem[];
   // Top-level header rows map 1:1, in order, to the first items of `header`; remember them by id before anything is appended.
   const headerById = new Map(menuRows.filter((m) => m.menu === "header" && m.parentId === null).map((r, i) => [r.id, header[i]]));
   const leaf = (labelEn: string, labelAr: string, url: string): NavItem => ({ labelEn, labelAr, url, newTab: false, showDesktop: true, showMobile: true, children: [] });
   const hasUrl = (items: NavItem[], url: string): boolean => items.some((m) => m.url.replace(/\/$/, "") === url || hasUrl(m.children ?? [], url));
 
-  // "Areas We Cover" appears only when the admin has added that item to the header menu (link "#areas"). It then lists the
-  // active service areas (linked when the area has a published page); pages placed inside it follow.
+  // Auto lists: an item with the link "#areas" or "#services" gets its sub-items from the Service Areas screen (active areas, linked when the area
+  // has a published page) or from the published Website Services. Items the admin put inside it follow the automatic ones.
   const areaLeaves = () => areaRows.map((a) => leaf(a.nameEn, a.nameAr, a.pages[0]?.publishedVersion ? `/${a.pages[0].publishedVersion.slug}` : ""));
-  const expandAreas = (m: NavItem) => {
+  const serviceLeaves = () => serviceRows.map((s) => leaf(s.nameEn, s.nameAr, `/services/${s.slug}`));
+  const leavesFor = (url: string) => (url === AREAS_MENU_URL ? areaLeaves() : serviceLeaves());
+  const expandAuto = (m: NavItem) => {
+    m.children = [...leavesFor(m.url), ...m.children];
     m.url = "";
-    m.children = [...areaLeaves(), ...m.children];
   };
   const areasMenu = header.find((m) => m.url === AREAS_MENU_URL) ?? null;
-  if (areasMenu) expandAreas(areasMenu);
-  // The phone menu can have its own "Areas We Cover" dropdown too.
-  (menus.mobile as NavItem[]).filter((m) => m.url === AREAS_MENU_URL).forEach(expandAreas);
-  // The other menus are plain link lists, so the special item means nothing there.
-  for (const key of ["footer", "services", "locations"]) menus[key] = (menus[key] as NavItem[]).filter((m) => m.url !== AREAS_MENU_URL);
+  // In the header and the phone menu an auto list is a dropdown.
+  header.filter((m) => isAutoUrl(m.url)).forEach(expandAuto);
+  (menus.mobile as NavItem[]).filter((m) => isAutoUrl(m.url)).forEach(expandAuto);
+  // The footer menus are plain link lists: there the automatic links take the item's place. "Areas We Cover" only does so in the Locations column.
+  for (const key of ["footer", "services", "locations"]) {
+    menus[key] = (menus[key] as NavItem[]).flatMap((m) => {
+      if (m.url === SERVICES_MENU_URL) return serviceLeaves();
+      if (m.url === AREAS_MENU_URL) return key === "locations" ? areaLeaves().filter((a) => a.url) : [];
+      return [m];
+    });
+  }
 
   // Pages placed "under their parent page" (menuParent "parent") nest below the navigation entry of their parent page, so a category
   // page's service pages form a third level. A page whose parent has no entry yet waits until it does (parents are handled first).

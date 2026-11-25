@@ -55,6 +55,7 @@ export async function saveMenu(menu: string, items: MenuItemInput[]): Promise<Ac
   const row = (i: MenuItemInput, order: number) => ({
     menu, labelEn: i.labelEn.trim(), labelAr: i.labelAr.trim(), url: i.url.trim(), sortOrder: order,
     visible: i.visible, showDesktop: i.showDesktop, showMobile: i.showMobile, newTab: i.newTab,
+    style: i.style === "button" ? "button" : "link", badgeEn: (i.badgeEn ?? "").trim(), badgeAr: (i.badgeAr ?? "").trim(),
   });
   const before = await prisma.menuItem.count({ where: { menu } });
 
