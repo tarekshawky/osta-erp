@@ -105,11 +105,13 @@ describe("starting content", () => {
     expect(new Set(SEED_SECTIONS.map((s) => s.key)).size).toBe(SEED_SECTIONS.length);
     for (const s of SEED_SECTIONS) if (s.auto) expect(isAutoSource(s.auto)).toBe(true);
   });
-  it("has Arabic for everything and an https source for every entry", () => {
+  it("has Arabic and a source for everything, on the current website and not the old one", () => {
     for (const e of entries) {
       expect(e.titleAr.trim() && e.bodyAr.trim(), e.titleEn).toBeTruthy();
-      expect(e.sourceUrl.startsWith("https://"), e.titleEn).toBe(true);
+      expect(/^(\/|https:\/\/)/.test(e.sourceUrl), e.titleEn).toBe(true);
     }
+    expect(JSON.stringify(SEED_SECTIONS)).not.toContain("ostaservices.com/");
+    expect(JSON.stringify(SEED_SECTIONS)).not.toContain("www.ostaservices.com");
   });
   it("holds back every fact the owner still has to supply", () => {
     const open = entries.filter((e) => entryProblems(e).length).map((e) => e.titleEn);

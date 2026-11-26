@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, Link2, Lock, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { deleteEntry, deleteSection, loadStartingContent, moveSection, saveEntry, saveSection, setEntryChecked, setPublicPage, setSectionVisible, type KnowledgeResult } from "@/app/admin/website/knowledge/actions";
 import type { EntryView, KnowledgeCenterData, SectionView } from "@/lib/knowledge/data";
-import { AUTO_SOURCES, ENTRY_TYPES, STATE_LABEL, TYPE_LABEL, entryProblems, entryState, isAutoSource, isPublicEntry, textChanged, type EntryInput, type EntryState, type EntryType } from "@/lib/knowledge/knowledge";
+import { AUTO_SOURCES, ENTRY_TYPES, STATE_LABEL, TYPE_LABEL, entryProblems, entryState, isAutoSource, isPublicEntry, isSourceLink, textChanged, type EntryInput, type EntryState, type EntryType } from "@/lib/knowledge/knowledge";
 
 const CARD = "rounded-3xl bg-white shadow-lg shadow-indigo-900/5";
 const FIELD = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-[#10163a] outline-none focus:border-[#4a7dff]";
@@ -223,7 +223,7 @@ export function KnowledgeCenter({ data, canPublish }: { data: KnowledgeCenterDat
                       {canPublish ? <button type="button" disabled={pending || dirty || !saved} onClick={() => saved && run(() => setEntryChecked(saved.id, true, saved.updatedAt), saved.visible ? "Checked. It is now public." : "Checked.")} className={PRIMARY}><Check size={15} /> I checked this text</button> : <p className="text-sm text-[#6b7399]">Only someone who may publish pages can mark it as checked.</p>}
                     </div>
                   ) : null}
-                  {form.sourceUrl.trim().startsWith("https://") && <a href={form.sourceUrl.trim()} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[#2a50c8]"><Link2 size={13} /> Open the source page</a>}
+                  {isSourceLink(form.sourceUrl) && <a href={form.sourceUrl.trim().startsWith("/") ? `${data.origin}${form.sourceUrl.trim()}` : form.sourceUrl.trim()} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[#2a50c8]"><Link2 size={13} /> Open the source page</a>}
                 </div>
               </section>
             )}

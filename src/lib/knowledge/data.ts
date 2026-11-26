@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { loadPublicPackages } from "@/lib/maintenance/data";
-import { siteOrigin } from "@/lib/seo/context";
 import { autoLines, buildLlmsTxt, isPublicEntry, readiness, type BranchFacts, type SyncData } from "./knowledge";
 import { PAGE_KEY, pageSetting, publicKnowledge, type PublicKnowledge } from "./publicView";
 
@@ -61,15 +60,16 @@ export async function loadKnowledgeCenter() {
   // The preview holds exactly what is public: the lines read from other screens, then the checked entries.
   const published = view.filter((s) => s.visible).map((s) => ({ title: s.titleEn, lines: [...s.autoLines, ...s.entries.filter((e) => isPublicEntry(e, true))] }));
   const about = view.filter((s) => s.visible).flatMap((s) => s.entries.filter((e) => e.titleEn === "About Osta Services" && isPublicEntry(e, true)))[0];
-  const llmsText = buildLlmsTxt({ siteName: "Osta Services (خدمات آسطا)", summary: about?.bodyEn ?? "", origin: siteOrigin(), sections: published });
+  const origin = publicSiteUrl();
+  const llmsText = buildLlmsTxt({ siteName: "Osta Services (خدمات آسطا)", summary: about?.bodyEn ?? "", origin, sections: published });
 
   const page = {
     ...pageSetting(pageRow),
-    url: `${publicSiteUrl()}/knowledge-center`,
+    url: `${origin}/knowledge-center`,
     checked: view.filter((s) => s.visible).reduce((n, s) => n + s.entries.filter((e) => isPublicEntry(e, true)).length, 0),
     synced: view.filter((s) => s.visible).reduce((n, s) => n + s.autoLines.length, 0),
   };
-  return { sections: view, checks, llmsText, origin: siteOrigin(), now: now.toISOString(), page };
+  return { sections: view, checks, llmsText, origin, now: now.toISOString(), page };
 }
 
 export type KnowledgeCenterData = Awaited<ReturnType<typeof loadKnowledgeCenter>>;
