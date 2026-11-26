@@ -1,4 +1,4 @@
-import { buildMenuTree, nestedCreate } from "@/lib/site/menuTree";
+import { buildMenuTree, menuLevels } from "@/lib/site/menuTree";
 import { prisma } from "@/lib/prisma";
 import { parseBlocks } from "./blocks";
 import { BACKUP_VERSION, type Bundle } from "./backup";
@@ -103,10 +103,8 @@ export async function applyBundle(bundle: Bundle, admin: { id: string; name: str
         const items = bundle.menus[menu];
         if (!items.length) continue; // an empty menu in the file never wipes the live one
         await tx.menuItem.deleteMany({ where: { menu } });
-        for (const [i, top] of items.entries()) {
-          const row = (m: MenuItemInput, o: number) => ({ menu, labelEn: m.labelEn, labelAr: m.labelAr, url: m.url, sortOrder: o, visible: m.visible, showDesktop: m.showDesktop, showMobile: m.showMobile, newTab: m.newTab, style: m.style === "button" ? "button" : "link", badgeEn: m.badgeEn ?? "", badgeAr: m.badgeAr ?? "" });
-          await tx.menuItem.create({ data: nestedCreate(top, i, row) });
-        }
+        const row = (m: MenuItemInput, o: number) => ({ menu, labelEn: m.labelEn, labelAr: m.labelAr, url: m.url, sortOrder: o, visible: m.visible, showDesktop: m.showDesktop, showMobile: m.showMobile, newTab: m.newTab, style: m.style === "button" ? "button" : "link", badgeEn: m.badgeEn ?? "", badgeAr: m.badgeAr ?? "" });
+        for (const rows of menuLevels(items, row)) await tx.menuItem.createMany({ data: rows });
         bump(report.updated, "menus");
       }
 

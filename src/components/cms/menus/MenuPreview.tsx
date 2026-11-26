@@ -56,6 +56,8 @@ export function MenuPreview({ menu, nodes, selected, data, known, onSelect }: { 
   // The dropdown that is open: the one holding the selected item, otherwise the first one with sub-items.
   const openTop = all.find((n) => open.includes(n.uid) && n.children.length) ?? all.find((n) => n.children.length) ?? null;
   const openSub = openTop?.children.find((c) => open.includes(c.uid) && c.children.length) ?? null;
+  // Same rule as the website: a dropdown with more than 10 items is laid out in four columns.
+  const wide = (openTop?.children.length ?? 0) > 10;
 
   const row = (n: PNode, active: boolean, extraClass = "") => (
     <button key={n.uid} type="button" disabled={n.automatic} onClick={() => onSelect(n.uid)} title={n.automatic ? "Added automatically" : undefined}
@@ -99,10 +101,12 @@ export function MenuPreview({ menu, nodes, selected, data, known, onSelect }: { 
               {(ar ? data.cta.ar : data.cta.en) && <span className="whitespace-nowrap rounded-full bg-blue-600 px-3 py-1.5 text-xs font-bold text-white">{ar ? data.cta.ar : data.cta.en}</span>}
             </div>
             {openTop && (
-              <div className="mt-1 flex items-start gap-1 px-4">
-                <div data-testid="preview-dropdown" className="max-h-56 w-56 overflow-y-auto rounded-xl bg-[#111c3d] p-1.5 shadow-lg">
+              <div className={`mt-1 flex items-start gap-1 px-4 ${wide ? "flex-col" : ""}`}>
+                <div data-testid="preview-dropdown" className={`max-h-56 overflow-y-auto rounded-xl bg-[#111c3d] p-1.5 shadow-lg ${wide ? "w-full" : "w-56"}`}>
                   <p className="px-3 pb-1 text-[10px] font-semibold uppercase text-slate-500">{label(openTop)}</p>
-                  {openTop.children.map((c) => row(c, open.includes(c.uid)))}
+                  <div className={wide ? "grid gap-x-1" : undefined} style={wide ? { gridAutoFlow: "column", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gridTemplateRows: `repeat(${Math.ceil(openTop.children.length / 4)}, auto)` } : undefined}>
+                    {openTop.children.map((c) => row(c, open.includes(c.uid)))}
+                  </div>
                 </div>
                 {openSub && <div data-testid="preview-flyout" className="max-h-56 w-56 overflow-y-auto rounded-xl bg-[#111c3d] p-1.5 shadow-lg">{openSub.children.map((c) => row(c, open.includes(c.uid)))}</div>}
               </div>

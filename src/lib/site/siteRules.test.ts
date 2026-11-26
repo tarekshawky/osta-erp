@@ -53,7 +53,7 @@ describe("menuProblem", () => {
     expect(menuProblem([item({ children: [item({ url: "" })] })])).toMatch(/needs a link/);
     expect(menuProblem([item({ children: [item({ children: [item({ url: "", children: [] })] })] })])).toMatch(/needs a link/);
   });
-  it("caps the size", () => expect(menuProblem(Array.from({ length: 41 }, () => item()))).toMatch(/40/));
+  it("has no limit on the number of items", () => expect(menuProblem(Array.from({ length: 500 }, () => item({ children: [item()] })))).toBeNull());
 });
 
 describe("social + whatsapp", () => {

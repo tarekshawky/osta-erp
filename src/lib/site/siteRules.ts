@@ -58,10 +58,8 @@ export type MenuItemInput = {
 };
 
 export function menuProblem(items: MenuItemInput[]): string | null {
-  let count = 0;
   const check = (list: MenuItemInput[], depth: number): string | null => {
     for (const item of list) {
-      count++;
       if (!item.labelEn.trim() || !item.labelAr.trim()) return "Every menu item needs an English and Arabic label.";
       if (item.style && item.style !== "link" && item.style !== "button") return "Unknown item type.";
       const badgeEn = (item.badgeEn ?? "").trim(), badgeAr = (item.badgeAr ?? "").trim();
@@ -84,9 +82,7 @@ export function menuProblem(items: MenuItemInput[]): string | null {
     }
     return null;
   };
-  const error = check(items, 1);
-  if (error) return error;
-  return count > 40 ? "A menu can have at most 40 items." : null;
+  return check(items, 1); // a menu can hold any number of items
 }
 
 export function socialProblem(l: { platform: string; url: string; label: string }): string | null {

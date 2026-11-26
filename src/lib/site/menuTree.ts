@@ -17,10 +17,17 @@ export function buildMenuTree<R extends Row, T>(rows: R[], menu: string, shape: 
   return walk(null, new Set());
 }
 
-// Prisma data for creating an item together with all of its descendants in one nested create.
-export type NestedCreate<D> = D & { children?: { create: NestedCreate<D>[] } };
-export function nestedCreate<I extends { children: I[] }, D>(item: I, order: number, row: (i: I, order: number) => D): NestedCreate<D> {
-  const data = { ...row(item, order) } as NestedCreate<D>;
-  if (item.children.length) data.children = { create: item.children.map((c, j) => nestedCreate(c, j, row)) };
-  return data;
+// The rows for saving a menu, one list per level (parents first), with ids and parent ids already set. Each level is written in
+// a single query, so a menu of any size saves quickly instead of one query per item.
+export function menuLevels<I extends { children: I[] }, D>(items: I[], row: (i: I, order: number) => D, newId: () => string = () => crypto.randomUUID()): (D & { id: string; parentId: string | null })[][] {
+  const levels: (D & { id: string; parentId: string | null })[][] = [];
+  const walk = (list: I[], parentId: string | null, level: number) => {
+    list.forEach((item, order) => {
+      const id = newId();
+      (levels[level] ??= []).push({ ...row(item, order), id, parentId });
+      walk(item.children, id, level + 1);
+    });
+  };
+  walk(items, null, 0);
+  return levels;
 }
