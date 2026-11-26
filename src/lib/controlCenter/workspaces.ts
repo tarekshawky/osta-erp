@@ -19,6 +19,7 @@ export const WORKSPACES: Workspace[] = [
     { href: "/admin/blog", label: "Blog", keywords: "articles posts مدونة" },
     { href: "/admin/blog/categories", label: "Blog categories", keywords: "topics" },
     { href: "/admin/legal", label: "Legal Center", keywords: "policies terms privacy سياسات شروط" },
+    { href: "/admin/website/knowledge", label: "AI Knowledge Center", keywords: "knowledge facts faq llms assistants معرفة أسئلة" },
   ] },
   { id: "services", label: "Services", title: "Services", hint: "What you sell", tabs: [
     { href: "/admin/services", label: "Website services", keywords: "service pages خدمات" },

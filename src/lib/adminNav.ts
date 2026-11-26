@@ -109,6 +109,7 @@ export const NAV_GROUPS: NavGroup[] = [
       BLOG,
       BLOG_CATEGORIES,
       LEGAL,
+      { href: "/admin/website/knowledge", label: "AI Knowledge Center", keywords: "knowledge facts faq llms assistants مركز المعرفة" },
       { href: "/admin/website/technical", label: "Technical Files & AI Management", keywords: "robots.txt llms.txt ads.txt ai crawlers" },
       { href: "/admin/website/code", label: "Global Header & Footer Code", keywords: "scripts tracking pixel head body custom code" },
       { href: "/admin/website/page-code", label: "Page-Level Header & Footer Code", keywords: "scripts per page custom code" },
