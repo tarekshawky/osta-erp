@@ -2,7 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { MenuManager } from "@/components/cms/menus/MenuManager";
 import type { PageOption } from "@/components/cms/menus/PagePicker";
 import { buildMenuTree } from "@/lib/site/menuTree";
@@ -75,7 +74,6 @@ export default async function MenusPage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Menus" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-slate-900">Menus</h2>
           <p className="text-sm text-slate-500">Five independent menus: changing one never changes another. You can also add a page to a menu from <Link href="/admin/website/structure" className="font-medium text-blue-600">Page structure</Link>.</p>

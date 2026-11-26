@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { BacklinkMonitor, type MonitorRow } from "@/components/cms/backlinks/BacklinkMonitor";
 import { assessLink, backlinkStats, type PageSignals } from "@/lib/seo/backlinks";
 
@@ -30,7 +29,6 @@ export default async function BacklinksPage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Backlink Monitor" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <BacklinkMonitor
           rows={rows} stats={stats} today={day(now)}
           lastScan={scan ? { at: scan.startedAt.toISOString().slice(0, 16).replace("T", " ") + " UTC", summary: `${scan.checked} checked` } : null}

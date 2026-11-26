@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { NewPageForm } from "@/components/cms/NewPageForm";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { SetupHomepage } from "@/components/cms/SetupHomepage";
 import { SetupBuiltInPages } from "@/components/cms/SetupBuiltInPages";
 import { BUILT_IN_PAGES } from "@/lib/cms/pageRules";
@@ -50,7 +49,6 @@ export default async function CmsPagesPage({ searchParams }: { searchParams: Pro
     <div className="pb-10">
       <AdminTopBar title="Website · Pages" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <div className="mb-5 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Pages</h2>

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { seoReport } from "@/lib/seo/report";
 import { isBuiltInSlug } from "@/lib/cms/pageRules";
 import { StructureScreen } from "./StructureScreen";
@@ -37,7 +36,6 @@ export default async function PageStructurePage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Page structure" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <div className="mb-5 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Page structure</h2>

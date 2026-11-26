@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { scoreStyle } from "@/lib/seo/scoreStyle";
 import { seoReport } from "@/lib/seo/report";
 
@@ -17,7 +16,6 @@ export default async function SeoOverviewPage() {
     <div className="pb-10">
       <AdminTopBar title="Website · SEO" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <h2 className="mb-1 text-2xl font-bold text-slate-900">SEO overview</h2>
         <p className="mb-5 max-w-2xl text-sm text-slate-500">Scores check each page&apos;s current draft: titles, descriptions, headings, image text, links and duplicates. A score is a guide, not a ranking promise.</p>
 

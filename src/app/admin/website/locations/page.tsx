@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { LocationManager, type BranchRow } from "@/components/cms/LocationManager";
 import type { HoursRow } from "@/lib/locations/locations";
 
@@ -26,7 +25,6 @@ export default async function LocationsPage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Locations" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <h2 className="mb-1 text-2xl font-bold text-slate-900">Locations</h2>
         <p className="mb-5 max-w-2xl text-sm text-slate-500">
           Your real offices. Each branch shows automatically on its emirate page (address, map, directions, call and WhatsApp buttons, services, coverage areas, rating and questions) and gets its own LocalBusiness structured data. Emirates without a branch are only shown as areas you serve.

@@ -3,10 +3,17 @@ import { redirect } from "next/navigation";
 import { requireEmployee } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { canAccessAdminSection } from "@/lib/adminSections";
+import { JobsBell } from "@/components/jobs/JobsBell";
+import { Bell } from "lucide-react";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireEmployee("ADMIN");
   const isSuperAdmin = admin.role === "SUPER_ADMIN";
+  const bell = (
+    <JobsBell>
+      <Bell size={18} aria-hidden />
+    </JobsBell>
+  );
 
   if (!isSuperAdmin) {
     const pathname = (await headers()).get("x-pathname") ?? "/admin";
@@ -17,7 +24,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       // explanatory message instead of `children`.
       if (pathname !== "/admin") redirect("/admin");
       return (
-        <AdminShell adminName={admin.name} isSuperAdmin={false} adminSections={admin.adminSections}>
+        <AdminShell adminName={admin.name} isSuperAdmin={false} adminSections={admin.adminSections} bell={bell}>
           <div className="p-8 text-center text-sm text-slate-500">
             You don&apos;t have access to any dashboard sections yet. Contact your Super Admin.
           </div>
@@ -27,7 +34,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <AdminShell adminName={admin.name} isSuperAdmin={isSuperAdmin} adminSections={admin.adminSections}>
+    <AdminShell adminName={admin.name} isSuperAdmin={isSuperAdmin} adminSections={admin.adminSections} bell={bell}>
       {children}
     </AdminShell>
   );

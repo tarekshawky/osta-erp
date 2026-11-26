@@ -2,7 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { guardPermission } from "@/lib/adminGuard";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { CodeForm } from "@/components/cms/CodeForm";
 import { savePageCode } from "@/app/admin/website/code-actions";
 
@@ -18,7 +17,6 @@ export default async function PageCodePage({ searchParams }: { searchParams: Pro
     <div className="pb-10">
       <AdminTopBar title="Website · Page-Level Code" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <h2 className="mb-1 text-2xl font-bold text-slate-900">Page-level header &amp; footer code</h2>
         <p className="mb-5 max-w-2xl text-sm text-slate-500">Code for one page only, such as a conversion script for a landing page. It runs while that page is published, on top of the global code. Pages built in Website → Pages are listed; to add code to a built-in page (About, Contact…), make it editable there first.</p>
 

@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { RedirectManager } from "@/components/cms/RedirectManager";
 
 const STATIC = ["/", "/services", "/pricing", "/blog", "/about", "/contact"];
@@ -22,7 +21,6 @@ export default async function RedirectsPage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Redirects & Sitemap" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <h2 className="mb-1 text-2xl font-bold text-slate-900">Redirects</h2>
         <p className="mb-5 max-w-2xl text-sm text-slate-500">Send an old address to a new one (301, permanent). Renaming a published page adds one automatically.</p>
         <RedirectManager rows={redirects.map((r) => ({ id: r.id, from: r.fromPath, to: r.toPath, created: r.createdAt.toISOString().slice(0, 10) }))} />

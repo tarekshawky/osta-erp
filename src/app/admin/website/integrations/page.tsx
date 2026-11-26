@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { guardPermission } from "@/lib/adminGuard";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { IntegrationsForm } from "@/components/cms/IntegrationsForm";
 
 export default async function IntegrationsPage() {
@@ -16,7 +15,6 @@ export default async function IntegrationsPage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Integrations" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <h2 className="mb-1 text-2xl font-bold text-slate-900">Integrations &amp; analytics</h2>
         <p className="mb-5 max-w-2xl text-sm text-slate-500">Every integration is optional and the site works with any of them missing. Scripts that track visitors load only after the visitor agrees.</p>
         <IntegrationsForm

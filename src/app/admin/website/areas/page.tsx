@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { AreaManager } from "@/components/cms/AreaManager";
 
 export default async function AreasPage() {
@@ -18,7 +17,6 @@ export default async function AreasPage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Service Areas" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <h2 className="mb-1 text-2xl font-bold text-slate-900">Service areas</h2>
         <p className="mb-5 max-w-2xl text-sm text-slate-500">
           Where you work, with the services offered in each. Create a page for an area to rank for local searches. Each area page must have its own content: a page that is a near-copy of another area page can&apos;t be published.

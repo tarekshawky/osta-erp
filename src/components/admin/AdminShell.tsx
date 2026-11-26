@@ -6,19 +6,39 @@ import { AutoTablePager } from "./AutoTablePager";
 import { NavProgress } from "./NavProgress";
 import { poppins } from "@/lib/fonts";
 import { AdminUserProvider } from "./AdminUserContext";
+import { usePathname } from "next/navigation";
+import { ControlCenterShell } from "@/components/control/ControlCenterShell";
+import { isControlCenterPath } from "@/lib/controlCenter/workspaces";
 
 export function AdminShell({
   adminName,
   isSuperAdmin,
   adminSections,
+  bell,
   children,
 }: {
   adminName: string;
   isSuperAdmin: boolean;
   adminSections: string[];
+  bell: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+
+  // Website screens use the Control Center frame: one dock at the top instead of the sidebar.
+  if (isControlCenterPath(usePathname())) {
+    return (
+      <AdminUserProvider value={{ name: adminName, isSuperAdmin, adminSections }}>
+        <div className={`admin-theme control-center flex min-h-dvh bg-[#f4f6fe] ${poppins.className}`}>
+          <ControlCenterShell isSuperAdmin={isSuperAdmin} adminSections={adminSections} bell={bell}>
+            {children}
+            <AutoTablePager />
+            <NavProgress />
+          </ControlCenterShell>
+        </div>
+      </AdminUserProvider>
+    );
+  }
 
   return (
     <AdminUserProvider value={{ name: adminName, isSuperAdmin, adminSections }}>

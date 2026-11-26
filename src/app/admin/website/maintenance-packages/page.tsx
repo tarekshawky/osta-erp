@@ -1,7 +1,6 @@
 import { requireEmployee } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { MaintenanceManager } from "@/components/cms/MaintenanceManager";
 import { asLines, loadGroups, loadSettings, toPkg } from "@/lib/maintenance/data";
 import { parseBuilder, type BuilderConfig } from "@/lib/maintenance/builder";
@@ -40,7 +39,6 @@ export default async function MaintenancePackagesPage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Maintenance Packages" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <h2 className="mb-1 text-2xl font-bold text-slate-900">Annual maintenance packages</h2>
         <p className="mb-5 max-w-2xl text-sm text-slate-500">Edit the packages, prices, included services and quantities, and the terms here. Add them to any page with the “Maintenance packages” block. Customers who press “Subscribe now” appear under Requests.</p>
         {data ? <MaintenanceManager {...data} /> : <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Maintenance packages need a database update that has not been applied yet.</p>}

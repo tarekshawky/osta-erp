@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { guardPermission } from "@/lib/adminGuard";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { TechnicalFilesManager } from "@/components/cms/TechnicalFilesManager";
 import { siteOrigin } from "@/lib/seo/context";
 import { isAiPolicy } from "@/lib/site/technicalFiles";
@@ -21,7 +20,6 @@ export default async function TechnicalFilesPage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Technical Files & AI" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <h2 className="mb-1 text-2xl font-bold text-slate-900">Technical files &amp; AI management</h2>
         <p className="mb-5 max-w-2xl text-sm text-slate-500">The plain-text files that tell search engines, AI assistants and ad networks how to treat your website. They are served from the root of your site.</p>
         <TechnicalFilesManager

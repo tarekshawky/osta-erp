@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { guardPermission } from "@/lib/adminGuard";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { CodeForm } from "@/components/cms/CodeForm";
 import { saveGlobalCode } from "@/app/admin/website/code-actions";
 
@@ -13,7 +12,6 @@ export default async function GlobalCodePage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Header & Footer Code" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <h2 className="mb-1 text-2xl font-bold text-slate-900">Global header &amp; footer code</h2>
         <p className="mb-5 max-w-2xl text-sm text-slate-500">Code added to every page of the public website. For one page only, use Page-Level Code.</p>
         <CodeForm

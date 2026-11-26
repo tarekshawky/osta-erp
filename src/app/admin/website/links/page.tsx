@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireEmployee } from "@/lib/auth";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
-import { WebsiteTabs } from "@/components/cms/WebsiteTabs";
 import { LinkReport, type PageLinks } from "@/components/cms/LinkReport";
 import { parseBlocks } from "@/lib/cms/blocks";
 import { collectLinks } from "@/lib/seo/analyze";
@@ -42,7 +41,6 @@ export default async function LinksPage() {
     <div className="pb-10">
       <AdminTopBar title="Website · Links" />
       <div className="px-6 py-6">
-        <WebsiteTabs />
         <h2 className="mb-1 text-2xl font-bold text-slate-900">Page links</h2>
         <p className="mb-5 max-w-2xl text-sm text-slate-500">For each page: where it links to, which of your pages link to it, and how many active backlinks point at it. Pages nothing links to are hard to find.</p>
         <LinkReport pages={rows} />
