@@ -2,6 +2,20 @@ import { prisma } from "@/lib/prisma";
 import { loadPublicPackages } from "@/lib/maintenance/data";
 import { siteOrigin } from "@/lib/seo/context";
 import { autoLines, buildLlmsTxt, isPublicEntry, readiness, type BranchFacts, type SyncData } from "./knowledge";
+import { PAGE_KEY, pageSetting, publicKnowledge, type PublicKnowledge } from "./publicView";
+
+// Where the public website is, for the admin's "open the page" link.
+export const publicSiteUrl = () => (process.env.SITE_URL ?? "https://osta-invoice-users.vercel.app").replace(/\/$/, "");
+
+export async function loadPublicKnowledge(): Promise<PublicKnowledge | null> {
+  const setting = pageSetting(await prisma.technicalFile.findUnique({ where: { key: PAGE_KEY } }));
+  if (!setting.enabled) return null;
+  const [sections, sync] = await Promise.all([
+    prisma.knowledgeSection.findMany({ where: { visible: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], include: { entries: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] } } }),
+    loadSyncData(),
+  ]);
+  return publicKnowledge(sections, sync, { indexable: setting.indexable, llms: sync.llmsPublished });
+}
 
 // What the other screens hold today: the Knowledge Center reads it each time and never keeps a copy.
 export async function loadSyncData(): Promise<SyncData & { branches: BranchFacts[]; llmsPublished: boolean }> {
@@ -25,9 +39,10 @@ export async function loadSyncData(): Promise<SyncData & { branches: BranchFacts
 
 // Everything the Knowledge Center screen shows.
 export async function loadKnowledgeCenter() {
-  const [sections, sync] = await Promise.all([
+  const [sections, sync, pageRow] = await Promise.all([
     prisma.knowledgeSection.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], include: { entries: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] } } }),
     loadSyncData(),
+    prisma.technicalFile.findUnique({ where: { key: PAGE_KEY } }),
   ]);
   const now = new Date();
   const view = sections.map((s) => ({
@@ -48,7 +63,13 @@ export async function loadKnowledgeCenter() {
   const about = view.filter((s) => s.visible).flatMap((s) => s.entries.filter((e) => e.titleEn === "About Osta Services" && isPublicEntry(e, true)))[0];
   const llmsText = buildLlmsTxt({ siteName: "Osta Services (خدمات آسطا)", summary: about?.bodyEn ?? "", origin: siteOrigin(), sections: published });
 
-  return { sections: view, checks, llmsText, origin: siteOrigin(), now: now.toISOString() };
+  const page = {
+    ...pageSetting(pageRow),
+    url: `${publicSiteUrl()}/knowledge-center`,
+    checked: view.filter((s) => s.visible).reduce((n, s) => n + s.entries.filter((e) => isPublicEntry(e, true)).length, 0),
+    synced: view.filter((s) => s.visible).reduce((n, s) => n + s.autoLines.length, 0),
+  };
+  return { sections: view, checks, llmsText, origin: siteOrigin(), now: now.toISOString(), page };
 }
 
 export type KnowledgeCenterData = Awaited<ReturnType<typeof loadKnowledgeCenter>>;

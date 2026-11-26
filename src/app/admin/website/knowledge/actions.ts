@@ -6,6 +6,7 @@ import { guardPermission, writeAudit } from "@/lib/adminGuard";
 import type { Permission } from "@/lib/permissions";
 import { LIMITS, entryProblems, saveProblem, textChanged, type EntryInput } from "@/lib/knowledge/knowledge";
 import { SEED_SECTIONS } from "@/lib/knowledge/seed";
+import { PAGE_KEY } from "@/lib/knowledge/publicView";
 
 export type KnowledgeResult = { ok: boolean; error?: string; id?: string };
 const fail = (error: string): KnowledgeResult => ({ ok: false, error });
@@ -39,6 +40,16 @@ export async function loadStartingContent(): Promise<KnowledgeResult> {
     }
   }, { timeout: 30_000 });
   await writeAudit(g.admin, "knowledge.seed", "KnowledgeSection", null, null, { sections: SEED_SECTIONS.length });
+  return done();
+}
+
+// Opens or closes the public page (and /knowledge.json), and says whether it may be indexed.
+export async function setPublicPage(enabled: boolean, indexable: boolean): Promise<KnowledgeResult> {
+  const g = await guardPermission(PUBLISH);
+  if (!g.ok) return fail(g.error);
+  const data = { enabled: !!enabled, content: enabled && indexable ? "index" : "noindex" };
+  await prisma.technicalFile.upsert({ where: { key: PAGE_KEY }, update: data, create: { key: PAGE_KEY, ...data } });
+  await writeAudit(g.admin, "knowledge.page", "TechnicalFile", PAGE_KEY, null, data);
   return done();
 }
 

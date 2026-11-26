@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LIMITS, autoLines, buildLlmsTxt, contactMismatches, entryProblems, entryState, isAutoSource, isPublicEntry, packageMismatches, readiness, saveProblem, textChanged, type EntryInput, type SyncData } from "./knowledge";
 import { SEED_SECTIONS } from "./seed";
+import { pageSetting, publicKnowledge, type StoredSection } from "./publicView";
 
 const good = { titleEn: "AC repair", titleAr: "تصليح المكيفات", bodyEn: "We repair split AC.", bodyAr: "نصلح مكيفات السبليت.", sourceUrl: "https://www.ostaservices.com/x" };
 const input = (o: Partial<EntryInput> = {}): EntryInput => ({ ...good, type: "FAQ", sectionId: "s", visible: true, schemaOn: true, note: "", ...o });
@@ -117,5 +118,33 @@ describe("starting content", () => {
   it("keeps outside research and the electrical service hidden", () => {
     expect(entries.filter((e) => e.note?.startsWith("From outside research")).every((e) => e.hidden)).toBe(true);
     expect(entries.find((e) => e.titleEn === "Technical maintenance")?.hidden).toBe(true);
+  });
+});
+
+describe("what leaves the admin", () => {
+  const entry = (id: string, o: Partial<StoredSection["entries"][number]> = {}) => ({ ...good, id, type: "FAQ", verifiedAt: ago(3), visible: true, schemaOn: true, note: "SECRET NOTE", verifiedByName: "SECRET NAME", ...o });
+  const section = (o: Partial<StoredSection> = {}): StoredSection => ({ key: "faq", titleEn: "FAQ", titleAr: "أسئلة", auto: "", visible: true, entries: [], ...o });
+  const sync: SyncData = { settings, packages: [pkg()], areas: [], profiles: [] };
+
+  it("holds only checked, visible, complete entries, and never the private fields", () => {
+    const out = publicKnowledge([
+      section({ entries: [entry("ok"), entry("unchecked", { verifiedAt: null }), entry("hidden", { visible: false }), entry("open", { bodyEn: "[price]" })] }),
+      section({ key: "off", visible: false, entries: [entry("in-hidden-section")] }),
+      section({ key: "empty" }),
+    ], sync, { indexable: false, llms: false });
+    expect(out.sections.map((s) => [s.key, s.items.map((i) => i.id)])).toEqual([["faq", ["ok"]]]);
+    expect(JSON.stringify(out)).not.toMatch(/SECRET|note|verifiedByName|price\]/);
+    expect(out.latestCheck).toBe(ago(3).toISOString());
+  });
+  it("adds the synced lines of a visible section, marked as automatic", () => {
+    const out = publicKnowledge([section({ key: "pricing", auto: "packages" })], sync, { indexable: true, llms: true });
+    expect(out.sections[0].items[0]).toMatchObject({ automatic: true, verifiedAt: null, schema: false, titleEn: "Gold" });
+    expect(out.latestCheck).toBeNull();
+  });
+  it("is off unless switched on, and indexable only when on", () => {
+    expect(pageSetting(null)).toEqual({ enabled: false, indexable: false });
+    expect(pageSetting({ enabled: false, content: "index" })).toEqual({ enabled: false, indexable: false });
+    expect(pageSetting({ enabled: true, content: "noindex" })).toEqual({ enabled: true, indexable: false });
+    expect(pageSetting({ enabled: true, content: "index" })).toEqual({ enabled: true, indexable: true });
   });
 });

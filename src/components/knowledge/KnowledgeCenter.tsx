@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, Link2, Lock, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
-import { deleteEntry, deleteSection, loadStartingContent, moveSection, saveEntry, saveSection, setEntryChecked, setSectionVisible, type KnowledgeResult } from "@/app/admin/website/knowledge/actions";
+import { deleteEntry, deleteSection, loadStartingContent, moveSection, saveEntry, saveSection, setEntryChecked, setPublicPage, setSectionVisible, type KnowledgeResult } from "@/app/admin/website/knowledge/actions";
 import type { EntryView, KnowledgeCenterData, SectionView } from "@/lib/knowledge/data";
 import { AUTO_SOURCES, ENTRY_TYPES, STATE_LABEL, TYPE_LABEL, entryProblems, entryState, isAutoSource, isPublicEntry, textChanged, type EntryInput, type EntryState, type EntryType } from "@/lib/knowledge/knowledge";
 
@@ -231,6 +231,27 @@ export function KnowledgeCenter({ data, canPublish }: { data: KnowledgeCenterDat
 
           {/* Readiness and what is synced */}
           <aside className="flex flex-col gap-4 lg:col-span-2 xl:col-span-1">
+            <section aria-label="Public page" className={`${CARD} p-5`}>
+              <div className="flex items-center gap-3">
+                <h2 className="mr-auto text-sm font-bold text-[#10163a]">Public page</h2>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${data.page.enabled ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{data.page.enabled ? "on" : "off"}</span>
+                <Switch on={data.page.enabled} label="Show the public Knowledge Center page" disabled={!canPublish || pending}
+                  onClick={() => {
+                    if (!data.page.enabled && !window.confirm(`Open the public page? Visitors will see ${data.page.checked} checked ${data.page.checked === 1 ? "entry" : "entries"} and ${data.page.synced} lines read from other screens. It stays hidden from search engines until you allow indexing.`)) return;
+                    run(() => setPublicPage(!data.page.enabled, false), data.page.enabled ? "The public page is off." : "The public page is open. Search engines are asked not to index it.");
+                  }} />
+              </div>
+              <p className="mt-1 text-xs text-[#6b7399]">{data.page.checked} checked · {data.page.synced} synced. The page and /knowledge.json show only these.</p>
+              <div className="mt-3 flex items-center gap-3 text-sm text-[#10163a]">
+                <span className="mr-auto">Let Google and AI assistants index it</span>
+                <Switch on={data.page.indexable} label="Let search engines and AI assistants index the page" disabled={!canPublish || pending || !data.page.enabled}
+                  onClick={() => {
+                    if (!data.page.indexable && !window.confirm("Allow indexing? Do this only when this website is the one you want Google and AI assistants to quote.")) return;
+                    run(() => setPublicPage(true, !data.page.indexable), data.page.indexable ? "Indexing is not allowed." : "Indexing is allowed.");
+                  }} />
+              </div>
+              {data.page.enabled && <a href={data.page.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#2a50c8]"><Link2 size={13} /> Open the public page</a>}
+            </section>
             <section aria-label="AI readiness" className={`${CARD} p-5`}>
               <div className="relative mx-auto h-32 w-32">
                 <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90" aria-hidden>
